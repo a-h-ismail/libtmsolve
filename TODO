@@ -1,0 +1,7 @@
+Remove original_exp and fix whatever depends on it
+Add option to disable variables in compiler
+Make a compiler variant for complex numbers
+Clean legacy code so it uses the more recent compilation method
+Add support for more than one unknown
+Add the ability to save a compiled expression for quick loading
+Add the ability of loading a compiled expression with unknown substitution
