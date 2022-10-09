@@ -3,7 +3,8 @@ Copyright (C) 2021-2022 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "string_tools.h"
-//Simple function to detect the word "inf", almost useless since the same can be accomplished with s_search
+#include "scientific.h"
+// Simple function to detect the word "inf", almost useless since the same can be accomplished with s_search
 bool is_infinite(char *exp, int index)
 {
     if (exp[index] == '+' || exp[index] == '-')
@@ -967,6 +968,42 @@ int priority_test(char operator1, char operator2)
         return 0;
     if (op1_p < op2_p)
         return -1;
-    //Silencing the compiler warning
+    // Silencing the compiler warning
     exit(-1);
+}
+// Replaces the keyword with the appropriate value
+void var_to_val(char *exp, char *keyword, double value)
+{
+    int i = 0, keylen = strlen(keyword);
+    while (exp[i] != '\0')
+    {
+        // search for the next occurence of the keyword
+        i = s_search(exp, keyword, i);
+        if (i == -1)
+            return;
+        // print the value in place of the keyword
+        i = value_printer(exp, i, i + keylen - 1, value);
+    }
+}
+// Function that uses var_to_val to replace the values of exp, pi and ans
+void variable_matcher(char *exp)
+{
+    int i;
+    var_to_val(exp, "pi", M_PI);
+    var_to_val(exp, "exp", M_E);
+    i = s_search(exp, "ans", 0);
+    while (i != -1)
+    {
+        // Case where ans is made of 1 term, no need for parenthesis
+        if ((creal(ans) == 0 && cimag(ans) != 0) || (creal(ans) != 0 && cimag(ans) == 0))
+            i = s_complex_print(exp, i, i + 2, ans);
+        else
+        {
+            // Case where ans is made of 2 terms, enclose them with parenthesis
+            exp[i] = '(';
+            exp[i + 2] = ')';
+            i = s_complex_print(exp, i + 1, i + 1, ans);
+        }
+        i = s_search(exp, "ans", i + 1);
+    }
 }

@@ -57,7 +57,7 @@ void replace_unknowns(variable_data *pointers, double value)
 //Function that calculates the derivative
 bool derivative(char *exp)
 {
-    int j, next, open1 = 4, open2, close1, close2;
+    int j=0, next, open1 = 4, open2, close1, close2;
     double n1, n2, fn1, fn2, der;
     char *temp;
     //The function must receive an expression of the form d/dx(f(x))(n1) where n1 is the value where we want to calculate the derivative

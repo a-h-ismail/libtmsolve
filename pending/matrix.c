@@ -102,7 +102,7 @@ double *matrix_copy(double *matrix)
         copy[i] = matrix[i];
     return copy;
 }
-//Find the detrminant of function A, returns NaN on error
+//Find the determinant of function A, returns NaN on error
 double matrix_det(double *A)
 {
     int a, j;

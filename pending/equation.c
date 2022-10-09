@@ -2,48 +2,24 @@
 Copyright (C) 2021-2022 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
+/*
 #include "internals.h"
 #include "scientific.h"
 #include "string_tools.h"
 #include "matrix.h"
-void system_solver(int degree)
+
+//Solve a linear system Ax=b
+void system_solver(double *A, double *b, int degree)
 {
-    double *system, temp, B[degree], *copy, det;
+    double *system, temp, *copy, det;
     int i, row, column;
-    //Ax=b
-    //"system" is the matrix A and B is the matrix b
-    system = (double *)malloc((degree * degree + 2) * sizeof(double));
-    system[0] = degree;
-    system[1] = degree;
-    if (system == NULL)
-    {
-        puts("Allocation failure, aborting.");
-        return;
-    }
-    for (i = 0; i < degree * (degree + 1); ++i)
-    {
-        row = i / (degree + 1);
-        column = i % (degree + 1);
-        //Entering the other side of the equation
-        if (column == degree)
-        {
-            printf("Enter second member of Equation %d:\n", row + 1);
-            B[row] = get_value(NULL);
-        }
-        else
-        {
-            printf("Enter coefficient of x%d of Equation %d:\n", column + 1, row + 1);
-            *(system + row * degree + column + 2) = get_value(NULL);
-        }
-    }
     det = matrix_det(system);
     if (det == 0)
     {
         puts("The system has no solution or infinite solutions.");
         return;
     }
-    //Printing the system before calculating the results
-    puts("\nThe system is:");
+    //Calculating solutions
     for (i = 0; i < degree * (degree + 1); ++i)
     {
         row = i / (degree + 1);
@@ -75,6 +51,7 @@ void system_solver(int degree)
     printf("\n");
     free(system);
 }
+
 void equation_solver(int degree)
 {
     double a, b, c, d, p, q, delta;
@@ -187,3 +164,4 @@ void equation_solver(int degree)
         puts("Degree not supported.");
     }
 }
+*/

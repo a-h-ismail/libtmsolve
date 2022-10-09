@@ -23,7 +23,7 @@ int error_handler(char *error, int arg1, ...)
     int i, arg2;
     struct error_structure
     {
-        char *pointer;
+        char *error_msg, err_exp[50];
         bool heap_allocated, fatal_error;
         int error_index;
     };
@@ -31,7 +31,7 @@ int error_handler(char *error, int arg1, ...)
     switch (arg1)
     {
     case 1:
-        error_table[error_count].pointer = error;
+        error_table[error_count].error_msg = error;
         arg2 = va_arg(arguments, int);
         switch (arg2)
         {
@@ -68,9 +68,9 @@ int error_handler(char *error, int arg1, ...)
 
         for (i = 0; i < error_count; ++i)
         {
-            puts(error_table[i].pointer);
+            puts(error_table[i].error_msg);
             if (error_table[i].fatal_error == true && error_table[i].error_index != -1)
-                error_print(original_exp, error_table[i].error_index);
+                error_print(error_table[i].err_exp, error_table[i].error_index);
         }
         error_handler(NULL, 3, 0);
         if (arg2 == 1)
@@ -84,8 +84,8 @@ int error_handler(char *error, int arg1, ...)
             for (i = 0; i < error_count; ++i)
                 if (error_table[i].heap_allocated == true)
                 {
-                    free(error_table[i].pointer);
-                    error_table[i].pointer = NULL;
+                    free(error_table[i].error_msg);
+                    error_table[i].error_msg = NULL;
                 }
             error_count = fatal = non_fatal = 0;
             break;
@@ -93,8 +93,8 @@ int error_handler(char *error, int arg1, ...)
             for (i = 0; i < backup_error_count; ++i)
                 if (backup[i].heap_allocated == true)
                 {
-                    free(backup[i].pointer);
-                    backup[i].pointer = NULL;
+                    free(backup[i].error_msg);
+                    backup[i].error_msg = NULL;
                 }
             backup_error_count = backup_fatal = backup_non_fatal = 0;
             break;
@@ -102,15 +102,15 @@ int error_handler(char *error, int arg1, ...)
             for (i = 0; i < error_count; ++i)
                 if (error_table[i].heap_allocated == true)
                 {
-                    free(error_table[i].pointer);
-                    error_table[i].pointer = NULL;
+                    free(error_table[i].error_msg);
+                    error_table[i].error_msg = NULL;
                 }
             error_count = i;
             for (i = 0; i < backup_error_count; ++i)
                 if (backup[i].heap_allocated == true)
                 {
-                    free(backup[i].pointer);
-                    backup[i].pointer = NULL;
+                    free(backup[i].error_msg);
+                    backup[i].error_msg = NULL;
                 }
             i += error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
@@ -127,20 +127,20 @@ int error_handler(char *error, int arg1, ...)
         {
         case 0:
             for (i = 0; i < error_count; ++i)
-                if (strcmp(error, error_table[i].pointer) == 0)
+                if (strcmp(error, error_table[i].error_msg) == 0)
                     return 1;
             break;
         case 1:
             for (i = 0; i < error_count; ++i)
-                if (strcmp(error, backup[i].pointer) == 0)
+                if (strcmp(error, backup[i].error_msg) == 0)
                     return 2;
             break;
         case 2:
             for (i = 0; i < error_count; ++i)
             {
-                if (strcmp(error, error_table[i].pointer) == 0)
+                if (strcmp(error, error_table[i].error_msg) == 0)
                     return 1;
-                else if (strcmp(error, backup[i].pointer) == 0)
+                else if (strcmp(error, backup[i].error_msg) == 0)
                     return 2;
             }
         }
@@ -181,7 +181,7 @@ int error_handler(char *error, int arg1, ...)
         non_fatal = backup_non_fatal;
         // Remove all references of the errors from the backup
         for (i = 0; i < backup_error_count; ++i)
-            backup[i].pointer = NULL;
+            backup[i].error_msg = NULL;
         break;
     }
     return -5;
