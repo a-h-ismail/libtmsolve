@@ -12,18 +12,18 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "internals.h"
 // Scientific solving functions
 int s_process(char *exp, int p);
-double solve_s_exp(s_expression **subexps);
+double solve_s_exp(s_expression *subexps);
 double pre_scientific_interpreter(char *exp);
-s_expression **scientific_compiler(char *exp);
+s_expression *scientific_compiler(char *exp);
 double factorial(double value);
 double scientific_interpreter(char *exp, bool int_der);
 double solve_region(char *exp, int a, int b);
 void scientific_complex_picker(char *exp);
-void delete_s_exp(s_expression **subexps);
+void delete_s_exp(s_expression *subexps);
 int priority_test(char operator1, char operator2);
 void priority_fill(node *list, int op_count);
-int subexp_start_at(s_expression **expression, int start, int current_s_exp, int mode);
-int s_exp_ending(s_expression **expression, int end, int current_s_exp, int s_exp_count);
+int subexp_start_at(s_expression *expression, int start, int current_s_exp, int mode);
+int s_exp_ending(s_expression *expression, int end, int current_s_exp, int s_exp_count);
 int32_t *find_factors(int32_t a);
 void fraction_processor(char *exp, bool wasdecimal);
 bool decimal_to_fraction(char *exp, bool inverse_process);

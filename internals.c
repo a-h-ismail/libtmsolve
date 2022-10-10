@@ -6,7 +6,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 /*
 Error handling function.
 arg 1:
-1: Save the *error to the errors database, arg 2: ( 0: not fatal-stack; 1: fatal-stack; 2: not fatal-heap; 3: fatal-heap).
+1: Save the *error to the errors database, arg 2: ( 0: not fatal, stack; 1: fatal, stack).
 For fatal errors, arg3 must have the index of the error (-1 means don't error_print)
 2: Print the errors to stdout and clear the database, return number of errors printed.
 3: Clear the error database. arg 2: clear (0: main; 1: backup; 2: all)
@@ -81,46 +81,26 @@ int error_handler(char *error, int arg1, ...)
         switch (arg2)
         {
         case 0:
-            for (i = 0; i < error_count; ++i)
-                if (error_table[i].heap_allocated == true)
-                {
-                    free(error_table[i].error_msg);
-                    error_table[i].error_msg = NULL;
-                }
+            memset(error_table, 0, 10 * sizeof(struct error_structure));
+            i = error_count;
             error_count = fatal = non_fatal = 0;
             break;
         case 1:
-            for (i = 0; i < backup_error_count; ++i)
-                if (backup[i].heap_allocated == true)
-                {
-                    free(backup[i].error_msg);
-                    backup[i].error_msg = NULL;
-                }
+            memset(backup, 0, 10 * sizeof(struct error_structure));
+            i = backup_error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
             break;
         case 2:
-            for (i = 0; i < error_count; ++i)
-                if (error_table[i].heap_allocated == true)
-                {
-                    free(error_table[i].error_msg);
-                    error_table[i].error_msg = NULL;
-                }
-            error_count = i;
-            for (i = 0; i < backup_error_count; ++i)
-                if (backup[i].heap_allocated == true)
-                {
-                    free(backup[i].error_msg);
-                    backup[i].error_msg = NULL;
-                }
-            i += error_count;
+            memset(error_table, 0, 10 * sizeof(struct error_structure));
+            memset(backup, 0, 10 * sizeof(struct error_structure));
+            i = error_count + backup_error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
             error_count = fatal = non_fatal = 0;
             break;
         default:
-            return false;
+            i=-1;
         }
         return i;
-
     case 4:
         arg2 = va_arg(arguments, int);
         switch (arg2)
@@ -199,9 +179,9 @@ void error_print(char *exp, int p)
 // Function to sort subexpressions by depth, also for use with qsort
 int compare_subexps_depth(const void *a, const void *b)
 {
-    if ((*((s_expression **)a))->depth < (*((s_expression **)b))->depth)
+    if ((*((s_expression *)a)).depth < (*((s_expression *)b)).depth)
         return 1;
-    else if ((*((s_expression **)a))->depth > (*((s_expression **)b))->depth)
+    else if ((*((s_expression *)a)).depth > (*((s_expression *)b)).depth)
         return -1;
     else
         return 0;

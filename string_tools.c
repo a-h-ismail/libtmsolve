@@ -633,10 +633,9 @@ bool valid_result(char *exp)
 int find_endofnumber(char *exp, int start)
 {
     int end = start;
-    bool scientific_notation = false;
     /*
     Algorithm:
-    * Starting from "start" check if the char at end+1 is a number if true increment end
+    * Starting from "start" check if the char at end+1 is a number, if true increment end
     * If not, check the following cases:
     * exp[end+1] is a point '.' before scientific notation, scientific notations 'e' 'E': increment end
     * exp[end+1] is the imaginary number 'i': Increment end then break
@@ -651,17 +650,9 @@ int find_endofnumber(char *exp, int start)
         else
         {
             if (exp[end + 1] == 'e' || exp[end + 1] == 'E')
-            {
-                scientific_notation = true;
                 ++end;
-            }
             else if (exp[end + 1] == '.')
-            {
-                if (scientific_notation)
-                    return end;
-                else
-                    ++end;
-            }
+                ++end;
             else if ((exp[end + 1] == '+' || exp[end + 1] == '-') && (exp[end] == 'e' || exp[end] == 'E'))
                 ++end;
             else if (exp[end + 1] == 'i')

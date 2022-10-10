@@ -2,19 +2,19 @@
 Copyright (C) 2021-2022 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#include "internals.h"
 #include "scientific.h"
 #include "string_tools.h"
 #include "function.h"
 #include <math.h>
-variable_data *variable_nodes(s_expression **subexps)
+//Generates a heap allocated array containing all unknown members metadata (location,sign)
+variable_data *variable_nodes(s_expression *subexps)
 {
     int i = 0, current_subexp = 0;
     variable_data *variable_list = malloc(g_nb_unknowns * sizeof(variable_data));
     node *i_node;
     do
     {
-        i_node = subexps[current_subexp]->node_list + subexps[current_subexp]->start_node;
+        i_node = subexps[current_subexp].node_list + subexps[current_subexp].start_node;
         while (i_node != NULL)
         {
             //Case of variable left operand
@@ -39,7 +39,7 @@ variable_data *variable_nodes(s_expression **subexps)
             i_node = i_node->next;
         }
         ++current_subexp;
-    } while (subexps[current_subexp - 1]->last_exp == false);
+    } while (subexps[current_subexp - 1].last_exp == false);
     return variable_list;
 }
 //Function that sets all double variables pointed to in the array with "value"
@@ -234,7 +234,7 @@ double integrate(char *exp, double a, double delta)
     int n;
     double integral, an, fn, rounds, temp;
     variable_data *var_array;
-    s_expression **subexps;
+    s_expression *subexps;
     if (delta < 0)
     {
         a = delta + a;
