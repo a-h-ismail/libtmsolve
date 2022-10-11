@@ -10,7 +10,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 variable_data *variable_nodes(s_expression *subexps)
 {
     int i = 0, current_subexp = 0;
-    variable_data *variable_list = malloc(g_nb_unknowns * sizeof(variable_data));
+    variable_data *variable_list = malloc(g_var_count * sizeof(variable_data));
     node *i_node;
     do
     {
@@ -21,18 +21,18 @@ variable_data *variable_nodes(s_expression *subexps)
             if (i_node->variable_operands & 0b1)
             {
                 if (i_node->variable_operands & 0b100)
-                    variable_list[i].isNegative = true;
+                    variable_list[i].is_negative = true;
                 else
-                    variable_list[i].isNegative = false;
+                    variable_list[i].is_negative = false;
                 variable_list[i].pointer = &(i_node->LeftOperand);
                 ++i;
             }
             if (i_node->variable_operands & 0b10)
             {
                 if (i_node->variable_operands & 0b1000)
-                    variable_list[i].isNegative = true;
+                    variable_list[i].is_negative = true;
                 else
-                    variable_list[i].isNegative = false;
+                    variable_list[i].is_negative = false;
                 variable_list[i].pointer = &(i_node->RightOperand);
                 ++i;
             }
@@ -46,9 +46,9 @@ variable_data *variable_nodes(s_expression *subexps)
 void replace_unknowns(variable_data *pointers, double value)
 {
     int i;
-    for (i = 0; i < g_nb_unknowns; ++i)
+    for (i = 0; i < g_var_count; ++i)
     {
-        if (pointers[i].isNegative)
+        if (pointers[i].is_negative)
             *(pointers[i].pointer) = -value;
         else
             *(pointers[i].pointer) = value;
@@ -241,7 +241,7 @@ double integrate(char *exp, double a, double delta)
         delta = -delta;
     }
     //Compile exp to the desired structure
-    subexps = scientific_compiler(exp);
+    subexps = scientific_compiler(exp,true);
     var_array = variable_nodes(subexps);
     //Calculating rounds
     rounds = ceil(delta) * 4096;
