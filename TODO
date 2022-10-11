@@ -1,5 +1,4 @@
-Remove original_exp and fix whatever depends on it
-Add option to disable variables in compiler
+Archive unused code
 Make a compiler variant for complex numbers
 Clean legacy code so it uses the more recent compilation method
 Add support for more than one unknown
