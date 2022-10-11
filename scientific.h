@@ -10,11 +10,12 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <math.h>
 #include <complex.h>
 #include "internals.h"
-// Scientific solving functions
+extern char *function_names[];
+extern double (*s_function[])(double);
 int s_process(char *exp, int p);
 double solve_s_exp(s_expression *subexps);
 double pre_scientific_interpreter(char *exp);
-s_expression *scientific_compiler(char *exp);
+s_expression *scientific_compiler(char *exp, bool enable_variables);
 double factorial(double value);
 double scientific_interpreter(char *exp, bool int_der);
 double solve_region(char *exp, int a, int b);

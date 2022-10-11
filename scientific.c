@@ -6,7 +6,9 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "internals.h"
 #include "function.h"
 #include "string_tools.h"
-int g_nb_unknowns;
+int g_var_count;
+char *function_names[] = {"fact", "abs", "ceil", "floor", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log"};
+double (*s_function[])(double) = {factorial, fabs, ceil, floor, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, cos, sin, tan, log, log10};
 double factorial(double value)
 {
     double result = 1, i;
@@ -140,7 +142,7 @@ double scientific_interpreter(char *exp, bool int_der)
                     return NAN;
         }
     }
-    subexp = scientific_compiler(exp);
+    subexp = scientific_compiler(exp,false);
     if (subexp == NULL)
         return NAN;
     result = solve_s_exp(subexp);
@@ -179,22 +181,22 @@ double solve_s_exp(s_expression *subexps)
             *(subexps[current_subexp].result) = &result;
 
         if (subexps[current_subexp].op_count == 0)
-            *(i_node->result) = i_node->LeftOperand;
+            *(i_node->node_result) = i_node->LeftOperand;
         else
             while (i_node != NULL)
             {
                 switch (i_node->operator)
                 {
                 case '+':
-                    *(i_node->result) = i_node->LeftOperand + i_node->RightOperand;
+                    *(i_node->node_result) = i_node->LeftOperand + i_node->RightOperand;
                     break;
 
                 case '-':
-                    *(i_node->result) = i_node->LeftOperand - i_node->RightOperand;
+                    *(i_node->node_result) = i_node->LeftOperand - i_node->RightOperand;
                     break;
 
                 case '*':
-                    *(i_node->result) = i_node->LeftOperand * i_node->RightOperand;
+                    *(i_node->node_result) = i_node->LeftOperand * i_node->RightOperand;
                     break;
 
                 case '/':
@@ -203,7 +205,7 @@ double solve_s_exp(s_expression *subexps)
                         error_handler("Error: Division by zero", 1, 1, i_node->index);
                         return NAN;
                     }
-                    *(i_node->result) = i_node->LeftOperand / i_node->RightOperand;
+                    *(i_node->node_result) = i_node->LeftOperand / i_node->RightOperand;
                     break;
 
                 case '%':
@@ -212,11 +214,11 @@ double solve_s_exp(s_expression *subexps)
                         error_handler("Error: Modulo zero implies a Division by 0.", 1, 1, i_node->index);
                         return NAN;
                     }
-                    *(i_node->result) = fmod(i_node->LeftOperand, i_node->RightOperand);
+                    *(i_node->node_result) = fmod(i_node->LeftOperand, i_node->RightOperand);
                     break;
 
                 case '^':
-                    *(i_node->result) = pow(i_node->LeftOperand, i_node->RightOperand);
+                    *(i_node->node_result) = pow(i_node->LeftOperand, i_node->RightOperand);
                     break;
                 }
                 i_node = i_node->next;
@@ -236,29 +238,30 @@ double solve_s_exp(s_expression *subexps)
     } while (subexps[current_subexp - 1].last_exp == false);
     return result;
 }
-// Sets the unknown in the node x_node in the left or right operand "r","l"
-bool set_unknown(char *exp, node *x_node, char operand)
+// Sets the variable in x_node to the left or right operand "r","l"
+// Returns true if the variable x was found, false otherwise
+bool set_variable_in_node(char *exp, node *x_node, char operand)
 {
-    bool isNegative = false, isUnknown = false;
+    bool is_negative = false, is_variable = false;
     if (*exp == 'x')
-        isUnknown = true;
+        is_variable = true;
     else if (exp[1] == 'x')
     {
         if (*exp == '+')
-            isUnknown = true;
+            is_variable = true;
         else if (*exp == '-')
-            isUnknown = isNegative = true;
+            is_variable = is_negative = true;
     }
-    // The value is not the unknown x
+    // The value is not the variable x
     else
         return false;
-    if (isUnknown)
+    if (is_variable)
     {
-        ++g_nb_unknowns;
+        ++g_var_count;
         // x as left op
         if (operand == 'l')
         {
-            if (isNegative)
+            if (is_negative)
                 x_node->variable_operands = x_node->variable_operands | 0b101;
             else
                 x_node->variable_operands = x_node->variable_operands | 0b1;
@@ -266,7 +269,7 @@ bool set_unknown(char *exp, node *x_node, char operand)
         // x as right op
         else if (operand == 'r')
         {
-            if (isNegative)
+            if (is_negative)
                 x_node->variable_operands = x_node->variable_operands | 0b1010;
             else
                 x_node->variable_operands = x_node->variable_operands | 0b10;
@@ -281,16 +284,14 @@ bool set_unknown(char *exp, node *x_node, char operand)
     return true;
 }
 // Compiles a math expression into a s_expression array
-s_expression *scientific_compiler(char *exp)
+s_expression *scientific_compiler(char *exp, bool enable_variables)
 {
     int length, solve_start, solve_end, i, j, op_count, status, subexp_count = 1;
     int current_subexp, *operator_indexes, buffer_size = 10000;
     length = strlen(exp);
-    g_nb_unknowns = 0;
+    g_var_count = 0;
     s_expression *subexps_ptr;
     node *current_nodes, *i_node;
-    char *function_names[] = {"fact", "abs", "ceil", "floor", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log"};
-    double (*s_function[])(double) = {factorial, fabs, ceil, floor, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, cos, sin, tan, log, log10};
 
     /*
     Compiling steps:
@@ -310,7 +311,7 @@ s_expression *scientific_compiler(char *exp)
             ++subexp_count;
     }
     // Allocate subexps array of pointers
-    subexps_ptr = calloc(subexp_count, sizeof(s_expression));
+    subexps_ptr = malloc(subexp_count * sizeof(s_expression));
     // Initialize function pointers
     for (i = 0; i < subexp_count; ++i)
         subexps_ptr[i].function_ptr = NULL;
@@ -387,6 +388,7 @@ s_expression *scientific_compiler(char *exp)
         // Searching for any function preceding the expression to set the function pointer
         if (solve_start > 1)
         {
+            //sizeof(s_function)/sizeof(s_function *);
             for (i = 0; i < 18; ++i)
             {
                 j = r_search(exp, function_names[i], solve_start - 2, true);
@@ -404,9 +406,9 @@ s_expression *scientific_compiler(char *exp)
         // Allocating the array of nodes
         // Case of no operators, create a dummy node and store the value in op1
         if (op_count == 0)
-            subexps_ptr[current_subexp].node_list = calloc(1, sizeof(node));
+            subexps_ptr[current_subexp].node_list = malloc(sizeof(node));
         else
-            subexps_ptr[current_subexp].node_list = calloc(op_count, sizeof(node));
+            subexps_ptr[current_subexp].node_list = malloc(op_count * sizeof(node));
 
         // Setting last_exp bit
         if (current_subexp == subexp_count - 1)
@@ -443,7 +445,7 @@ s_expression *scientific_compiler(char *exp)
                 current_nodes->LeftOperand = read_value(exp, solve_start);
                 if (isnan(current_nodes->LeftOperand))
                 {
-                    status = set_unknown(exp + solve_start, current_nodes, 'l');
+                    status = set_variable_in_node(exp + solve_start, current_nodes, 'l');
                     if (!status)
                     {
                         error_handler("Syntax error.", 1, 1, solve_start);
@@ -453,7 +455,7 @@ s_expression *scientific_compiler(char *exp)
             }
 
             subexps_ptr[current_subexp].start_node = 0;
-            subexps_ptr[current_subexp].result = &(current_nodes->result);
+            subexps_ptr[current_subexp].result = &(current_nodes->node_result);
             current_nodes[0].next = NULL;
             continue;
         }
@@ -478,8 +480,12 @@ s_expression *scientific_compiler(char *exp)
             current_nodes[0].LeftOperand = read_value(exp, solve_start);
             if (isnan(current_nodes[0].LeftOperand))
             {
-                // Checking for the unknown 'x'
-                status = set_unknown(exp + solve_start, current_nodes, 'l');
+                // Checking for the variable 'x'
+                if (enable_variables == true)
+                    status = set_variable_in_node(exp + solve_start, current_nodes, 'l');
+                else
+                    status = false;
+                // Variable x not found, try to read number
                 if (!status)
                 {
                     status = subexp_start_at(subexps_ptr, solve_start, current_subexp, 1);
@@ -503,8 +509,11 @@ s_expression *scientific_compiler(char *exp)
                 // Case of reading the number to operand2 of a node
                 if (isnan(current_nodes[i].RightOperand))
                 {
-                    // Checking for the unknown 'x'
-                    status = set_unknown(exp + current_nodes[i].index + 1, current_nodes + i, 'r');
+                    // Checking for the variable 'x'
+                    if (enable_variables == true)
+                        status = set_variable_in_node(exp + current_nodes[i].index + 1, current_nodes + i, 'r');
+                    else
+                        status = false;
                     if (!status)
                     {
                         // Case of a subexpression result as operand2, set result pointer to operand2
@@ -526,8 +535,11 @@ s_expression *scientific_compiler(char *exp)
                 current_nodes[i + 1].LeftOperand = read_value(exp, current_nodes[i].index + 1);
                 if (isnan(current_nodes[i + 1].LeftOperand))
                 {
-                    // Checking for the unknown 'x'
-                    status = set_unknown(exp + current_nodes[i].index + 1, current_nodes + i + 1, 'l');
+                    // Checking for the variable 'x'
+                    if (enable_variables == true)
+                        status = set_variable_in_node(exp + current_nodes[i].index + 1, current_nodes + i + 1, 'l');
+                    else
+                        status = false;
                     if (!status)
                     {
                         status = subexp_start_at(subexps_ptr, current_nodes[i].index + 1, current_subexp, 1);
@@ -546,8 +558,11 @@ s_expression *scientific_compiler(char *exp)
         current_nodes[op_count - 1].RightOperand = read_value(exp, current_nodes[op_count - 1].index + 1);
         if (isnan(current_nodes[op_count - 1].RightOperand))
         {
-            // Checking for the unknown 'x'
-            status = set_unknown(exp + current_nodes[op_count - 1].index + 1, current_nodes + op_count - 1, 'r');
+            // Checking for the variable 'x'
+            if (enable_variables == true)
+                status = set_variable_in_node(exp + current_nodes[op_count - 1].index + 1, current_nodes + op_count - 1, 'r');
+            else
+                status = false;
             if (!status)
             {
                 // If an expression is the last term, find it and set the pointers
@@ -629,22 +644,22 @@ s_expression *scientific_compiler(char *exp)
             }
             // Case of the first node or a node with no left candidate
             if (l_node == -1)
-                i_node->result = &(current_nodes[r_node].LeftOperand);
+                i_node->node_result = &(current_nodes[r_node].LeftOperand);
             // Case of a node between 2 nodes
             else if (l_node > -1 && r_node < op_count)
             {
                 if (current_nodes[l_node].priority >= current_nodes[r_node].priority)
-                    i_node->result = &(current_nodes[l_node].RightOperand);
+                    i_node->node_result = &(current_nodes[l_node].RightOperand);
                 else
-                    i_node->result = &(current_nodes[r_node].LeftOperand);
+                    i_node->node_result = &(current_nodes[r_node].LeftOperand);
             }
             // Case of the last node
             else if (i == op_count - 1)
-                i_node->result = &(current_nodes[l_node].RightOperand);
+                i_node->node_result = &(current_nodes[l_node].RightOperand);
             i_node = i_node->next;
         }
         // Case of the last node in the traversal order, set result to be result of the subexpression
-        subexps_ptr[current_subexp].result = &(i_node->result);
+        subexps_ptr[current_subexp].result = &(i_node->node_result);
     }
 
     return subexps_ptr;
