@@ -36,4 +36,5 @@ bool parenthesis_check(char *exp);
 bool combine_add_subtract(char *exp, int a, int b);
 bool part_of_keyword(char *exp, char *keyword1, char *keyword2, int index);
 bool valid_result(char *exp);
-void rps();
+arg_list* get_arguments(char *string);
+void free_arg_list(arg_list *list, bool list_on_heap);

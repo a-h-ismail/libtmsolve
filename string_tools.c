@@ -344,7 +344,7 @@ bool is_valid_number(char *exp, int start)
     else
         return false;
 }
-// Function that performs implicit multiplication
+// Function that converts implicit multiplication to explicit multiplication
 bool implicit_multiplication(char *exp)
 {
     int i, j, k, symbol;
@@ -997,4 +997,34 @@ void variable_matcher(char *exp)
         }
         i = s_search(exp, "ans", i + 1);
     }
+}
+// Function that extracts arguments separated by "," from a string and returns them in a struct
+arg_list *get_arguments(char *string)
+{
+    arg_list *current_args=malloc(sizeof(arg_list));
+    int length = strlen(string), current, prev, max_args = 10, count;
+    // You could use current_args.arg_count but this improves readability (the compiler should optimize this)
+    count = 0;
+    current_args->arguments = malloc(max_args * sizeof(char *));
+    for (current = prev = 0; current < length; ++current)
+    {
+        if (string[current] == ",")
+        {
+            current_args->arguments[count] = malloc(current - prev + 1);
+            strncpy(current_args->arguments[count], string + prev, current - prev);
+            current_args->arguments[count][current - prev] = '\0';
+            prev = current + 1;
+            ++count;
+        }
+    }
+    return current_args;
+}
+// Frees the argument list array of char *
+// Can also free the list itself if it was allocated with malloc
+void free_arg_list(arg_list *list, bool list_on_heap)
+{
+    for (int i = 0; i < list->arg_count; ++i)
+        free(list->arguments[i]);
+    if (list_on_heap)
+        free(list);
 }
