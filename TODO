@@ -1,6 +1,7 @@
 Archive unused code
+Add special functions that may take multiple argument (using comma separated argument in strings)
 Make a compiler variant for complex numbers
 Clean legacy code so it uses the more recent compilation method
-Add support for more than one unknown
+Add support for more than one variable
 Add the ability to save a compiled expression for quick loading
-Add the ability of loading a compiled expression with unknown substitution
+Add the ability of loading a compiled expression with variable substitution
