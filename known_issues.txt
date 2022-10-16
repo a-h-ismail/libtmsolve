@@ -1,0 +1,3 @@
+- erroneous syntax at the end of a number (ex: 3+6wduhcbuwrb) produces correct result ignoring the error
+- Scientific notation does not support floating point exponent (ignores decimal part)
+- left to right binding for power operator (should be right to left)
