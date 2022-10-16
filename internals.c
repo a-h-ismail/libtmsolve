@@ -3,8 +3,9 @@ Copyright (C) 2021-2022 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "internals.h"
+char *g_exp = NULL;
 /*
-Error handling function.
+Error handling function, collect and manage errors.
 arg 1:
 1: Save the *error to the errors database, arg 2: ( 0: not fatal, stack; 1: fatal, stack).
 For fatal errors, arg3 must have the index of the error (-1 means don't error_print)
@@ -24,37 +25,40 @@ int error_handler(char *error, int arg1, ...)
     struct error_structure
     {
         char *error_msg, err_exp[50];
-        bool heap_allocated, fatal_error;
+        bool fatal_error;
         int error_index;
     };
     static struct error_structure error_table[10], backup[10];
     switch (arg1)
     {
+    // Save mode
     case 1:
         error_table[error_count].error_msg = error;
         arg2 = va_arg(arguments, int);
         switch (arg2)
         {
         case 0:
-            error_table[error_count].heap_allocated = false;
             error_table[error_count].fatal_error = false;
             ++non_fatal;
             break;
         case 1:
-            error_table[error_count].heap_allocated = false;
             error_table[error_count].fatal_error = true;
-            error_table[error_count].error_index = va_arg(arguments, int);
-            ++fatal;
-            break;
-        case 2:
-            error_table[error_count].heap_allocated = true;
-            error_table[error_count].fatal_error = false;
-            ++non_fatal;
-            break;
-        case 3:
-            error_table[error_count].heap_allocated = true;
-            error_table[error_count].fatal_error = true;
-            error_table[error_count].error_index = va_arg(arguments, int);
+            int position = va_arg(arguments, int);
+            if (position != -1)
+            {
+                // Center the error in the string
+                if (position > 49)
+                {
+                    strncpy(error_table[error_count].err_exp, g_exp + position - 24, 49);
+                    error_table[error_count].err_exp[49] = '\0';
+                    error_table[error_count].error_index = 24;
+                }
+                else
+                {
+                    strcpy(error_table[error_count].err_exp, g_exp);
+                    error_table[error_count].error_index = position;
+                }
+            }
             ++fatal;
             break;
         default:
@@ -62,7 +66,7 @@ int error_handler(char *error, int arg1, ...)
         }
         error_count = fatal + non_fatal;
         return 0;
-
+    // Print errors
     case 2:
         arg2 = va_arg(arguments, int);
 
@@ -75,7 +79,7 @@ int error_handler(char *error, int arg1, ...)
         error_handler(NULL, 3, 0);
         if (arg2 == 1)
             printf("\n");
-
+    // Clear errors
     case 3:
         arg2 = va_arg(arguments, int);
         switch (arg2)
@@ -98,9 +102,10 @@ int error_handler(char *error, int arg1, ...)
             error_count = fatal = non_fatal = 0;
             break;
         default:
-            i=-1;
+            i = -1;
         }
         return i;
+    // Search for a specific error (search by pointer not text)
     case 4:
         arg2 = va_arg(arguments, int);
         switch (arg2)
@@ -126,6 +131,7 @@ int error_handler(char *error, int arg1, ...)
         }
         return -1;
 
+    // Return the number of saved errors
     case 5:
         arg2 = va_arg(arguments, int);
         switch (arg2)
@@ -138,9 +144,10 @@ int error_handler(char *error, int arg1, ...)
             return non_fatal + fatal;
         }
 
+    // Backup errors, useful if data is processed in another way to prevent mixing of errors
     case 6:
         // Clear the previous backup
-        error_handler(NULL, 3, 1);
+        error_handler(NULL,3, 1);
         // Copy the current error database to the backup database
         for (i = 0; i < error_count; ++i)
             backup[i] = error_table[i];
@@ -151,6 +158,7 @@ int error_handler(char *error, int arg1, ...)
         error_count = fatal = non_fatal = 0;
         return 0;
 
+    // Overwrite main error database with the backup error database
     case 7:
         // Clear current database
         error_handler(NULL, 3);
@@ -164,19 +172,19 @@ int error_handler(char *error, int arg1, ...)
             backup[i].error_msg = NULL;
         break;
     }
-    return -5;
+    return -1;
 }
 
-// Function that points at the location of the error found
-void error_print(char *exp, int p)
+// Function that prints the expression and points at the location of the error found
+void error_print(char *exp, int error_pos)
 {
     int i;
     puts(exp);
-    for (i = 0; i < p; ++i)
+    for (i = 0; i < error_pos; ++i)
         printf("~");
     printf("^\n");
 }
-// Function to sort subexpressions by depth, also for use with qsort
+// Function to sort subexpressions by depth, for use with qsort
 int compare_subexps_depth(const void *a, const void *b)
 {
     if ((*((s_expression *)a)).depth < (*((s_expression *)b)).depth)
