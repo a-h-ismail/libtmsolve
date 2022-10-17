@@ -1,5 +1,5 @@
 Archive unused code
-Add special functions that may take multiple argument (using comma separated argument in strings)
+Improve error handler and error_print
 Make a compiler variant for complex numbers
 Clean legacy code so it uses the more recent compilation method
 Add support for more than one variable
