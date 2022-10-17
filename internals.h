@@ -15,20 +15,25 @@ SPDX-License-Identifier: LGPL-2.1-only
 extern int g_var_count;
 extern double complex ans;
 extern char *g_exp;
+typedef struct arg_list
+{
+    int arg_count;
+    char **arguments;
+} arg_list;
 typedef struct node
 {
     char operator;
     // Index of the operator in the expression
-    int index;
+    int operator_index;
     // Index of the node in the node array
     int node_index;
-    // Used to store data about unknown nodes as follow:
+    // Used to store data about variable operands nodes as follow:
     // b0:l_operand, b1:r_operand, b2:l_op_negative, b3:r_op_negative
     uint8_t variable_operands;
     // Node operator priority
     uint8_t priority;
 
-    double LeftOperand, RightOperand, *node_result;
+    double left_operand, right_operand, *node_result;
     struct node *next;
 } node;
 // Simple structure to hold pointer and sign of unknown members of an equation
@@ -45,11 +50,11 @@ typedef struct s_expression
         |
         v
         cos(pi/3)
-           ^    ^
+            ^  ^
     solve_start |
-               end_index
+               solve_end
     */
-    int expression_start, solve_start, end_index;
+    int expression_start, solve_start, solve_end;
     // The index of the node at which the subexpression solving start
     int start_node;
     struct node *node_list;
@@ -57,11 +62,13 @@ typedef struct s_expression
     The result is a double pointer because the subexpression result is determined later (it links to nodes of other subexps or ans)
     Keep in mind the result is carried by the last node in order (the pointer points to the result pointer of last node).
     I thought about saving the last node index and using that, but subexp[current_subexp].node_list[last_node].node_result is too long
-     */
+    */
     double **result;
     // function to execute on the final result
     double (*function_ptr)(double);
-    bool last_exp;
+    // Extended function to execute
+    double (*ext_function_ptr)(char *);
+    bool last_subexp;
 } s_expression;
 int error_handler(char *error, int arg, ...);
 void error_print(char *, int);
