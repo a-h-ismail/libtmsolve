@@ -1001,14 +1001,19 @@ void variable_matcher(char *exp)
 // Function that extracts arguments separated by "," from a string and returns them in a struct
 arg_list *get_arguments(char *string)
 {
-    arg_list *current_args=malloc(sizeof(arg_list));
+    arg_list *current_args = malloc(sizeof(arg_list));
     int length = strlen(string), current, prev, max_args = 10, count;
     // You could use current_args.arg_count but this improves readability (the compiler should optimize this)
     count = 0;
     current_args->arguments = malloc(max_args * sizeof(char *));
     for (current = prev = 0; current < length; ++current)
     {
-        if (string[current] == ",")
+        if (current == max_args)
+        {
+            max_args += 10;
+            current_args = realloc(current_args,max_args * sizeof(arg_list *));
+        }
+        if (string[current] == ',')
         {
             current_args->arguments[count] = malloc(current - prev + 1);
             strncpy(current_args->arguments[count], string + prev, current - prev);
@@ -1017,6 +1022,11 @@ arg_list *get_arguments(char *string)
             ++count;
         }
     }
+    current_args->arguments[count] = malloc(current - prev + 1);
+    strncpy(current_args->arguments[count], string + prev, current - prev);
+    current_args->arguments[count][current - prev] = '\0';
+    ++count;
+    current_args->arg_count = count;
     return current_args;
 }
 // Frees the argument list array of char *
