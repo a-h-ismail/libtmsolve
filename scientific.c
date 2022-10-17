@@ -177,6 +177,7 @@ double solve_s_exp(s_expression *subexps)
                 return NAN;
             }
             ++current_subexp;
+            free(args);
             continue;
         }
         i_node = subexps[current_subexp].node_list + subexps[current_subexp].start_node;

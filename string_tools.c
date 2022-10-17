@@ -1035,6 +1035,7 @@ void free_arg_list(arg_list *list, bool list_on_heap)
 {
     for (int i = 0; i < list->arg_count; ++i)
         free(list->arguments[i]);
+    free(list->arguments);
     if (list_on_heap)
         free(list);
 }
