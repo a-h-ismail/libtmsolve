@@ -2,4 +2,4 @@
 - Scientific notation does not support floating point exponent (ignores decimal part)
 - left to right binding for power operator (should be right to left)
 - Implicit multiplication is affecting integration function
-- Nesting integration causes the process to hang (due to recalculation)
+- Nesting integration causes the process to hang (due to recalculation of the nested integral)

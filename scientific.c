@@ -20,36 +20,36 @@ double factorial(double value)
         result *= i;
     return result;
 }
-int s_process(char *exp, int p)
+int s_process(char *expr, int p)
 {
     int a, b, success_count;
     char op;
     double v, v1, v2;
     // find starting index of first operand by checking the position just after the previous operand
-    a = find_startofnumber(exp, p - 1);
-    if (is_infinite(exp, a))
+    a = find_startofnumber(expr, p - 1);
+    if (is_infinite(expr, a))
     {
         error_handler("Infinite number used as first operand.", 1, 1, -1);
         return -1;
     }
-    if (is_imaginary(exp, a, p - 1))
+    if (is_imaginary(expr, a, p - 1))
     {
         error_handler("Imaginary number not accepted.", 1, 0);
         return -1;
     }
     // find ending index of second operand
-    b = find_endofnumber(exp, p + 1);
-    if (is_infinite(exp, p + 1))
+    b = find_endofnumber(expr, p + 1);
+    if (is_infinite(expr, p + 1))
     {
         error_handler("Infinite number used as second operand.", 1, 1, -1);
         return -1;
     }
-    if (is_imaginary(exp, p + 1, b))
+    if (is_imaginary(expr, p + 1, b))
     {
         error_handler("Imaginary number not accepted.", 1, 0);
         return -1;
     }
-    success_count = sscanf(exp + a, "%lf%c%lf", &v1, &op, &v2);
+    success_count = sscanf(expr + a, "%lf%c%lf", &v1, &op, &v2);
     // return in case of sscanf failure.
     if (success_count != 3)
     {
@@ -62,7 +62,7 @@ int s_process(char *exp, int p)
     case '^':
         // case of -x^n, which is equivalent to -(x^n)
         // The second case (-x)^n is handled by the scientific interpreter
-        if (exp[a] == '-')
+        if (expr[a] == '-')
         {
             v1 = -v1;
             ++a;
@@ -105,33 +105,35 @@ int s_process(char *exp, int p)
         return -1;
     }
     // function to print the result of the operation in the place of the operands and trim/extend space accordingly
-    b = value_printer(exp, a, b, v);
+    b = value_printer(expr, a, b, v);
     // returning the end of the number to the calling function to prevent unnecessary checking for operand.
     return b;
 }
-double scientific_interpreter(char *exp)
+double calculate_expr(char *expr)
 {
     double result;
     s_expression *subexp;
     // Check for empty input
-    if (exp[0] == '\0')
+    if (expr[0] == '\0')
     {
         error_handler("Empty input.", 1, 1, -1);
         return false;
     }
-    if (parenthesis_check(exp) == false)
+    // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
+    combine_add_subtract(expr, 0, strlen(expr) - 1);
+    if (parenthesis_check(expr) == false)
         return false;
-    // if (implicit_multiplication(exp) == false)
-    //     return false;
-    subexp = scientific_compiler(exp, false);
+    if (implicit_multiplication(expr) == false)
+        return false;
+    subexp = parse_expr(expr, false);
     if (subexp == NULL)
         return NAN;
-    result = solve_s_exp(subexp);
-    delete_s_exp(subexp);
+    result = evaluate(subexp);
+    delete_subexps(subexp);
     return result;
 }
-// Solve a compiled list of subexpressions and return the final result
-double solve_s_exp(s_expression *subexps)
+// Evaluates the expresssion
+double evaluate(s_expression *subexps)
 {
     node *i_node;
     int current_subexp = 0;
@@ -281,98 +283,95 @@ bool set_variable_in_node(char *exp, node *x_node, char operand)
         }
         else
         {
-            // In case an invalid operand symbol is received, you probably messed up badly
-            puts("This error should not appear unless you screwed up badly.");
+            puts("Invaild operand argument.");
             exit(2);
         }
     }
     return true;
 }
-// Compiles a math expression into a s_expression array
-s_expression *scientific_compiler(char *exp, bool enable_variables)
+// Parse a math expression into a s_expression array
+s_expression *parse_expr(char *expr, bool enable_variables)
 {
-    int length, solve_start, solve_end, i, j, op_count, status, subexp_count = 1;
-    int current_subexp;
+    int i, j, length, subexp_count = 1;
+    int cur_subexpr;
     int buffer_size = 10, buffer_step = 10;
-    length = strlen(exp);
+    length = strlen(expr);
     g_var_count = 0;
     s_expression *subexps_ptr;
     node *current_nodes, *i_node;
 
     /*
-    Compiling steps:
+    Parsing steps:
     1- Locate and determine the depth of each subexpression (the whole expression has a depth of 0)
     2- Sort subexpressions by depth (high to low)
     3- Parse subexpressions from high to low depth
     */
 
-    // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
-    combine_add_subtract(exp, 0, length - 1);
-    length = strlen(exp);
+    length = strlen(expr);
 
     subexps_ptr = malloc(buffer_size * sizeof(s_expression));
 
     int depth = 0;
-    current_subexp = 0;
+    cur_subexpr = 0;
     // Determining the depth and start/end of each subexpression parenthesis
     for (i = 0; i < length; ++i)
     {
         // Resize the subexp array on the fly
-        if (current_subexp == buffer_size)
+        if (cur_subexpr == buffer_size)
         {
             buffer_size += buffer_step;
             subexps_ptr = realloc(subexps_ptr, buffer_size * sizeof(s_expression));
         }
-        if (exp[i] == '(')
+        if (expr[i] == '(')
         {
-            subexps_ptr[current_subexp].ext_function_ptr = NULL;
+            subexps_ptr[cur_subexpr].ext_function_ptr = NULL;
             // Treat extended functions as a subexpression
             for (j = 0; j < sizeof(ext_s_function) / sizeof(*ext_s_function); ++j)
             {
                 int temp;
-                temp = r_search(exp, ext_function_names[j], i - 1, true);
+                temp = r_search(expr, ext_function_names[j], i - 1, true);
                 if (temp != -1)
                 {
-                    subexps_ptr[current_subexp].expression_start = temp;
-                    subexps_ptr[current_subexp].solve_start = i + 1;
-                    i = find_closing_parenthesis(exp, i);
-                    subexps_ptr[current_subexp].solve_end = i - 1;
-                    subexps_ptr[current_subexp].depth = depth + 1;
-                    subexps_ptr[current_subexp].ext_function_ptr = ext_s_function[j];
+                    subexps_ptr[cur_subexpr].expression_start = temp;
+                    subexps_ptr[cur_subexpr].solve_start = i + 1;
+                    i = find_closing_parenthesis(expr, i);
+                    subexps_ptr[cur_subexpr].solve_end = i - 1;
+                    subexps_ptr[cur_subexpr].depth = depth + 1;
+                    subexps_ptr[cur_subexpr].ext_function_ptr = ext_s_function[j];
                     break;
                 }
             }
-            if (subexps_ptr[current_subexp].ext_function_ptr != NULL)
+            if (subexps_ptr[cur_subexpr].ext_function_ptr != NULL)
             {
-                ++current_subexp;
+                ++cur_subexpr;
                 continue;
             }
             // Normal case
             ++depth;
-            subexps_ptr[current_subexp].solve_start = i + 1;
-            subexps_ptr[current_subexp].depth = depth;
+            subexps_ptr[cur_subexpr].solve_start = i + 1;
+            subexps_ptr[cur_subexpr].depth = depth;
             // The expression start is the parenthesis, may change if a function is found
-            subexps_ptr[current_subexp].expression_start = i;
-            subexps_ptr[current_subexp].solve_end = find_closing_parenthesis(exp, i) - 1;
-            ++current_subexp;
+            subexps_ptr[cur_subexpr].expression_start = i;
+            subexps_ptr[cur_subexpr].solve_end = find_closing_parenthesis(expr, i) - 1;
+            ++cur_subexpr;
         }
-        else if (exp[i] == ')')
+        else if (expr[i] == ')')
             --depth;
     }
     // + 1 for the subexpression with depth 0
-    subexp_count = current_subexp + 1;
+    subexp_count = cur_subexpr + 1;
     for (i = 0; i < subexp_count; ++i)
         subexps_ptr[i].function_ptr = NULL;
     // The whole expression "subexpression"
-    subexps_ptr[current_subexp].depth = 0;
-    subexps_ptr[current_subexp].solve_start = subexps_ptr[current_subexp].expression_start = 0;
-    subexps_ptr[current_subexp].solve_end = length - 1;
-    subexps_ptr[current_subexp].ext_function_ptr = NULL;
+    subexps_ptr[cur_subexpr].depth = 0;
+    subexps_ptr[cur_subexpr].solve_start = subexps_ptr[cur_subexpr].expression_start = 0;
+    subexps_ptr[cur_subexpr].solve_end = length - 1;
+    subexps_ptr[cur_subexpr].ext_function_ptr = NULL;
 
     // Sort by depth (high to low)
     qsort(subexps_ptr, subexp_count, sizeof(s_expression), compare_subexps_depth);
 
-    int *operator_indexes;
+    int *operator_index, solve_start, solve_end, op_count, status;
     buffer_size = buffer_step = 1000;
 
     /*
@@ -389,43 +388,43 @@ s_expression *scientific_compiler(char *exp, bool enable_variables)
     - Set the result pointer of each node relying on its position and neighbor priorities
     - Set the subexp result double pointer to the result pointer of the last calculated node
     */
-    for (current_subexp = 0; current_subexp < subexp_count; ++current_subexp)
+    for (cur_subexpr = 0; cur_subexpr < subexp_count; ++cur_subexpr)
     {
-        if (current_subexp == subexp_count - 1)
-            subexps_ptr[current_subexp].last_subexp = true;
+        if (cur_subexpr == subexp_count - 1)
+            subexps_ptr[cur_subexpr].last_subexp = true;
         else
-            subexps_ptr[current_subexp].last_subexp = false;
+            subexps_ptr[cur_subexpr].last_subexp = false;
 
-        if (subexps_ptr[current_subexp].ext_function_ptr != NULL)
+        if (subexps_ptr[cur_subexpr].ext_function_ptr != NULL)
         {
-            subexps_ptr[current_subexp].node_list = NULL;
-            subexps_ptr[current_subexp].result = malloc(sizeof(double **));
+            subexps_ptr[cur_subexpr].node_list = NULL;
+            subexps_ptr[cur_subexpr].result = malloc(sizeof(double **));
             continue;
         }
 
         // For simplicity
-        solve_start = subexps_ptr[current_subexp].solve_start;
-        solve_end = subexps_ptr[current_subexp].solve_end;
+        solve_start = subexps_ptr[cur_subexpr].solve_start;
+        solve_end = subexps_ptr[cur_subexpr].solve_end;
 
-        operator_indexes = (int *)malloc(buffer_size * sizeof(int));
+        operator_index = (int *)malloc(buffer_size * sizeof(int));
         // Count number of operators and store it's indexes
         for (i = solve_start, op_count = 0; i <= solve_end; ++i)
         {
             // Skipping over an already processed expression
-            if (exp[i] == '(')
+            if (expr[i] == '(')
             {
                 int previous_subexp;
-                previous_subexp = subexp_start_at(subexps_ptr, i + 1, current_subexp, 2);
+                previous_subexp = subexp_start_at(subexps_ptr, i + 1, cur_subexpr, 2);
                 if (previous_subexp != -1)
                     i = subexps_ptr[previous_subexp].solve_end + 1;
             }
-            else if (is_number(exp[i]))
+            else if (is_number(expr[i]))
                 continue;
 
-            else if (is_op(*(exp + i)))
+            else if (is_op(*(expr + i)))
             {
                 // Skipping a + or - used in scientific notation (like 1e+5)
-                if ((exp[i - 1] == 'e' || exp[i - 1] == 'E') && (exp[i] == '+' || exp[i] == '-'))
+                if ((expr[i - 1] == 'e' || expr[i - 1] == 'E') && (expr[i] == '+' || expr[i] == '-'))
                 {
                     ++i;
                     continue;
@@ -434,11 +433,11 @@ s_expression *scientific_compiler(char *exp, bool enable_variables)
                 if (op_count == buffer_size)
                 {
                     buffer_size += buffer_step;
-                    operator_indexes = realloc(operator_indexes, buffer_size * sizeof(int));
+                    operator_index = realloc(operator_index, buffer_size * sizeof(int));
                 }
-                operator_indexes[op_count] = i;
+                operator_index[op_count] = i;
                 // Skipping a + or - coming just after an operator
-                if (exp[i + 1] == '-' || exp[i + 1] == '+')
+                if (expr[i + 1] == '-' || expr[i + 1] == '+')
                     ++i;
                 ++op_count;
             }
@@ -451,56 +450,56 @@ s_expression *scientific_compiler(char *exp, bool enable_variables)
             int total = sizeof(s_function) / sizeof(*s_function);
             for (i = 0; i < total; ++i)
             {
-                j = r_search(exp, function_names[i], solve_start - 2, true);
+                j = r_search(expr, function_names[i], solve_start - 2, true);
                 if (j != -1)
                 {
-                    subexps_ptr[current_subexp].function_ptr = s_function[i];
+                    subexps_ptr[cur_subexpr].function_ptr = s_function[i];
                     // Setting the start of the subexpression to the start of the function name
-                    subexps_ptr[current_subexp].expression_start = j;
+                    subexps_ptr[cur_subexpr].expression_start = j;
                     break;
                 }
             }
         }
 
-        subexps_ptr[current_subexp].op_count = op_count;
+        subexps_ptr[cur_subexpr].op_count = op_count;
         // Allocating the array of nodes
         // Case of no operators, create a dummy node and store the value in op1
         if (op_count == 0)
-            subexps_ptr[current_subexp].node_list = malloc(sizeof(node));
+            subexps_ptr[cur_subexpr].node_list = malloc(sizeof(node));
         else
-            subexps_ptr[current_subexp].node_list = malloc(op_count * sizeof(node));
+            subexps_ptr[cur_subexpr].node_list = malloc(op_count * sizeof(node));
 
-        current_nodes = subexps_ptr[current_subexp].node_list;
+        current_nodes = subexps_ptr[cur_subexpr].node_list;
 
         // Checking if the expression is terminated with an operator
-        if (op_count != 0 && operator_indexes[op_count - 1] == solve_end)
+        if (op_count != 0 && operator_index[op_count - 1] == solve_end)
         {
-            error_handler("Missing right operand", 1, 1, operator_indexes[op_count - 1]);
-            delete_s_exp(subexps_ptr);
+            error_handler("Missing right operand", 1, 1, operator_index[op_count - 1]);
+            delete_subexps(subexps_ptr);
             return NULL;
         }
         // Filling operations and index data into each node
         for (i = 0; i < op_count; ++i)
         {
-            current_nodes[i].operator_index = operator_indexes[i];
-            current_nodes[i].operator = exp[operator_indexes[i]];
+            current_nodes[i].operator_index = operator_index[i];
+            current_nodes[i].operator= expr[operator_index[i]];
         }
-        free(operator_indexes);
+        free(operator_index);
 
         // Case of expression with one term, use one node with operand1 to hold the number
         if (op_count == 0)
         {
-            i = subexp_start_at(subexps_ptr, subexps_ptr[current_subexp].solve_start, current_subexp, 1);
-            subexps_ptr[current_subexp].node_list[0].variable_operands = 0;
+            i = subexp_start_at(subexps_ptr, subexps_ptr[cur_subexpr].solve_start, cur_subexpr, 1);
+            subexps_ptr[cur_subexpr].node_list[0].variable_operands = 0;
             // Case of nested no operators expressions, set the result of the deeper expression as the left op of the dummy
             if (i != -1)
                 *(subexps_ptr[i].result) = &(current_nodes->left_operand);
             else
             {
-                current_nodes->left_operand = read_value(exp, solve_start);
+                current_nodes->left_operand = read_value(expr, solve_start);
                 if (isnan(current_nodes->left_operand))
                 {
-                    status = set_variable_in_node(exp + solve_start, current_nodes, 'l');
+                    status = set_variable_in_node(expr + solve_start, current_nodes, 'l');
                     if (!status)
                     {
                         error_handler("Syntax error.", 1, 1, solve_start);
@@ -509,8 +508,8 @@ s_expression *scientific_compiler(char *exp, bool enable_variables)
                 }
             }
 
-            subexps_ptr[current_subexp].start_node = 0;
-            subexps_ptr[current_subexp].result = &(current_nodes->node_result);
+            subexps_ptr[cur_subexpr].start_node = 0;
+            subexps_ptr[cur_subexpr].result = &(current_nodes->node_result);
             current_nodes[0].next = NULL;
             continue;
         }
@@ -527,23 +526,23 @@ s_expression *scientific_compiler(char *exp, bool enable_variables)
         }
 
         // Trying to read first number into first node
-        // If a -/+ sign is in the beginning of the expression. it will be treated as 0-/+x
-        if (exp[solve_start] == '-' || exp[solve_start] == '+')
+        // If a - or + sign is in the beginning of the expression. it will be treated as 0-val or 0+val
+        if (expr[solve_start] == '-' || expr[solve_start] == '+')
             current_nodes[0].left_operand = 0;
         else
         {
-            current_nodes[0].left_operand = read_value(exp, solve_start);
+            current_nodes[0].left_operand = read_value(expr, solve_start);
             if (isnan(current_nodes[0].left_operand))
             {
                 // Checking for the variable 'x'
                 if (enable_variables == true)
-                    status = set_variable_in_node(exp + solve_start, current_nodes, 'l');
+                    status = set_variable_in_node(expr + solve_start, current_nodes, 'l');
                 else
                     status = false;
                 // Variable x not found, try to read number
                 if (!status)
                 {
-                    status = subexp_start_at(subexps_ptr, solve_start, current_subexp, 1);
+                    status = subexp_start_at(subexps_ptr, solve_start, cur_subexpr, 1);
                     if (status == -1)
                     {
                         error_handler("Syntax error.", 1, 1, solve_start);
@@ -555,24 +554,24 @@ s_expression *scientific_compiler(char *exp, bool enable_variables)
             }
         }
 
-        // Intermediate nodes
+        // Intermediate nodes, read number to the appropriate node operand
         for (i = 0; i < op_count - 1; ++i)
         {
             if (current_nodes[i].priority >= current_nodes[i + 1].priority)
             {
-                current_nodes[i].right_operand = read_value(exp, current_nodes[i].operator_index + 1);
-                // Case of reading the number to operand2 of a node
+                current_nodes[i].right_operand = read_value(expr, current_nodes[i].operator_index + 1);
+                // Case of reading the number to the right operand of a node
                 if (isnan(current_nodes[i].right_operand))
                 {
                     // Checking for the variable 'x'
                     if (enable_variables == true)
-                        status = set_variable_in_node(exp + current_nodes[i].operator_index + 1, current_nodes + i, 'r');
+                        status = set_variable_in_node(expr + current_nodes[i].operator_index + 1, current_nodes + i, 'r');
                     else
                         status = false;
                     if (!status)
                     {
-                        // Case of a subexpression result as operand2, set result pointer to operand2
-                        status = subexp_start_at(subexps_ptr, current_nodes[i].operator_index + 1, current_subexp, 1);
+                        // Case of a subexpression result as right_operand, set result pointer to right_operand
+                        status = subexp_start_at(subexps_ptr, current_nodes[i].operator_index + 1, cur_subexpr, 1);
                         if (status == -1)
                         {
                             error_handler("Syntax error.", 1, 1, current_nodes[i].operator_index + 1);
@@ -583,21 +582,21 @@ s_expression *scientific_compiler(char *exp, bool enable_variables)
                     }
                 }
             }
-            // Case of the node[i] having less priority than the next node, use next node's operand1
+            // Case of the node[i] having less priority than the next node, use next node's left_operand
             else
             {
                 // Read number
-                current_nodes[i + 1].left_operand = read_value(exp, current_nodes[i].operator_index + 1);
+                current_nodes[i + 1].left_operand = read_value(expr, current_nodes[i].operator_index + 1);
                 if (isnan(current_nodes[i + 1].left_operand))
                 {
                     // Checking for the variable 'x'
                     if (enable_variables == true)
-                        status = set_variable_in_node(exp + current_nodes[i].operator_index + 1, current_nodes + i + 1, 'l');
+                        status = set_variable_in_node(expr + current_nodes[i].operator_index + 1, current_nodes + i + 1, 'l');
                     else
                         status = false;
                     if (!status)
                     {
-                        status = subexp_start_at(subexps_ptr, current_nodes[i].operator_index + 1, current_subexp, 1);
+                        status = subexp_start_at(subexps_ptr, current_nodes[i].operator_index + 1, cur_subexpr, 1);
                         if (status == -1)
                         {
                             error_handler("Syntax error.", 1, 1, current_nodes[i].operator_index + 1);
@@ -610,18 +609,18 @@ s_expression *scientific_compiler(char *exp, bool enable_variables)
             }
         }
         // Placing the last number in the last node
-        current_nodes[op_count - 1].right_operand = read_value(exp, current_nodes[op_count - 1].operator_index + 1);
+        current_nodes[op_count - 1].right_operand = read_value(expr, current_nodes[op_count - 1].operator_index + 1);
         if (isnan(current_nodes[op_count - 1].right_operand))
         {
             // Checking for the variable 'x'
             if (enable_variables == true)
-                status = set_variable_in_node(exp + current_nodes[op_count - 1].operator_index + 1, current_nodes + op_count - 1, 'r');
+                status = set_variable_in_node(expr + current_nodes[op_count - 1].operator_index + 1, current_nodes + op_count - 1, 'r');
             else
                 status = false;
             if (!status)
             {
                 // If an expression is the last term, find it and set the pointers
-                status = subexp_start_at(subexps_ptr, current_nodes[op_count - 1].operator_index + 1, current_subexp, 1);
+                status = subexp_start_at(subexps_ptr, current_nodes[op_count - 1].operator_index + 1, cur_subexpr, 1);
                 if (status == -1)
                 {
                     error_handler("Syntax error.", 1, 1, current_nodes[i].operator_index + 1);
@@ -637,7 +636,7 @@ s_expression *scientific_compiler(char *exp, bool enable_variables)
             {
                 if (current_nodes[j].priority == i)
                 {
-                    subexps_ptr[current_subexp].start_node = j;
+                    subexps_ptr[cur_subexpr].start_node = j;
                     // Making the main loop exit by setting i outside continue condition
                     i = -1;
                     break;
@@ -646,7 +645,7 @@ s_expression *scientific_compiler(char *exp, bool enable_variables)
         }
 
         // Setting nodes order of execution
-        i = subexps_ptr[current_subexp].start_node;
+        i = subexps_ptr[cur_subexpr].start_node;
         int target_priority = current_nodes[i].priority;
         j = i + 1;
         while (target_priority > 0)
@@ -669,7 +668,7 @@ s_expression *scientific_compiler(char *exp, bool enable_variables)
         current_nodes[i].next = NULL;
 
         // Set result pointers for each node based on position and priority
-        i_node = &(current_nodes[subexps_ptr[current_subexp].start_node]);
+        i_node = &(current_nodes[subexps_ptr[cur_subexpr].start_node]);
         int l_node, r_node;
         while (i_node->next != NULL)
         {
@@ -710,13 +709,13 @@ s_expression *scientific_compiler(char *exp, bool enable_variables)
             i_node = i_node->next;
         }
         // Case of the last node in the traversal order, set result to be result of the subexpression
-        subexps_ptr[current_subexp].result = &(i_node->node_result);
+        subexps_ptr[cur_subexpr].result = &(i_node->node_result);
     }
 
     return subexps_ptr;
 }
 // Free a subexpressions array and its contents
-void delete_s_exp(s_expression *subexps)
+void delete_subexps(s_expression *subexps)
 {
     int i = 0, count;
     while (subexps[i].last_subexp == false)
@@ -730,14 +729,14 @@ void delete_s_exp(s_expression *subexps)
     }
     free(subexps);
 }
-// Solve only the region between a and b and return the answer.
-double solve_region(char *exp, int a, int b)
+// Evaluate only the region of expr between a and b and return the answer.
+double evaluate_region(char *expr, int a, int b)
 {
     char *temp = (char *)malloc(23 * (b - a + 2) * sizeof(char));
     double result;
     temp[b - a + 1] = '\0';
-    strncpy(temp, exp + a, b - a + 1);
-    result = scientific_interpreter(temp);
+    strncpy(temp, expr + a, b - a + 1);
+    result = calculate_expr(temp);
     if (isnan(result))
         return NAN;
     free(temp);

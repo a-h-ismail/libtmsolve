@@ -28,7 +28,7 @@ typedef struct node
     // Index of the node in the node array
     int node_index;
     // Used to store data about variable operands nodes as follow:
-    // b0:l_operand, b1:r_operand, b2:l_op_negative, b3:r_op_negative
+    // b0:left_operand, b1:right_operand, b2:l_op_negative, b3:r_op_negative
     uint8_t variable_operands;
     // Node operator priority
     uint8_t priority;

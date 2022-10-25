@@ -1,7 +1,9 @@
-Archive unused code
+Remove legacy code
 Improve error handler and error_print
-Make a compiler variant for complex numbers
-Clean legacy code so it uses the more recent compilation method
+Make a parser variant for complex numbers
 Add support for more than one variable
-Add the ability to save a compiled expression for quick loading
-Add the ability of loading a compiled expression with variable substitution
+Add the ability to save a parsed expression for quick loading
+
+Low priority:
+Add support for more than one variable
+Add the ability of loading a parsed expression with variable substitution

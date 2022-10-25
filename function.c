@@ -67,19 +67,19 @@ double derivative(char *arguments)
         return false;
     }
     double x, f_prime, temp1, temp2;
-    x = scientific_interpreter(args->arguments[1]);
-    exp_d = scientific_compiler(args->arguments[0], true);
+    x = calculate_expr(args->arguments[1]);
+    exp_d = parse_expr(args->arguments[0], true);
     variables = variable_nodes(exp_d);
     // Solve for x
     replace_variable(variables, x);
-    temp1 = solve_s_exp(exp_d);
+    temp1 = evaluate(exp_d);
     // Solve for x + (small value)
     replace_variable(variables, x + 1e-7);
-    temp2 = solve_s_exp(exp_d);
+    temp2 = evaluate(exp_d);
     // get the derivative
     f_prime = (temp2 - temp1) / (1e-7);
     free(variables);
-    delete_s_exp(exp_d);
+    delete_subexps(exp_d);
     free_arg_list(args, true);
     return f_prime;
 }
@@ -90,7 +90,7 @@ double calculate_function(char *exp, int a, int b, double x)
     temp[b - a + 1] = '\0';
     strncpy(temp, exp + a, b - a + 1);
     var_to_val(temp, "x", x);
-    result = scientific_interpreter(temp);
+    result = calculate_expr(temp);
     free(temp);
     return result;
 }
@@ -101,8 +101,8 @@ double integral_processor(char *arguments)
     arg_list *args;
     args = get_arguments(arguments);
     double lower_bound, upper_bound, result;
-    lower_bound = scientific_interpreter(args->arguments[0]);
-    upper_bound = scientific_interpreter(args->arguments[1]);
+    lower_bound = calculate_expr(args->arguments[0]);
+    upper_bound = calculate_expr(args->arguments[1]);
     result = integrate(args->arguments[2], lower_bound, upper_bound - lower_bound);
     free_arg_list(args, true);
     return result;
@@ -119,19 +119,19 @@ double integrate(char *exp, double a, double delta)
         delta = -delta;
     }
     // Compile exp to the desired structure
-    subexps = scientific_compiler(exp, true);
+    subexps = parse_expr(exp, true);
     var_array = variable_nodes(subexps);
     // Calculating rounds
-    rounds = ceil(delta) * 4096;
-    if (rounds > 1e6)
-        rounds = 1e6;
+    rounds = ceil(delta) * 16384;
+    if (rounds > 1e7)
+        rounds = 1e7;
     // Simpson 3/8 formula:
     // 3h/8[(y0 + yn) + 3(y1 + y2 + y4 + y5 + … + yn-1) + 2(y3 + y6 + y9 + … + yn-3)]
     // First step: y0 + yn
     replace_variable(var_array, a);
-    integral = solve_s_exp(subexps);
+    integral = evaluate(subexps);
     replace_variable(var_array, a + delta);
-    integral += solve_s_exp(subexps);
+    integral += evaluate(subexps);
     if (isnan(integral) == true)
     {
         error_handler("Error while calculating integral, make sure the function is defined on the integration interval.", 1, 1, -1);
@@ -145,7 +145,7 @@ double integrate(char *exp, double a, double delta)
             continue;
         an = a + delta * n / rounds;
         replace_variable(var_array, an);
-        fn = solve_s_exp(subexps);
+        fn = evaluate(subexps);
         if (isnan(fn) == true)
         {
             error_handler("Error while calculating integral, make sure the function is defined on the integration interval.", 1, 1, -1);
@@ -160,7 +160,7 @@ double integrate(char *exp, double a, double delta)
     {
         an = a + delta * n / rounds;
         replace_variable(var_array, an);
-        fn = solve_s_exp(subexps);
+        fn = evaluate(subexps);
         if (isnan(fn) == true)
         {
             error_handler("Error while calculating integral, make sure the function is defined on the integration interval.", 1, 1, -1);
@@ -172,7 +172,7 @@ double integrate(char *exp, double a, double delta)
     }
     integral += 2 * temp;
     integral *= 0.375 / rounds * delta;
-    delete_s_exp(subexps);
+    delete_subexps(subexps);
     free(var_array);
     return integral;
 }

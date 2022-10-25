@@ -74,28 +74,29 @@ int find_min(int a, int b)
     else
         return b;
 }
-double read_value(char *exp, int start)
+// Returns the value of the number or variable (can be constant like pi or variable like ans) starting at (expr + start)
+double read_value(char *expr, int start)
 {
-    double value, variable_values[] = {M_PI, M_E, (double)ans};
-    bool isNegative;
-    int status, variable_nameLen[] = {2, 3, 3};
+    double value, variable_values[] = {M_PI, M_E, ans};
+    bool is_negative;
+    int status, variable_name_len[] = {2, 3, 3};
     char *variable_names[] = {"pi",
                               "exp",
                               "ans"};
-    if (exp[start] == '-')
+    if (expr[start] == '-')
     {
-        isNegative = true;
+        is_negative = true;
         ++start;
     }
     else
-        isNegative = false;
-    status = sscanf(exp + start, "%lf", &value);
+        is_negative = false;
+    status = sscanf(expr + start, "%lf", &value);
     if (status == 0)
     {
         int i;
-        for (i = 0; i < 3; ++i)
+        for (i = 0; i < sizeof(variable_names)/sizeof(*variable_names); ++i)
         {
-            if (strncmp(exp + start, variable_names[i], variable_nameLen[i]) == 0)
+            if (strncmp(expr + start, variable_names[i], variable_name_len[i]) == 0)
             {
                 value = variable_values[i];
                 status = 2;
@@ -106,7 +107,7 @@ double read_value(char *exp, int start)
     // Case where nothing was found even after checking for variables
     if (status == 0)
         return NAN;
-    if (isNegative)
+    if (is_negative)
         value = -value;
     return value;
 }
@@ -355,29 +356,20 @@ bool implicit_multiplication(char *exp)
     // Implicit multiplication with parenthesis
     while (i != -1)
     {
-        symbol = -1;
-        // Preventing implicit multiplication on being performed on int and d/dx parenthesis
-        if (i > 2 && strncmp(exp + i - 3, "int", 3) == 0)
-            symbol = i - 3;
-        else if (i > 3 && strncmp(exp + i - 4, "d/dx", 4) == 0)
-            symbol = i - 4;
-        if (symbol != -1)
-        {
-            k = find_closing_parenthesis(exp, i);
-            exp[i] = '[';
-            exp[k] = ']';
-            i = k + 1;
-            k = find_closing_parenthesis(exp, i);
-            if (k == -1)
-                return false;
-            exp[i] = '[';
-            exp[k] = ']';
-            string_resizer(exp, k, k + 2);
-            memmove(exp + symbol + 1, exp + symbol, k - symbol + 1);
-            exp[symbol] = '(';
-            exp[k + 2] = ')';
-            i = symbol;
-        }
+        k = find_closing_parenthesis(exp, i);
+        exp[i] = '[';
+        exp[k] = ']';
+        i = k + 1;
+        k = find_closing_parenthesis(exp, i);
+        if (k == -1)
+            return false;
+        exp[i] = '[';
+        exp[k] = ']';
+        string_resizer(exp, k, k + 2);
+        memmove(exp + symbol + 1, exp + symbol, k - symbol + 1);
+        exp[symbol] = '(';
+        exp[k + 2] = ')';
+        i = symbol;
         j = find_closing_parenthesis(exp, i);
         condition_met = true;
         if (i != 0)
@@ -409,7 +401,7 @@ bool implicit_multiplication(char *exp)
         }
         i = next_open_parenthesis(exp, i + 1);
     }
-    // Removing square brackets used to prevent implicit multiplication
+    // Restore parenthesis
     for (i = 0; exp[i] != '\0'; ++i)
     {
         if (exp[i] == '[')
@@ -920,7 +912,6 @@ bool parenthesis_check(char *exp)
         return false;
     }
     // Checking that no useless parenthesis pairs are written (planned for later)
-    // Also later I may reuse the buffers to improve expression compilation speed
     free(open_position);
     free(close_position);
     return true;
@@ -1011,7 +1002,7 @@ arg_list *get_arguments(char *string)
         if (current == max_args)
         {
             max_args += 10;
-            current_args = realloc(current_args,max_args * sizeof(arg_list *));
+            current_args = realloc(current_args, max_args * sizeof(arg_list *));
         }
         if (string[current] == ',')
         {
