@@ -12,7 +12,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <math.h>
 #include <complex.h>
 #include <string.h>
-extern int g_var_count;
 extern double complex ans;
 extern char *g_exp;
 typedef struct arg_list
@@ -33,13 +32,13 @@ typedef struct node
     // Node operator priority
     uint8_t priority;
 
-    double left_operand, right_operand, *node_result;
+    double complex left_operand, right_operand, *node_result;
     struct node *next;
 } node;
 // Simple structure to hold pointer and sign of unknown members of an equation
 typedef struct variable_data
 {
-    double *pointer;
+    double complex *pointer;
     bool is_negative;
 } variable_data;
 typedef struct s_expression
@@ -63,13 +62,28 @@ typedef struct s_expression
     Keep in mind the result is carried by the last node in order (the pointer points to the result pointer of last node).
     I thought about saving the last node index and using that, but subexp[current_subexp].node_list[last_node].node_result is too long
     */
-    double **result;
-    // function to execute on the final result
+    double complex **result;
+    // Function to execute on the final result
     double (*function_ptr)(double);
+    // Complex function to execute
+    double complex (*cmplx_function_ptr)(double complex);
     // Extended function to execute
     double (*ext_function_ptr)(char *);
-    bool last_subexp;
+    // Enables execution of special function, allows optimizing of nested extended functions like integration
+    bool execute_extended;
 } s_expression;
+typedef struct math_expr
+{
+    // The subexpressions forming the math expression after parsing
+    s_expression *subexps;
+    // Number of subexpressions
+    int subexpr_count;
+    // Variable operands count
+    int var_count;
+    variable_data *variable_ptr;
+    // Answer of the expression
+    double complex answer;
+} math_expr;
 int error_handler(char *error, int arg, ...);
 void error_print(char *, int);
 int find_min(int a, int b);

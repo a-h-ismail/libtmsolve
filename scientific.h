@@ -10,13 +10,13 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <math.h>
 #include <complex.h>
 #include "internals.h"
-extern char *function_names[];
-extern double (*s_function[])(double);
-extern char *ext_function_names[];
-extern double (*ext_s_function[])(char *);
+extern char *function_name[];
+extern double (*math_function[])(double);
+extern char *ext_function_name[];
+extern double (*ext_math_function[])(char *);
 int s_process(char *exp, int p);
-double evaluate(s_expression *subexps);
-s_expression *parse_expr(char *exp, bool enable_variables);
+double complex evaluate(math_expr *math_struct);
+math_expr *parse_expr(char *exp, bool enable_variables, bool enable_complex);
 double factorial(double value);
 double calculate_expr(char *exp);
 double evaluate_region(char *exp, int a, int b);

@@ -75,11 +75,11 @@ int find_min(int a, int b)
         return b;
 }
 // Returns the value of the number or variable (can be constant like pi or variable like ans) starting at (expr + start)
-double read_value(char *expr, int start)
+double complex read_value(char *expr, int start, bool enable_complex)
 {
-    double value, variable_values[] = {M_PI, M_E, ans};
-    bool is_negative;
-    int status, variable_name_len[] = {2, 3, 3};
+    double complex value, variable_values[] = {M_PI, M_E, ans};
+    bool is_negative, is_complex = false;
+    int status;
     char *variable_names[] = {"pi",
                               "exp",
                               "ans"};
@@ -90,13 +90,27 @@ double read_value(char *expr, int start)
     }
     else
         is_negative = false;
+    // Check for complex number
+    if (enable_complex)
+    {
+        int end = find_endofnumber(expr, start);
+        if (expr[start] == 'i')
+        {
+            // Using XOR to flip the boolean from false to true
+            is_complex = is_complex ^ 1;
+            ++start;
+        }
+        if (expr[end] == 'i')
+            // Again, XOR toggles between true and false
+            is_complex = is_complex ^ 1;
+    }
     status = sscanf(expr + start, "%lf", &value);
     if (status == 0)
     {
         int i;
-        for (i = 0; i < sizeof(variable_names)/sizeof(*variable_names); ++i)
+        for (i = 0; i < sizeof(variable_names) / sizeof(*variable_names); ++i)
         {
-            if (strncmp(expr + start, variable_names[i], variable_name_len[i]) == 0)
+            if (strncmp(expr + start, variable_names[i], strlen(variable_names[i])) == 0)
             {
                 value = variable_values[i];
                 status = 2;
@@ -107,6 +121,9 @@ double read_value(char *expr, int start)
     // Case where nothing was found even after checking for variables
     if (status == 0)
         return NAN;
+
+    if (enable_complex && is_complex)
+        value *= I;
     if (is_negative)
         value = -value;
     return value;
@@ -414,7 +431,7 @@ bool implicit_multiplication(char *exp)
 bool var_implicit_multiplication(char *exp)
 {
     char *keyword[] = {"ans", "exp", "pi", "x", "i", "sin", "ceil", "dx"};
-    char *function_names[] =
+    char *function_name[] =
         {"fact", "abs", "arg", "ceil", "floor", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log"};
     int keylen[] = {3, 3, 2, 1, 1, 3, 4, 2}, i, current, k, p1, p2, p3, temp;
     // keyword[current] is the current variable being tested
@@ -518,8 +535,8 @@ bool var_implicit_multiplication(char *exp)
     // Implicit multiplication with scientific functions
     for (current = 0; current < 19; ++current)
     {
-        length = strlen(function_names[current]);
-        i = s_search(exp, function_names[current], 0);
+        length = strlen(function_name[current]);
+        i = s_search(exp, function_name[current], 0);
         while (i != -1)
         {
             p2 = i;
@@ -528,7 +545,7 @@ bool var_implicit_multiplication(char *exp)
                 // Checking that the keyword is not a part of another keyword
                 for (k = 4; k < 16; ++k)
                 {
-                    if (part_of_keyword(exp, function_names[current], function_names[k], i) == true)
+                    if (part_of_keyword(exp, function_name[current], function_name[k], i) == true)
                         goto endl2;
                 }
             }
@@ -587,7 +604,7 @@ bool var_implicit_multiplication(char *exp)
                         // Encasing the function in parenthesis
                         exp[p2] = '(';
                         exp[p3 + 2] = ')';
-                        i = s_search(exp, function_names[current], i + length + 1);
+                        i = s_search(exp, function_name[current], i + length + 1);
                         continue;
                     }
                 }
@@ -601,7 +618,7 @@ bool var_implicit_multiplication(char *exp)
             }
         // Initializing the next run
         endl2:;
-            i = s_search(exp, function_names[current], i + length);
+            i = s_search(exp, function_name[current], i + length);
         }
     }
     return true;

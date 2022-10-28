@@ -23,7 +23,7 @@ int find_startofnumber(char *exp, int end);
 void var_to_val(char *exp, char *keyword, double value);
 int s_search(char *source, char *keyword, int index);
 int r_search(char *source, char *keyword, int index, bool adjacent_search);
-double read_value(char *exp, int start);
+double complex read_value(char *exp, int start, bool enable_complex);
 void nice_print(char *format, double value, bool is_first);
 int find_add_subtract(char *exp, int i);
 int second_deepest_parenthesis(char *exp);

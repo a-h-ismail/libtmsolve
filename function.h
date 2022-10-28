@@ -5,7 +5,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #ifndef FUNCTION_H
 #define FUNCTION_H
 #include "internals.h"
-variable_data *variable_nodes(s_expression *subexps);
+void *variable_nodes(math_expr *math_struct);
 void replace_variable(variable_data *pointers, double value);
 double calculate_function(char *exp, int a, int b, double x);
 bool derivative_processor(char *exp);

@@ -6,41 +6,49 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "string_tools.h"
 #include "function.h"
 #include <math.h>
-// Generates a heap allocated array containing all unknown members metadata (location, sign)
-variable_data *variable_nodes(s_expression *subexps)
+// Generates a heap allocated AoS containing all variable members metadata and stores it in the math_struct
+void *variable_nodes(math_expr *math_struct)
 {
-    int i = 0, current_subexp = 0;
-    variable_data *variable_list = malloc(g_var_count * sizeof(variable_data));
+    int i = 0, subexpr_index, buffer_size = 50, buffer_step = 50;
+    variable_data *variable_ptr = malloc(buffer_size * sizeof(variable_data));
+    s_expression *subexpr_ptr = math_struct->subexps;
     node *i_node;
-    do
+
+    for (subexpr_index = 0; subexpr_index < math_struct->subexpr_count; ++subexpr_index)
     {
-        i_node = subexps[current_subexp].node_list + subexps[current_subexp].start_node;
+        i_node = subexpr_ptr[subexpr_index].node_list + subexpr_ptr[subexpr_index].start_node;
         while (i_node != NULL)
         {
+            if(i==buffer_size)
+            {
+                buffer_size += buffer_step;
+                variable_ptr = realloc(variable_ptr, buffer_size * sizeof(variable_ptr));
+            }
             // Case of variable left operand
             if (i_node->variable_operands & 0b1)
             {
                 if (i_node->variable_operands & 0b100)
-                    variable_list[i].is_negative = true;
+                    variable_ptr[i].is_negative = true;
                 else
-                    variable_list[i].is_negative = false;
-                variable_list[i].pointer = &(i_node->left_operand);
+                    variable_ptr[i].is_negative = false;
+                variable_ptr[i].pointer = &(i_node->left_operand);
                 ++i;
             }
             if (i_node->variable_operands & 0b10)
             {
                 if (i_node->variable_operands & 0b1000)
-                    variable_list[i].is_negative = true;
+                    variable_ptr[i].is_negative = true;
                 else
-                    variable_list[i].is_negative = false;
-                variable_list[i].pointer = &(i_node->right_operand);
+                    variable_ptr[i].is_negative = false;
+                variable_ptr[i].pointer = &(i_node->right_operand);
                 ++i;
             }
             i_node = i_node->next;
         }
-        ++current_subexp;
-    } while (subexps[current_subexp - 1].last_subexp == false);
-    return variable_list;
+    }
+    variable_ptr = realloc(variable_ptr, i* sizeof(variable_ptr));
+    math_struct->var_count = i;
+    math_struct->variable_ptr = variable_ptr;
 }
 // Function that sets all double variables pointed to in the array with "value"
 void replace_variable(variable_data *pointers, double value)
@@ -68,7 +76,7 @@ double derivative(char *arguments)
     }
     double x, f_prime, temp1, temp2;
     x = calculate_expr(args->arguments[1]);
-    exp_d = parse_expr(args->arguments[0], true);
+    exp_d = parse_expr(args->arguments[0], true, false);
     variables = variable_nodes(exp_d);
     // Solve for x
     replace_variable(variables, x);
@@ -119,7 +127,7 @@ double integrate(char *exp, double a, double delta)
         delta = -delta;
     }
     // Compile exp to the desired structure
-    subexps = parse_expr(exp, true);
+    subexps = parse_expr(exp, true, false);
     var_array = variable_nodes(subexps);
     // Calculating rounds
     rounds = ceil(delta) * 16384;
