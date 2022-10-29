@@ -21,7 +21,7 @@ double factorial(double value);
 double calculate_expr(char *exp);
 double evaluate_region(char *exp, int a, int b);
 void scientific_complex_picker(char *exp);
-void delete_subexps(s_expression *subexps);
+void delete_math_expr(math_expr *math_struct);
 int priority_test(char operator1, char operator2);
 void priority_fill(node *list, int op_count);
 int subexp_start_at(s_expression *expression, int start, int current_s_exp, int mode);

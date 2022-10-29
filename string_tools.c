@@ -77,7 +77,8 @@ int find_min(int a, int b)
 // Returns the value of the number or variable (can be constant like pi or variable like ans) starting at (expr + start)
 double complex read_value(char *expr, int start, bool enable_complex)
 {
-    double complex value, variable_values[] = {M_PI, M_E, ans};
+    double complex variable_values[] = {M_PI, M_E, ans};
+    double value;
     bool is_negative, is_complex = false;
     int status;
     char *variable_names[] = {"pi",
@@ -122,11 +123,12 @@ double complex read_value(char *expr, int start, bool enable_complex)
     if (status == 0)
         return NAN;
 
-    if (enable_complex && is_complex)
-        value *= I;
     if (is_negative)
         value = -value;
-    return value;
+    if (enable_complex && is_complex)
+        return value * I;
+    else
+        return value;
 }
 bool is_op(char c)
 {
@@ -228,7 +230,7 @@ bool combine_add_subtract(char *exp, int a, int b)
     return true;
 }
 // Deletes whitespace from the expression
-void string_cleaner(char *exp)
+void remove_whitespace(char *exp)
 {
     int start, end, length;
     length = strlen(exp);
@@ -362,70 +364,77 @@ bool is_valid_number(char *exp, int start)
     else
         return false;
 }
-// Function that converts implicit multiplication to explicit multiplication
-bool implicit_multiplication(char *exp)
+// Function that converts implicit multiplication to explicit multiplication, may change the length of expr
+bool implicit_multiplication(char **expr)
 {
     int i, j, k, symbol;
     bool condition_met;
-    if (var_implicit_multiplication(exp) == false)
+    char *expr_ptr;
+    *expr = realloc(*expr, 4 * strlen(*expr) * sizeof(char));
+    expr_ptr = *expr;
+    if (var_implicit_multiplication(expr_ptr) == false)
+    {
+        *expr = realloc(*expr, (strlen(*expr) + 1) * sizeof(char));
         return false;
-    i = next_open_parenthesis(exp, 0);
+    }
+    i = next_open_parenthesis(expr_ptr, 0);
     // Implicit multiplication with parenthesis
     while (i != -1)
     {
-        k = find_closing_parenthesis(exp, i);
-        exp[i] = '[';
-        exp[k] = ']';
+        k = find_closing_parenthesis(expr_ptr, i);
+        expr_ptr[i] = '[';
+        expr_ptr[k] = ']';
         i = k + 1;
-        k = find_closing_parenthesis(exp, i);
+        k = find_closing_parenthesis(expr_ptr, i);
         if (k == -1)
             return false;
-        exp[i] = '[';
-        exp[k] = ']';
-        string_resizer(exp, k, k + 2);
-        memmove(exp + symbol + 1, exp + symbol, k - symbol + 1);
-        exp[symbol] = '(';
-        exp[k + 2] = ')';
+        expr_ptr[i] = '[';
+        expr_ptr[k] = ']';
+        string_resizer(expr_ptr, k, k + 2);
+        memmove(expr_ptr + symbol + 1, expr_ptr + symbol, k - symbol + 1);
+        expr_ptr[symbol] = '(';
+        expr_ptr[k + 2] = ')';
         i = symbol;
-        j = find_closing_parenthesis(exp, i);
+        j = find_closing_parenthesis(expr_ptr, i);
         condition_met = true;
         if (i != 0)
         {
             // Case where the implicit multiplication is with a number
-            if (is_number(exp[i - 1]) || exp[i - 1] == 'i')
-                k = find_startofnumber(exp, i);
+            if (is_number(expr_ptr[i - 1]) || expr_ptr[i - 1] == 'i')
+                k = find_startofnumber(expr_ptr, i);
             // Case where the implicit multiplication is with a closed parenthesis
-            else if (exp[i - 1] == ')')
-                k = find_opening_parenthesis(exp, i - 1);
+            else if (expr_ptr[i - 1] == ')')
+                k = find_opening_parenthesis(expr_ptr, i - 1);
             // Other cases
             else
                 condition_met = false;
             if (condition_met)
-                shift_and_multiply(exp, &k, &i, &j, 'l');
+                shift_and_multiply(expr_ptr, &k, &i, &j, 'l');
         }
         condition_met = true;
-        if (exp[j + 1] != '\0')
+        if (expr_ptr[j + 1] != '\0')
         {
             // Case where implicit multiplication is with a number or a variable
-            if (is_number(exp[j + 1]) || is_alphabetic(exp[j + 1]))
-                k = find_endofnumber(exp, j + 1);
-            else if (exp[j + 1] == '(')
-                k = find_closing_parenthesis(exp, j + 1);
+            if (is_number(expr_ptr[j + 1]) || is_alphabetic(expr_ptr[j + 1]))
+                k = find_endofnumber(expr_ptr, j + 1);
+            else if (expr_ptr[j + 1] == '(')
+                k = find_closing_parenthesis(expr_ptr, j + 1);
             else
                 condition_met = false;
             if (condition_met)
-                shift_and_multiply(exp, &i, &j, &k, 'r');
+                shift_and_multiply(expr_ptr, &i, &j, &k, 'r');
         }
-        i = next_open_parenthesis(exp, i + 1);
+        i = next_open_parenthesis(expr_ptr, i + 1);
     }
     // Restore parenthesis
-    for (i = 0; exp[i] != '\0'; ++i)
+    for (i = 0; expr_ptr[i] != '\0'; ++i)
     {
-        if (exp[i] == '[')
-            exp[i] = '(';
-        else if (exp[i] == ']')
-            exp[i] = ')';
+        if (expr_ptr[i] == '[')
+            expr_ptr[i] = '(';
+        else if (expr_ptr[i] == ']')
+            expr_ptr[i] = ')';
     }
+    *expr = realloc(*expr, (strlen(*expr) + 1) * sizeof(char));
     return true;
 }
 bool var_implicit_multiplication(char *exp)
@@ -622,21 +631,6 @@ bool var_implicit_multiplication(char *exp)
         }
     }
     return true;
-}
-// Check if the final result is valid
-bool valid_result(char *exp)
-{
-    int end;
-    end = find_endofnumber(exp, 0);
-    if (exp[end + 1] == '-' || exp[end + 1] == '+')
-        end = find_endofnumber(exp, end + 1);
-    if (end == strlen(exp) - 1)
-        return true;
-    else
-    {
-        error_handler("Syntax error.", 1, 1, -1);
-        return false;
-    }
 }
 // Function to find the index of the number's end
 int find_endofnumber(char *exp, int start)
@@ -943,7 +937,7 @@ Function that compares the priority of 2 operators, returns:
 int priority_test(char operator1, char operator2)
 {
     char operators[7] = {'!', '^', '*', '/', '%', '+', '-'};
-    short priority[7] = {4, 3, 2, 2, 2, 1, 1}, op1_p, op2_p, i;
+    short priority[7] = {4, 3, 2, 2, 2, 1, 1}, op1_p='\0', op2_p='\0', i;
     // Find priority of LeftOperand
     for (i = 0; i < 7; ++i)
     {
@@ -952,14 +946,16 @@ int priority_test(char operator1, char operator2)
             op1_p = priority[i];
             break;
         }
-    }
-    for (i = 0; i < 7; ++i)
-    {
         if (operator2 == operators[i])
         {
             op2_p = priority[i];
             break;
         }
+    }
+    if(op1_p=='\0'||op2_p=='\0')
+    {
+        puts("Invalid operators in priority_test.");
+        exit(3);
     }
     if (op1_p > op2_p)
         return 1;
@@ -982,28 +978,6 @@ void var_to_val(char *exp, char *keyword, double value)
             return;
         // print the value in place of the keyword
         i = value_printer(exp, i, i + keylen - 1, value);
-    }
-}
-// Function that uses var_to_val to replace the values of exp, pi and ans
-void variable_matcher(char *exp)
-{
-    int i;
-    var_to_val(exp, "pi", M_PI);
-    var_to_val(exp, "exp", M_E);
-    i = s_search(exp, "ans", 0);
-    while (i != -1)
-    {
-        // Case where ans is made of 1 term, no need for parenthesis
-        if ((creal(ans) == 0 && cimag(ans) != 0) || (creal(ans) != 0 && cimag(ans) == 0))
-            i = s_complex_print(exp, i, i + 2, ans);
-        else
-        {
-            // Case where ans is made of 2 terms, enclose them with parenthesis
-            exp[i] = '(';
-            exp[i + 2] = ')';
-            i = s_complex_print(exp, i + 1, i + 1, ans);
-        }
-        i = s_search(exp, "ans", i + 1);
     }
 }
 // Function that extracts arguments separated by "," from a string and returns them in a struct

@@ -28,7 +28,7 @@ typedef struct node
     int node_index;
     // Used to store data about variable operands nodes as follow:
     // b0:left_operand, b1:right_operand, b2:l_op_negative, b3:r_op_negative
-    uint8_t variable_operands;
+    uint8_t var_metadata;
     // Node operator priority
     uint8_t priority;
 
@@ -54,13 +54,12 @@ typedef struct s_expression
                solve_end
     */
     int expression_start, solve_start, solve_end;
-    // The index of the node at which the subexpression solving start
+    // The index of the node at which the subexpression parsing starts
     int start_node;
     struct node *node_list;
     /*
     The result is a double pointer because the subexpression result is determined later (it links to nodes of other subexps or ans)
     Keep in mind the result is carried by the last node in order (the pointer points to the result pointer of last node).
-    I thought about saving the last node index and using that, but subexp[current_subexp].node_list[last_node].node_result is too long
     */
     double complex **result;
     // Function to execute on the final result
@@ -75,7 +74,7 @@ typedef struct s_expression
 typedef struct math_expr
 {
     // The subexpressions forming the math expression after parsing
-    s_expression *subexps;
+    s_expression *subexpr_ptr;
     // Number of subexpressions
     int subexpr_count;
     // Variable operands count
@@ -83,6 +82,8 @@ typedef struct math_expr
     variable_data *variable_ptr;
     // Answer of the expression
     double complex answer;
+
+    bool enable_complex;
 } math_expr;
 int error_handler(char *error, int arg, ...);
 void error_print(char *, int);

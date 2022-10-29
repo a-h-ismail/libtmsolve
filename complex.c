@@ -20,14 +20,13 @@ void complex_interpreter(char *exp)
         printf("\n");
         return;
     }
-    if (implicit_multiplication(exp) == false)
+    if (implicit_multiplication(&exp) == false)
         return;
     if ((p1 = s_search(exp, "inf", 0)) != -1)
     {
         error_handler("Infinity is not accepted as input (inf).", 1, 1, p1);
         return;
     }
-    variable_matcher(exp);
     /*
     *Given that complex numbers are made of 2 parts, real and imaginary, the interpreter has to:
     *Find the second deepest open parenthesis and its closing parenthesis.
@@ -54,8 +53,6 @@ void complex_interpreter(char *exp)
         if (success == false)
             return;
     }
-    if (valid_result(exp) == false)
-        return;
     ans = read_complex(exp, 0, strlen(exp) - 1);
     printf("= ");
     complex_print(ans);
@@ -208,7 +205,7 @@ bool complex_stage1_solver(char *exp, int a, int b)
         //Search for the next open parenthesis
         i = next_open_parenthesis(temp, i);
     }
-    string_cleaner(temp);
+    remove_whitespace(temp);
     //Use stage 2 solver to solve the developed expression
     k = complex_stage2_solver(temp, 0, strlen(temp) - 1);
     if (k == -1)
@@ -289,7 +286,7 @@ int s_complex_print(char *exp, int a, int b, double complex value)
         if (real == 0)
         {
             if (a != 0 && exp[a] == '-' && imaginary > 0)
-                sprintf(buffer, "%+.14gi", imaginary);
+                sprintf(buffer, "%+.16gi", imaginary);
             else
                 sprintf(buffer, "%.16gi", imaginary);
         }
