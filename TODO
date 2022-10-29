@@ -1,4 +1,5 @@
 Remove legacy code
+Fix implicit multiplication
 Improve error handler and error_print
 Make a parser variant for complex numbers
 Add support for more than one variable
