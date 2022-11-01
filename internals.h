@@ -71,6 +71,7 @@ typedef struct s_expression
     // Enables execution of special function, allows optimizing of nested extended functions like integration
     bool execute_extended;
 } s_expression;
+// The standalone structure to hold all of an expression's metadata
 typedef struct math_expr
 {
     // The subexpressions forming the math expression after parsing
@@ -82,9 +83,16 @@ typedef struct math_expr
     variable_data *variable_ptr;
     // Answer of the expression
     double complex answer;
-
+    // Set to true if the expression was parsed with complex enabled
     bool enable_complex;
 } math_expr;
+
+// Simple structure to store a fraction of the form a + b / c
+typedef struct fraction
+{
+    // value = a + b / c
+    double a, b, c;
+} fraction;
 int error_handler(char *error, int arg, ...);
 void error_print(char *, int);
 int find_min(int a, int b);
