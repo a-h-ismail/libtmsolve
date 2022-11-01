@@ -22,6 +22,7 @@ double (*math_function[])(double) =
 char *ext_function_name[] = {"int", "der"};
 double (*ext_math_function[])(char *) =
     {integral_processor, derivative};
+
 // Complex functions
 char *cmplx_function_name[] =
     {"abs", "arg", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "log"};
@@ -35,7 +36,7 @@ double factorial(double value)
         result *= i;
     return result;
 }
-double calculate_expr(char *expr)
+double complex calculate_expr(char *expr, bool enable_complex)
 {
     double result;
     math_expr *math_struct;
@@ -64,7 +65,6 @@ double complex evaluate(math_expr *math_struct)
     node *i_node;
     int subexpr_index = 0, subexpr_count = math_struct->subexpr_count;
     s_expression *subexpr_ptr = math_struct->subexpr_ptr;
-    double complex result;
     /*
     #ifdef DEBUG
         // Dumping node data
@@ -172,7 +172,7 @@ double complex evaluate(math_expr *math_struct)
         }
         ++subexpr_index;
     }
-    return result;
+    return math_struct->answer;
 }
 // Sets the variable in x_node to the left or right operand "r","l"
 // Returns true if the variable x was found, false otherwise
@@ -689,233 +689,165 @@ void delete_math_expr(math_expr *math_struct)
     free(math_struct);
 }
 
-// Function that factorizes a 32 bit number, returns factors in a heap allocated array
-// | factor0 | occurences_of_factor0 | factor1 | occurences_of_factor1 |
-int32_t *find_factors(int32_t number)
+// Function that factorizes a 32 bit number
+int_factor *find_factors(int32_t value)
 {
-    int32_t dividend = 2, *factors;
+    int32_t dividend = 2;
+    int_factor *factor_list;
     int i = 0;
-    // factors are stored in an 64 element array
-    //*(factors+2*x) -> factors
-    //*(factors+2*x+1) -> number of occurences of the factor *(factors+2*x)
-    factors = (int32_t *)calloc(64, sizeof(int));
-    if (number == 0)
-        return factors;
-    *(factors) = 1;
-    *(factors + 1) = 1;
+
+    factor_list = calloc(64, sizeof(int_factor));
+    if (value == 0)
+        return factor_list;
+    factor_list[0].factor = factor_list[0].power = 1;
+
     // Turning negative numbers into positive for factorization to work
-    if (number < 0)
-        number = -number;
-    // Simple factorization algorithm
-    while (number != 1)
+    if (value < 0)
+        value = -value;
+    // Simple optimized factorization algorithm
+    while (value != 1)
     {
-        if (number % dividend == 0)
+        if (value % dividend == 0)
         {
             ++i;
-            number = number / dividend;
-            *(factors + (i * 2)) = dividend;
-            *(factors + (i * 2) + 1) = 1;
-            while (number % dividend == 0 && number >= dividend)
+            value = value / dividend;
+            factor_list[i].factor = dividend;
+            factor_list[i].power = 1;
+            while (value % dividend == 0 && value >= dividend)
             {
-                number = number / dividend;
-                ++*(factors + (i * 2) + 1);
+                value = value / dividend;
+                ++factor_list[i].power;
             }
         }
         else
         {
-            // Optimize by skipping numbers greater than number/2 (in other terms, number itself is number prime)
-            if (dividend > number / 2 && number != 1)
+            // Optimize by skipping values greater than value/2 (in other terms, the value itself is a prime)
+            if (dividend > value / 2 && value != 1)
             {
                 ++i;
-                *(factors + (i * 2)) = number;
-                *(factors + (i * 2) + 1) = 1;
+                factor_list[i].factor = value;
+                factor_list[i].power = 1;
                 break;
             }
         }
-        // Optimizing factorization by skipping even numbers (> 2)
+        // Optimizing factorization by skipping even values (> 2)
         if (dividend > 2)
             dividend = dividend + 2;
         else
             ++dividend;
     }
+    // Case of a prime number
     if (i == 0)
     {
-        *(factors + 2) = number;
-        *(factors + 3) = 1;
+        factor_list[1].factor = value;
+        factor_list[1].power = 1;
     }
-    return factors;
+    return factor_list;
 }
 
-void fraction_reducer(int32_t *num_factors, int32_t *denom_factors, int32_t *numerator, int32_t *denominator)
+void reduce_fraction(fraction *fraction_str)
 {
     int i = 1, j = 1, min;
-    while (*(num_factors + 2 * i) != 0 && *(denom_factors + 2 * j) != 0)
+    int_factor *num_factor, *denom_factor;
+    num_factor = find_factors(fraction_str->b);
+    denom_factor = find_factors(fraction_str->c);
+    if(num_factor->factor==0)
+        return;
+    if(denom_factor->factor==0)
+        return;
+    while (num_factor[i].factor != 0 && denom_factor[j].factor != 0)
     {
-        if (*(num_factors + 2 * i) == *(denom_factors + 2 * j))
+        if (num_factor[i].factor == denom_factor[j].factor)
         {
             // upon finding the minimun power we subtract it from the power of the num and denum
-            min = find_min(*(num_factors + (2 * i) + 1), *(denom_factors + (2 * j) + 1));
-            *(num_factors + (2 * i) + 1) -= min;
-            *(denom_factors + (2 * j) + 1) -= min;
+            min = find_min(num_factor[i].power, denom_factor[j].power);
+            num_factor[i].power -= min;
+            denom_factor[j].power -= min;
             ++i;
             ++j;
         }
         else
         {
             // If the factor at i is smaller increment i , otherwise increment j
-            if (*(num_factors + (2 * i)) < *(denom_factors + (2 * j)))
+            if (num_factor[i].factor < denom_factor[j].factor)
                 ++i;
             else
                 ++j;
         }
     }
-    *numerator = 1;
-    *denominator = 1;
+    fraction_str->b = fraction_str->c = 1;
     // Calculate numerator and denominator after reduction
-    for (i = 1; *(num_factors + (2 * i)) != 0; ++i)
-    {
-        if (*(num_factors + (2 * i) + 1) != 0)
-            *numerator *= pow(*(num_factors + (2 * i)), *(num_factors + (2 * i) + 1));
-    }
-    for (i = 1; *(denom_factors + (2 * i)) != 0; ++i)
-    {
-        if (*(denom_factors + (2 * i) + 1) != 0)
-            *denominator *= pow(*(denom_factors + (2 * i)), *(denom_factors + (2 * i) + 1));
-    }
-}
+    for (i = 1; num_factor[i].factor != 0; ++i)
+        fraction_str->b *= pow(num_factor[i].factor, num_factor[i].power);
 
-void fraction_processor(char *exp, bool wasdecimal)
-{
-    int success_count;
-    int32_t v1, v2, v, r;
-    double check1, check2;
-    success_count = sscanf(exp, "%lf/%lf", &check1, &check2);
-    if (success_count != 2)
-    {
-        puts("Syntax error.");
-        return;
-    }
-    // Given that fraction reducer operates on positive numbers, abs(int32_t_MIN)>2147483647 can't be accepted
-    if (fabs(check1) > 2147483647 || fabs(check2) > 2147483647)
-    {
-        puts("Values must be in range [-2147483647,2147483647]");
-        return;
-    }
-    v1 = check1;
-    v2 = check2;
-    v = v1 / v2;
-    r = v1 % v2;
-    if (r == 0)
-    {
-        printf("%s = %" PRId32 "", exp, v);
-        if (wasdecimal == false)
-            printf("\n");
-        return;
-    }
-    if ((r != 0 || v1 < v2) && v1 != 0)
-    {
-        int32_t *f_v1, *f_v2;
-        // flip signs of v1 and v2 if both are negative or if v2 only is negative to move the - to v1
-        if ((v1 < 0 && v2 < 0) || (v1 > 0 && v2 < 0))
-        {
-            v1 = -v1;
-            v2 = -v2;
-        }
-        if (v1 > v2)
-            v1 = v1 % v2;
-        if (v1 < 0)
-        {
-            v1 = -v1;
-            v1 = v1 % v2;
-            v1 = -v1;
-        }
-        f_v1 = find_factors(v1);
-        f_v2 = find_factors(v2);
-        if (v1 < 0)
-        {
-            v1 = -v1;
-            fraction_reducer(f_v1, f_v2, &v1, &v2);
-            v1 = -v1;
-        }
-        else
-            fraction_reducer(f_v1, f_v2, &v1, &v2);
-        if (v != 0)
-        {
-            if (v1 >= 0)
-                printf("= %" PRId32 "/%" PRId32 " = %" PRId32 "+%" PRId32 "/%" PRId32 "", (v * v2 + v1), v2, v, v1, v2);
-            else
-                printf("= %" PRId32 "/%" PRId32 " = %" PRId32 "%" PRId32 "/%" PRId32 "", (v * v2 + v1), v2, v, v1, v2);
-        }
-        else
-            printf("= %" PRId32 "/%" PRId32 "", v1, v2);
-        if (wasdecimal == false)
-            printf(" = %g\n", calculate_expr(exp));
-        free(f_v1);
-        free(f_v2);
-    }
-}
+    for (i = 1; denom_factor[i].factor != 0; ++i)
+        fraction_str->c *= pow(denom_factor[i].factor, denom_factor[i].power);
 
-bool decimal_to_fraction(char *exp, bool inverse_process)
+    free(num_factor);
+    free(denom_factor);
+}
+// Converts a floating point value to decimal representation a*b/c
+fraction decimal_to_fraction(double value, bool inverse_process)
 {
-    int p = 0, i, j, fractionl;
-    int32_t v1, v2 = 0;
-    char pattern[14];
-    double v = 0;
+    int decimal_point = 1, i, j, decimal_length;
     bool success = false;
-    // we read the value and rewrite it in case of scientific notation
-    // ex: 1e-7 -> rewrite to 0.0000001
-    sscanf(exp, "%lf", &v);
-    if (fabs(v) > 2147483647 || v - (int32_t)v == 0 || fabs(v) < 1e-8)
-        return false;
-    if (fabs(v) < 1e-4)
+    char pattern[11], printed_value[23];
+    fraction result;
+
+    // Using the denominator as a mean to report failure, if c==0 then the function failed
+    result.c = 0;
+
+    if (value > INT32_MAX || fabs(value) < pow(10, -log10(INT32_MAX)))
+        return result;
+
+    // Store the integer part in 'a'
+    result.a = floor(value);
+    value -= floor(value);
+
+    // The case of an integer
+    if (value == 0)
+        return result;
+
+    sprintf(printed_value, "%.14g", value);
+    // Removing trailing zeros
+    for (i = strlen(printed_value) - 1; i > decimal_point; --i)
     {
-        sprintf(exp, "%.16lf", v);
-        // Removing trailing zeros
-        for (i = strlen(exp) - 1; i > p; --i)
+        // Stop at the first non zero value and null terminate
+        if (*(printed_value + i) != '0')
         {
-            // Stop at the first non zero value and null terminate
-            if (*(exp + i) != '0')
-            {
-                *(exp + i + 1) = '\0';
-                break;
-            }
-        }
-    }
-    for (i = 0; i < strlen(exp); ++i)
-        if (*(exp + i) == '.')
-        {
-            p = i;
+            *(printed_value + i + 1) = '\0';
             break;
         }
-    // return if no point is found
-    if (p == 0)
-        return false;
-    fractionl = strlen(exp) - p - 1;
-    if (fractionl >= 10)
+    }
+
+    decimal_length = strlen(printed_value) - decimal_point - 1;
+    if (decimal_length >= 10)
     {
         // Look for a pattern to detect fractions from periodic decimals
-        for (i = p + 1; i - p < fractionl / 2; ++i)
+        for (i = decimal_point + 1; i - decimal_point < decimal_length / 2; ++i)
         {
-            pattern[0] = *(exp + i);
+            // First number in the pattern (to the right of the decimal_point)
+            pattern[0] = printed_value[i];
             pattern[1] = '\0';
             j = i + 1;
             while (true)
             {
                 // First case: the "pattern" is smaller than the remaining decimal digits.
-                if (strlen(exp) - j > strlen(pattern))
+                if (strlen(printed_value) - j > strlen(pattern))
                 {
                     // If the pattern is found again in the remaining decimal digits, jump over it.
-                    if (strncmp(pattern, exp + j, strlen(pattern)) == 0)
+                    if (strncmp(pattern, printed_value + j, strlen(pattern)) == 0)
                         j += strlen(pattern);
                     // If not, copy the digits between i and j to the pattern for further testing
                     else
                     {
-                        strncpy(pattern, exp + i, j - i + 1);
+                        strncpy(pattern, printed_value + i, j - i + 1);
                         pattern[j - i + 1] = '\0';
                         ++j;
                     }
                     // If the pattern matches the last decimal digits, stop the execution with SUCCESS
-                    if (strlen(exp) - j == strlen(pattern) && strncmp(pattern, exp + strlen(exp) + j, strlen(pattern) == 0))
+                    if (strlen(printed_value) - j == strlen(pattern) &&
+                        strncmp(pattern, printed_value + strlen(printed_value) + j, strlen(pattern) == 0))
                     {
                         success = true;
                         break;
@@ -925,7 +857,7 @@ bool decimal_to_fraction(char *exp, bool inverse_process)
                 else
                 {
                     // Consider a SUCCESS the case where the remaining digits except the last one match the leftmost digits of the pattern
-                    if (strncmp(pattern, exp + j, strlen(exp) - j - 1) == 0)
+                    if (strncmp(pattern, printed_value + j, strlen(printed_value) - j - 1) == 0)
                     {
                         success = true;
                         break;
@@ -937,70 +869,60 @@ bool decimal_to_fraction(char *exp, bool inverse_process)
             if (success == true)
                 break;
         }
-        // getting the fraction from the "pattern"
-        if (success == true)
-        {
-            int i2;
-            if (strlen(pattern) + i - p - 1 < 8)
-            {
-                for (i2 = 0; i2 < strlen(pattern); ++i2)
-                    v2 += 9 * pow(10, i2);
-                v2 = v2 * pow(10, i - p - 1);
-            }
-            else
-                return false;
-            sscanf(pattern, "%" PRId32 " ", &v1);
-            // i - p - 1 is the number of decimal digits between the period and the point
-            v1 = v1 + (int32_t)(v * pow(10, i - p - 1)) * (v2 / pow(10, i - p - 1));
-            sprintf(exp, "%" PRId32 "/%" PRId32 "", v1, v2);
-            if (inverse_process == false)
-            {
-                // The ~ indicates that the fraction does not equal the decimal, but it is very close to it
-                printf("~");
-                fraction_processor(exp, true);
-            }
-            return true;
-        }
     }
-    else if (strlen(exp) - 1 < 10)
+    else
     {
-        // Prevent integer overflow by returning if the value resulting will have more than 9 digits
-        v2 = pow(10, fractionl);
-        v1 = v * v2;
-        sprintf(exp, "%" PRId32 "/%" PRId32 "", v1, v2);
-        if (inverse_process == false)
+        result.c = pow(10, decimal_length);
+        result.b = value*result.c;
+        reduce_fraction(&result);
+        return result;
+    }
+    // getting the fraction from the "pattern"
+    if (success == true)
+    {
+        int pattern_start;
+        // Just in case the pattern was found to be zeors due to minor rounding (like 5.0000000000000003)
+        if(pattern[0]=='0')
+            return result;
+        // Generate the denominator
+        for (i = 0; i < strlen(pattern); ++i)
+            result.c += 9 * pow(10, i);
+        // Find the pattern start in case it doesn't start right after the decimal point (like 0.79999)
+        pattern_start = s_search(printed_value, pattern, decimal_point + 1);
+        if (pattern_start > decimal_point + 1)
         {
-            fraction_processor(exp, true);
+            result.b *= value * (pow(10, pattern_start - decimal_point - 1 + strlen(pattern)) - pow(10, pattern_start - decimal_point - 1));
+            result.c *= pow(10, pattern_start - decimal_point - 1);
         }
-        return true;
+        else
+            sscanf(pattern, "%lf", &result.b);
+        reduce_fraction(&result);
+        return result;
     }
     // trying to get the fraction by inverting it then trying the algorithm again
-    if (inverse_process == false && fractionl > 10)
+    else if (inverse_process == false)
     {
-        double inverse = 1 / v;
-        char temp[22];
+        double inverse_value = 1 / value;
         // case where the fraction is likely of form 1/x
-        if (fabs(inverse - round(inverse)) < 1e-7)
+        if (fabs(inverse_value - floor(inverse_value)) < 1e-10)
         {
-            if (fabs(round(inverse)) == 1)
-                printf("~=1");
-            else
-                printf("~=1/%" PRId32 "", (int32_t)round(inverse));
-            return true;
+            result.b = 1;
+            result.c = inverse_value;
+            return result;
         }
-        sprintf(temp, "%.12lf", inverse);
-        if (decimal_to_fraction(temp, true) == false)
-            return false;
+        // Other cases like 3/17 (non periodic but the inverse is periodic)
         else
         {
-            sscanf(temp, "%" PRId32 "/%" PRId32 "", &v2, &v1);
-            sprintf(exp, "%" PRId32 "/%" PRId32 "", v1, v2);
-            printf("~");
-            fraction_processor(exp, true);
-            return true;
+            fraction inverted = decimal_to_fraction(inverse_value, true);
+            if (inverted.c != 0)
+            {
+                // inverse of a + b / c is c / ( a *c + b )
+                result.b = inverted.c;
+                result.c = inverted.b + inverted.a * inverted.c;
+            }
         }
     }
-    return false;
+    return result;
 }
 void priority_fill(node *list, int op_count)
 {
