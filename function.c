@@ -74,7 +74,7 @@ double derivative(char *arguments)
         return false;
     }
     double x, f_prime, fx1, fx2;
-    x = calculate_expr(args->arguments[1]);
+    x = calculate_expr(args->arguments[1],false);
     math_struct = parse_expr(args->arguments[0], true, false);
     // Solve for x
     set_variable(math_struct, x);
@@ -97,8 +97,8 @@ double integral_processor(char *arguments)
     int n;
     double lower_bound, upper_bound, result, an, fn, rounds, temp, delta;
 
-    lower_bound = calculate_expr(args->arguments[0]);
-    upper_bound = calculate_expr(args->arguments[1]);
+    lower_bound = calculate_expr(args->arguments[0],false);
+    upper_bound = calculate_expr(args->arguments[1],false);
 
     delta = upper_bound - lower_bound;
     if (delta < 0)
