@@ -5,27 +5,27 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "string_tools.h"
 #include "scientific.h"
 // Simple function to detect the word "inf", almost useless since the same can be accomplished with s_search
-bool is_infinite(char *exp, int index)
+bool is_infinite(char *expr, int index)
 {
-    if (exp[index] == '+' || exp[index] == '-')
+    if (expr[index] == '+' || expr[index] == '-')
         ++index;
-    if (strncmp(exp + index, "inf", 3) == 0)
+    if (strncmp(expr + index, "inf", 3) == 0)
         return true;
     else
         return false;
 }
 // Function to find the closed parenthesis corresponding to a specified open one
-int find_closing_parenthesis(char *exp, int p)
+int find_closing_parenthesis(char *expr, int p)
 {
     // initializing pcount to 1 because the function receives the index of an open parenthesis
     int pcount = 1;
-    while (*(exp + p) != '\0' && pcount != 0)
+    while (*(expr + p) != '\0' && pcount != 0)
     {
         // Skipping over the first parenthesis
         ++p;
-        if (*(exp + p) == '(')
+        if (*(expr + p) == '(')
             ++pcount;
-        else if (*(exp + p) == ')')
+        else if (*(expr + p) == ')')
             --pcount;
     }
     // Case where the open parenthesis has no closing one, return -1 to the calling function
@@ -34,7 +34,7 @@ int find_closing_parenthesis(char *exp, int p)
     else
         return p;
 }
-int find_opening_parenthesis(char *exp, int p)
+int find_opening_parenthesis(char *expr, int p)
 {
     // initializing pcount to 1 because the function receives the index of a closed parenthesis
     int pcount = 1;
@@ -42,9 +42,9 @@ int find_opening_parenthesis(char *exp, int p)
     {
         // Skipping over the first parenthesis
         --p;
-        if (*(exp + p) == ')')
+        if (*(expr + p) == ')')
             ++pcount;
-        else if (*(exp + p) == '(')
+        else if (*(expr + p) == '(')
             --pcount;
     }
     // Case where the closed parenthesis has no opening one, return -1 to the calling function
@@ -54,14 +54,14 @@ int find_opening_parenthesis(char *exp, int p)
         return p;
 }
 // Function to find the deepest parenthesis (last open parenthesis before first close one), returns -1 if none is found
-int find_deepest_parenthesis(char *exp)
+int find_deepest_parenthesis(char *expr)
 {
     int i, open = -1;
-    for (i = 0; exp[i] != '\0'; ++i)
+    for (i = 0; expr[i] != '\0'; ++i)
     {
-        if (exp[i] == '(')
+        if (expr[i] == '(')
             open = i;
-        else if (exp[i] == ')')
+        else if (expr[i] == ')')
             break;
     }
     return open;
@@ -80,7 +80,7 @@ double complex read_value(char *expr, int start, bool enable_complex)
     double complex variable_values[] = {M_PI, M_E, ans};
     double value;
     bool is_negative, is_complex = false;
-    int status;
+    int status = 0;
     char *variable_names[] = {"pi",
                               "exp",
                               "ans"};
@@ -91,38 +91,46 @@ double complex read_value(char *expr, int start, bool enable_complex)
     }
     else
         is_negative = false;
-    // Check for complex number
-    if (enable_complex)
-    {
-        int end = find_endofnumber(expr, start);
-        if (expr[start] == 'i')
-        {
-            // Using XOR to flip the boolean from false to true
-            is_complex = is_complex ^ 1;
-            ++start;
-        }
-        if (expr[end] == 'i')
-            // Again, XOR toggles between true and false
-            is_complex = is_complex ^ 1;
-    }
-    status = sscanf(expr + start, "%lf", &value);
-    if (status == 0)
-    {
-        int i;
-        for (i = 0; i < sizeof(variable_names) / sizeof(*variable_names); ++i)
-        {
-            if (strncmp(expr + start, variable_names[i], strlen(variable_names[i])) == 0)
-            {
-                value = variable_values[i];
-                status = 2;
-                break;
-            }
-        }
-    }
-    // Case where nothing was found even after checking for variables
-    if (status == 0)
-        return NAN;
 
+    int i;
+    for (i = 0; i < sizeof(variable_names) / sizeof(*variable_names); ++i)
+    {
+        if (strncmp(expr + start, variable_names[i], strlen(variable_names[i])) == 0)
+        {
+            value = variable_values[i];
+            status = 2;
+            break;
+        }
+    }
+
+    if (status == 0)
+    {
+        // Check for complex number
+        if (enable_complex)
+        {
+            int end = find_endofnumber(expr, start);
+            if (expr[start] == 'i')
+            {
+                // Using XOR to flip the boolean from false to true
+                is_complex = is_complex ^ 1;
+                if (start == end)
+                {
+                    if (is_negative)
+                        return -I;
+                    else
+                        return I;
+                }
+                ++start;
+            }
+            if (expr[end] == 'i')
+                // Again, XOR toggles between true and false
+                is_complex = is_complex ^ 1;
+        }
+        status = sscanf(expr + start, "%lf", &value);
+        // Case where nothing was found even after checking for variables
+        if (status == 0)
+            return NAN;
+    }
     if (is_negative)
         value = -value;
     if (enable_complex && is_complex)
@@ -154,11 +162,11 @@ bool is_op(char c)
 }
 // Function that returns the index of the previous operator starting from i
 // if no operators are found, returns 0.
-int previousop(char *exp, int i)
+int previousop(char *expr, int i)
 {
     while (i >= 0)
     {
-        if (is_op(exp[i]) == false)
+        if (is_op(expr[i]) == false)
             --i;
         else
             break;
@@ -166,82 +174,82 @@ int previousop(char *exp, int i)
     return i;
 }
 // Function that seeks for the next occurence of a + or - sign starting from i
-int find_add_subtract(char *exp, int i)
+int find_add_subtract(char *expr, int i)
 {
-    while (exp[i] != '+' && exp[i] != '-' && exp[i] != '\0')
+    while (expr[i] != '+' && expr[i] != '-' && expr[i] != '\0')
     {
         ++i;
-        if (exp[i - 1] == 'e' || exp[i - 1] == 'E')
+        if (expr[i - 1] == 'e' || expr[i - 1] == 'E')
             ++i;
     }
     // Check that the stop was not caused by reaching \0
-    if (exp[i] == '\0')
+    if (expr[i] == '\0')
         return -1;
     else
         return i;
 }
 // Function that returns the index of the next operator starting from i
 // if no operators are found, returns -1.
-int nextop(char *exp, int i)
+int nextop(char *expr, int i)
 {
-    while (*(exp + i) != '\0')
+    while (*(expr + i) != '\0')
     {
-        if (is_op(exp[i]) == false)
+        if (is_op(expr[i]) == false)
             ++i;
         else
             break;
     }
-    if (*(exp + i) != '\0')
+    if (*(expr + i) != '\0')
         return i;
     else
         return -1;
 }
-/*Function that combines the add/subtract operators (ex: -- => +) in the area of exp limited by a,b.
+/*Function that combines the add/subtract operators (ex: -- => +) in the area of expr limited by a,b.
 Returns true on success and false in case of invalid indexes a and b.
 */
-bool combine_add_subtract(char *exp, int a, int b)
+bool combine_add_subtract(char *expr, int a, int b)
 {
     int subcount, i, j;
-    if (b > strlen(exp) || a > b || a < 0)
+    if (b > strlen(expr) || a > b || a < 0)
         return false;
-    i = find_add_subtract(exp, a);
+    i = find_add_subtract(expr, a);
     while (i != -1 && i < b)
     {
         j = i;
         subcount = 0;
-        if (exp[j] == '-')
+        if (expr[j] == '-')
             ++subcount;
         while (1)
         {
-            if (exp[j + 1] == '-')
+            if (expr[j + 1] == '-')
                 ++subcount;
-            else if (exp[j + 1] != '+')
+            else if (expr[j + 1] != '+')
                 break;
             ++j;
         }
         if (subcount % 2 == 1)
-            exp[i] = '-';
+            expr[i] = '-';
         else
-            exp[i] = '+';
+            expr[i] = '+';
         if (i < j)
-            string_resizer(exp, j, i);
-        i = find_add_subtract(exp, i + 1);
+            string_resizer(expr, j, i);
+        i = find_add_subtract(expr, i + 1);
     }
     return true;
 }
 // Deletes whitespace from the expression
-void remove_whitespace(char *exp)
+void remove_whitespace(char *expr)
 {
     int start, end, length;
-    length = strlen(exp);
+    length = strlen(expr);
     for (start = 0; start < length; ++start)
     {
-        if (exp[start] == ' ')
+        if (expr[start] == ' ')
         {
             end = start;
-            while (exp[end] == ' ')
+            while (expr[end] == ' ')
                 ++end;
-            memmove(exp + start, exp + end, length - end + 1);
+            memmove(expr + start, expr + end, length - end + 1);
             length -= end - start;
         }
     }
@@ -279,30 +287,30 @@ bool is_alphabetic(char c)
  Function that replaces the data present between indexes a and b with the real value v sent by the calling function.
  Returns index of the last element of the number printed.
  */
-int value_printer(char *exp, int a, int b, double v)
+int value_printer(char *expr, int a, int b, double v)
 {
     char temp[24];
     int length;
     // Check if the value was negative then became positive to add a +.
-    if (exp[a] == '-' && v >= 0 && a != 0)
+    if (expr[a] == '-' && v >= 0 && a != 0)
         sprintf(temp, "+%.16g", v);
     else
     {
         // case with double negatives ex: --x
-        if (a != 0 && exp[a - 1] == '-' && v < 0)
+        if (a != 0 && expr[a - 1] == '-' && v < 0)
         {
             v = -v;
-            exp[a - 1] = '+';
+            expr[a - 1] = '+';
         }
         sprintf(temp, "%.16g", v);
     }
     length = strlen(temp);
-    string_resizer(exp, b, a + length - 1);
-    strncpy(exp + a, temp, length);
+    string_resizer(expr, b, a + length - 1);
+    strncpy(expr + a, temp, length);
     return a + length - 1;
 }
-// Checks if keyword1 found at index of exp is a part of keyword2
-bool part_of_keyword(char *exp, char *keyword1, char *keyword2, int index)
+// Checks if keyword1 found at index of expr is a part of keyword2
+bool part_of_keyword(char *expr, char *keyword1, char *keyword2, int index)
 {
     int keylen[2], i;
     keylen[0] = strlen(keyword1);
@@ -310,7 +318,7 @@ bool part_of_keyword(char *exp, char *keyword1, char *keyword2, int index)
     // If the length of keyword1 is bigger or equal to keyword2, then no way keyword1 is part of keyword2
     if (keylen[0] >= keylen[1])
         return false;
-    i = r_search(exp, keyword2, index, false);
+    i = r_search(expr, keyword2, index, false);
     if (i == -1)
         return false;
     // If the distance between the match of keyword2 and keyword1 is less than the length of keyword2
@@ -327,39 +335,39 @@ p1 must be the start of the first operand, p2 the start of the second operand an
 For right implicit multiplication:
 p1 must be the start of the first operand, p2 the end of it, and p3 the end of the second operand.
 */
-void shift_and_multiply(char *exp, int *p1, int *p2, int *p3, char direction)
+void shift_and_multiply(char *expr, int *p1, int *p2, int *p3, char direction)
 {
     switch (direction)
     {
     case 'l':
         // Creating 3 empty spaces to accomodate for ( * )
-        string_resizer(exp, *p3, *p3 + 3);
-        memmove(exp + *p2 + 2, exp + *p2, *p3 - *p2 + 1);
+        string_resizer(expr, *p3, *p3 + 3);
+        memmove(expr + *p2 + 2, expr + *p2, *p3 - *p2 + 1);
         *p3 += 3;
-        memmove(exp + *p1 + 1, exp + *p1, *p2 - *p1);
-        exp[*p1] = '(';
-        exp[*p2 + 1] = '*';
-        exp[*p3] = ')';
+        memmove(expr + *p1 + 1, expr + *p1, *p2 - *p1);
+        expr[*p1] = '(';
+        expr[*p2 + 1] = '*';
+        expr[*p3] = ')';
         *p2 = *p1;
         break;
     case 'r':
         // Creating 3 empty spaces to accomodate for ( * )
-        string_resizer(exp, *p3, *p3 + 3);
-        memmove(exp + *p2 + 3, exp + *p2 + 1, *p3 - *p2);
+        string_resizer(expr, *p3, *p3 + 3);
+        memmove(expr + *p2 + 3, expr + *p2 + 1, *p3 - *p2);
         *p3 += 2;
-        memmove(exp + *p1 + 1, exp + *p1, *p2 - *p1 + 1);
-        exp[*p1] = '(';
-        exp[*p3 + 1] = ')';
-        exp[*p2 + 2] = '*';
+        memmove(expr + *p1 + 1, expr + *p1, *p2 - *p1 + 1);
+        expr[*p1] = '(';
+        expr[*p3 + 1] = ')';
+        expr[*p2 + 2] = '*';
         ++*p1;
     }
 }
 // Function that checks if the number starting at start is valid
-bool is_valid_number(char *exp, int start)
+bool is_valid_number(char *expr, int start)
 {
-    if (exp[start] == '+' || exp[start] == '-')
+    if (expr[start] == '+' || expr[start] == '-')
         ++start;
-    if (is_number(exp[start]) || exp[start] == 'i')
+    if (is_number(expr[start]) || expr[start] == 'i')
         return true;
     else
         return false;
@@ -381,22 +389,32 @@ bool implicit_multiplication(char **expr)
     // Implicit multiplication with parenthesis
     while (i != -1)
     {
-        k = find_closing_parenthesis(expr_ptr, i);
-        expr_ptr[i] = '[';
-        expr_ptr[k] = ']';
-        i = k + 1;
-        k = find_closing_parenthesis(expr_ptr, i);
-        if (k == -1)
-            return false;
-        expr_ptr[i] = '[';
-        expr_ptr[k] = ']';
-        string_resizer(expr_ptr, k, k + 2);
-        memmove(expr_ptr + symbol + 1, expr_ptr + symbol, k - symbol + 1);
-        expr_ptr[symbol] = '(';
-        expr_ptr[k + 2] = ')';
-        i = symbol;
-        j = find_closing_parenthesis(expr_ptr, i);
+        symbol = -1;
+        // Preventing implicit multiplication on being performed on int and d/dx parenthesis
+        if (i > 2 && strncmp(*expr + i - 3, "int", 3) == 0)
+            symbol = i - 3;
+        else if (i > 3 && strncmp(*expr + i - 4, "d/dx", 4) == 0)
+            symbol = i - 4;
+        if (symbol != -1)
+        {
+            k = find_closing_parenthesis(*expr, i);
+            *expr[i] = '[';
+            *expr[k] = ']';
+            i = k + 1;
+            k = find_closing_parenthesis(*expr, i);
+            if (k == -1)
+                return false;
+            *expr[i] = '[';
+            *expr[k] = ']';
+            string_resizer(*expr, k, k + 2);
+            memmove(expr + symbol + 1, expr + symbol, k - symbol + 1);
+            *expr[symbol] = '(';
+            *expr[k + 2] = ')';
+            i = symbol;
+        }
+        j = find_closing_parenthesis(*expr, i);
         condition_met = true;
+
         if (i != 0)
         {
             // Case where the implicit multiplication is with a number
@@ -437,9 +455,9 @@ bool implicit_multiplication(char **expr)
     *expr = realloc(*expr, (strlen(*expr) + 1) * sizeof(char));
     return true;
 }
-bool var_implicit_multiplication(char *exp)
+bool var_implicit_multiplication(char *expr)
 {
-    char *keyword[] = {"ans", "exp", "pi", "x", "i", "sin", "ceil", "dx"};
+    char *keyword[] = {"ans", "expr", "pi", "x", "i", "sin", "ceil", "dx"};
     char *function_name[] =
         {"fact", "abs", "arg", "ceil", "floor", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log"};
     int keylen[] = {3, 3, 2, 1, 1, 3, 4, 2}, i, current, k, p1, p2, p3, temp;
@@ -447,13 +465,13 @@ bool var_implicit_multiplication(char *exp)
     for (current = 0; current < 5; ++current)
     {
         // search the first match of keyword[current]
-        i = s_search(exp, keyword[current], 0);
+        i = s_search(expr, keyword[current], 0);
         while (i != -1)
         {
-            // Checking that keyword[current] is not part of another keyword, like x being part of exp
+            // Checking that keyword[current] is not part of another keyword, like x being part of expr
             for (k = 0; k < 8; ++k)
             {
-                if (part_of_keyword(exp, keyword[current], keyword[k], i) == true)
+                if (part_of_keyword(expr, keyword[current], keyword[k], i) == true)
                     goto endl1;
             }
             // Implicit multiplication on the left
@@ -463,20 +481,20 @@ bool var_implicit_multiplication(char *exp)
                 // read_complex can read the complex number without * mark
                 if (current < 4)
                 {
-                    if (is_number(exp[i - 1]))
+                    if (is_number(expr[i - 1]))
                     {
-                        p1 = find_startofnumber(exp, i - 1);
+                        p1 = find_startofnumber(expr, i - 1);
                         p2 = i;
                         p3 = i + keylen[current] - 1;
-                        shift_and_multiply(exp, &p1, &p2, &p3, 'l');
+                        shift_and_multiply(expr, &p1, &p2, &p3, 'l');
                         i += 2;
                     }
-                    else if (exp[i - 1] == ')')
+                    else if (expr[i - 1] == ')')
                     {
-                        p1 = find_opening_parenthesis(exp, i - 1);
+                        p1 = find_opening_parenthesis(expr, i - 1);
                         p2 = i;
                         p3 = i + keylen[current] - 1;
-                        shift_and_multiply(exp, &p1, &p2, &p3, 'l');
+                        shift_and_multiply(expr, &p1, &p2, &p3, 'l');
                         i += 2;
                     }
                 }
@@ -485,13 +503,13 @@ bool var_implicit_multiplication(char *exp)
                 {
                     if (i - keylen[k] < 0)
                         continue;
-                    temp = strncmp(keyword[k], exp + i - keylen[k], keylen[k]);
+                    temp = strncmp(keyword[k], expr + i - keylen[k], keylen[k]);
                     if (temp == 0)
                     {
                         p1 = i - keylen[k];
                         p2 = i;
                         p3 = i + keylen[current] - 1;
-                        shift_and_multiply(exp, &p1, &p2, &p3, 'l');
+                        shift_and_multiply(expr, &p1, &p2, &p3, 'l');
                         i += 2;
                         break;
                     }
@@ -499,44 +517,44 @@ bool var_implicit_multiplication(char *exp)
             }
             // Implicit multiplication on the right
             // i + keylen[j] is the index of the first element after the keyword found
-            if (exp[i + keylen[current]] != '\0')
+            if (expr[i + keylen[current]] != '\0')
             {
                 if (current < 4)
                 {
-                    if (is_number(exp[i + keylen[current]]) == true)
+                    if (is_number(expr[i + keylen[current]]) == true)
                     {
                         p1 = i;
                         p2 = i + keylen[current] - 1;
-                        p3 = find_endofnumber(exp, p2 + 1);
-                        shift_and_multiply(exp, &p1, &p2, &p3, 'r');
+                        p3 = find_endofnumber(expr, p2 + 1);
+                        shift_and_multiply(expr, &p1, &p2, &p3, 'r');
                         ++i;
                     }
-                    else if (exp[i + keylen[current]] == '(')
+                    else if (expr[i + keylen[current]] == '(')
                     {
                         p1 = i;
                         p2 = i + keylen[current] - 1;
-                        p3 = find_closing_parenthesis(exp, p2 + 1);
-                        shift_and_multiply(exp, &p1, &p2, &p3, 'r');
+                        p3 = find_closing_parenthesis(expr, p2 + 1);
+                        shift_and_multiply(expr, &p1, &p2, &p3, 'r');
                         ++i;
                     }
                 }
                 // keyword[k] is the variable being checked if it is being implicitly multiplied with keyword[j]
                 for (k = 0; k < 5; ++k)
                 {
-                    temp = strncmp(keyword[k], exp + i + keylen[current], keylen[k]);
+                    temp = strncmp(keyword[k], expr + i + keylen[current], keylen[k]);
                     if (temp == 0)
                     {
                         p1 = i;
                         p2 = i + keylen[current] - 1;
                         p3 = p2 + keylen[k];
-                        shift_and_multiply(exp, &p1, &p2, &p3, 'r');
+                        shift_and_multiply(expr, &p1, &p2, &p3, 'r');
                         break;
                     }
                 }
             }
         endl1:;
             // Find next match of keyword[j]
-            i = s_search(exp, keyword[current], i + keylen[current]);
+            i = s_search(expr, keyword[current], i + keylen[current]);
         }
     }
     int length;
@@ -545,7 +563,7 @@ bool var_implicit_multiplication(char *exp)
     for (current = 0; current < 19; ++current)
     {
         length = strlen(function_name[current]);
-        i = s_search(exp, function_name[current], 0);
+        i = s_search(expr, function_name[current], 0);
         while (i != -1)
         {
             p2 = i;
@@ -554,28 +572,28 @@ bool var_implicit_multiplication(char *exp)
                 // Checking that the keyword is not a part of another keyword
                 for (k = 4; k < 16; ++k)
                 {
-                    if (part_of_keyword(exp, function_name[current], function_name[k], i) == true)
+                    if (part_of_keyword(expr, function_name[current], function_name[k], i) == true)
                         goto endl2;
                 }
             }
             // Add enclosing parenthesis for cases like cos x
-            if (exp[i + length] != '(')
+            if (expr[i + length] != '(')
             {
                 int start = i + length, end;
-                if (exp[start] == '\0' || (exp[start] != '-' && exp[start] != '+' && is_op(exp[start])))
+                if (expr[start] == '\0' || (expr[start] != '-' && expr[start] != '+' && is_op(expr[start])))
                 {
                     error_handler("Missing function parameter.", 1, 1, start);
                     return false;
                 }
                 // Number following a scientific function
-                if (is_valid_number(exp, start))
-                    end = find_endofnumber(exp, start);
-                else if (is_op(exp[start + 1]) == false)
+                if (is_valid_number(expr, start))
+                    end = find_endofnumber(expr, start);
+                else if (is_op(expr[start + 1]) == false)
                 {
                     // Variable following a scientific function
-                    end = nextop(exp, start + 1) - 1;
+                    end = nextop(expr, start + 1) - 1;
                     if (end == -2)
-                        end = strlen(exp) - 1;
+                        end = strlen(expr) - 1;
                     if (end == start - 1)
                     {
                         error_handler("Missing function parameter.", 1, 1, start);
@@ -583,22 +601,22 @@ bool var_implicit_multiplication(char *exp)
                     }
                 }
                 // Shifting after the function to make room for enclosing parenthesis
-                string_resizer(exp, end, end + 2);
-                memmove(exp + start + 1, exp + start, end - start + 1);
-                exp[start] = '(';
-                exp[end + 2] = ')';
+                string_resizer(expr, end, end + 2);
+                memmove(expr + start + 1, expr + start, end - start + 1);
+                expr[start] = '(';
+                expr[end + 2] = ')';
                 p3 = end + 2;
             }
             // Implicit multiplication on the left
             if (i != 0)
             {
-                if (is_number(exp[i - 1]) == false && is_op(exp[i - 1]) == false)
+                if (is_number(expr[i - 1]) == false && is_op(expr[i - 1]) == false)
                 {
                     bool success = false;
                     for (k = 0; k < 4; ++k)
                     {
-                        // Verifying that the scientific function is not preceded by any variable (ans,pi,exp,x)
-                        if (i >= keylen[k] && r_search(exp, keyword[k], i, true) != i - keylen[k])
+                        // Verifying that the scientific function is not preceded by any variable (ans,pi,expr,x)
+                        if (i >= keylen[k] && r_search(expr, keyword[k], i, true) != i - keylen[k])
                         {
                             p1 = i - keylen[k];
                             success = true;
@@ -608,57 +626,57 @@ bool var_implicit_multiplication(char *exp)
                     // Case where a scientific function is preceded by another scientific function (or possibly garbage)
                     if (success == false)
                     {
-                        string_resizer(exp, p3, p3 + 2);
-                        memmove(exp + p2 + 1, exp + p2, p3 - p2 + 1);
+                        string_resizer(expr, p3, p3 + 2);
+                        memmove(expr + p2 + 1, expr + p2, p3 - p2 + 1);
                         // Encasing the function in parenthesis
-                        exp[p2] = '(';
-                        exp[p3 + 2] = ')';
-                        i = s_search(exp, function_name[current], i + length + 1);
+                        expr[p2] = '(';
+                        expr[p3 + 2] = ')';
+                        i = s_search(expr, function_name[current], i + length + 1);
                         continue;
                     }
                 }
                 // Case where the scientific function is preceded by a number
                 // Add a * sign after the number
-                else if (is_number(exp[i - 1]) || exp[i - 1] == 'i')
+                else if (is_number(expr[i - 1]) || expr[i - 1] == 'i')
                 {
-                    string_resizer(exp, i - 1, i);
-                    exp[i++] = '*';
+                    string_resizer(expr, i - 1, i);
+                    expr[i++] = '*';
                 }
             }
         // Initializing the next run
         endl2:;
-            i = s_search(exp, function_name[current], i + length);
+            i = s_search(expr, function_name[current], i + length);
         }
     }
     return true;
 }
 // Function to find the index of the number's end
-int find_endofnumber(char *exp, int start)
+int find_endofnumber(char *expr, int start)
 {
     int end = start;
     /*
     Algorithm:
     * Starting from "start" check if the char at end+1 is a number, if true increment end
     * If not, check the following cases:
-    * exp[end+1] is a point '.' before scientific notation, scientific notations 'e' 'E': increment end
-    * exp[end+1] is the imaginary number 'i': Increment end then break
-    * exp[end+1] is an add/subtract operator following a scientific notation, increment end
+    * expr[end+1] is a point '.' before scientific notation, scientific notations 'e' 'E': increment end
+    * expr[end+1] is the imaginary number 'i': Increment end then break
+    * expr[end+1] is an add/subtract operator following a scientific notation, increment end
     *
     * If none of the following cases applies, break execution and return end
     */
     while (1)
     {
-        if (is_number(exp[end + 1]) == true && exp[end + 1] != '\0')
+        if (is_number(expr[end + 1]) == true && expr[end + 1] != '\0')
             ++end;
         else
         {
-            if (exp[end + 1] == 'e' || exp[end + 1] == 'E')
+            if (expr[end + 1] == 'e' || expr[end + 1] == 'E')
                 ++end;
-            else if (exp[end + 1] == '.')
+            else if (expr[end + 1] == '.')
                 ++end;
-            else if ((exp[end + 1] == '+' || exp[end + 1] == '-') && (exp[end] == 'e' || exp[end] == 'E'))
+            else if ((expr[end + 1] == '+' || expr[end + 1] == '-') && (expr[end] == 'e' || expr[end] == 'E'))
                 ++end;
-            else if (exp[end + 1] == 'i')
+            else if (expr[end + 1] == 'i')
             {
                 ++end;
                 break;
@@ -669,7 +687,7 @@ int find_endofnumber(char *exp, int start)
     }
     return end;
 }
-int find_startofnumber(char *exp, int end)
+int find_startofnumber(char *expr, int end)
 {
     int start = end;
     /*
@@ -678,10 +696,10 @@ int find_startofnumber(char *exp, int end)
     * If start=0, break.
     * Check if the char at start-1 is a number, if true decrement start.
     * If not handle the following cases:
-    * exp[start-1] is the imaginary number 'i': decrement start and break (this means i is the start of the number)
-    * exp[start-1] is a point, scientific notation (e,E): decrement start
-    * exp[start-1] is an add/subtract following a scientific notation: subtract 2 from start
-    * exp[start-1] is a - operator: decrement start then break
+    * expr[start-1] is the imaginary number 'i': decrement start and break (this means i is the start of the number)
+    * expr[start-1] is a point, scientific notation (e,E): decrement start
+    * expr[start-1] is an add/subtract following a scientific notation: subtract 2 from start
+    * expr[start-1] is a - operator: decrement start then break
     *
     * If none of the conditions above applies, break.
     */
@@ -689,20 +707,20 @@ int find_startofnumber(char *exp, int end)
     {
         if (start == 0)
             break;
-        if (is_number(exp[start - 1]) == true)
+        if (is_number(expr[start - 1]) == true)
             --start;
         else
         {
-            if (exp[start - 1] == 'i')
+            if (expr[start - 1] == 'i')
             {
                 --start;
                 break;
             }
-            if (exp[start - 1] == 'e' || exp[start - 1] == 'E' || exp[start - 1] == '.')
+            if (expr[start - 1] == 'e' || expr[start - 1] == 'E' || expr[start - 1] == '.')
                 --start;
-            else if (start > 1 && (exp[start - 1] == '+' || exp[start - 1] == '-') && (exp[start - 2] == 'e' || exp[start - 2] == 'E'))
+            else if (start > 1 && (expr[start - 1] == '+' || expr[start - 1] == '-') && (expr[start - 2] == 'e' || expr[start - 2] == 'E'))
                 start -= 2;
-            else if (exp[start - 1] == '-')
+            else if (expr[start - 1] == '-')
             {
                 --start;
                 break;
@@ -776,7 +794,7 @@ void nice_print(char *format, double value, bool is_first)
     printf(format, fabs(value));
 }
 // Find the second deepest parenthesis
-int second_deepest_parenthesis(char *exp)
+int second_deepest_parenthesis(char *expr)
 {
     int i, open, closed;
     /*
@@ -785,14 +803,14 @@ int second_deepest_parenthesis(char *exp)
     * Search the open parenthesis preceding it.
     * If there is no close parenthesis between these 2 parenthesis, return
     */
-    i = find_deepest_parenthesis(exp);
+    i = find_deepest_parenthesis(expr);
     // Case where the deepest parenthesis is the first one,
     if (i == 0)
         return -1;
     while (i > 0)
     {
-        open = previous_open_parenthesis(exp, i - 1);
-        closed = previous_closed_parenthesis(exp, i);
+        open = previous_open_parenthesis(expr, i - 1);
+        closed = previous_closed_parenthesis(expr, i);
         // The only case where closed==open is when no open or closed parenthesis is preceding the position
         if (closed == open)
             return -1;
@@ -806,42 +824,42 @@ int second_deepest_parenthesis(char *exp)
     }
     return -1;
 }
-int previous_open_parenthesis(char *exp, int p)
+int previous_open_parenthesis(char *expr, int p)
 {
-    while (exp[p] != '(' && p > 0)
+    while (expr[p] != '(' && p > 0)
         --p;
     // Checking if the stop was caused by reaching 0 or finding a parenthesis
-    if (p == 0 && exp[p] != '(')
+    if (p == 0 && expr[p] != '(')
         return -1;
     else
         return p;
 }
-int previous_closed_parenthesis(char *exp, int p)
+int previous_closed_parenthesis(char *expr, int p)
 {
-    while (exp[p] != ')' && p > 0)
+    while (expr[p] != ')' && p > 0)
         --p;
     // Checking if the stop was caused by reaching 0 or finding a parenthesis
-    if (p == 0 && exp[p] != ')')
+    if (p == 0 && expr[p] != ')')
         return -1;
     else
         return p;
 }
-int next_open_parenthesis(char *exp, int p)
+int next_open_parenthesis(char *expr, int p)
 {
-    while (exp[p] != '(' && exp[p] != '\0')
+    while (expr[p] != '(' && expr[p] != '\0')
         ++p;
     // Checking if the stop was caused by reaching \0 or finding a parenthesis
-    if (exp[p] == '\0')
+    if (expr[p] == '\0')
         return -1;
     else
         return p;
 }
-int next_closed_parenthesis(char *exp, int p)
+int next_closed_parenthesis(char *expr, int p)
 {
-    while (exp[p] != ')' && exp[p] != '\0')
+    while (expr[p] != ')' && expr[p] != '\0')
         ++p;
     // Checking if the stop was caused by reaching \0 or finding a parenthesis
-    if (exp[p] == '\0')
+    if (expr[p] == '\0')
         return -1;
     else
         return p;
@@ -881,17 +899,17 @@ int compare_ints_reverse(const void *a, const void *b)
 Function that checks if every open parenthesis has a closing parenthesis and that no parenthesis pair is empty.
 Returns true when checks pass
 */
-bool parenthesis_check(char *exp)
+bool parenthesis_check(char *expr)
 {
-    int open, close = -1, k = 0, *open_position, *close_position, length = strlen(exp);
+    int open, close = -1, k = 0, *open_position, *close_position, length = strlen(expr);
     open_position = (int *)malloc(length * sizeof(int));
     close_position = (int *)malloc(length * sizeof(int));
     *open_position = *close_position = -2;
-    open = next_open_parenthesis(exp, 0);
+    open = next_open_parenthesis(expr, 0);
     // Check if every open parenthesis has a close parenthesis and log their indexes
     while (open != -1)
     {
-        close = find_closing_parenthesis(exp, open);
+        close = find_closing_parenthesis(expr, open);
         if (close - open == 1)
         {
             error_handler("An empty parenthesis pair.", 1, 1, open);
@@ -906,16 +924,16 @@ bool parenthesis_check(char *exp)
         }
         open_position[k] = open;
         close_position[k] = close;
-        open = next_open_parenthesis(exp, open + 1);
+        open = next_open_parenthesis(expr, open + 1);
         ++k;
     }
     qsort(open_position, k, sizeof(int), compare_ints);
     qsort(close_position, k, sizeof(int), compare_ints_reverse);
     // Case of no open parenthesis, check if a close parenthesis is present
     if (k == 0)
-        close = next_closed_parenthesis(exp, 0);
+        close = next_closed_parenthesis(expr, 0);
     else
-        close = next_closed_parenthesis(exp, close_position[0] + 1);
+        close = next_closed_parenthesis(expr, close_position[0] + 1);
 
     if (close != -1)
     {
@@ -937,7 +955,7 @@ Function that compares the priority of 2 operators, returns:
 int priority_test(char operator1, char operator2)
 {
     char operators[7] = {'!', '^', '*', '/', '%', '+', '-'};
-    short priority[7] = {4, 3, 2, 2, 2, 1, 1}, op1_p='\0', op2_p='\0', i;
+    short priority[7] = {4, 3, 2, 2, 2, 1, 1}, op1_p = '\0', op2_p = '\0', i;
     // Find priority of LeftOperand
     for (i = 0; i < 7; ++i)
     {
@@ -952,7 +970,7 @@ int priority_test(char operator1, char operator2)
             break;
         }
     }
-    if(op1_p=='\0'||op2_p=='\0')
+    if (op1_p == '\0' || op2_p == '\0')
     {
         puts("Invalid operators in priority_test.");
         exit(3);
@@ -967,17 +985,17 @@ int priority_test(char operator1, char operator2)
     exit(-1);
 }
 // Replaces the keyword with the appropriate value
-void var_to_val(char *exp, char *keyword, double value)
+void var_to_val(char *expr, char *keyword, double value)
 {
     int i = 0, keylen = strlen(keyword);
-    while (exp[i] != '\0')
+    while (expr[i] != '\0')
     {
         // search for the next occurence of the keyword
-        i = s_search(exp, keyword, i);
+        i = s_search(expr, keyword, i);
         if (i == -1)
             return;
         // print the value in place of the keyword
-        i = value_printer(exp, i, i + keylen - 1, value);
+        i = value_printer(expr, i, i + keylen - 1, value);
     }
 }
 // Function that extracts arguments separated by "," from a string and returns them in a struct
