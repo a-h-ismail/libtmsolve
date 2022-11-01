@@ -52,7 +52,7 @@ double complex calculate_expr(char *expr, bool enable_complex)
         return false;
     if (implicit_multiplication(&expr) == false)
         return false;
-    math_struct = parse_expr(expr, false, false);
+    math_struct = parse_expr(expr, false, enable_complex);
     if (math_struct == NULL)
         return NAN;
     result = evaluate(math_struct);
@@ -292,7 +292,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     // + 1 for the subexpression with depth 0
     subexpr_count = subexpr_index + 1;
     // Shrink the block to the required size
-    subexpr_ptr = realloc(subexpr_ptr, subexpr_count * sizeof(subexpr_count));
+    subexpr_ptr = realloc(subexpr_ptr, subexpr_count * sizeof(s_expression));
     // Copy the pointer to the structure
     math_struct->subexpr_ptr = subexpr_ptr;
 
@@ -399,7 +399,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             }
             else
             {
-                // Determining the number of complex functions to check at runtime
+                // Determining the number of complex functions to check
                 int total = sizeof(cmplx_function) / sizeof(*cmplx_function);
                 for (i = 0; i < total; ++i)
                 {
@@ -465,6 +465,11 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             subexpr_ptr[subexpr_index].start_node = 0;
             subexpr_ptr[subexpr_index].result = &(node_block->node_result);
             node_block[0].next = NULL;
+            if (subexpr_index == subexpr_count - 1)
+            {
+                node_block[0].node_result = &math_struct->answer;
+                break;
+            }
             continue;
         }
         else
@@ -751,9 +756,9 @@ void reduce_fraction(fraction *fraction_str)
     int_factor *num_factor, *denom_factor;
     num_factor = find_factors(fraction_str->b);
     denom_factor = find_factors(fraction_str->c);
-    if(num_factor->factor==0)
+    if (num_factor->factor == 0)
         return;
-    if(denom_factor->factor==0)
+    if (denom_factor->factor == 0)
         return;
     while (num_factor[i].factor != 0 && denom_factor[j].factor != 0)
     {
@@ -873,7 +878,7 @@ fraction decimal_to_fraction(double value, bool inverse_process)
     else
     {
         result.c = pow(10, decimal_length);
-        result.b = value*result.c;
+        result.b = value * result.c;
         reduce_fraction(&result);
         return result;
     }
@@ -882,7 +887,7 @@ fraction decimal_to_fraction(double value, bool inverse_process)
     {
         int pattern_start;
         // Just in case the pattern was found to be zeors due to minor rounding (like 5.0000000000000003)
-        if(pattern[0]=='0')
+        if (pattern[0] == '0')
             return result;
         // Generate the denominator
         for (i = 0; i < strlen(pattern); ++i)
