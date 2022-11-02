@@ -179,7 +179,7 @@ int find_add_subtract(char *expr, int i)
     while (expr[i] != '+' && expr[i] != '-' && expr[i] != '\0')
     {
         ++i;
-        if (expr[i - 1] == 'e' || expr[i - 1] == 'E' && expr[i] != '\0')
+        if ((expr[i - 1] == 'e' || expr[i - 1] == 'E') && expr[i] != '\0')
             ++i;
     }
     // Check that the stop was not caused by reaching \0
@@ -390,11 +390,6 @@ bool implicit_multiplication(char **expr)
     while (i != -1)
     {
         symbol = -1;
-        // Preventing implicit multiplication on being performed on int and d/dx parenthesis
-        if (i > 2 && strncmp(expr_ptr + i - 3, "int", 3) == 0)
-            symbol = i - 3;
-        else if (i > 3 && strncmp(expr_ptr + i - 4, "d/dx", 4) == 0)
-            symbol = i - 4;
         if (symbol != -1)
         {
             k = find_closing_parenthesis(expr_ptr, i);
@@ -914,12 +909,14 @@ bool parenthesis_check(char *expr)
         {
             error_handler("An empty parenthesis pair.", 1, 1, open);
             free(open_position);
+            free(close_position);
             return false;
         }
         if (close == -1)
         {
             error_handler("An open parenthesis has no close parenthesis.", 1, 1, open);
             free(open_position);
+            free(close_position);
             return false;
         }
         open_position[k] = open;
