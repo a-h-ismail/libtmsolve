@@ -313,6 +313,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     {
         subexpr_ptr[i].function_ptr = NULL;
         subexpr_ptr[i].cmplx_function_ptr = NULL;
+        subexpr_ptr[i].node_list = NULL;
     }
 
     // The whole expression "subexpression"
@@ -371,7 +372,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             else if (is_op(*(expr + i)))
             {
                 // Skipping a + or - used in scientific notation (like 1e+5)
-                if ((expr[i - 1] == 'e' || expr[i - 1] == 'E') && (expr[i] == '+' || expr[i] == '-'))
+                if (i > 0 && (expr[i - 1] == 'e' || expr[i - 1] == 'E') && (expr[i] == '+' || expr[i] == '-'))
                 {
                     ++i;
                     continue;
@@ -689,7 +690,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             tmp_node->node_result = &math_struct->answer;
     }
     // Set the variables metadata
-    if(enable_variables)
+    if (enable_variables)
         set_variable_ptr(math_struct);
     return math_struct;
 }
@@ -817,18 +818,22 @@ fraction decimal_to_fraction(double value, bool inverse_process)
     // Using the denominator as a mean to report failure, if c==0 then the function failed
     result.c = 0;
 
-    if (value > INT32_MAX || fabs(value) < pow(10, -log10(INT32_MAX)))
+    if (fabs(value) > INT32_MAX || fabs(value) < pow(10, -log10(INT32_MAX) + 1))
         return result;
 
     // Store the integer part in 'a'
     result.a = floor(value);
     value -= floor(value);
 
+    // Edge case due to floating point lack of precision
+    if (1 - value < 1e-9)
+        return result;
+
     // The case of an integer
     if (value == 0)
         return result;
 
-    sprintf(printed_value, "%.14g", value);
+    sprintf(printed_value, "%.14lf", value);
     // Removing trailing zeros
     for (i = strlen(printed_value) - 1; i > decimal_point; --i)
     {
@@ -911,7 +916,7 @@ fraction decimal_to_fraction(double value, bool inverse_process)
         pattern_start = s_search(printed_value, pattern, decimal_point + 1);
         if (pattern_start > decimal_point + 1)
         {
-            result.b *= value * (pow(10, pattern_start - decimal_point - 1 + strlen(pattern)) - pow(10, pattern_start - decimal_point - 1));
+            result.b = round(value * (pow(10, pattern_start - decimal_point - 1 + strlen(pattern)) - pow(10, pattern_start - decimal_point - 1)));
             result.c *= pow(10, pattern_start - decimal_point - 1);
         }
         else
