@@ -38,25 +38,37 @@ double factorial(double value)
 }
 double complex calculate_expr(char *expr, bool enable_complex)
 {
-    double result;
+    double complex result;
     math_expr *math_struct;
+    char *expr_local = malloc((strlen(expr) + 1) * sizeof(char));
+    strcpy(expr_local, expr);
     // Check for empty input
-    if (expr[0] == '\0')
+    if (expr_local[0] == '\0')
     {
         error_handler("Empty input.", 1, 1, -1);
         return false;
     }
     // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
-    combine_add_subtract(expr, 0, strlen(expr) - 1);
-    if (parenthesis_check(expr) == false)
+    combine_add_subtract(expr_local, 0, strlen(expr_local) - 2);
+    if (parenthesis_check(expr_local) == false)
+    {
+        free(expr_local);
         return false;
-    if (implicit_multiplication(&expr) == false)
+    }
+    if (implicit_multiplication(&expr_local) == false)
+    {
+        free(expr_local);
         return false;
-    math_struct = parse_expr(expr, false, enable_complex);
+    }
+    math_struct = parse_expr(expr_local, false, enable_complex);
     if (math_struct == NULL)
+    {
+        free(expr_local);
         return NAN;
+    }
     result = evaluate(math_struct);
     delete_math_expr(math_struct);
+    free(expr_local);
     return result;
 }
 // Evaluates the expresssion
@@ -151,7 +163,7 @@ double complex evaluate(math_expr *math_struct)
                     break;
 
                 case '^':
-                    *(i_node->node_result) = pow(i_node->left_operand, i_node->right_operand);
+                    *(i_node->node_result) = cpow(i_node->left_operand, i_node->right_operand);
                     break;
                 }
                 i_node = i_node->next;
@@ -176,16 +188,16 @@ double complex evaluate(math_expr *math_struct)
 }
 // Sets the variable in x_node to the left or right operand "r","l"
 // Returns true if the variable x was found, false otherwise
-bool set_variable_metadata(char *exp, node *x_node, char operand)
+bool set_variable_metadata(char *expr, node *x_node, char operand)
 {
     bool is_negative = false, is_variable = false;
-    if (*exp == 'x')
+    if (*expr == 'x')
         is_variable = true;
-    else if (exp[1] == 'x')
+    else if (expr[1] == 'x')
     {
-        if (*exp == '+')
+        if (*expr == '+')
             is_variable = true;
-        else if (*exp == '-')
+        else if (*expr == '-')
             is_variable = is_negative = true;
     }
     // The value is not the variable x
@@ -676,6 +688,9 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         if (subexpr_index == subexpr_count - 1)
             tmp_node->node_result = &math_struct->answer;
     }
+    // Set the variables metadata
+    if(enable_variables)
+        set_variable_ptr(math_struct);
     return math_struct;
 }
 // Free a math_expr related memory
