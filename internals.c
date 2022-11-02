@@ -77,8 +77,7 @@ int error_handler(char *error, int arg1, ...)
                 error_print(error_table[i].err_exp, error_table[i].error_index);
         }
         error_handler(NULL, 3, 0);
-        if (arg2 == 1)
-            printf("\n");
+
     // Clear errors
     case 3:
         arg2 = va_arg(arguments, int);
