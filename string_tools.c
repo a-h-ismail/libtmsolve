@@ -179,7 +179,7 @@ int find_add_subtract(char *expr, int i)
     while (expr[i] != '+' && expr[i] != '-' && expr[i] != '\0')
     {
         ++i;
-        if (expr[i - 1] == 'e' || expr[i - 1] == 'E')
+        if (expr[i - 1] == 'e' || expr[i - 1] == 'E' && expr[i] != '\0')
             ++i;
     }
     // Check that the stop was not caused by reaching \0
@@ -391,28 +391,28 @@ bool implicit_multiplication(char **expr)
     {
         symbol = -1;
         // Preventing implicit multiplication on being performed on int and d/dx parenthesis
-        if (i > 2 && strncmp(*expr + i - 3, "int", 3) == 0)
+        if (i > 2 && strncmp(expr_ptr + i - 3, "int", 3) == 0)
             symbol = i - 3;
-        else if (i > 3 && strncmp(*expr + i - 4, "d/dx", 4) == 0)
+        else if (i > 3 && strncmp(expr_ptr + i - 4, "d/dx", 4) == 0)
             symbol = i - 4;
         if (symbol != -1)
         {
-            k = find_closing_parenthesis(*expr, i);
-            *expr[i] = '[';
-            *expr[k] = ']';
+            k = find_closing_parenthesis(expr_ptr, i);
+            expr_ptr[i] = '[';
+            expr_ptr[k] = ']';
             i = k + 1;
-            k = find_closing_parenthesis(*expr, i);
+            k = find_closing_parenthesis(expr_ptr, i);
             if (k == -1)
                 return false;
-            *expr[i] = '[';
-            *expr[k] = ']';
-            string_resizer(*expr, k, k + 2);
+            expr_ptr[i] = '[';
+            expr_ptr[k] = ']';
+            string_resizer(expr_ptr, k, k + 2);
             memmove(expr + symbol + 1, expr + symbol, k - symbol + 1);
-            *expr[symbol] = '(';
-            *expr[k + 2] = ')';
+            expr_ptr[symbol] = '(';
+            expr_ptr[k + 2] = ')';
             i = symbol;
         }
-        j = find_closing_parenthesis(*expr, i);
+        j = find_closing_parenthesis(expr_ptr, i);
         condition_met = true;
 
         if (i != 0)
@@ -938,6 +938,8 @@ bool parenthesis_check(char *expr)
     if (close != -1)
     {
         error_handler("Extra close parenthesis.", 1, 1, close);
+        free(open_position);
+        free(close_position);
         return false;
     }
     // Checking that no useless parenthesis pairs are written (planned for later)
