@@ -1,4 +1,3 @@
 - erroneous syntax at the end of a number (ex: 3+6wduhcbuwrb) produces correct result ignoring the error
 - Scientific notation does not support floating point exponent (ignores decimal part)
-- Implicit multiplication has an uninitialized value in use
-- Nesting integration causes the process to hang (due to recalculation of the nested integral)
+- Nesting special functions causes the calculator to hang (due to mixed separators)
