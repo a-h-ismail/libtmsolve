@@ -4,220 +4,192 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "matrix.h"
 #include "internals.h"
-// Warning: next section requires some algebra
-double *find_subm(double *A, int i, int j)
+// Generate a matrix with dimensions
+matrix_str *new_matrix(int rows, int columns)
 {
-    double *B;
-    int a, i2, x, y, j2;
-    a = *A;
-    B = (double *)malloc(((a - 1) * (a - 1) + 2) * sizeof(double));
-    *B = *(B + 1) = a - 1;
-    B = B + 2;
-    A = A + 2;
-    y = 0;
-    for (i2 = 0; i2 < a; ++i2)
-    {
-        x = 0;
-        //first we select the row to copy
-        if (i2 == i)
-        {
-            ++i2;
-            //break on the end of the matrix
-            if (i2 == a)
-                break;
-        }
-        for (j2 = 0; j2 < a; ++j2)
-        {
-            //we select the row to copy
-            if (j2 == j)
-            {
-                ++j2;
-                if (j2 == a)
-                    break;
-            }
-            *(B + (a - 1) * y + x) = *(A + (a * i2) + j2);
-            ++x;
-        }
-        ++y;
-    }
-    return B - 2;
+    matrix_str *matrix;
+    matrix = malloc(sizeof(matrix_str));
+    matrix->columns = columns;
+    matrix->rows = rows;
+    matrix->data = malloc(rows * sizeof(double *));
+    for (int i = 0; i < rows; ++i)
+        matrix->data[i] = malloc(columns * sizeof(double));
+    return matrix;
 }
-//Multiply matrixes A and B and return a pointer to the resulting matrix, returns NULL in case of error
-double *matrix_multiply(double *A, double *B)
+// Delete a matrix structure
+void delete_matrix(matrix_str *matrix)
 {
-    int i, j, y, a, b, d;
-    double *R;
-    if (*(A + 1) != *B)
+    for (int i = 0; i < matrix->rows; ++i)
+        free(matrix->data[i]);
+    free(matrix->data);
+    free(matrix);
+}
+// Generates a new matrix derived from "matrix" excluding row and col
+matrix_str *remove_matrix_row_col(matrix_str *matrix, int row, int col)
+{
+    matrix_str *derived_matrix;
+    derived_matrix = new_matrix(matrix->rows - 1, matrix->columns - 1);
+    int parent_row, parent_col, derived_row, derived_col;
+    for (parent_row = derived_row = 0; parent_row < matrix->rows; ++parent_row)
+    {
+        if (parent_row == row)
+            continue;
+        for (parent_col = derived_col = 0; parent_col < matrix->columns; ++parent_col)
+        {
+            if (parent_col == col)
+                continue;
+            else
+                derived_matrix->data[derived_row][derived_col++] = matrix->data[parent_row][parent_col];
+        }
+        ++derived_row;
+    }
+    return derived_matrix;
+}
+// Multiply matrixes A and B and return a pointer to the resulting matrix, returns NULL in case of error
+matrix_str *matrix_multiply(matrix_str *A, matrix_str *B)
+{
+    int i, j, k;
+    matrix_str *result;
+    if (A->columns != B->rows)
     {
         puts("Cannot multiply, incompatible dimensions.");
         return NULL;
     }
-    R = (double *)calloc(*A * *(B + 1) + 2, sizeof(double));
-    a = *A;
-    b = *(A + 1);
-    d = *(B + 1);
-    //We offset A and B by 2 because first 2 elements are the dimensions
-    A = A + 2;
-    B = B + 2;
-    *R = a;
-    *(R + 1) = d;
-    R = R + 2;
-    //i defines the row at which we are working.
-    for (i = 0; i < a; i++)
-        for (j = 0; j < d; ++j)
+    result = new_matrix(A->rows, B->columns);
+    // i defines the row at which we are working.
+    for (i = 0; i < A->rows; ++i)
+        for (j = 0; j < B->columns; ++j)
         {
-            y = 0;
-            //take a couple minutes and read carefully, it isn't that hard
-            while (y < d)
-            {
-                *(R + (d * i) + j) += *(A + (i * b) + y) * *(B + (y * d) + j);
-                ++y;
-            }
+            result->data[i][j] = 0;
+            // In the next loop: i, j are constant, k sweeps the column of the B matrix
+            for (k = 0; k < B->rows; ++k)
+                result->data[i][j] += A->data[i][k] * B->data[k][j];
         }
-    return R - 2;
+    return result;
 }
-//Function that replaces the column of the matrix with the matrix_column sent as argument
-void remplace_matrix_column(double *matrix, double *matrix_column, int column)
+// Function that replaces the column of the matrix with the matrix_column sent as argument
+void remplace_matrix_column(matrix_str *matrix, matrix_str *matrix_column, int column)
 {
-    int a, b, i;
-    a = *matrix;
-    b = *(matrix + 1);
-    for (i = 0; i < b; ++i)
-        *(matrix + a * i + column + 2) = *(matrix_column + i);
+    for (int i = 0; i < matrix_column->rows; ++i)
+        matrix->data[i][column] = matrix_column->data[i][0];
 }
-//Create a copy of matrix and returns a pointer to the copy
-double *matrix_copy(double *matrix)
+// Create a copy of matrix and returns a pointer to the copy
+matrix_str *matrix_copy(matrix_str *matrix)
 {
-    double *copy;
-    int a, b, i, n;
+    matrix_str *copy;
     if (matrix == NULL)
         return NULL;
-    a = *matrix;
-    b = *(matrix + 1);
-    n = a * b + 2;
-    copy = (double *)malloc(n * sizeof(double));
-    if (copy == NULL)
-        return NULL;
-    for (i = 0; i < n; ++i)
-        copy[i] = matrix[i];
+
+    copy = new_matrix(matrix->columns, matrix->rows);
+    for (int i = 0; i < matrix->rows; ++i)
+        memcpy(copy->data[i], matrix->data[i], matrix->columns * sizeof(double));
     return copy;
 }
-//Find the determinant of function A, returns NaN on error
-double matrix_det(double *A)
+
+// Find the determinant of matrix A, returns NaN on error
+double matrix_det(matrix_str *A)
 {
-    int a, j;
-    double mult, *B, det = 0;
-    if (*A != *(A + 1))
+    int i;
+    matrix_str *B;
+    double det = 0,tmp;
+    if (A->rows != A->columns)
     {
         puts("Error, matrix must be square.");
         return NAN;
     }
-    a = *A;
-    if (a == 2)
+
+    if (A->rows == 2)
     {
-        det = (*(A + 2) * *(A + 5)) - (*(A + 3) * *(A + 4));
+        det = A->data[0][0] * A->data[1][1] - A->data[1][0] * A->data[0][1];
         return det;
     }
     else
     {
-        A = A + 2;
-        //here j points at the column we are working at
-        for (j = 0; j < a; ++j)
+        // i points at the column we are working at
+        for (i = 0; i < A->columns; ++i)
         {
-            //hold the value pointed to by (0,j) to multiply later
-            if (j % 2 == 0)
-                mult = *(A + j);
+            // hold the value pointed to by (0,j) to multiply later
+            if (i % 2 == 0)
+                tmp = A->data[0][i];
             else
-                mult = -*(A + j);
-            //create a sub array to hold the matrix of order a-1
-            B = find_subm(A - 2, 0, j);
-            det += mult * matrix_det(B);
+                tmp = -A->data[0][i];
+
+            // Get matrix B from matrix A by excluding rows
+            B = remove_matrix_row_col(A, 0, i);
+            det += tmp * matrix_det(B);
             free(B);
         }
     }
     return det;
 }
-double *matrix_tr(double *M)
+// Get the transpose of matrix M
+matrix_str *matrix_tr(matrix_str *M)
 {
-    int i, j, a, b;
-    double *R;
-    a = *M;
-    b = *(M + 1);
-    R = (double *)malloc((a * b + 2) * sizeof(double));
-    *R = b;
-    *(R + 1) = a;
-    R = R + 2;
-    M = M + 2;
-    for (i = 0; i < a; ++i)
-        for (j = 0; j < b; ++j)
-            *(R + (j * a) + i) = *(M + (i * b) + j);
-    return R - 2;
+    int i, j;
+    matrix_str *transpose = new_matrix(M->columns, M->rows);
+    for (i = 0; i < M->rows; ++i)
+        for (j = 0; j < M->columns; ++j)
+            transpose->data[j][i] = M->data[i][j];
+    return transpose;
 }
-double *comatrix(double *M)
+matrix_str *comatrix(matrix_str *M)
 {
-    int i, j, a, b;
-    double *R, *sub, det;
-    //Check for empty matrix
+    int i, j;
+    matrix_str *comatrix, *minor;
+    double det;
+    // Check for empty matrix
     if (M == NULL)
         return NULL;
-    a = *M;
-    b = *(M + 1);
-    R = (double *)malloc((a * b + 2) * sizeof(double));
-    *R = a;
-    *(R + 1) = b;
-    if (a == 1 || a != b)
+    if (M->rows < 2 || M->rows != M->columns)
     {
-        puts("Error, invalid matrix.");
+        error_handler("Error, invalid matrix.", 1, 1);
         return NULL;
     }
-    //Don't forget to decrement the pointer by 2 before sending it anywhere where free exists
-    //You don't want to corrupt your heap, do you?
-    R = R + 2;
-    if (a == 2)
+    comatrix = new_matrix(M->rows, M->columns);
+    if (comatrix->rows == 2)
     {
-        M = M + 2;
-        *R = *(M + 3);
-        *(R + 3) = *M;
-        *(R + 1) = -*(M + 2);
-        *(R + 2) = -*(M + 1);
-        return R - 2;
+        comatrix->data[0][0] = M->data[1][1];
+        comatrix->data[1][1] = M->data[0][0];
+        comatrix->data[0][1] = -M->data[1][0];
+        comatrix->data[1][0] = -M->data[0][1];
+        return comatrix;
     }
-    for (i = 0; i < a; ++i)
-        for (j = 0; j < b; ++j)
+    for (i = 0; i < M->rows; ++i)
+        for (j = 0; j < M->columns; ++j)
         {
-            sub = find_subm(M, i, j);
-            det = matrix_det(sub);
-            free(sub);
-            *(R + (i * b) + j) = pow(-1, i + j + 2) * det;
+            minor = remove_matrix_row_col(M, i, j);
+            det = matrix_det(minor);
+            free(minor);
+            comatrix->data[i][j] = pow(-1, i + j) * det;
         }
-    return R - 2;
+    return comatrix;
 }
-double *matrix_inv(double *M)
+matrix_str *matrix_inv(matrix_str *M)
 {
-    int a, b, i;
-    double det, *R, *prevR;
-    //Check for empty matrix
+    int i,j;
+    double det;
+    matrix_str *inverse, *tmp;
+    // Check for empty matrix
     if (M == NULL)
         return NULL;
-    a = *M;
-    b = *(M + 1);
-    if (a != b || a < 2)
+    if (M->rows != M->columns || M->rows < 2)
     {
-        puts("Error, invalid matrix");
+        puts("Can't invert non square matrix.");
         return NULL;
     }
-    R = comatrix(M);
-    prevR = R;
-    R = matrix_tr(R);
-    free(prevR);
+    inverse = comatrix(M);
+    //tmp stores the comatrix pointer, otherwise it would be lost and memory leaked
+    tmp = inverse;
+    inverse = matrix_tr(inverse);
+    free(tmp);
     det = matrix_det(M);
     if (det == 0)
     {
         puts("Matrix cannot be inverted, determinant = 0.");
         return NULL;
     }
-    R = R + 2;
-    for (i = 0; i < a * b; ++i)
-        *(R + i) = *(R + i) / det;
-    return R - 2;
+    for (i = 0; i < inverse->rows; ++i)
+        for (j = 0; j < inverse->columns;++j)
+            inverse->data[i][j] /= det;
+    return inverse;
 }
