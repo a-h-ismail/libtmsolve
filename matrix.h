@@ -4,11 +4,16 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include <math.h>
 #include <stdlib.h>
-double *find_subm(double *A, int i, int j);
-double *matrix_multiply(double *A, double *B);
-double matrix_det(double *A);
-double *comatrix(double *M);
-double *matrix_tr(double *M);
-double *matrix_inv(double *M);
-void remplace_matrix_column(double *matrix, double *matrix_column, int column);
-double *matrix_copy(double *matrix);
+typedef struct matrix_str
+{
+    int rows, columns;
+    double **data;
+} matrix_str;
+matrix_str *remove_matrix_row_col(matrix_str *matrix, int row, int col);
+matrix_str *matrix_multiply(matrix_str *A, matrix_str *B);
+double matrix_det(matrix_str *A);
+matrix_str *comatrix(matrix_str *M);
+matrix_str *matrix_tr(matrix_str *M);
+matrix_str *matrix_inv(matrix_str *M);
+void remplace_matrix_column(matrix_str *matrix, matrix_str *matrix_column, int column);
+matrix_str *matrix_copy(matrix_str *matrix);
