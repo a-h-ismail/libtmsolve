@@ -1,7 +1,4 @@
-Remove legacy code
-Fix implicit multiplication
 Improve error handler and error_print
-Make a parser variant for complex numbers
 Add support for more than one variable
 Add the ability to save a parsed expression for quick loading
 Allow decimal to fraction convertion for numbers larger than 32 bit int
@@ -9,3 +6,4 @@ Allow decimal to fraction convertion for numbers larger than 32 bit int
 Low priority:
 Add support for more than one variable
 Add the ability of loading a parsed expression with variable substitution
+Add a proper equation mode
