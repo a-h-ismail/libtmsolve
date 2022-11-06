@@ -117,7 +117,7 @@ double matrix_det(matrix_str *A)
             // Get matrix B from matrix A by excluding rows
             B = remove_matrix_row_col(A, 0, i);
             det += tmp * matrix_det(B);
-            free(B);
+            delete_matrix(B);
         }
     }
     return det;
@@ -159,7 +159,7 @@ matrix_str *comatrix(matrix_str *M)
         {
             minor = remove_matrix_row_col(M, i, j);
             det = matrix_det(minor);
-            free(minor);
+            delete_matrix(minor);
             comatrix->data[i][j] = pow(-1, i + j) * det;
         }
     return comatrix;
@@ -181,7 +181,7 @@ matrix_str *matrix_inv(matrix_str *M)
     //tmp stores the comatrix pointer, otherwise it would be lost and memory leaked
     tmp = inverse;
     inverse = matrix_tr(inverse);
-    free(tmp);
+    delete_matrix(tmp);
     det = matrix_det(M);
     if (det == 0)
     {
