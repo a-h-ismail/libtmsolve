@@ -6,6 +6,16 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "internals.h"
 #include "function.h"
 #include "string_tools.h"
+// Function to sort subexpressions by depth, for use with qsort
+int compare_subexps_depth(const void *a, const void *b)
+{
+    if ((*((s_expression *)a)).depth < (*((s_expression *)b)).depth)
+        return 1;
+    else if ((*((s_expression *)a)).depth > (*((s_expression *)b)).depth)
+        return -1;
+    else
+        return 0;
+}
 double complex cabs_z(double complex z)
 {
     return cabs(z);
@@ -108,19 +118,24 @@ double complex evaluate(math_expr *math_struct)
         if (subexpr_ptr[subexpr_index].node_list == NULL)
         {
             char *args;
-            int length = subexpr_ptr[subexpr_index].solve_end - subexpr_ptr[subexpr_index].solve_start + 1;
-            args = malloc((length + 1) * sizeof(char));
-            memcpy(args, g_exp + subexpr_ptr[subexpr_index].solve_start, length);
-            args[length] = '\0';
-            // Calling the extended function
-            **(subexpr_ptr[subexpr_index].result) = (*(subexpr_ptr[subexpr_index].ext_function_ptr))(args);
-            if (isnan((double)**(subexpr_ptr[subexpr_index].result)))
+            if (subexpr_ptr[subexpr_index].execute_extended)
             {
-                error_handler("Math error", 1, 0, subexpr_ptr[subexpr_index].solve_start);
-                return NAN;
+                int length = subexpr_ptr[subexpr_index].solve_end - subexpr_ptr[subexpr_index].solve_start + 1;
+                args = malloc((length + 1) * sizeof(char));
+                memcpy(args, glob_expr + subexpr_ptr[subexpr_index].solve_start, length);
+                args[length] = '\0';
+                // Calling the extended function
+                **(subexpr_ptr[subexpr_index].result) = (*(subexpr_ptr[subexpr_index].ext_function_ptr))(args);
+                if (isnan((double)**(subexpr_ptr[subexpr_index].result)))
+                {
+                    error_handler("Math error", 1, 0, subexpr_ptr[subexpr_index].solve_start);
+                    return NAN;
+                }
+                subexpr_ptr[subexpr_index].execute_extended = false;
+                free(args);
             }
             ++subexpr_index;
-            free(args);
+
             continue;
         }
         i_node = subexpr_ptr[subexpr_index].node_list + subexpr_ptr[subexpr_index].start_node;
@@ -314,9 +329,10 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         subexpr_ptr[i].function_ptr = NULL;
         subexpr_ptr[i].cmplx_function_ptr = NULL;
         subexpr_ptr[i].node_list = NULL;
+        subexpr_ptr[i].execute_extended = true;
     }
 
-    // The whole expression "subexpression"
+    // The whole expression's "subexpression"
     subexpr_ptr[subexpr_index].depth = 0;
     subexpr_ptr[subexpr_index].solve_start = subexpr_ptr[subexpr_index].expression_start = 0;
     subexpr_ptr[subexpr_index].solve_end = length - 1;

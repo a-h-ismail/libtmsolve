@@ -3,7 +3,7 @@ Copyright (C) 2021-2022 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "internals.h"
-char *g_exp = NULL;
+char *glob_expr = NULL;
 /*
 Error handling function, collect and manage errors.
 arg 1:
@@ -49,13 +49,13 @@ int error_handler(char *error, int arg1, ...)
                 // Center the error in the string
                 if (position > 49)
                 {
-                    strncpy(error_table[error_count].err_exp, g_exp + position - 24, 49);
+                    strncpy(error_table[error_count].err_exp, glob_expr + position - 24, 49);
                     error_table[error_count].err_exp[49] = '\0';
                     error_table[error_count].error_index = 24;
                 }
                 else
                 {
-                    strcpy(error_table[error_count].err_exp, g_exp);
+                    strcpy(error_table[error_count].err_exp, glob_expr);
                     error_table[error_count].error_index = position;
                 }
             }
@@ -182,14 +182,4 @@ void error_print(char *exp, int error_pos)
     for (i = 0; i < error_pos; ++i)
         printf("~");
     printf("^\n");
-}
-// Function to sort subexpressions by depth, for use with qsort
-int compare_subexps_depth(const void *a, const void *b)
-{
-    if ((*((s_expression *)a)).depth < (*((s_expression *)b)).depth)
-        return 1;
-    else if ((*((s_expression *)a)).depth > (*((s_expression *)b)).depth)
-        return -1;
-    else
-        return 0;
 }
