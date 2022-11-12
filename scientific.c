@@ -628,7 +628,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 if (node_block[j].priority == i)
                 {
                     subexpr_ptr[subexpr_index].start_node = j;
-                    // Making the main loop exit by setting i outside continue condition
+                    // Exiting the main loop by setting i outside continue condition
                     i = -1;
                     break;
                 }
@@ -660,44 +660,60 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
 
         // Set result pointers for each node based on position and priority
         tmp_node = &(node_block[subexpr_ptr[subexpr_index].start_node]);
-        int l_node, r_node;
+        int left_node, right_node, prev_index = -2, prev_left = -2, prev_right = -2;
         while (tmp_node->next != NULL)
         {
             i = tmp_node->node_index;
             // Finding the previous and next nodes to compare
-            l_node = i - 1, r_node = i + 1;
+            left_node = i - 1, right_node = i + 1;
 
-            // Optimizing contiguous block of same priority by using previous results (TODO)
-            while (l_node != -1)
+            while (left_node != -1)
             {
-                if (tmp_node->priority <= node_block[l_node].priority)
-                    --l_node;
+                if (left_node == prev_index)
+                {
+                    left_node = prev_left;
+                    break;
+                }
+                else if (tmp_node->priority <= node_block[left_node].priority)
+                    --left_node;
+                // Optimize the edge case of successive <= priority nodes like a+a+a+a+a+a+a+a by using previous results
                 else
                     break;
             }
 
-            while (r_node < op_count)
+            while (right_node < op_count)
             {
-                if (tmp_node->priority < node_block[r_node].priority)
-                    ++r_node;
+                if (right_node == prev_index)
+                {
+                    right_node = prev_right;
+                    break;
+                }
+                else if (tmp_node->priority < node_block[right_node].priority)
+                    ++right_node;
+                // Similar idea to the above
+
                 else
                     break;
             }
             // Case of the first node or a node with no left candidate
-            if (l_node == -1)
-                tmp_node->node_result = &(node_block[r_node].left_operand);
+            if (left_node == -1)
+                tmp_node->node_result = &(node_block[right_node].left_operand);
             // Case of a node between 2 nodes
-            else if (l_node > -1 && r_node < op_count)
+            else if (left_node > -1 && right_node < op_count)
             {
-                if (node_block[l_node].priority >= node_block[r_node].priority)
-                    tmp_node->node_result = &(node_block[l_node].right_operand);
+                if (node_block[left_node].priority >= node_block[right_node].priority)
+                    tmp_node->node_result = &(node_block[left_node].right_operand);
                 else
-                    tmp_node->node_result = &(node_block[r_node].left_operand);
+                    tmp_node->node_result = &(node_block[right_node].left_operand);
             }
             // Case of the last node
             else if (i == op_count - 1)
-                tmp_node->node_result = &(node_block[l_node].right_operand);
+                tmp_node->node_result = &(node_block[left_node].right_operand);
             tmp_node = tmp_node->next;
+
+            prev_index = i;
+            prev_left = left_node;
+            prev_right = right_node;
         }
         // Case of the last node in the traversal order, set result to be result of the subexpression
         subexpr_ptr[subexpr_index].result = &(tmp_node->node_result);
