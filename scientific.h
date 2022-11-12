@@ -6,7 +6,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define SCIENTIFIC_H
 /*
     Contains:
-    * The declaration of all scientific expression operations functions
+    * The declaration of all scientific related functions
     * The structures used by these functions
     * Global expression and answer variables
 */
@@ -61,7 +61,7 @@ typedef struct s_expression
     int start_node;
     struct node *node_list;
     /*
-    The result is a double pointer because the subexpression result is determined later (it links to nodes of other subexps or ans)
+    The result is a double pointer because the subexpression result is determined later
     Keep in mind the result is carried by the last node in order (the pointer points to the result pointer of last node).
     */
     double complex **result;
@@ -97,12 +97,15 @@ typedef struct fraction
     // value = a + b / c
     double a, b, c;
 } fraction;
+// Global variables
 extern double complex ans;
 extern char *glob_expr;
 extern char *function_name[];
 extern double (*math_function[])(double);
 extern char *ext_function_name[];
 extern double (*ext_math_function[])(char *);
+
+// Scientific functions
 int compare_subexps_depth(const void *a, const void *b);
 double complex evaluate(math_expr *math_struct);
 math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex);
@@ -122,12 +125,5 @@ void factorize(char *expr);
 void nroot_solver(char *expr);
 void fraction_reducer(int32_t *f_v1, int32_t *f_v2, int32_t *v1, int32_t *v2);
 // Complex functions
-int c_process(char *expr, int p);
-bool complex_stage1_solver(char *expr, int a, int b);
-int complex_stage2_solver(char *expr, int a, int b);
-double complex read_complex(char *expr, int a, int b);
-int s_complex_print(char *expr, int a, int b, double complex value);
-void complex_print(double complex value);
-bool is_imaginary(char *expr, int a, int b);
 void complex_interpreter(char *expr);
 #endif
