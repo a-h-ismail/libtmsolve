@@ -9,13 +9,15 @@ SPDX-License-Identifier: LGPL-2.1-only
     * The declaration of all scientific related functions
     * The structures used by these functions
     * Global expression and answer variables
+    * Defines error messages of this mode
 */
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <math.h>
-#include <complex.h>
 #include "internals.h"
+// Error messages
+#define DIVISION_BY_ZERO "Division by zero isn't defined."
+#define MODULO_ZERO "Modulo zero implies a division by zero."
+#define MATH_ERROR "Math error."
+#define RIGHT_OP_MISSING "Missing right operand."
+
 // Holds the data of a factor
 typedef struct int_factor
 {

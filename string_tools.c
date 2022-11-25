@@ -577,7 +577,7 @@ bool var_implicit_multiplication(char *expr)
                 int start = i + length, end;
                 if (expr[start] == '\0' || (expr[start] != '-' && expr[start] != '+' && is_op(expr[start])))
                 {
-                    error_handler("Missing function parameter.", 1, 1, start);
+                    error_handler(PARAMETER_MISSING, 1, 1, start);
                     return false;
                 }
                 // Number following a scientific function
@@ -591,7 +591,7 @@ bool var_implicit_multiplication(char *expr)
                         end = strlen(expr) - 1;
                     if (end == start - 1)
                     {
-                        error_handler("Missing function parameter.", 1, 1, start);
+                        error_handler(PARAMETER_MISSING, 1, 1, start);
                         return false;
                     }
                 }
@@ -907,14 +907,14 @@ bool parenthesis_check(char *expr)
         close = find_closing_parenthesis(expr, open);
         if (close - open == 1)
         {
-            error_handler("An empty parenthesis pair.", 1, 1, open);
+            error_handler(PARENTHESIS_EMPTY, 1, 1, open);
             free(open_position);
             free(close_position);
             return false;
         }
         if (close == -1)
         {
-            error_handler("An open parenthesis has no close parenthesis.", 1, 1, open);
+            error_handler(PARENTHESIS_NOT_CLOSED, 1, 1, open);
             free(open_position);
             free(close_position);
             return false;
@@ -934,7 +934,7 @@ bool parenthesis_check(char *expr)
 
     if (close != -1)
     {
-        error_handler("Extra close parenthesis.", 1, 1, close);
+        error_handler(PARENTHESIS_NOT_OPEN, 1, 1, close);
         free(open_position);
         free(close_position);
         return false;

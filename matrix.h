@@ -4,6 +4,8 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include <math.h>
 #include <stdlib.h>
+// Errors
+#define INVALID_MATRIX "Invalid matrix."
 typedef struct matrix_str
 {
     int rows, columns;

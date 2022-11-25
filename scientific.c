@@ -55,7 +55,7 @@ double complex calculate_expr(char *expr, bool enable_complex)
     // Check for empty input
     if (expr_local[0] == '\0')
     {
-        error_handler("Empty input.", 1, 1, -1);
+        error_handler(NO_INPUT, 1, 1, -1);
         return false;
     }
     // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
@@ -128,7 +128,7 @@ double complex evaluate(math_expr *math_struct)
                 **(subexpr_ptr[subexpr_index].result) = (*(subexpr_ptr[subexpr_index].ext_function_ptr))(args);
                 if (isnan((double)**(subexpr_ptr[subexpr_index].result)))
                 {
-                    error_handler("Math error", 1, 0, subexpr_ptr[subexpr_index].solve_start);
+                    error_handler(MATH_ERROR, 1, 0, subexpr_ptr[subexpr_index].solve_start);
                     return NAN;
                 }
                 subexpr_ptr[subexpr_index].execute_extended = false;
@@ -162,7 +162,7 @@ double complex evaluate(math_expr *math_struct)
                 case '/':
                     if (i_node->right_operand == 0)
                     {
-                        error_handler("Error: Division by zero", 1, 1, i_node->operator_index);
+                        error_handler(DIVISION_BY_ZERO, 1, 1, i_node->operator_index);
                         return NAN;
                     }
                     *(i_node->node_result) = i_node->left_operand / i_node->right_operand;
@@ -171,7 +171,7 @@ double complex evaluate(math_expr *math_struct)
                 case '%':
                     if (i_node->right_operand == 0)
                     {
-                        error_handler("Error: Modulo zero implies a Division by 0.", 1, 1, i_node->operator_index);
+                        error_handler(MODULO_ZERO, 1, 1, i_node->operator_index);
                         return NAN;
                     }
                     *(i_node->node_result) = fmod(i_node->left_operand, i_node->right_operand);
@@ -193,7 +193,7 @@ double complex evaluate(math_expr *math_struct)
 
             if (isnan((double)**(subexpr_ptr[subexpr_index].result)))
             {
-                error_handler("Math error", 1, 0, subexpr_ptr[subexpr_index].solve_start);
+                error_handler(MATH_ERROR, 1, 0, subexpr_ptr[subexpr_index].solve_start);
                 return NAN;
             }
         }
@@ -456,7 +456,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         // Checking if the expression is terminated with an operator
         if (op_count != 0 && operator_index[op_count - 1] == solve_end)
         {
-            error_handler("Missing right operand", 1, 1, operator_index[op_count - 1]);
+            error_handler(RIGHT_OP_MISSING, 1, 1, operator_index[op_count - 1]);
             delete_math_expr(math_struct);
             return NULL;
         }
@@ -484,7 +484,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                     status = set_variable_metadata(expr + solve_start, node_block, 'l');
                     if (!status)
                     {
-                        error_handler("Syntax error.", 1, 1, solve_start);
+                        error_handler(SYNTAX_ERROR, 1, 1, solve_start);
                         delete_math_expr(math_struct);
                         return NULL;
                     }
@@ -533,7 +533,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                     status = subexp_start_at(subexpr_ptr, solve_start, subexpr_index, 1);
                     if (status == -1)
                     {
-                        error_handler("Syntax error.", 1, 1, solve_start);
+                        error_handler(SYNTAX_ERROR, 1, 1, solve_start);
                         delete_math_expr(math_struct);
                         return NULL;
                     }
@@ -563,7 +563,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                         status = subexp_start_at(subexpr_ptr, node_block[i].operator_index + 1, subexpr_index, 1);
                         if (status == -1)
                         {
-                            error_handler("Syntax error.", 1, 1, node_block[i].operator_index + 1);
+                            error_handler(SYNTAX_ERROR, 1, 1, node_block[i].operator_index + 1);
                             delete_math_expr(math_struct);
                             return NULL;
                         }
@@ -589,7 +589,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                         status = subexp_start_at(subexpr_ptr, node_block[i].operator_index + 1, subexpr_index, 1);
                         if (status == -1)
                         {
-                            error_handler("Syntax error.", 1, 1, node_block[i].operator_index + 1);
+                            error_handler(SYNTAX_ERROR, 1, 1, node_block[i].operator_index + 1);
                             delete_math_expr(math_struct);
                             return NULL;
                         }
@@ -614,7 +614,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 status = subexp_start_at(subexpr_ptr, node_block[op_count - 1].operator_index + 1, subexpr_index, 1);
                 if (status == -1)
                 {
-                    error_handler("Syntax error.", 1, 1, node_block[i].operator_index + 1);
+                    error_handler(SYNTAX_ERROR, 1, 1, node_block[i].operator_index + 1);
                     return NULL;
                 }
                 *(subexpr_ptr[status].result) = &(node_block[op_count - 1].right_operand);
@@ -927,10 +927,11 @@ fraction decimal_to_fraction(double value, bool inverse_process)
                 break;
         }
     }
+    // Simple cases with finite decimal digits
     else
     {
         result.c = pow(10, decimal_length);
-        result.b = value * result.c;
+        result.b = round(value * result.c);
         reduce_fraction(&result);
         return result;
     }

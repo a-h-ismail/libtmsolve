@@ -3,6 +3,12 @@ Copyright (C) 2021-2022 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "internals.h"
+// Errors
+#define PARAMETER_MISSING "The function expects more arguments."
+#define PARENTHESIS_EMPTY "Empty parenthesis pair."
+#define PARENTHESIS_NOT_CLOSED "Open parenthesis has no closing parenthesis."
+#define PARENTHESIS_NOT_OPEN "Extra closing parenthesis."
+// Function declarations
 bool is_infinite(char *expr, int index);
 int find_closing_parenthesis(char *expr, int p);
 int find_opening_parenthesis(char *expr, int p);

@@ -13,6 +13,9 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <math.h>
 #include <complex.h>
 #include <string.h>
+// Errors
+#define SYNTAX_ERROR "Syntax error."
+#define NO_INPUT "Empty input."
 typedef struct arg_list
 {
     int arg_count;
