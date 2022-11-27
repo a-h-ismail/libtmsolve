@@ -214,6 +214,8 @@ bool set_variable_metadata(char *expr, node *x_node, char operand)
             is_variable = true;
         else if (*expr == '-')
             is_variable = is_negative = true;
+        else
+            return false;
     }
     // The value is not the variable x
     else
@@ -385,7 +387,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             else if (is_number(expr[i]))
                 continue;
 
-            else if (is_op(*(expr + i)))
+            else if (is_op(expr[i]))
             {
                 // Skipping a + or - used in scientific notation (like 1e+5)
                 if (i > 0 && (expr[i - 1] == 'e' || expr[i - 1] == 'E') && (expr[i] == '+' || expr[i] == '-'))
@@ -494,6 +496,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             subexpr_ptr[subexpr_index].start_node = 0;
             subexpr_ptr[subexpr_index].result = &(node_block->node_result);
             node_block[0].next = NULL;
+            // If the one term expression is the last one, use the math_struct answer
             if (subexpr_index == subexpr_count - 1)
             {
                 node_block[0].node_result = &math_struct->answer;
@@ -514,12 +517,15 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         }
 
         // Trying to read first number into first node
+
         // If a - or + sign is in the beginning of the expression. it will be treated as 0-val or 0+val
         if (expr[solve_start] == '-' || expr[solve_start] == '+')
             node_block[0].left_operand = 0;
         else
         {
+            // Read a value to the left operand
             node_block[0].left_operand = read_value(expr, solve_start, enable_complex);
+            // If reading a value fails, it is probably a variable like x
             if (isnan((double)node_block[0].left_operand))
             {
                 // Checking for the variable 'x'
@@ -527,7 +533,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                     status = set_variable_metadata(expr + solve_start, node_block, 'l');
                 else
                     status = false;
-                // Variable x not found, try to read number
+                // Variable x not found, the left operand is probably another subexpression
                 if (!status)
                 {
                     status = subexp_start_at(subexpr_ptr, solve_start, subexpr_index, 1);
@@ -559,7 +565,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                         status = false;
                     if (!status)
                     {
-                        // Case of a subexpression result as right_operand, set result pointer to right_operand
+                        // Case of a subexpression result as right_operand, set its result pointer to right_operand
                         status = subexp_start_at(subexpr_ptr, node_block[i].operator_index + 1, subexpr_index, 1);
                         if (status == -1)
                         {
@@ -584,6 +590,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                         status = set_variable_metadata(expr + node_block[i].operator_index + 1, node_block + i + 1, 'l');
                     else
                         status = false;
+                    // Again a subexpression
                     if (!status)
                     {
                         status = subexp_start_at(subexpr_ptr, node_block[i].operator_index + 1, subexpr_index, 1);
@@ -600,6 +607,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             }
         }
         // Placing the last number in the last node
+        // Read a value
         node_block[op_count - 1].right_operand = read_value(expr, node_block[op_count - 1].operator_index + 1, enable_complex);
         if (isnan((double)node_block[op_count - 1].right_operand))
         {
