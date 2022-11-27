@@ -19,7 +19,7 @@ void set_variable_ptr(math_expr *math_struct)
         i_node = subexpr_ptr[subexpr_index].node_list + subexpr_ptr[subexpr_index].start_node;
         while (i_node != NULL)
         {
-            if(i==buffer_size)
+            if (i == buffer_size)
             {
                 buffer_size += buffer_step;
                 variable_ptr = realloc(variable_ptr, buffer_size * sizeof(variable_ptr));
@@ -46,7 +46,7 @@ void set_variable_ptr(math_expr *math_struct)
             i_node = i_node->next;
         }
     }
-    variable_ptr = realloc(variable_ptr, i* sizeof(variable_ptr));
+    variable_ptr = realloc(variable_ptr, i * sizeof(variable_ptr));
     math_struct->var_count = i;
     math_struct->variable_ptr = variable_ptr;
 }
@@ -74,7 +74,10 @@ double derivative(char *arguments)
         return false;
     }
     double x, f_prime, fx1, fx2;
-    x = calculate_expr(args->arguments[1],false);
+    // Perform implied multiplication because the special function was skipped
+    implicit_multiplication(&(args->arguments[1]));
+    
+    x = calculate_expr(args->arguments[1], false);
     math_struct = parse_expr(args->arguments[0], true, false);
     // Solve for x
     set_variable(math_struct, x);
@@ -89,16 +92,15 @@ double derivative(char *arguments)
     return f_prime;
 }
 
-
 double integral_processor(char *arguments)
 {
     math_expr *math_struct;
-    arg_list *args=get_arguments(arguments);
+    arg_list *args = get_arguments(arguments);
     int n;
-    double lower_bound, upper_bound, result, an, fn, rounds, temp, delta;
+    double lower_bound, upper_bound, result, an, fn, rounds, tmp, delta;
 
-    lower_bound = calculate_expr(args->arguments[0],false);
-    upper_bound = calculate_expr(args->arguments[1],false);
+    lower_bound = calculate_expr(args->arguments[0], false);
+    upper_bound = calculate_expr(args->arguments[1], false);
 
     delta = upper_bound - lower_bound;
     if (delta < 0)
@@ -106,11 +108,14 @@ double integral_processor(char *arguments)
         lower_bound = delta + lower_bound;
         delta = -delta;
     }
+    // Perform implied multiplication because the special function was skipped
+    implicit_multiplication(&(args->arguments[2]));
+
     // Compile the expression to the desired structure
     math_struct = parse_expr(args->arguments[2], true, false);
 
     // Calculating the number of rounds
-    rounds = ceil(delta) * 16384;
+    rounds = ceil(delta) * 16384000;
     if (rounds > 1e7)
         rounds = 1e7;
     // Simpson 3/8 formula:
@@ -126,7 +131,7 @@ double integral_processor(char *arguments)
         delete_math_expr(math_struct);
         return NAN;
     }
-    for (n = 1, temp = 0; n < rounds; ++n)
+    for (n = 1, tmp = 0; n < rounds; ++n)
     {
         if (n % 3 == 0)
             continue;
@@ -139,10 +144,10 @@ double integral_processor(char *arguments)
             delete_math_expr(math_struct);
             return NAN;
         }
-        temp += fn;
+        tmp += fn;
     }
-    result += 3 * temp;
-    for (n = 3, temp = 0; n < rounds; n += 3)
+    result += 3 * tmp;
+    for (n = 3, tmp = 0; n < rounds; n += 3)
     {
         an = lower_bound + delta * n / rounds;
         set_variable(math_struct, an);
@@ -153,10 +158,10 @@ double integral_processor(char *arguments)
             delete_math_expr(math_struct);
             return NAN;
         }
-        temp += fn;
+        tmp += fn;
     }
-    result += 2 * temp;
-    result *= 0.375 / rounds * delta;
+    result += 2 * tmp;
+    result *= 0.375 * (delta / rounds);
     delete_math_expr(math_struct);
     free_arg_list(args, true);
     return result;
