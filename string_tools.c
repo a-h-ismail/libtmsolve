@@ -78,9 +78,9 @@ int find_min(int a, int b)
 double complex read_value(char *expr, int start, bool enable_complex)
 {
     double complex variable_values[] = {M_PI, M_E, ans};
-    double value;
+    complex double value;
     bool is_negative, is_complex = false;
-    int status = 0;
+    int flag = 0;
     char *variable_names[] = {"pi",
                               "exp",
                               "ans"};
@@ -98,12 +98,12 @@ double complex read_value(char *expr, int start, bool enable_complex)
         if (strncmp(expr + start, variable_names[i], strlen(variable_names[i])) == 0)
         {
             value = variable_values[i];
-            status = 2;
+            flag = 2;
             break;
         }
     }
 
-    if (status == 0)
+    if (flag == 0)
     {
         // Check for complex number
         if (enable_complex)
@@ -126,9 +126,12 @@ double complex read_value(char *expr, int start, bool enable_complex)
                 // Again, XOR toggles between true and false
                 is_complex = is_complex ^ 1;
         }
-        status = sscanf(expr + start, "%lf", &value);
+
+        double tmp;
+        flag = sscanf(expr + start, "%lf", &tmp);
+        value = tmp;
         // Case where nothing was found even after checking for variables
-        if (status == 0)
+        if (flag == 0)
             return NAN;
     }
     if (is_negative)
