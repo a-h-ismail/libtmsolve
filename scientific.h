@@ -18,36 +18,44 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define MATH_ERROR "Math error."
 #define RIGHT_OP_MISSING "Missing right operand."
 
-// Holds the data of a factor
+/// Holds the data of a factor, for use with factorization related features.
 typedef struct int_factor
 {
     int factor;
     int power;
 } int_factor;
-// Stores the required metadata for an operand and its operators
+
+/// Stores the required metadata for an operand and its operators.
 typedef struct node
 {
+    /// The operator of this node
     char operator;
-    // Index of the operator in the expression
+    /// Index of the operator in the expression
     int operator_index;
-    // Index of the node in the node array
+    /// Index of the node in the node array
     int node_index;
-    // Used to store data about variable operands as follows:
-    // b0:left_operand, b1:right_operand, b2:left_op_negative, b3:right_op_negative
+    /** Used to store data about variable operands as follows:
+    b0:left_operand, b1:right_operand, b2:left_operand_negative, b3:right_operand_negative
+    */
     uint8_t var_metadata;
-    // Node operator priority
+    /// Node operator priority
     uint8_t priority;
 
     double complex left_operand, right_operand, *node_result;
+    /// Points to the next node in evaluation order
     struct node *next;
 } node;
-// Simple structure to hold pointer and sign of unknown members of an equation
+
+/// @brief Holds the data required to locate and set a variable in the expression.
 typedef struct variable_data
 {
+    /// @brief Pointer to the operand set as variable.
     double complex *pointer;
+    /// @brief Set to true if the operand is negative.
     bool is_negative;
 } variable_data;
 
+/// @brief Holds the metadata of a subexpression
 typedef struct s_expression
 {
     int op_count, depth;
@@ -62,41 +70,44 @@ typedef struct s_expression
     // The index of the node at which the subexpression parsing starts
     int start_node;
     struct node *node_list;
-    /*
-    The result is a double pointer because the subexpression result is determined later
-    Keep in mind the result is carried by the last node in order (the pointer points to the result pointer of last node).
-    */
+
+    /// Each node has a result pointer, this pointer tells which one of the result pointers will carry the subexpression result.
     double complex **result;
-    // Function to execute on the final result
+    /// Function to execute on the subexpression result.
     double (*function_ptr)(double);
-    // Complex function to execute
+    /// Complex function to execute on the subexpression result.
     double complex (*cmplx_function_ptr)(double complex);
-    // Extended function to execute
+    /// Extended function to execute.
     double (*ext_function_ptr)(char *);
-    // Enables execution of special function, allows optimizing of nested extended functions like integration
+    /// Enables execution of extended function, allows optimizing of nested extended functions like integration without thrashing performance.
     bool execute_extended;
 } s_expression;
-// The standalone structure to hold all of an expression's metadata
+
+/// The standalone structure to hold all of an expression's metadata
 typedef struct math_expr
 {
-    // The subexpressions forming the math expression after parsing
+    /// The subexpression array created by parsing the math expression.
     s_expression *subexpr_ptr;
-    // Number of subexpressions
+
+    /// Number of subexpression in this math expression.
     int subexpr_count;
-    // Variable operands count
+
+    /// Number of variable operands.
     int var_count;
 
+    /// Array of variable operands metadata
     variable_data *variable_ptr;
-    // Answer of the expression
+
+    /// Answer of the expression
     double complex answer;
-    // Set to true if the expression was parsed with complex enabled
+
+    /// Toggles complex support
     bool enable_complex;
 } math_expr;
 
-// Simple structure to store a fraction of the form a + b / c
+/// Simple structure to store a fraction of the form a + b / c
 typedef struct fraction
 {
-    // value = a + b / c
     double a, b, c;
 } fraction;
 // Global variables

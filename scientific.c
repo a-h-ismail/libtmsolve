@@ -115,6 +115,7 @@ double complex evaluate(math_expr *math_struct)
     */
     while (subexpr_index < subexpr_count)
     {
+        // Case with special function
         if (subexpr_ptr[subexpr_index].node_list == NULL)
         {
             char *args;
@@ -122,7 +123,7 @@ double complex evaluate(math_expr *math_struct)
             {
                 int length = subexpr_ptr[subexpr_index].solve_end - subexpr_ptr[subexpr_index].solve_start + 1;
                 args = malloc((length + 1) * sizeof(char));
-                memcpy(args, glob_expr + subexpr_ptr[subexpr_index].solve_start, length);
+                memcpy(args, glob_expr + subexpr_ptr[subexpr_index].solve_start, length*sizeof(char));
                 args[length] = '\0';
                 // Calling the extended function
                 **(subexpr_ptr[subexpr_index].result) = (*(subexpr_ptr[subexpr_index].ext_function_ptr))(args);
@@ -246,7 +247,11 @@ bool set_variable_metadata(char *expr, node *x_node, char operand)
     }
     return true;
 }
-// Parse a math expression into a s_expression array
+/**
+ * Parses a math expression into a structure ready for evaluation.
+ * @param expr The string containing the math expression
+ * @return A pointer to the generated math structure.
+*/
 math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
 {
     int i, j, length, subexpr_count = 1;
