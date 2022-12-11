@@ -22,7 +22,7 @@ void set_variable_ptr(math_expr *math_struct)
             if (i == buffer_size)
             {
                 buffer_size += buffer_step;
-                variable_ptr = realloc(variable_ptr, buffer_size * sizeof(variable_ptr));
+                variable_ptr = realloc(variable_ptr, buffer_size * sizeof(variable_data));
             }
             // Case of variable left operand
             if (i_node->var_metadata & 0b1)
@@ -46,9 +46,14 @@ void set_variable_ptr(math_expr *math_struct)
             i_node = i_node->next;
         }
     }
-    variable_ptr = realloc(variable_ptr, i * sizeof(variable_ptr));
-    math_struct->var_count = i;
-    math_struct->variable_ptr = variable_ptr;
+    if (i != 0)
+    {
+        variable_ptr = realloc(variable_ptr, i * sizeof(variable_data));
+        math_struct->var_count = i;
+        math_struct->variable_ptr = variable_ptr;
+    }
+    else
+        free(variable_ptr);
 }
 // Function that sets all variables pointed to in the array with "value"
 void set_variable(math_expr *math_struct, double complex value)
@@ -76,7 +81,7 @@ double derivative(char *arguments)
     double x, f_prime, fx1, fx2;
     // Perform implied multiplication because the special function was skipped
     implicit_multiplication(&(args->arguments[1]));
-    
+
     x = calculate_expr(args->arguments[1], false);
     math_struct = parse_expr(args->arguments[0], true, false);
     // Solve for x
