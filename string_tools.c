@@ -1013,7 +1013,7 @@ arg_list *get_arguments(char *string)
         if (current == max_args)
         {
             max_args += 10;
-            current_args = realloc(current_args, max_args * sizeof(arg_list *));
+            current_args = realloc(current_args, max_args * sizeof(arg_list));
         }
         if (string[current] == ',')
         {
