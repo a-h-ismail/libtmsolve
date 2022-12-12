@@ -186,11 +186,11 @@ int next_op(char *expr, int i)
 /*Function that combines the add/subtract operators (ex: -- => +) in the area of expr limited by a,b.
 Returns true on success and false in case of invalid indexes a and b.
 */
-bool combine_add_subtract(char *expr, int a, int b)
+void combine_add_subtract(char *expr, int a, int b)
 {
     int subcount, i, j;
     if (b > strlen(expr) || a > b || a < 0)
-        return false;
+        return;
     i = find_add_subtract(expr, a);
     while (i != -1 && i < b)
     {
@@ -214,7 +214,6 @@ bool combine_add_subtract(char *expr, int a, int b)
             string_resizer(expr, j, i);
         i = find_add_subtract(expr, i + 1);
     }
-    return true;
 }
 
 void remove_whitespace(char *str)
@@ -549,12 +548,19 @@ bool var_implicit_multiplication(char *expr)
                         return false;
                     }
                 }
-                // Shifting after the function to make room for enclosing parenthesis
-                string_resizer(expr, end, end + 2);
-                memmove(expr + start + 1, expr + start, end - start + 1);
-                expr[start] = '(';
-                expr[end + 2] = ')';
-                p3 = end + 2;
+                // Other cases
+                else
+                    end = -1;
+
+                if (end != -1)
+                {
+                    // Shifting after the function to make room for enclosing parenthesis
+                    string_resizer(expr, end, end + 2);
+                    memmove(expr + start + 1, expr + start, end - start + 1);
+                    expr[start] = '(';
+                    expr[end + 2] = ')';
+                    p3 = end + 2;
+                }
             }
             // Implicit multiplication on the left
             if (i != 0)
@@ -681,14 +687,14 @@ int find_startofnumber(char *expr, int end)
     return start;
 }
 
-int f_search(char *source, char *keyword, int index)
+int f_search(char *str, char *keyword, int index)
 {
     int length = strlen(keyword);
-    while (source[index] != '\0')
+    while (str[index] != '\0')
     {
-        if (source[index] == keyword[0])
+        if (str[index] == keyword[0])
         {
-            if (strncmp(source + index, keyword, length) == 0)
+            if (strncmp(str + index, keyword, length) == 0)
                 return index;
             else
                 ++index;
@@ -700,16 +706,16 @@ int f_search(char *source, char *keyword, int index)
 }
 // Reverse search function, returns the index of the first match of keyword, or -1 if none is found
 // adjacent_search stops the search if the index is not inside the keyword
-int r_search(char *source, char *keyword, int index, bool adjacent_search)
+int r_search(char *str, char *keyword, int index, bool adjacent_search)
 {
     int length = strlen(keyword), i = index;
     while (i != -1)
     {
         if (adjacent_search == true && i == index - length)
             return -1;
-        if (source[i] == keyword[0])
+        if (str[i] == keyword[0])
         {
-            if (strncmp(source + i, keyword, length) == 0)
+            if (strncmp(str + i, keyword, length) == 0)
                 return i;
             else
                 --i;
@@ -869,17 +875,11 @@ bool parenthesis_check(char *expr)
     return true;
 }
 
-/*
-Function that compares the priority of 2 operators, returns:
-1 if operator1 has higher priority than operator2
-0 if operators 1 and 2 have same priority
--1 if operator1 has lower priority than operator2
-*/
-int priority_test(char operator1, char operator2)
+int compare_priority(char operator1, char operator2)
 {
     char operators[7] = {'!', '^', '*', '/', '%', '+', '-'};
     short priority[7] = {4, 3, 2, 2, 2, 1, 1}, op1_p = '\0', op2_p = '\0', i;
-    // Find priority of LeftOperand
+
     for (i = 0; i < 7; ++i)
     {
         if (operator1 == operators[i])
@@ -898,17 +898,9 @@ int priority_test(char operator1, char operator2)
         puts("Invalid operators in priority_test.");
         exit(3);
     }
-    if (op1_p > op2_p)
-        return 1;
-    if (op1_p == op2_p)
-        return 0;
-    if (op1_p < op2_p)
-        return -1;
-    // Silencing the compiler warning
-    exit(-1);
+    return op1_p - op2_p;
 }
 
-// Function that extracts arguments separated by "," from a string and returns them in a struct
 arg_list *get_arguments(char *string)
 {
     arg_list *current_args = malloc(sizeof(arg_list));
