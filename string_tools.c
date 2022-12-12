@@ -14,25 +14,25 @@ bool is_infinite(char *expr, int index)
     else
         return false;
 }
-// Function to find the closed parenthesis corresponding to a specified open one
-int find_closing_parenthesis(char *expr, int p)
+
+int find_closing_parenthesis(char *expr, int i)
 {
-    // initializing pcount to 1 because the function receives the index of an open parenthesis
+    // Initializing pcount to 1 because the function receives the index of an open parenthesis
     int pcount = 1;
-    while (*(expr + p) != '\0' && pcount != 0)
+    while (*(expr + i) != '\0' && pcount != 0)
     {
         // Skipping over the first parenthesis
-        ++p;
-        if (*(expr + p) == '(')
+        ++i;
+        if (*(expr + i) == '(')
             ++pcount;
-        else if (*(expr + p) == ')')
+        else if (*(expr + i) == ')')
             --pcount;
     }
     // Case where the open parenthesis has no closing one, return -1 to the calling function
     if (pcount != 0)
         return -1;
     else
-        return p;
+        return i;
 }
 int find_opening_parenthesis(char *expr, int p)
 {
@@ -53,19 +53,7 @@ int find_opening_parenthesis(char *expr, int p)
     else
         return p;
 }
-// Function to find the deepest parenthesis (last open parenthesis before first close one), returns -1 if none is found
-int find_deepest_parenthesis(char *expr)
-{
-    int i, open = -1;
-    for (i = 0; expr[i] != '\0'; ++i)
-    {
-        if (expr[i] == '(')
-            open = i;
-        else if (expr[i] == ')')
-            break;
-    }
-    return open;
-}
+
 // Function to find the minimum
 int find_min(int a, int b)
 {
@@ -163,19 +151,7 @@ bool is_op(char c)
         return false;
     }
 }
-// Function that returns the index of the previous operator starting from i
-// if no operators are found, returns 0.
-int previousop(char *expr, int i)
-{
-    while (i >= 0)
-    {
-        if (is_op(expr[i]) == false)
-            --i;
-        else
-            break;
-    }
-    return i;
-}
+
 // Function that seeks for the next occurence of a + or - sign starting from i
 int find_add_subtract(char *expr, int i)
 {
@@ -193,7 +169,7 @@ int find_add_subtract(char *expr, int i)
 }
 // Function that returns the index of the next operator starting from i
 // if no operators are found, returns -1.
-int nextop(char *expr, int i)
+int next_op(char *expr, int i)
 {
     while (*(expr + i) != '\0')
     {
@@ -240,19 +216,19 @@ bool combine_add_subtract(char *expr, int a, int b)
     }
     return true;
 }
-// Deletes whitespace from the expression
-void remove_whitespace(char *expr)
+
+void remove_whitespace(char *str)
 {
     int start, end, length;
-    length = strlen(expr);
+    length = strlen(str);
     for (start = 0; start < length; ++start)
     {
-        if (expr[start] == ' ')
+        if (str[start] == ' ')
         {
             end = start;
-            while (expr[end] == ' ')
+            while (str[end] == ' ')
                 ++end;
-            memmove(expr + start, expr + end, length - end + 1);
+            memmove(str + start, str + end, length - end + 1);
             length -= end - start;
         }
     }
@@ -272,7 +248,7 @@ void string_resizer(char *str, int o_end, int n_end)
         memmove(str + n_end + 1, str + o_end + 1, strlen(str + o_end));
 }
 // Simple function that checks if the character is a number
-bool is_number(char c)
+bool is_digit(char c)
 {
     if (c >= '0' && c <= '9')
         return true;
@@ -286,32 +262,7 @@ bool is_alphabetic(char c)
     else
         return false;
 }
-/*
- Function that replaces the data present between indexes a and b with the real value v sent by the calling function.
- Returns index of the last element of the number printed.
- */
-int value_printer(char *expr, int a, int b, double v)
-{
-    char temp[24];
-    int length;
-    // Check if the value was negative then became positive to add a +.
-    if (expr[a] == '-' && v >= 0 && a != 0)
-        sprintf(temp, "+%.16g", v);
-    else
-    {
-        // case with double negatives ex: --x
-        if (a != 0 && expr[a - 1] == '-' && v < 0)
-        {
-            v = -v;
-            expr[a - 1] = '+';
-        }
-        sprintf(temp, "%.16g", v);
-    }
-    length = strlen(temp);
-    string_resizer(expr, b, a + length - 1);
-    strncpy(expr + a, temp, length);
-    return a + length - 1;
-}
+
 // Checks if keyword1 found at index of expr is a part of keyword2
 bool part_of_keyword(char *expr, char *keyword1, char *keyword2, int index)
 {
@@ -370,7 +321,7 @@ bool is_valid_number(char *expr, int start)
 {
     if (expr[start] == '+' || expr[start] == '-')
         ++start;
-    if (is_number(expr[start]) || expr[start] == 'i')
+    if (is_digit(expr[start]) || expr[start] == 'i')
         return true;
     else
         return false;
@@ -416,7 +367,7 @@ bool implicit_multiplication(char **expr)
         if (i != 0)
         {
             // Case where the implicit multiplication is with a number
-            if (is_number(expr_ptr[i - 1]) || expr_ptr[i - 1] == 'i')
+            if (is_digit(expr_ptr[i - 1]) || expr_ptr[i - 1] == 'i')
                 k = find_startofnumber(expr_ptr, i);
             // Case where the implicit multiplication is with a closed parenthesis
             else if (expr_ptr[i - 1] == ')')
@@ -431,7 +382,7 @@ bool implicit_multiplication(char **expr)
         if (expr_ptr[j + 1] != '\0')
         {
             // Case where implicit multiplication is with a number or a variable
-            if (is_number(expr_ptr[j + 1]) || is_alphabetic(expr_ptr[j + 1]))
+            if (is_digit(expr_ptr[j + 1]) || is_alphabetic(expr_ptr[j + 1]))
                 k = find_endofnumber(expr_ptr, j + 1);
             else if (expr_ptr[j + 1] == '(')
                 k = find_closing_parenthesis(expr_ptr, j + 1);
@@ -479,7 +430,7 @@ bool var_implicit_multiplication(char *expr)
                 // read_complex can read the complex number without * mark
                 if (current < 4)
                 {
-                    if (is_number(expr[i - 1]))
+                    if (is_digit(expr[i - 1]))
                     {
                         p1 = find_startofnumber(expr, i - 1);
                         p2 = i;
@@ -519,7 +470,7 @@ bool var_implicit_multiplication(char *expr)
             {
                 if (current < 4)
                 {
-                    if (is_number(expr[i + keylen[current]]) == true)
+                    if (is_digit(expr[i + keylen[current]]) == true)
                     {
                         p1 = i;
                         p2 = i + keylen[current] - 1;
@@ -589,7 +540,7 @@ bool var_implicit_multiplication(char *expr)
                 else if (is_op(expr[start + 1]) == false)
                 {
                     // Variable following a scientific function
-                    end = nextop(expr, start + 1) - 1;
+                    end = next_op(expr, start + 1) - 1;
                     if (end == -2)
                         end = strlen(expr) - 1;
                     if (end == start - 1)
@@ -608,7 +559,7 @@ bool var_implicit_multiplication(char *expr)
             // Implicit multiplication on the left
             if (i != 0)
             {
-                if (is_number(expr[i - 1]) == false && is_op(expr[i - 1]) == false)
+                if (is_digit(expr[i - 1]) == false && is_op(expr[i - 1]) == false)
                 {
                     bool success = false;
                     for (k = 0; k < 4; ++k)
@@ -635,7 +586,7 @@ bool var_implicit_multiplication(char *expr)
                 }
                 // Case where the scientific function is preceded by a number
                 // Add a * sign after the number
-                else if (is_number(expr[i - 1]) || expr[i - 1] == 'i')
+                else if (is_digit(expr[i - 1]) || expr[i - 1] == 'i')
                 {
                     string_resizer(expr, i - 1, i);
                     expr[i++] = '*';
@@ -648,7 +599,7 @@ bool var_implicit_multiplication(char *expr)
     }
     return true;
 }
-// Function to find the index of the number's end
+
 int find_endofnumber(char *expr, int start)
 {
     int end = start;
@@ -664,7 +615,7 @@ int find_endofnumber(char *expr, int start)
     */
     while (1)
     {
-        if (is_number(expr[end + 1]) == true && expr[end + 1] != '\0')
+        if (is_digit(expr[end + 1]) == true && expr[end + 1] != '\0')
             ++end;
         else
         {
@@ -685,13 +636,14 @@ int find_endofnumber(char *expr, int start)
     }
     return end;
 }
+
 int find_startofnumber(char *expr, int end)
 {
     int start = end;
     /*
     Algorithm:
     * Starting from start=end:
-    * If start=0, break.
+    * If start==0, break.
     * Check if the char at start-1 is a number, if true decrement start.
     * If not handle the following cases:
     * expr[start-1] is the imaginary number 'i': decrement start
@@ -705,7 +657,7 @@ int find_startofnumber(char *expr, int end)
     {
         if (start == 0)
             break;
-        if (is_number(expr[start - 1]) == true)
+        if (is_digit(expr[start - 1]) == true)
             --start;
         else
         {
@@ -728,7 +680,7 @@ int find_startofnumber(char *expr, int end)
     }
     return start;
 }
-// Function to find the first occurence of a string starting from i
+
 int f_search(char *source, char *keyword, int index)
 {
     int length = strlen(keyword);
@@ -790,37 +742,7 @@ void nice_print(char *format, double value, bool is_first)
     }
     printf(format, fabs(value));
 }
-// Find the second deepest parenthesis
-int second_deepest_parenthesis(char *expr)
-{
-    int i, open, closed;
-    /*
-    To find the second deepest parenthesis:
-    * Find the deepest parenthesis
-    * Search the open parenthesis preceding it.
-    * If there is no close parenthesis between these 2 parenthesis, return
-    */
-    i = find_deepest_parenthesis(expr);
-    // Case where the deepest parenthesis is the first one,
-    if (i == 0)
-        return -1;
-    while (i > 0)
-    {
-        open = previous_open_parenthesis(expr, i - 1);
-        closed = previous_closed_parenthesis(expr, i);
-        // The only case where closed==open is when no open or closed parenthesis is preceding the position
-        if (closed == open)
-            return -1;
-        if (closed > open)
-        {
-            i = open;
-            continue;
-        }
-        else
-            return open;
-    }
-    return -1;
-}
+
 int previous_open_parenthesis(char *expr, int p)
 {
     while (expr[p] != '(' && p > 0)
@@ -985,20 +907,7 @@ int priority_test(char operator1, char operator2)
     // Silencing the compiler warning
     exit(-1);
 }
-// Replaces the keyword with the appropriate value
-void var_to_val(char *expr, char *keyword, double value)
-{
-    int i = 0, keylen = strlen(keyword);
-    while (expr[i] != '\0')
-    {
-        // search for the next occurence of the keyword
-        i = f_search(expr, keyword, i);
-        if (i == -1)
-            return;
-        // print the value in place of the keyword
-        i = value_printer(expr, i, i + keylen - 1, value);
-    }
-}
+
 // Function that extracts arguments separated by "," from a string and returns them in a struct
 arg_list *get_arguments(char *string)
 {
