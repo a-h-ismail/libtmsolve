@@ -268,7 +268,6 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     - Parse subexpressions from high to low depth
     */
 
-    length = strlen(expr);
     subexpr_ptr = malloc(buffer_size * sizeof(s_expression));
 
     int depth = 0;

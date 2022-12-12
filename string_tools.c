@@ -4,7 +4,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "string_tools.h"
 #include "scientific.h"
-// Simple function to detect the word "inf", almost useless since the same can be accomplished with s_search
+// Simple function to detect the word "inf", almost useless since the same can be accomplished with f_search
 bool is_infinite(char *expr, int index)
 {
     if (expr[index] == '+' || expr[index] == '-')
@@ -463,7 +463,7 @@ bool var_implicit_multiplication(char *expr)
     for (current = 0; current < 5; ++current)
     {
         // search the first match of keyword[current]
-        i = s_search(expr, keyword[current], 0);
+        i = f_search(expr, keyword[current], 0);
         while (i != -1)
         {
             // Checking that keyword[current] is not part of another keyword, like x being part of expr
@@ -552,7 +552,7 @@ bool var_implicit_multiplication(char *expr)
             }
         endl1:;
             // Find next match of keyword[j]
-            i = s_search(expr, keyword[current], i + keylen[current]);
+            i = f_search(expr, keyword[current], i + keylen[current]);
         }
     }
     int length;
@@ -561,7 +561,7 @@ bool var_implicit_multiplication(char *expr)
     for (current = 0; current < 19; ++current)
     {
         length = strlen(function_name[current]);
-        i = s_search(expr, function_name[current], 0);
+        i = f_search(expr, function_name[current], 0);
         while (i != -1)
         {
             p2 = i;
@@ -629,7 +629,7 @@ bool var_implicit_multiplication(char *expr)
                         // Encasing the function in parenthesis
                         expr[p2] = '(';
                         expr[p3 + 2] = ')';
-                        i = s_search(expr, function_name[current], i + length + 1);
+                        i = f_search(expr, function_name[current], i + length + 1);
                         continue;
                     }
                 }
@@ -643,7 +643,7 @@ bool var_implicit_multiplication(char *expr)
             }
         // Initializing the next run
         endl2:;
-            i = s_search(expr, function_name[current], i + length);
+            i = f_search(expr, function_name[current], i + length);
         }
     }
     return true;
@@ -690,11 +690,11 @@ int find_startofnumber(char *expr, int end)
     int start = end;
     /*
     Algorithm:
-    * Starting from end:
+    * Starting from start=end:
     * If start=0, break.
     * Check if the char at start-1 is a number, if true decrement start.
     * If not handle the following cases:
-    * expr[start-1] is the imaginary number 'i': decrement start and break (this means i is the start of the number)
+    * expr[start-1] is the imaginary number 'i': decrement start
     * expr[start-1] is a point, scientific notation (e,E): decrement start
     * expr[start-1] is an add/subtract following a scientific notation: subtract 2 from start
     * expr[start-1] is a - operator: decrement start then break
@@ -712,7 +712,6 @@ int find_startofnumber(char *expr, int end)
             if (expr[start - 1] == 'i')
             {
                 --start;
-                break;
             }
             if (expr[start - 1] == 'e' || expr[start - 1] == 'E' || expr[start - 1] == '.')
                 --start;
@@ -730,7 +729,7 @@ int find_startofnumber(char *expr, int end)
     return start;
 }
 // Function to find the first occurence of a string starting from i
-int s_search(char *source, char *keyword, int index)
+int f_search(char *source, char *keyword, int index)
 {
     int length = strlen(keyword);
     while (source[index] != '\0')
@@ -993,7 +992,7 @@ void var_to_val(char *expr, char *keyword, double value)
     while (expr[i] != '\0')
     {
         // search for the next occurence of the keyword
-        i = s_search(expr, keyword, i);
+        i = f_search(expr, keyword, i);
         if (i == -1)
             return;
         // print the value in place of the keyword
