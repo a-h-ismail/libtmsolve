@@ -6,7 +6,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define SCIENTIFIC_H
 /**
  * @file
- * @brief This header defines all scientific related macros, structures, globals and functions.
+ * @brief Defines all scientific related macros, structures, globals and functions.
 */
 #include "internals.h"
 
