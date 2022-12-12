@@ -6,7 +6,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "internals.h"
 #include "function.h"
 #include "string_tools.h"
-// Function to sort subexpressions by depth, for use with qsort
+
 int compare_subexps_depth(const void *a, const void *b)
 {
     if ((*((s_expression *)a)).depth < (*((s_expression *)b)).depth)
@@ -41,34 +41,35 @@ double complex (*cmplx_function[])(double complex) =
 
 double factorial(double value)
 {
-    double result = 1, i;
-    for (i = 2; i <= value; ++i)
+    double result = 1;
+    for (int i = 2; i <= value; ++i)
         result *= i;
     return result;
 }
+
 double complex calculate_expr(char *expr, bool enable_complex)
 {
     double complex result;
     math_expr *math_struct;
-    char *expr_local = malloc((strlen(expr) + 1) * sizeof(char));
-    strcpy(expr_local, expr);
+    char *expr_local = strdup(expr);
     // Check for empty input
     if (expr_local[0] == '\0')
     {
         error_handler(NO_INPUT, 1, 1, -1);
-        return false;
+        free(expr_local);
+        return NAN;
     }
     // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
     combine_add_subtract(expr_local, 0, strlen(expr_local) - 2);
     if (parenthesis_check(expr_local) == false)
     {
         free(expr_local);
-        return false;
+        return NAN;
     }
     if (implicit_multiplication(&expr_local) == false)
     {
         free(expr_local);
-        return false;
+        return NAN;
     }
     math_struct = parse_expr(expr_local, false, enable_complex);
     if (math_struct == NULL)
@@ -81,7 +82,7 @@ double complex calculate_expr(char *expr, bool enable_complex)
     free(expr_local);
     return result;
 }
-// Evaluates the expresssion
+
 double complex evaluate(math_expr *math_struct)
 {
     node *i_node;
@@ -123,7 +124,7 @@ double complex evaluate(math_expr *math_struct)
             {
                 int length = subexpr_ptr[subexpr_index].solve_end - subexpr_ptr[subexpr_index].solve_start + 1;
                 args = malloc((length + 1) * sizeof(char));
-                memcpy(args, glob_expr + subexpr_ptr[subexpr_index].solve_start, length*sizeof(char));
+                memcpy(args, glob_expr + subexpr_ptr[subexpr_index].solve_start, length * sizeof(char));
                 args[length] = '\0';
                 // Calling the extended function
                 **(subexpr_ptr[subexpr_index].result) = (*(subexpr_ptr[subexpr_index].ext_function_ptr))(args);
@@ -185,25 +186,23 @@ double complex evaluate(math_expr *math_struct)
                 i_node = i_node->next;
             }
         // Executing function on the subexpression result
-        if (subexpr_ptr[subexpr_index].function_ptr != NULL || subexpr_ptr[subexpr_index].cmplx_function_ptr != NULL)
-        {
-            if (math_struct->enable_complex)
-                **(subexpr_ptr[subexpr_index].result) = (*(subexpr_ptr[subexpr_index].cmplx_function_ptr))(**(subexpr_ptr[subexpr_index].result));
-            else
-                **(subexpr_ptr[subexpr_index].result) = (*(subexpr_ptr[subexpr_index].function_ptr))(**(subexpr_ptr[subexpr_index].result));
+        // Complex function
+        if (math_struct->enable_complex && subexpr_ptr[subexpr_index].cmplx_function_ptr != NULL)
+            **(subexpr_ptr[subexpr_index].result) = (*(subexpr_ptr[subexpr_index].cmplx_function_ptr))(**(subexpr_ptr[subexpr_index].result));
+        // Real function
+        else if (!math_struct->enable_complex && subexpr_ptr[subexpr_index].function_ptr != NULL)
+            **(subexpr_ptr[subexpr_index].result) = (*(subexpr_ptr[subexpr_index].function_ptr))(**(subexpr_ptr[subexpr_index].result));
 
-            if (isnan((double)**(subexpr_ptr[subexpr_index].result)))
-            {
-                error_handler(MATH_ERROR, 1, 0, subexpr_ptr[subexpr_index].solve_start);
-                return NAN;
-            }
+        if (isnan((double)**(subexpr_ptr[subexpr_index].result)))
+        {
+            error_handler(MATH_ERROR, 1, 0, subexpr_ptr[subexpr_index].solve_start);
+            return NAN;
         }
         ++subexpr_index;
     }
     return math_struct->answer;
 }
-// Sets the variable in x_node to the left or right operand "r","l"
-// Returns true if the variable x was found, false otherwise
+
 bool set_variable_metadata(char *expr, node *x_node, char operand)
 {
     bool is_negative = false, is_variable = false;
@@ -247,11 +246,7 @@ bool set_variable_metadata(char *expr, node *x_node, char operand)
     }
     return true;
 }
-/**
- * Parses a math expression into a structure ready for evaluation.
- * @param expr The string containing the math expression
- * @return A pointer to the generated math structure.
-*/
+
 math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
 {
     int i, j, length, subexpr_count = 1;
@@ -267,7 +262,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
 
     /*
     Parsing steps:
-    - Locate and determine the depth of each subexpression (the whole expression has a depth of 0)
+    - Locate and determine the depth of each subexpression (the whole expression's "subexpression" has a depth of 0)
     - Fill the expression data (start/end...)
     - Sort subexpressions by depth (high to low)
     - Parse subexpressions from high to low depth
@@ -281,7 +276,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     // Determining the depth and start/end of each subexpression parenthesis
     for (i = 0; i < length; ++i)
     {
-        // Resize the subexp array on the fly
+        // Resize the subexpr array on the fly
         if (subexpr_index == buffer_size)
         {
             buffer_size += buffer_step;
@@ -369,7 +364,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         if (subexpr_ptr[subexpr_index].ext_function_ptr != NULL)
         {
             subexpr_ptr[subexpr_index].node_list = NULL;
-            subexpr_ptr[subexpr_index].result = malloc(sizeof(double complex **));
+            subexpr_ptr[subexpr_index].result = malloc(sizeof(double complex *));
             continue;
         }
 
@@ -465,6 +460,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         {
             error_handler(RIGHT_OP_MISSING, 1, 1, operator_index[op_count - 1]);
             delete_math_expr(math_struct);
+            free(operator_index);
             return NULL;
         }
         // Filling operations and index data into each node
@@ -739,7 +735,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         set_variable_ptr(math_struct);
     return math_struct;
 }
-// Free a math_expr related memory
+
 void delete_math_expr(math_expr *math_struct)
 {
     int i = 0;
@@ -755,7 +751,6 @@ void delete_math_expr(math_expr *math_struct)
     free(math_struct);
 }
 
-// Function that factorizes a 32 bit number
 int_factor *find_factors(int32_t value)
 {
     int32_t dividend = 2;
@@ -817,10 +812,13 @@ void reduce_fraction(fraction *fraction_str)
     int_factor *num_factor, *denom_factor;
     num_factor = find_factors(fraction_str->b);
     denom_factor = find_factors(fraction_str->c);
-    if (num_factor->factor == 0)
+    // If a zero was returned by the factorizing function, nothing to do.
+    if (num_factor->factor == 0 || denom_factor->factor == 0)
+    {
+        free(num_factor);
+        free(denom_factor);
         return;
-    if (denom_factor->factor == 0)
-        return;
+    }
     while (num_factor[i].factor != 0 && denom_factor[j].factor != 0)
     {
         if (num_factor[i].factor == denom_factor[j].factor)
@@ -917,7 +915,7 @@ fraction decimal_to_fraction(double value, bool inverse_process)
                     }
                     // If the pattern matches the last decimal digits, stop the execution with SUCCESS
                     if (strlen(printed_value) - j == strlen(pattern) &&
-                        strncmp(pattern, printed_value + strlen(printed_value) + j, strlen(pattern) == 0))
+                        strncmp(pattern, printed_value + strlen(printed_value) + j, strlen(pattern)) == 0)
                     {
                         success = true;
                         break;
@@ -959,7 +957,7 @@ fraction decimal_to_fraction(double value, bool inverse_process)
         for (i = 0; i < strlen(pattern); ++i)
             result.c += 9 * pow(10, i);
         // Find the pattern start in case it doesn't start right after the decimal point (like 0.79999)
-        pattern_start = s_search(printed_value, pattern, decimal_point + 1);
+        pattern_start = f_search(printed_value, pattern, decimal_point + 1);
         if (pattern_start > decimal_point + 1)
         {
             result.b = round(value * (pow(10, pattern_start - decimal_point - 1 + strlen(pattern)) - pow(10, pattern_start - decimal_point - 1)));
@@ -1012,18 +1010,17 @@ void priority_fill(node *list, int op_count)
         }
     }
 }
-// Function that finds the subexpression that starts from 'start'
-// Mode determines if the value to return is expression_start (1) or solve_start (2)
-int subexp_start_at(s_expression *expression, int start, int current_s_exp, int mode)
+
+int subexp_start_at(s_expression *m_expr, int start, int subexpr_i, int mode)
 {
     int i;
-    i = current_s_exp - 1;
+    i = subexpr_i - 1;
     switch (mode)
     {
     case 1:
         while (i >= 0)
         {
-            if (expression[i].expression_start == start)
+            if (m_expr[i].expression_start == start)
                 return i;
             else
                 --i;
@@ -1032,7 +1029,7 @@ int subexp_start_at(s_expression *expression, int start, int current_s_exp, int 
     case 2:
         while (i >= 0)
         {
-            if (expression[i].solve_start == start)
+            if (m_expr[i].solve_start == start)
                 return i;
             else
                 --i;
