@@ -383,7 +383,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 if (previous_subexp != -1)
                     i = subexpr_ptr[previous_subexp].solve_end + 1;
             }
-            else if (is_number(expr[i]))
+            else if (is_digit(expr[i]))
                 continue;
 
             else if (is_op(expr[i]))
