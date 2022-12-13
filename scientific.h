@@ -6,7 +6,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define SCIENTIFIC_H
 /**
  * @file
- * @brief Defines all scientific related macros, structures, globals and functions.
+ * @brief Declares all scientific related macros, structures, globals and functions.
 */
 #include "internals.h"
 
@@ -126,7 +126,7 @@ extern double (*ext_math_function[])(char *);
 /// @brief Comparator function for use with qsort(), compares the depth of 2 subexpressions.
 /// @param a
 /// @param b
-/// @return 1 if a.depth < b.depth; -1 if a.depth > b.depth; 0 otherwise
+/// @return 1 if a.depth < b.depth; -1 if a.depth > b.depth; 0 otherwise.
 int compare_subexps_depth(const void *a, const void *b);
 
 double factorial(double value);

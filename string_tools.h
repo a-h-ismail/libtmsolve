@@ -5,7 +5,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "internals.h"
 /**
  * @file
- * @brief Defines all string handling related macros, structures, globals and functions.
+ * @brief Declares all string handling related macros, structures, globals and functions.
 */
 // Errors
 #define PARAMETER_MISSING "The function expects more arguments."

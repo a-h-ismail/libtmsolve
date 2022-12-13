@@ -5,10 +5,42 @@ SPDX-License-Identifier: LGPL-2.1-only
 #ifndef FUNCTION_H
 #define FUNCTION_H
 #include "internals.h"
+/**
+ * @file
+ * @brief Function handling
+*/
+
+/**
+ * @brief Generates a heap allocated array of structure containing all variable members metadata and stores it in the math_struct.
+ * @param math_struct The math_struct used to generate and store the metadata.
+ */
 void set_variable_ptr(math_expr *math_struct);
+
+/**
+ * @brief Sets a value to all the variable members of math_struct.
+ *  First you need to call set_variable_ptr() once to get the required metadata.
+ * @param math_struct 
+ * @param value 
+ */
 void set_variable(math_expr *math_struct, double complex value);
-bool derivative_processor(char *expr);
+
+/**
+ * @brief Calculates the derivative of a function at a specific point.
+ * @details The function expects 2 arguments stored in a string and comma ',' separated.\n 
+ * The first argument is the function to derivate and the second is the point to calculate the derivative at.\n
+ * The derivation is done using the definition of derivative.
+ * @param expr The string containing the arguments.
+ * @return The value of the derivative at the specified point.
+ */
 double derivative(char *expr);
-double integrate(char *expr, double a, double b);
-double integral_processor(char *expr);
+
+/**
+ * @brief Calculates the bounded integral of a function.
+ * @details The function expects 3 arguments stored in a string and comma ',' separated.\n 
+ * Expected arguments: upper_bound, lower_bound, function.\n 
+ * Numerical integration using Simpson's 3/8 rule.
+ * @param expr The arguments string.
+ * @return Integration answer, or NaN in case of failure.
+ */
+double integrate(char *expr);
 #endif

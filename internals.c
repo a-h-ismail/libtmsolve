@@ -4,18 +4,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "internals.h"
 char *glob_expr = NULL;
-/*
-Error handling function, collect and manage errors.
-arg 1:
-1: Save the *error to the errors database, arg 2: ( 0: not fatal, stack; 1: fatal, stack).
-For fatal errors, arg3 must have the index of the error (-1 means don't error_print)
-2: Print the errors to stdout and clear the database, return number of errors printed.
-3: Clear the error database. arg 2: clear (0: main; 1: backup; 2: all)
-4: Search for *error in the errors database, return 1 on match in main, 2 in backup. arg 2: search (0: main; 1: backup; 2: all)
-5: Return the amount of errors in the database. arg 2: errors in (0: main; 1: backup; 2: all)
-6: Backup current errors, making room for new ones
-7: Restore the backed up errors, clearing the current errors in the process.
-*/
+
 int error_handler(char *error, int arg1, ...)
 {
     static int error_count = 0, fatal = 0, non_fatal = 0, backup_error_count = 0, backup_fatal, backup_non_fatal;
@@ -68,8 +57,6 @@ int error_handler(char *error, int arg1, ...)
         return 0;
     // Print errors
     case 2:
-        arg2 = va_arg(arguments, int);
-
         for (i = 0; i < error_count; ++i)
         {
             puts(error_table[i].error_msg);
@@ -174,11 +161,10 @@ int error_handler(char *error, int arg1, ...)
     return -1;
 }
 
-// Function that prints the expression and points at the location of the error found
-void error_print(char *exp, int error_pos)
+void error_print(char *expr, int error_pos)
 {
     int i;
-    puts(exp);
+    puts(expr);
     for (i = 0; i < error_pos; ++i)
         printf("~");
     printf("^\n");

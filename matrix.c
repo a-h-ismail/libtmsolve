@@ -67,11 +67,11 @@ matrix_str *matrix_multiply(matrix_str *A, matrix_str *B)
         }
     return result;
 }
-// Function that replaces the column of the matrix with the matrix_column sent as argument
-void remplace_matrix_column(matrix_str *matrix, matrix_str *matrix_column, int column)
+
+void replace_matrix_column(matrix_str *matrix, matrix_str *column_matrix, int column)
 {
-    for (int i = 0; i < matrix_column->rows; ++i)
-        matrix->data[i][column] = matrix_column->data[i][0];
+    for (int i = 0; i < column_matrix->rows; ++i)
+        matrix->data[i][column] = column_matrix->data[i][0];
 }
 // Create a copy of matrix and returns a pointer to the copy
 matrix_str *matrix_copy(matrix_str *matrix)
@@ -91,7 +91,7 @@ double matrix_det(matrix_str *A)
 {
     int i;
     matrix_str *B;
-    double det = 0,tmp;
+    double det = 0, tmp;
     if (A->rows != A->columns)
     {
         puts("Error, matrix must be square.");
@@ -166,7 +166,7 @@ matrix_str *comatrix(matrix_str *M)
 }
 matrix_str *matrix_inv(matrix_str *M)
 {
-    int i,j;
+    int i, j;
     double det;
     matrix_str *inverse, *tmp;
     // Check for empty matrix
@@ -178,7 +178,7 @@ matrix_str *matrix_inv(matrix_str *M)
         return NULL;
     }
     inverse = comatrix(M);
-    //tmp stores the comatrix pointer, otherwise it would be lost and memory leaked
+    // tmp stores the comatrix pointer, otherwise it would be lost and memory leaked
     tmp = inverse;
     inverse = matrix_tr(inverse);
     delete_matrix(tmp);
@@ -189,7 +189,7 @@ matrix_str *matrix_inv(matrix_str *M)
         return NULL;
     }
     for (i = 0; i < inverse->rows; ++i)
-        for (j = 0; j < inverse->columns;++j)
+        for (j = 0; j < inverse->columns; ++j)
             inverse->data[i][j] /= det;
     return inverse;
 }

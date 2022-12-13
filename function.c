@@ -6,7 +6,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "string_tools.h"
 #include "function.h"
 #include <math.h>
-// Generates a heap allocated AoS containing all variable members metadata and stores it in the math_struct
 void set_variable_ptr(math_expr *math_struct)
 {
     int i = 0, subexpr_index, buffer_size = 50, buffer_step = 50;
@@ -97,7 +96,7 @@ double derivative(char *arguments)
     return f_prime;
 }
 
-double integral_processor(char *arguments)
+double integrate(char *arguments)
 {
     math_expr *math_struct;
     arg_list *args = get_arguments(arguments);
