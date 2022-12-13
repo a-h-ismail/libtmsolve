@@ -31,7 +31,7 @@ double (*math_function[])(double) =
 // Extended functions, may take more than one parameter (stored in a comma separated string)
 char *ext_function_name[] = {"int", "der"};
 double (*ext_math_function[])(char *) =
-    {integral_processor, derivative};
+    {integrate, derivative};
 
 // Complex functions
 char *cmplx_function_name[] =
