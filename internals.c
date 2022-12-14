@@ -13,11 +13,11 @@ int error_handler(char *error, int arg1, ...)
     int i, arg2;
     struct error_structure
     {
-        char *error_msg, err_exp[50];
+        char *error_msg, err_str[50];
         bool fatal_error;
         int error_index;
     };
-    static struct error_structure error_table[10], backup[10];
+    static struct error_structure error_table[MAX_ERRORS], backup[MAX_ERRORS];
     switch (arg1)
     {
     // Save mode
@@ -38,13 +38,13 @@ int error_handler(char *error, int arg1, ...)
                 // Center the error in the string
                 if (position > 49)
                 {
-                    strncpy(error_table[error_count].err_exp, glob_expr + position - 24, 49);
-                    error_table[error_count].err_exp[49] = '\0';
+                    strncpy(error_table[error_count].err_str, glob_expr + position - 24, 49);
+                    error_table[error_count].err_str[49] = '\0';
                     error_table[error_count].error_index = 24;
                 }
                 else
                 {
-                    strcpy(error_table[error_count].err_exp, glob_expr);
+                    strcpy(error_table[error_count].err_str, glob_expr);
                     error_table[error_count].error_index = position;
                 }
             }
@@ -61,7 +61,7 @@ int error_handler(char *error, int arg1, ...)
         {
             puts(error_table[i].error_msg);
             if (error_table[i].fatal_error == true && error_table[i].error_index != -1)
-                error_print(error_table[i].err_exp, error_table[i].error_index);
+                error_print(error_table[i].err_str, error_table[i].error_index);
         }
         error_handler(NULL, 3, 0);
 
@@ -71,18 +71,18 @@ int error_handler(char *error, int arg1, ...)
         switch (arg2)
         {
         case 0:
-            memset(error_table, 0, 10 * sizeof(struct error_structure));
+            memset(error_table, 0, MAX_ERRORS * sizeof(struct error_structure));
             i = error_count;
             error_count = fatal = non_fatal = 0;
             break;
         case 1:
-            memset(backup, 0, 10 * sizeof(struct error_structure));
+            memset(backup, 0, MAX_ERRORS * sizeof(struct error_structure));
             i = backup_error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
             break;
         case 2:
-            memset(error_table, 0, 10 * sizeof(struct error_structure));
-            memset(backup, 0, 10 * sizeof(struct error_structure));
+            memset(error_table, 0, MAX_ERRORS * sizeof(struct error_structure));
+            memset(backup, 0, MAX_ERRORS * sizeof(struct error_structure));
             i = error_count + backup_error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
             error_count = fatal = non_fatal = 0;

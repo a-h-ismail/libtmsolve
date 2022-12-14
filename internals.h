@@ -6,7 +6,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define INTERNALS_H
 /**
  * @file
- * @brief Defines the functions necessary for the general fuctions of the calculator, some general error messages and the headers needed.
+ * @brief Defines the functions necessary for the general operation of the calculator, some general error messages and all the headers needed.
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,6 +19,12 @@ SPDX-License-Identifier: LGPL-2.1-only
 // Errors
 #define SYNTAX_ERROR "Syntax error."
 #define NO_INPUT "Empty input."
+
+#define MAX_ERRORS 5
+
+/// @brief Use to store the current expression being processed, used by error_handler() to generate the error prompt.
+extern char *glob_expr;
+
 /// @brief Stores metadata related to extended functions arguments.
 typedef struct arg_list
 {

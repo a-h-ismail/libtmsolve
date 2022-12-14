@@ -7,7 +7,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 /**
  * @file
  * @brief Declares all scientific related macros, structures, globals and functions.
-*/
+ */
 #include "internals.h"
 
 // Error messages
@@ -23,61 +23,76 @@ typedef struct int_factor
     int power;
 } int_factor;
 
-/// @brief Stores the required metadata for an operand and its operators.
-typedef struct node
+/// @brief Operator node, stores the required metadata for an operator and its operators.
+typedef struct op_node
 {
-    /// The operator of this node
+    /// The operator of this op_node
     char operator;
     /// Index of the operator in the expression
     int operator_index;
-    /// Index of the node in the node array
+    /// Index of the op_node in the op_node array
     int node_index;
     /**
      *  Used to store data about variable operands as follows:
      *  b0:left_operand, b1:right_operand, b2:left_operand_negative, b3:right_operand_negative
-    */
+     */
     uint8_t var_metadata;
     /// Node operator priority
     uint8_t priority;
 
     double complex left_operand, right_operand, *node_result;
-    /// Points to the next node in evaluation order
-    struct node *next;
-} node;
+    /// Points to the next op_node in evaluation order
+    struct op_node *next;
+} op_node;
 
-/// @brief Holds the data required to locate and set a variable in the expression.
-typedef struct variable_data
+/// @brief Holds the data required to locate and set the value variable in the expression.
+typedef struct var_op_data
 {
     /// @brief Pointer to the operand set as variable.
-    double complex *pointer;
+    double complex *var_ptr;
     /// @brief Set to true if the operand is negative.
     bool is_negative;
-} variable_data;
+} var_op_data;
 
 /// @brief Holds the metadata of a subexpression
 typedef struct s_expression
 {
-    int op_count, depth;
-    /*
-    expression start
-    ____v
-    ____cos(pi/3)
-    ________^__^
-    solve_start, solve_end
-    */
-    int expression_start, solve_start, solve_end;
-    /// Index of the node at which the subexpression parsing starts
+    /// @brief Number of operators in this subexpression.
+    int op_count;
+
+    /// @brief Depth of the subexpression, starts from 0 for the whole expression and adds 1 for each nested parenthesis pair.
+    int depth;
+
+    /// @brief The start index of the actual subexpression to parse,
+    /// skips the function name (if any) and points to the beginning of the numerical expression.
+    int solve_start;
+
+    /// @brief The start index of the subexpression in the expression.
+    /// @details If the subexpression has a function call, the index will be at the first character of the function name, otherwise equals to solve_start.
+    int expression_start;
+
+    /// @brief The end index of the subexpression, just before the close parenthesis.
+    int solve_end;
+
+    /// Index of the op_node at which the subexpression parsing starts
     int start_node;
 
-    struct node *node_list;
-    /// Each node has a result pointer, this pointer tells which one of the result pointers will carry the subexpression result.
-    double complex **result;
+    /// The array of op_nodes composing this subexpression.
+    struct op_node *subexpr_nodes;
+
+    /// @brief Points at one of the op_nodes result pointer, indicating that the answer of that node is the answer of this subexpression.
+    /// @details The op_node does not need to be in the same instance of the subexpr struct.
+    double complex **s_result;
+
     /// Function to execute on the subexpression result.
     double (*function_ptr)(double);
+
     /// Complex function to execute on the subexpression result.
     double complex (*cmplx_function_ptr)(double complex);
+
     /// Extended function to execute.
     double (*ext_function_ptr)(char *);
+
     /// Enables execution of extended function, allows optimizing of nested extended functions like integration without thrashing performance.
     bool execute_extended;
 } s_expression;
@@ -95,7 +110,7 @@ typedef struct math_expr
     int var_count;
 
     /// Array of variable operands metadata
-    variable_data *variable_ptr;
+    var_op_data *variable_ptr;
 
     /// Answer of the expression
     double complex answer;
@@ -112,16 +127,24 @@ typedef struct fraction
 
 // Global variables
 
-/// @brief Use to store the answer of the last calculation to allow reuse
+/// @brief Stores the answer of the last calculation to allow reuse in future calculations.
 extern double complex ans;
 
-extern char *glob_expr;
-extern char *function_name[];
-extern double (*math_function[])(double);
-extern char *ext_function_name[];
-extern double (*ext_math_function[])(char *);
+/// @brief Contains the names of scientific functions (for real numbers) like sin, cos...
+extern char *r_function_name[];
 
-// Scientific functions
+/// @brief Contains the function pointer of scientific functions.
+extern double (*r_function_ptr[])(double);
+
+/// @brief Contains the names of complex numbers functions like sin, cos...
+extern char *cmplx_function_name[];
+
+/// @brief Contains the function pointer of scientific functions.
+extern double complex (*cmplx_function_ptr[])(double complex);
+
+extern char *ext_function_name[];
+
+extern double (*ext_math_function[])(char *);
 
 /// @brief Comparator function for use with qsort(), compares the depth of 2 subexpressions.
 /// @param a
@@ -129,6 +152,11 @@ extern double (*ext_math_function[])(char *);
 /// @return 1 if a.depth < b.depth; -1 if a.depth > b.depth; 0 otherwise.
 int compare_subexps_depth(const void *a, const void *b);
 
+/**
+ * @brief Calculates the factorial.
+ * @param value 
+ * @return value!
+ */
 double factorial(double value);
 
 /**
@@ -144,16 +172,16 @@ double complex calculate_expr(char *expr, bool enable_complex);
  * @param math_struct The math structure to evaluate.
  * @return The answer of the math expression, or NaN on error.
  */
-double complex evaluate(math_expr *math_struct);
+double complex evaluate_str(math_expr *math_struct);
 
 /**
  * @brief Sets the variable metadata in x_node to the left and/or right operand.
  * @param expr expr The expression string pointer, offset to the position where x_node left/right operand starts.
- * @param x_node The node structure to set the variable in.
+ * @param x_node The op_node structure to set the variable in.
  * @param operand Informs the function which operand to set as variable.
  * @return true if the variable x was found at either operands of x_node, false otherwise.
  */
-bool set_variable_metadata(char *expr, node *x_node, char operand);
+bool set_variable_metadata(char *expr, op_node *x_node, char operand);
 /**
  * @brief Parses a math expression into a structure.
  * @param expr The string containing the math expression.
@@ -169,15 +197,12 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex);
  */
 void delete_math_expr(math_expr *math_struct);
 
-
 /**
- * @brief Fills a node array with the priority of each node's operator.
- * @param list The node array to fill.
+ * @brief Fills a op_node array with the priority of each op_node's operator.
+ * @param list The op_node array to fill.
  * @param op_count The number of operators in the array. Equal to the number of nodes.
  */
-void priority_fill(node *list, int op_count);
-
-
+void priority_fill(op_node *list, int op_count);
 
 /**
  * @brief Finds the subexpression that starts at a specific index in the string.
@@ -185,7 +210,7 @@ void priority_fill(node *list, int op_count);
  * @param start The starting index of the subexpression in the string.
  * @param subexpr_i The index in the subexpression array to initiate searching, should be the index of the subexpression you are currently processing.
  * @param mode Determines if the value passed by start is the expression_start (mode==1) or solve_start (mode==2).
- * @return 
+ * @return
  */
 int subexp_start_at(s_expression *m_expr, int start, int subexpr_i, int mode);
 
