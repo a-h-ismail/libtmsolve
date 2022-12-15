@@ -262,7 +262,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     op_node *node_block, *tmp_node;
     math_expr *math_struct = malloc(sizeof(math_expr));
     math_struct->var_count = 0;
-    math_struct->variable_ptr = NULL;
+    math_struct->var_data = NULL;
     math_struct->enable_complex = enable_complex;
 
     /*
@@ -736,7 +736,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     }
     // Set the variables metadata
     if (enable_variables)
-        set_variable_ptr(math_struct);
+        set_var_data(math_struct);
     return math_struct;
 }
 
@@ -751,7 +751,7 @@ void delete_math_expr(math_expr *math_struct)
         free(subexps[i].subexpr_nodes);
     }
     free(subexps);
-    free(math_struct->variable_ptr);
+    free(math_struct->var_data);
     free(math_struct);
 }
 

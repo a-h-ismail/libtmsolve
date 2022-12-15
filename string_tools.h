@@ -51,7 +51,14 @@ int next_op(char *expr, int i);
  * @param str The string to delete whitespace from it.
  */
 void remove_whitespace(char *str);
-void string_resizer(char *str, int o_end, int n_end);
+
+/**
+ * @brief Resizes the 
+ * @param str 
+ * @param o_end 
+ * @param n_end 
+ */
+void resize_zone(char *str, int o_end, int n_end);
 bool implicit_multiplication(char **expr);
 bool var_implicit_multiplication(char *expr);
 

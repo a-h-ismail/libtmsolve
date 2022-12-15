@@ -211,7 +211,7 @@ void combine_add_subtract(char *expr, int a, int b)
         else
             expr[i] = '+';
         if (i < j)
-            string_resizer(expr, j, i);
+            resize_zone(expr, j, i);
         i = find_add_subtract(expr, i + 1);
     }
 }
@@ -237,7 +237,7 @@ void remove_whitespace(char *str)
     This function receives the address of the string (*str),
     the index of last element of the region (end), the new index of the last element after resize.
 */
-void string_resizer(char *str, int o_end, int n_end)
+void resize_zone(char *str, int o_end, int n_end)
 {
     // case when size remains the same
     if (o_end == n_end)
@@ -294,7 +294,7 @@ void shift_and_multiply(char *expr, int *p1, int *p2, int *p3, char direction)
     {
     case 'l':
         // Creating 3 empty spaces to accomodate for ( * )
-        string_resizer(expr, *p3, *p3 + 3);
+        resize_zone(expr, *p3, *p3 + 3);
         memmove(expr + *p2 + 2, expr + *p2, *p3 - *p2 + 1);
         *p3 += 3;
         memmove(expr + *p1 + 1, expr + *p1, *p2 - *p1);
@@ -305,7 +305,7 @@ void shift_and_multiply(char *expr, int *p1, int *p2, int *p3, char direction)
         break;
     case 'r':
         // Creating 3 empty spaces to accomodate for ( * )
-        string_resizer(expr, *p3, *p3 + 3);
+        resize_zone(expr, *p3, *p3 + 3);
         memmove(expr + *p2 + 3, expr + *p2 + 1, *p3 - *p2);
         *p3 += 2;
         memmove(expr + *p1 + 1, expr + *p1, *p2 - *p1 + 1);
@@ -354,7 +354,7 @@ bool implicit_multiplication(char **expr)
                 return false;
             expr_ptr[i] = '[';
             expr_ptr[k] = ']';
-            string_resizer(expr_ptr, k, k + 2);
+            resize_zone(expr_ptr, k, k + 2);
             memmove(expr + symbol + 1, expr + symbol, k - symbol + 1);
             expr_ptr[symbol] = '(';
             expr_ptr[k + 2] = ')';
@@ -555,7 +555,7 @@ bool var_implicit_multiplication(char *expr)
                 if (end != -1)
                 {
                     // Shifting after the function to make room for enclosing parenthesis
-                    string_resizer(expr, end, end + 2);
+                    resize_zone(expr, end, end + 2);
                     memmove(expr + start + 1, expr + start, end - start + 1);
                     expr[start] = '(';
                     expr[end + 2] = ')';
@@ -581,7 +581,7 @@ bool var_implicit_multiplication(char *expr)
                     // Case where a scientific function is preceded by another scientific function (or possibly garbage)
                     if (success == false)
                     {
-                        string_resizer(expr, p3, p3 + 2);
+                        resize_zone(expr, p3, p3 + 2);
                         memmove(expr + p2 + 1, expr + p2, p3 - p2 + 1);
                         // Encasing the function in parenthesis
                         expr[p2] = '(';
@@ -594,7 +594,7 @@ bool var_implicit_multiplication(char *expr)
                 // Add a * sign after the number
                 else if (is_digit(expr[i - 1]) || expr[i - 1] == 'i')
                 {
-                    string_resizer(expr, i - 1, i);
+                    resize_zone(expr, i - 1, i);
                     expr[i++] = '*';
                 }
             }

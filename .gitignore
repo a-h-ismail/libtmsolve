@@ -1,3 +1,4 @@
 libtmsolve.so
 *.o
 .vscode
+doxygen/html

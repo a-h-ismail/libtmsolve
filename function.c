@@ -6,40 +6,40 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "string_tools.h"
 #include "function.h"
 #include <math.h>
-void set_variable_ptr(math_expr *math_struct)
+void set_var_data(math_expr *M)
 {
-    int i = 0, subexpr_index, buffer_size = 50, buffer_step = 50;
-    var_op_data *variable_ptr = malloc(buffer_size * sizeof(var_op_data));
-    m_subexpr *subexpr_ptr = math_struct->subexpr_ptr;
+    int i = 0, s_index, buffer_size = 50, buffer_step = 50;
+    var_op_data *vars = malloc(buffer_size * sizeof(var_op_data));
+    m_subexpr *subexpr_ptr = M->subexpr_ptr;
     op_node *i_node;
 
-    for (subexpr_index = 0; subexpr_index < math_struct->subexpr_count; ++subexpr_index)
+    for (s_index = 0; s_index < M->subexpr_count; ++s_index)
     {
-        i_node = subexpr_ptr[subexpr_index].subexpr_nodes + subexpr_ptr[subexpr_index].start_node;
+        i_node = subexpr_ptr[s_index].subexpr_nodes + subexpr_ptr[s_index].start_node;
         while (i_node != NULL)
         {
             if (i == buffer_size)
             {
                 buffer_size += buffer_step;
-                variable_ptr = realloc(variable_ptr, buffer_size * sizeof(var_op_data));
+                vars = realloc(vars, buffer_size * sizeof(var_op_data));
             }
             // Case of variable left operand
             if (i_node->var_metadata & 0b1)
             {
                 if (i_node->var_metadata & 0b100)
-                    variable_ptr[i].is_negative = true;
+                    vars[i].is_negative = true;
                 else
-                    variable_ptr[i].is_negative = false;
-                variable_ptr[i].var_ptr = &(i_node->left_operand);
+                    vars[i].is_negative = false;
+                vars[i].var_ptr = &(i_node->left_operand);
                 ++i;
             }
             if (i_node->var_metadata & 0b10)
             {
                 if (i_node->var_metadata & 0b1000)
-                    variable_ptr[i].is_negative = true;
+                    vars[i].is_negative = true;
                 else
-                    variable_ptr[i].is_negative = false;
-                variable_ptr[i].var_ptr = &(i_node->right_operand);
+                    vars[i].is_negative = false;
+                vars[i].var_ptr = &(i_node->right_operand);
                 ++i;
             }
             i_node = i_node->next;
@@ -47,12 +47,12 @@ void set_variable_ptr(math_expr *math_struct)
     }
     if (i != 0)
     {
-        variable_ptr = realloc(variable_ptr, i * sizeof(var_op_data));
-        math_struct->var_count = i;
-        math_struct->variable_ptr = variable_ptr;
+        vars = realloc(vars, i * sizeof(var_op_data));
+        M->var_count = i;
+        M->var_data = vars;
     }
     else
-        free(variable_ptr);
+        free(vars);
 }
 // Function that sets all variables pointed to in the array with "value"
 void set_variable(math_expr *math_struct, double complex value)
@@ -60,10 +60,10 @@ void set_variable(math_expr *math_struct, double complex value)
     int i;
     for (i = 0; i < math_struct->var_count; ++i)
     {
-        if (math_struct->variable_ptr[i].is_negative)
-            *(math_struct->variable_ptr[i].var_ptr) = -value;
+        if (math_struct->var_data[i].is_negative)
+            *(math_struct->var_data[i].var_ptr) = -value;
         else
-            *(math_struct->variable_ptr[i].var_ptr) = value;
+            *(math_struct->var_data[i].var_ptr) = value;
     }
 }
 // Function that calculates the derivative of f(x) for a specific value of x

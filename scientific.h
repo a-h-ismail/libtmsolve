@@ -45,7 +45,7 @@ typedef struct op_node
     struct op_node *next;
 } op_node;
 
-/// @brief Holds the data required to locate and set the value variable in the expression.
+/// @brief Holds the data required to locate and set a value to a variable in the expression.
 typedef struct var_op_data
 {
     /// @brief Pointer to the operand set as variable.
@@ -110,7 +110,7 @@ typedef struct math_expr
     int var_count;
 
     /// Array of variable operands metadata
-    var_op_data *variable_ptr;
+    var_op_data *var_data;
 
     /// Answer of the expression
     double complex answer;
