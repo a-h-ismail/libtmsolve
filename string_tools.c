@@ -338,7 +338,7 @@ bool implicit_multiplication(char **expr)
         *expr = realloc(*expr, (strlen(*expr) + 1) * sizeof(char));
         return false;
     }
-    i = next_open_parenthesis(expr_ptr, 0);
+    i = f_search(expr_ptr, "(", 0);
     // Implicit multiplication with parenthesis
     while (i != -1)
     {
@@ -390,7 +390,7 @@ bool implicit_multiplication(char **expr)
             if (condition_met)
                 shift_and_multiply(expr_ptr, &i, &j, &k, 'r');
         }
-        i = next_open_parenthesis(expr_ptr, i + 1);
+        i = f_search(expr_ptr, "(", i + 1);
     }
     // Restore parenthesis
     for (i = 0; expr_ptr[i] != '\0'; ++i)
@@ -726,7 +726,6 @@ int r_search(char *str, char *keyword, int index, bool adjacent_search)
     return -1;
 }
 
-// Function to help with printing formatted equations to stdout.
 void nice_print(char *format, double value, bool is_first)
 {
     // Printing nothing if the value is 0 or -0
@@ -749,46 +748,6 @@ void nice_print(char *format, double value, bool is_first)
     printf(format, fabs(value));
 }
 
-int previous_open_parenthesis(char *expr, int p)
-{
-    while (expr[p] != '(' && p > 0)
-        --p;
-    // Checking if the stop was caused by reaching 0 or finding a parenthesis
-    if (p == 0 && expr[p] != '(')
-        return -1;
-    else
-        return p;
-}
-int previous_closed_parenthesis(char *expr, int p)
-{
-    while (expr[p] != ')' && p > 0)
-        --p;
-    // Checking if the stop was caused by reaching 0 or finding a parenthesis
-    if (p == 0 && expr[p] != ')')
-        return -1;
-    else
-        return p;
-}
-int next_open_parenthesis(char *expr, int p)
-{
-    while (expr[p] != '(' && expr[p] != '\0')
-        ++p;
-    // Checking if the stop was caused by reaching \0 or finding a parenthesis
-    if (expr[p] == '\0')
-        return -1;
-    else
-        return p;
-}
-int next_closed_parenthesis(char *expr, int p)
-{
-    while (expr[p] != ')' && expr[p] != '\0')
-        ++p;
-    // Checking if the stop was caused by reaching \0 or finding a parenthesis
-    if (expr[p] == '\0')
-        return -1;
-    else
-        return p;
-}
 // Function that checks the existence of value in an int array of "count" ints
 bool int_search(int *array, int value, int count)
 {
@@ -800,26 +759,7 @@ bool int_search(int *array, int value, int count)
     }
     return false;
 }
-// Function to sort ints in increasing order for qsort
-int compare_ints(const void *a, const void *b)
-{
-    if (*(int *)a < *(int *)b)
-        return -1;
-    else if (*(int *)a > *(int *)b)
-        return 1;
-    else
-        return 0;
-}
-// Reverse of the above
-int compare_ints_reverse(const void *a, const void *b)
-{
-    if (*(int *)a < *(int *)b)
-        return 1;
-    else if (*(int *)a > *(int *)b)
-        return -1;
-    else
-        return 0;
-}
+
 /*
 Function that checks if every open parenthesis has a closing parenthesis and that no parenthesis pair is empty.
 Returns true when checks pass
@@ -830,7 +770,8 @@ bool parenthesis_check(char *expr)
     open_position = (int *)malloc(length * sizeof(int));
     close_position = (int *)malloc(length * sizeof(int));
     *open_position = *close_position = -2;
-    open = next_open_parenthesis(expr, 0);
+    open = f_search(expr, "(", 0);
+    ;
     // Check if every open parenthesis has a close parenthesis and log their indexes
     while (open != -1)
     {
@@ -851,16 +792,16 @@ bool parenthesis_check(char *expr)
         }
         open_position[k] = open;
         close_position[k] = close;
-        open = next_open_parenthesis(expr, open + 1);
+        open = f_search(expr, "(", open + 1);
         ++k;
     }
     qsort(open_position, k, sizeof(int), compare_ints);
     qsort(close_position, k, sizeof(int), compare_ints_reverse);
     // Case of no open parenthesis, check if a close parenthesis is present
     if (k == 0)
-        close = next_closed_parenthesis(expr, 0);
+        close = f_search(expr,")", 0);
     else
-        close = next_closed_parenthesis(expr, close_position[0] + 1);
+        close = f_search(expr,")", close_position[0] + 1);
 
     if (close != -1)
     {

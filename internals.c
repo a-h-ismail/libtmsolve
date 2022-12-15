@@ -169,3 +169,23 @@ void error_print(char *expr, int error_pos)
         printf("~");
     printf("^\n");
 }
+
+int compare_ints(const void *a, const void *b)
+{
+    if (*(int *)a < *(int *)b)
+        return -1;
+    else if (*(int *)a > *(int *)b)
+        return 1;
+    else
+        return 0;
+}
+
+int compare_ints_reverse(const void *a, const void *b)
+{
+    if (*(int *)a < *(int *)b)
+        return 1;
+    else if (*(int *)a > *(int *)b)
+        return -1;
+    else
+        return 0;
+}

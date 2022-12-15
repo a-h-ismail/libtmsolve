@@ -9,9 +9,9 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 int compare_subexps_depth(const void *a, const void *b)
 {
-    if ((*((s_expression *)a)).depth < (*((s_expression *)b)).depth)
+    if ((*((m_subexpr *)a)).depth < (*((m_subexpr *)b)).depth)
         return 1;
-    else if ((*((s_expression *)a)).depth > (*((s_expression *)b)).depth)
+    else if ((*((m_subexpr *)a)).depth > (*((m_subexpr *)b)).depth)
         return -1;
     else
         return 0;
@@ -77,17 +77,17 @@ double complex calculate_expr(char *expr, bool enable_complex)
         free(expr_local);
         return NAN;
     }
-    result = evaluate(math_struct);
+    result = eval_math_expr(math_struct);
     delete_math_expr(math_struct);
     free(expr_local);
     return result;
 }
 
-double complex evaluate(math_expr *math_struct)
+double complex eval_math_expr(math_expr *M)
 {
     op_node *i_node;
-    int subexpr_index = 0, subexpr_count = math_struct->subexpr_count;
-    s_expression *subexpr_ptr = math_struct->subexpr_ptr;
+    int s_index = 0, s_count = M->subexpr_count;
+    m_subexpr *tmp_subexpr = M->subexpr_ptr;
     /*
     #ifdef DEBUG
         // Dumping op_node data
@@ -114,35 +114,35 @@ double complex evaluate(math_expr *math_struct)
         fflush(stdout);
     #endif
     */
-    while (subexpr_index < subexpr_count)
+    while (s_index < s_count)
     {
         // Case with special function
-        if (subexpr_ptr[subexpr_index].subexpr_nodes == NULL)
+        if (tmp_subexpr[s_index].subexpr_nodes == NULL)
         {
             char *args;
-            if (subexpr_ptr[subexpr_index].execute_extended)
+            if (tmp_subexpr[s_index].execute_extended)
             {
-                int length = subexpr_ptr[subexpr_index].solve_end - subexpr_ptr[subexpr_index].solve_start + 1;
+                int length = tmp_subexpr[s_index].solve_end - tmp_subexpr[s_index].solve_start + 1;
                 args = malloc((length + 1) * sizeof(char));
-                memcpy(args, glob_expr + subexpr_ptr[subexpr_index].solve_start, length * sizeof(char));
+                memcpy(args, glob_expr + tmp_subexpr[s_index].solve_start, length * sizeof(char));
                 args[length] = '\0';
                 // Calling the extended function
-                **(subexpr_ptr[subexpr_index].s_result) = (*(subexpr_ptr[subexpr_index].ext_function_ptr))(args);
-                if (isnan((double)**(subexpr_ptr[subexpr_index].s_result)))
+                **(tmp_subexpr[s_index].s_result) = (*(tmp_subexpr[s_index].ext_function_ptr))(args);
+                if (isnan((double)**(tmp_subexpr[s_index].s_result)))
                 {
-                    error_handler(MATH_ERROR, 1, 0, subexpr_ptr[subexpr_index].solve_start);
+                    error_handler(MATH_ERROR, 1, 0, tmp_subexpr[s_index].solve_start);
                     return NAN;
                 }
-                subexpr_ptr[subexpr_index].execute_extended = false;
+                tmp_subexpr[s_index].execute_extended = false;
                 free(args);
             }
-            ++subexpr_index;
+            ++s_index;
 
             continue;
         }
-        i_node = subexpr_ptr[subexpr_index].subexpr_nodes + subexpr_ptr[subexpr_index].start_node;
+        i_node = tmp_subexpr[s_index].subexpr_nodes + tmp_subexpr[s_index].start_node;
 
-        if (subexpr_ptr[subexpr_index].op_count == 0)
+        if (tmp_subexpr[s_index].op_count == 0)
             *(i_node->node_result) = i_node->left_operand;
         else
             while (i_node != NULL)
@@ -187,20 +187,20 @@ double complex evaluate(math_expr *math_struct)
             }
         // Executing function on the subexpression result
         // Complex function
-        if (math_struct->enable_complex && subexpr_ptr[subexpr_index].cmplx_function_ptr != NULL)
-            **(subexpr_ptr[subexpr_index].s_result) = (*(subexpr_ptr[subexpr_index].cmplx_function_ptr))(**(subexpr_ptr[subexpr_index].s_result));
+        if (M->enable_complex && tmp_subexpr[s_index].cmplx_function_ptr != NULL)
+            **(tmp_subexpr[s_index].s_result) = (*(tmp_subexpr[s_index].cmplx_function_ptr))(**(tmp_subexpr[s_index].s_result));
         // Real function
-        else if (!math_struct->enable_complex && subexpr_ptr[subexpr_index].function_ptr != NULL)
-            **(subexpr_ptr[subexpr_index].s_result) = (*(subexpr_ptr[subexpr_index].function_ptr))(**(subexpr_ptr[subexpr_index].s_result));
+        else if (!M->enable_complex && tmp_subexpr[s_index].function_ptr != NULL)
+            **(tmp_subexpr[s_index].s_result) = (*(tmp_subexpr[s_index].function_ptr))(**(tmp_subexpr[s_index].s_result));
 
-        if (isnan((double)**(subexpr_ptr[subexpr_index].s_result)))
+        if (isnan((double)**(tmp_subexpr[s_index].s_result)))
         {
-            error_handler(MATH_ERROR, 1, 0, subexpr_ptr[subexpr_index].solve_start);
+            error_handler(MATH_ERROR, 1, 0, tmp_subexpr[s_index].solve_start);
             return NAN;
         }
-        ++subexpr_index;
+        ++s_index;
     }
-    return math_struct->answer;
+    return M->answer;
 }
 
 bool set_variable_metadata(char *expr, op_node *x_node, char operand)
@@ -249,11 +249,16 @@ bool set_variable_metadata(char *expr, op_node *x_node, char operand)
 
 math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
 {
-    int i, j, length, subexpr_count = 1;
-    int subexpr_index;
+    int i, j, length;
+    // Number of subexpressions
+    int s_count = 1;
+    // Used for indexing of subexpressions
+    int s_index;
+    // Use for dynamic growing blocks.
     int buffer_size = 10, buffer_step = 10;
+
     length = strlen(expr);
-    s_expression *subexpr_ptr;
+    m_subexpr *tmp_subexpr;
     op_node *node_block, *tmp_node;
     math_expr *math_struct = malloc(sizeof(math_expr));
     math_struct->var_count = 0;
@@ -268,22 +273,22 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     - Parse subexpressions from high to low depth
     */
 
-    subexpr_ptr = malloc(buffer_size * sizeof(s_expression));
+    tmp_subexpr = malloc(buffer_size * sizeof(m_subexpr));
 
     int depth = 0;
-    subexpr_index = 0;
+    s_index = 0;
     // Determining the depth and start/end of each subexpression parenthesis
     for (i = 0; i < length; ++i)
     {
         // Resize the subexpr array on the fly
-        if (subexpr_index == buffer_size)
+        if (s_index == buffer_size)
         {
             buffer_size += buffer_step;
-            subexpr_ptr = realloc(subexpr_ptr, buffer_size * sizeof(s_expression));
+            tmp_subexpr = realloc(tmp_subexpr, buffer_size * sizeof(m_subexpr));
         }
         if (expr[i] == '(')
         {
-            subexpr_ptr[subexpr_index].ext_function_ptr = NULL;
+            tmp_subexpr[s_index].ext_function_ptr = NULL;
             // Treat extended functions as a subexpression
             for (j = 0; j < sizeof(ext_math_function) / sizeof(*ext_math_function); ++j)
             {
@@ -291,56 +296,56 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 temp = r_search(expr, ext_function_name[j], i - 1, true);
                 if (temp != -1)
                 {
-                    subexpr_ptr[subexpr_index].expression_start = temp;
-                    subexpr_ptr[subexpr_index].solve_start = i + 1;
+                    tmp_subexpr[s_index].subexpr_start = temp;
+                    tmp_subexpr[s_index].solve_start = i + 1;
                     i = find_closing_parenthesis(expr, i);
-                    subexpr_ptr[subexpr_index].solve_end = i - 1;
-                    subexpr_ptr[subexpr_index].depth = depth + 1;
-                    subexpr_ptr[subexpr_index].ext_function_ptr = ext_math_function[j];
+                    tmp_subexpr[s_index].solve_end = i - 1;
+                    tmp_subexpr[s_index].depth = depth + 1;
+                    tmp_subexpr[s_index].ext_function_ptr = ext_math_function[j];
                     break;
                 }
             }
-            if (subexpr_ptr[subexpr_index].ext_function_ptr != NULL)
+            if (tmp_subexpr[s_index].ext_function_ptr != NULL)
             {
-                ++subexpr_index;
+                ++s_index;
                 continue;
             }
             // Normal case
             ++depth;
-            subexpr_ptr[subexpr_index].solve_start = i + 1;
-            subexpr_ptr[subexpr_index].depth = depth;
+            tmp_subexpr[s_index].solve_start = i + 1;
+            tmp_subexpr[s_index].depth = depth;
             // The expression start is the parenthesis, may change if a function is found
-            subexpr_ptr[subexpr_index].expression_start = i;
-            subexpr_ptr[subexpr_index].solve_end = find_closing_parenthesis(expr, i) - 1;
-            ++subexpr_index;
+            tmp_subexpr[s_index].subexpr_start = i;
+            tmp_subexpr[s_index].solve_end = find_closing_parenthesis(expr, i) - 1;
+            ++s_index;
         }
         else if (expr[i] == ')')
             --depth;
     }
     // + 1 for the subexpression with depth 0
-    subexpr_count = subexpr_index + 1;
+    s_count = s_index + 1;
     // Shrink the block to the required size
-    subexpr_ptr = realloc(subexpr_ptr, subexpr_count * sizeof(s_expression));
+    tmp_subexpr = realloc(tmp_subexpr, s_count * sizeof(m_subexpr));
     // Copy the pointer to the structure
-    math_struct->subexpr_ptr = subexpr_ptr;
+    math_struct->subexpr_ptr = tmp_subexpr;
 
-    math_struct->subexpr_count = subexpr_count;
-    for (i = 0; i < subexpr_count; ++i)
+    math_struct->subexpr_count = s_count;
+    for (i = 0; i < s_count; ++i)
     {
-        subexpr_ptr[i].function_ptr = NULL;
-        subexpr_ptr[i].cmplx_function_ptr = NULL;
-        subexpr_ptr[i].subexpr_nodes = NULL;
-        subexpr_ptr[i].execute_extended = true;
+        tmp_subexpr[i].function_ptr = NULL;
+        tmp_subexpr[i].cmplx_function_ptr = NULL;
+        tmp_subexpr[i].subexpr_nodes = NULL;
+        tmp_subexpr[i].execute_extended = true;
     }
 
     // The whole expression's "subexpression"
-    subexpr_ptr[subexpr_index].depth = 0;
-    subexpr_ptr[subexpr_index].solve_start = subexpr_ptr[subexpr_index].expression_start = 0;
-    subexpr_ptr[subexpr_index].solve_end = length - 1;
-    subexpr_ptr[subexpr_index].ext_function_ptr = NULL;
+    tmp_subexpr[s_index].depth = 0;
+    tmp_subexpr[s_index].solve_start = tmp_subexpr[s_index].subexpr_start = 0;
+    tmp_subexpr[s_index].solve_end = length - 1;
+    tmp_subexpr[s_index].ext_function_ptr = NULL;
 
     // Sort by depth (high to low)
-    qsort(subexpr_ptr, subexpr_count, sizeof(s_expression), compare_subexps_depth);
+    qsort(tmp_subexpr, s_count, sizeof(m_subexpr), compare_subexps_depth);
 
     int *operator_index, solve_start, solve_end, op_count, status;
     buffer_size = buffer_step = 1000;
@@ -358,18 +363,18 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     - Set the result pointer of each op_node relying on its position and neighbor priorities
     - Set the subexp result double pointer to the result pointer of the last calculated op_node
     */
-    for (subexpr_index = 0; subexpr_index < subexpr_count; ++subexpr_index)
+    for (s_index = 0; s_index < s_count; ++s_index)
     {
-        if (subexpr_ptr[subexpr_index].ext_function_ptr != NULL)
+        if (tmp_subexpr[s_index].ext_function_ptr != NULL)
         {
-            subexpr_ptr[subexpr_index].subexpr_nodes = NULL;
-            subexpr_ptr[subexpr_index].s_result = malloc(sizeof(double complex *));
+            tmp_subexpr[s_index].subexpr_nodes = NULL;
+            tmp_subexpr[s_index].s_result = malloc(sizeof(double complex *));
             continue;
         }
 
         // For simplicity
-        solve_start = subexpr_ptr[subexpr_index].solve_start;
-        solve_end = subexpr_ptr[subexpr_index].solve_end;
+        solve_start = tmp_subexpr[s_index].solve_start;
+        solve_end = tmp_subexpr[s_index].solve_end;
 
         operator_index = (int *)malloc(buffer_size * sizeof(int));
         // Count number of operators and store it's indexes
@@ -379,9 +384,9 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             if (expr[i] == '(')
             {
                 int previous_subexp;
-                previous_subexp = subexp_start_at(subexpr_ptr, i + 1, subexpr_index, 2);
+                previous_subexp = find_subexpr_by_start(tmp_subexpr, i + 1, s_index, 2);
                 if (previous_subexp != -1)
-                    i = subexpr_ptr[previous_subexp].solve_end + 1;
+                    i = tmp_subexpr[previous_subexp].solve_end + 1;
             }
             else if (is_digit(expr[i]))
                 continue;
@@ -420,9 +425,9 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                     j = r_search(expr, r_function_name[i], solve_start - 2, true);
                     if (j != -1)
                     {
-                        subexpr_ptr[subexpr_index].function_ptr = r_function_ptr[i];
+                        tmp_subexpr[s_index].function_ptr = r_function_ptr[i];
                         // Setting the start of the subexpression to the start of the function name
-                        subexpr_ptr[subexpr_index].expression_start = j;
+                        tmp_subexpr[s_index].subexpr_start = j;
                         break;
                     }
                 }
@@ -436,23 +441,23 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                     j = r_search(expr, cmplx_function_name[i], solve_start - 2, true);
                     if (j != -1)
                     {
-                        subexpr_ptr[subexpr_index].cmplx_function_ptr = cmplx_function_ptr[i];
-                        subexpr_ptr[subexpr_index].expression_start = j;
+                        tmp_subexpr[s_index].cmplx_function_ptr = cmplx_function_ptr[i];
+                        tmp_subexpr[s_index].subexpr_start = j;
                         break;
                     }
                 }
             }
         }
 
-        subexpr_ptr[subexpr_index].op_count = op_count;
+        tmp_subexpr[s_index].op_count = op_count;
         // Allocating the array of nodes
         // Case of no operators, create a dummy op_node and store the value in op1
         if (op_count == 0)
-            subexpr_ptr[subexpr_index].subexpr_nodes = malloc(sizeof(op_node));
+            tmp_subexpr[s_index].subexpr_nodes = malloc(sizeof(op_node));
         else
-            subexpr_ptr[subexpr_index].subexpr_nodes = malloc(op_count * sizeof(op_node));
+            tmp_subexpr[s_index].subexpr_nodes = malloc(op_count * sizeof(op_node));
 
-        node_block = subexpr_ptr[subexpr_index].subexpr_nodes;
+        node_block = tmp_subexpr[s_index].subexpr_nodes;
 
         // Checking if the expression is terminated with an operator
         if (op_count != 0 && operator_index[op_count - 1] == solve_end)
@@ -473,11 +478,11 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         // Case of expression with one term, use one op_node with operand1 to hold the number
         if (op_count == 0)
         {
-            i = subexp_start_at(subexpr_ptr, subexpr_ptr[subexpr_index].solve_start, subexpr_index, 1);
-            subexpr_ptr[subexpr_index].subexpr_nodes[0].var_metadata = 0;
+            i = find_subexpr_by_start(tmp_subexpr, tmp_subexpr[s_index].solve_start, s_index, 1);
+            tmp_subexpr[s_index].subexpr_nodes[0].var_metadata = 0;
             // Case of nested no operators expressions, set the result of the deeper expression as the left op of the dummy
             if (i != -1)
-                *(subexpr_ptr[i].s_result) = &(node_block->left_operand);
+                *(tmp_subexpr[i].s_result) = &(node_block->left_operand);
             else
             {
                 node_block->left_operand = read_value(expr, solve_start, enable_complex);
@@ -493,11 +498,11 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 }
             }
 
-            subexpr_ptr[subexpr_index].start_node = 0;
-            subexpr_ptr[subexpr_index].s_result = &(node_block->node_result);
+            tmp_subexpr[s_index].start_node = 0;
+            tmp_subexpr[s_index].s_result = &(node_block->node_result);
             node_block[0].next = NULL;
             // If the one term expression is the last one, use the math_struct answer
-            if (subexpr_index == subexpr_count - 1)
+            if (s_index == s_count - 1)
             {
                 node_block[0].node_result = &math_struct->answer;
                 break;
@@ -536,7 +541,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 // Variable x not found, the left operand is probably another subexpression
                 if (!status)
                 {
-                    status = subexp_start_at(subexpr_ptr, solve_start, subexpr_index, 1);
+                    status = find_subexpr_by_start(tmp_subexpr, solve_start, s_index, 1);
                     if (status == -1)
                     {
                         error_handler(SYNTAX_ERROR, 1, 1, solve_start);
@@ -544,7 +549,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                         return NULL;
                     }
                     else
-                        *(subexpr_ptr[status].s_result) = &(node_block[0].left_operand);
+                        *(tmp_subexpr[status].s_result) = &(node_block[0].left_operand);
                 }
             }
         }
@@ -566,7 +571,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                     if (!status)
                     {
                         // Case of a subexpression result as right_operand, set its result pointer to right_operand
-                        status = subexp_start_at(subexpr_ptr, node_block[i].operator_index + 1, subexpr_index, 1);
+                        status = find_subexpr_by_start(tmp_subexpr, node_block[i].operator_index + 1, s_index, 1);
                         if (status == -1)
                         {
                             error_handler(SYNTAX_ERROR, 1, 1, node_block[i].operator_index + 1);
@@ -574,7 +579,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                             return NULL;
                         }
                         else
-                            *(subexpr_ptr[status].s_result) = &(node_block[i].right_operand);
+                            *(tmp_subexpr[status].s_result) = &(node_block[i].right_operand);
                     }
                 }
             }
@@ -593,7 +598,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                     // Again a subexpression
                     if (!status)
                     {
-                        status = subexp_start_at(subexpr_ptr, node_block[i].operator_index + 1, subexpr_index, 1);
+                        status = find_subexpr_by_start(tmp_subexpr, node_block[i].operator_index + 1, s_index, 1);
                         if (status == -1)
                         {
                             error_handler(SYNTAX_ERROR, 1, 1, node_block[i].operator_index + 1);
@@ -601,7 +606,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                             return NULL;
                         }
                         else
-                            *(subexpr_ptr[status].s_result) = &(node_block[i + 1].left_operand);
+                            *(tmp_subexpr[status].s_result) = &(node_block[i + 1].left_operand);
                     }
                 }
             }
@@ -619,13 +624,13 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             if (!status)
             {
                 // If an expression is the last term, find it and set the pointers
-                status = subexp_start_at(subexpr_ptr, node_block[op_count - 1].operator_index + 1, subexpr_index, 1);
+                status = find_subexpr_by_start(tmp_subexpr, node_block[op_count - 1].operator_index + 1, s_index, 1);
                 if (status == -1)
                 {
                     error_handler(SYNTAX_ERROR, 1, 1, node_block[i].operator_index + 1);
                     return NULL;
                 }
-                *(subexpr_ptr[status].s_result) = &(node_block[op_count - 1].right_operand);
+                *(tmp_subexpr[status].s_result) = &(node_block[op_count - 1].right_operand);
             }
         }
         // Set the starting op_node by searching the first op_node with the highest priority
@@ -635,7 +640,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             {
                 if (node_block[j].priority == i)
                 {
-                    subexpr_ptr[subexpr_index].start_node = j;
+                    tmp_subexpr[s_index].start_node = j;
                     // Exiting the main loop by setting i outside continue condition
                     i = -1;
                     break;
@@ -644,7 +649,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         }
 
         // Setting nodes order of execution
-        i = subexpr_ptr[subexpr_index].start_node;
+        i = tmp_subexpr[s_index].start_node;
         int target_priority = node_block[i].priority;
         j = i + 1;
         while (target_priority > 0)
@@ -667,7 +672,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         node_block[i].next = NULL;
 
         // Set result pointers for each op_node based on position and priority
-        tmp_node = &(node_block[subexpr_ptr[subexpr_index].start_node]);
+        tmp_node = &(node_block[tmp_subexpr[s_index].start_node]);
         int left_node, right_node, prev_index = -2, prev_left = -2, prev_right = -2;
         while (tmp_node->next != NULL)
         {
@@ -724,9 +729,9 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             prev_right = right_node;
         }
         // Case of the last op_node in the traversal order, set result to be result of the subexpression
-        subexpr_ptr[subexpr_index].s_result = &(tmp_node->node_result);
+        tmp_subexpr[s_index].s_result = &(tmp_node->node_result);
         // The last op_node in the last subexpression should point to math_struct answer
-        if (subexpr_index == subexpr_count - 1)
+        if (s_index == s_count - 1)
             tmp_node->node_result = &math_struct->answer;
     }
     // Set the variables metadata
@@ -738,7 +743,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
 void delete_math_expr(math_expr *math_struct)
 {
     int i = 0;
-    s_expression *subexps = math_struct->subexpr_ptr;
+    m_subexpr *subexps = math_struct->subexpr_ptr;
     for (i = 0; i < math_struct->subexpr_count; ++i)
     {
         if (subexps[i].ext_function_ptr != NULL)
@@ -811,7 +816,7 @@ void reduce_fraction(fraction *fraction_str)
     int_factor *num_factor, *denom_factor;
     num_factor = find_factors(fraction_str->b);
     denom_factor = find_factors(fraction_str->c);
-    // If a zero was returned by the factorizing function, nothing to do.
+    // If a zero was returned by the factorization function, nothing to do.
     if (num_factor->factor == 0 || denom_factor->factor == 0)
     {
         free(num_factor);
@@ -822,7 +827,7 @@ void reduce_fraction(fraction *fraction_str)
     {
         if (num_factor[i].factor == denom_factor[j].factor)
         {
-            // upon finding the minimun power we subtract it from the power of the num and denum
+            // Subtract the minimun from the power of the num and denom
             min = find_min(num_factor[i].power, denom_factor[j].power);
             num_factor[i].power -= min;
             denom_factor[j].power -= min;
@@ -1010,16 +1015,16 @@ void priority_fill(op_node *list, int op_count)
     }
 }
 
-int subexp_start_at(s_expression *m_expr, int start, int subexpr_i, int mode)
+int find_subexpr_by_start(m_subexpr *S, int start, int s_index, int mode)
 {
     int i;
-    i = subexpr_i - 1;
+    i = s_index - 1;
     switch (mode)
     {
     case 1:
         while (i >= 0)
         {
-            if (m_expr[i].expression_start == start)
+            if (S[i].subexpr_start == start)
                 return i;
             else
                 --i;
@@ -1028,7 +1033,7 @@ int subexp_start_at(s_expression *m_expr, int start, int subexpr_i, int mode)
     case 2:
         while (i >= 0)
         {
-            if (m_expr[i].solve_start == start)
+            if (S[i].solve_start == start)
                 return i;
             else
                 --i;
@@ -1037,13 +1042,13 @@ int subexp_start_at(s_expression *m_expr, int start, int subexpr_i, int mode)
     return -1;
 }
 // Function that finds the subexpression that ends at 'end'
-int s_exp_ending(s_expression *expression, int end, int current_s_exp, int s_exp_count)
+int find_subexpr_by_end(m_subexpr *S, int end, int s_index, int s_count)
 {
     int i;
-    i = current_s_exp - 1;
-    while (i < s_exp_count)
+    i = s_index - 1;
+    while (i < s_count)
     {
-        if (expression[i].solve_end == end)
+        if (S[i].solve_end == end)
             return i;
         else
             --i;

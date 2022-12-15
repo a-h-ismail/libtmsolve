@@ -54,8 +54,8 @@ typedef struct var_op_data
     bool is_negative;
 } var_op_data;
 
-/// @brief Holds the metadata of a subexpression
-typedef struct s_expression
+/// @brief Holds the metadata of a subexpression.
+typedef struct m_subexpr
 {
     /// @brief Number of operators in this subexpression.
     int op_count;
@@ -69,7 +69,7 @@ typedef struct s_expression
 
     /// @brief The start index of the subexpression in the expression.
     /// @details If the subexpression has a function call, the index will be at the first character of the function name, otherwise equals to solve_start.
-    int expression_start;
+    int subexpr_start;
 
     /// @brief The end index of the subexpression, just before the close parenthesis.
     int solve_end;
@@ -95,13 +95,13 @@ typedef struct s_expression
 
     /// Enables execution of extended function, allows optimizing of nested extended functions like integration without thrashing performance.
     bool execute_extended;
-} s_expression;
+} m_subexpr;
 
 /// The standalone structure to hold all of an expression's metadata.
 typedef struct math_expr
 {
     /// The subexpression array created by parsing the math expression.
-    s_expression *subexpr_ptr;
+    m_subexpr *subexpr_ptr;
 
     /// Number of subexpression in this math expression.
     int subexpr_count;
@@ -133,28 +133,27 @@ extern double complex ans;
 /// @brief Contains the names of scientific functions (for real numbers) like sin, cos...
 extern char *r_function_name[];
 
-/// @brief Contains the function pointer of scientific functions.
+/// @brief Contains the function pointers of scientific functions.
 extern double (*r_function_ptr[])(double);
 
 /// @brief Contains the names of complex numbers functions like sin, cos...
 extern char *cmplx_function_name[];
 
-/// @brief Contains the function pointer of scientific functions.
+/// @brief Contains the function pointers of scientific functions.
 extern double complex (*cmplx_function_ptr[])(double complex);
 
+/// @brief Contains the names of extended functions (functions with variable number of arguments, passed as a comma separated string).
 extern char *ext_function_name[];
 
+/// @brief Contains the function pointers of scientific functions.
 extern double (*ext_math_function[])(char *);
 
 /// @brief Comparator function for use with qsort(), compares the depth of 2 subexpressions.
-/// @param a
-/// @param b
 /// @return 1 if a.depth < b.depth; -1 if a.depth > b.depth; 0 otherwise.
 int compare_subexps_depth(const void *a, const void *b);
 
 /**
  * @brief Calculates the factorial.
- * @param value 
  * @return value!
  */
 double factorial(double value);
@@ -169,10 +168,10 @@ double complex calculate_expr(char *expr, bool enable_complex);
 
 /**
  * @brief Evaluates a math_expr structure and calculates the result.
- * @param math_struct The math structure to evaluate.
- * @return The answer of the math expression, or NaN on error.
+ * @param M The math structure to evaluate.
+ * @return The answer of the math expression, or NaN in case of failure.
  */
-double complex evaluate_str(math_expr *math_struct);
+double complex eval_math_expr(math_expr *M);
 
 /**
  * @brief Sets the variable metadata in x_node to the left and/or right operand.
@@ -206,15 +205,23 @@ void priority_fill(op_node *list, int op_count);
 
 /**
  * @brief Finds the subexpression that starts at a specific index in the string.
- * @param m_expr The subexpressions array to search.
+ * @param S The subexpressions array to search.
  * @param start The starting index of the subexpression in the string.
- * @param subexpr_i The index in the subexpression array to initiate searching, should be the index of the subexpression you are currently processing.
+ * @param s_index The index in the subexpression array to initiate searching, should be the index of the subexpression you are currently processing.
  * @param mode Determines if the value passed by start is the expression_start (mode==1) or solve_start (mode==2).
- * @return
+ * @return Depends on the mode, either 
  */
-int subexp_start_at(s_expression *m_expr, int start, int subexpr_i, int mode);
+int find_subexpr_by_start(m_subexpr *S, int start, int s_index, int mode);
 
-int s_exp_ending(s_expression *expression, int end, int current_s_exp, int s_exp_count);
+/**
+ * @brief Finds the subexpression that ends at a specific index in the string.
+ * @param S The subexpression array to search.
+ * @param end The end index of the subexpression in the string.
+ * @param s_index The index in the subexpression array to initiate searching, should be the index of the subexpression you are currently processing.
+ * @param s_count The number of subexpressions in the expression.
+ * @return 
+ */
+int find_subexpr_by_end(m_subexpr *S, int end, int s_index, int s_count);
 
 /**
  * @brief Finds the factors of a signed 32bit integer.

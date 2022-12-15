@@ -64,4 +64,10 @@ void error_print(char *expr, int error_pos);
  * @return The minimum among the integers.
  */
 int find_min(int a, int b);
+
+/// @brief Comparator function for use with qsort(), use to sort in increasing order.
+int compare_ints(const void *a, const void *b);
+
+/// @brief Comparator function for use with qsort(), use to sort in decreasing order.
+int compare_ints_reverse(const void *a, const void *b);
 #endif

@@ -112,6 +112,8 @@ int r_search(char *str, char *keyword, int index, bool adjacent_search);
  */
 double complex read_value(char *expr, int start, bool enable_complex);
 
+/// Helps with printing formatted equations to stdout.
+/// @remark Currently unused
 void nice_print(char *format, double value, bool is_first);
 
 /**
@@ -121,10 +123,6 @@ void nice_print(char *format, double value, bool is_first);
  * @return The index of the occurence, -1 if none is found.
  */
 int find_add_subtract(char *expr, int i);
-int previous_open_parenthesis(char *expr, int p);
-int previous_closed_parenthesis(char *expr, int p);
-int next_open_parenthesis(char *expr, int p);
-int next_closed_parenthesis(char *expr, int p);
 
 /**
  * @brief Checks that each open parenthesis has a closing parenthesis and that no empty parenthesis pair exists.
@@ -158,4 +156,5 @@ int compare_priority(char operator1, char operator2);
  * @return A structure containing the arguments stored in separate strings.
  */
 arg_list* get_arguments(char *string);
+
 void free_arg_list(arg_list *list, bool list_on_heap);

@@ -10,7 +10,7 @@ void set_variable_ptr(math_expr *math_struct)
 {
     int i = 0, subexpr_index, buffer_size = 50, buffer_step = 50;
     var_op_data *variable_ptr = malloc(buffer_size * sizeof(var_op_data));
-    s_expression *subexpr_ptr = math_struct->subexpr_ptr;
+    m_subexpr *subexpr_ptr = math_struct->subexpr_ptr;
     op_node *i_node;
 
     for (subexpr_index = 0; subexpr_index < math_struct->subexpr_count; ++subexpr_index)
@@ -85,10 +85,10 @@ double derivative(char *arguments)
     math_struct = parse_expr(args->arguments[0], true, false);
     // Solve for x
     set_variable(math_struct, x);
-    fx1 = evaluate(math_struct);
+    fx1 = eval_math_expr(math_struct);
     // Solve for x + (small value)
     set_variable(math_struct, x + 1e-8);
-    fx2 = evaluate(math_struct);
+    fx2 = eval_math_expr(math_struct);
     // get the derivative
     f_prime = (fx2 - fx1) / (1e-8);
     delete_math_expr(math_struct);
@@ -126,9 +126,9 @@ double integrate(char *arguments)
     // 3h/8[(y0 + yn) + 3(y1 + y2 + y4 + y5 + … + yn-1) + 2(y3 + y6 + y9 + … + yn-3)]
     // First step: y0 + yn
     set_variable(math_struct, lower_bound);
-    result = evaluate(math_struct);
+    result = eval_math_expr(math_struct);
     set_variable(math_struct, lower_bound + delta);
-    result += evaluate(math_struct);
+    result += eval_math_expr(math_struct);
     if (isnan(result) == true)
     {
         error_handler("Error while calculating integral, make sure the function is defined on the integration interval.", 1, 1, -1);
@@ -141,7 +141,7 @@ double integrate(char *arguments)
             continue;
         an = lower_bound + delta * n / rounds;
         set_variable(math_struct, an);
-        fn = evaluate(math_struct);
+        fn = eval_math_expr(math_struct);
         if (isnan(fn) == true)
         {
             error_handler("Error while calculating integral, make sure the function is defined on the integration interval.", 1, 1, -1);
@@ -155,7 +155,7 @@ double integrate(char *arguments)
     {
         an = lower_bound + delta * n / rounds;
         set_variable(math_struct, an);
-        fn = evaluate(math_struct);
+        fn = eval_math_expr(math_struct);
         if (isnan(fn) == true)
         {
             error_handler("Error while calculating integral, make sure the function is defined on the integration interval.", 1, 1, -1);
