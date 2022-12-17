@@ -339,6 +339,11 @@ bool implicit_multiplication(char **expr)
         return false;
     }
     i = f_search(expr_ptr, "(", 0);
+
+    // If no parenthesis is found, return immediately.
+    // If left to continue, any sqaure bracket will become a parenthesis, bypassing the previous parenthesis_check
+    if(i==-1)
+        return true;
     // Implicit multiplication with parenthesis
     while (i != -1)
     {
@@ -771,7 +776,6 @@ bool parenthesis_check(char *expr)
     close_position = (int *)malloc(length * sizeof(int));
     *open_position = *close_position = -2;
     open = f_search(expr, "(", 0);
-    ;
     // Check if every open parenthesis has a close parenthesis and log their indexes
     while (open != -1)
     {
