@@ -167,7 +167,7 @@ void error_print(char *expr, int error_pos)
     puts(expr);
     for (i = 0; i < error_pos; ++i)
         printf("~");
-    printf("^\n");
+    puts("^\n");
 }
 
 int compare_ints(const void *a, const void *b)
