@@ -959,6 +959,7 @@ fraction decimal_to_fraction(double value, bool inverse_process)
         // Just in case the pattern was found to be zeors due to minor rounding (like 5.0000000000000003)
         if (pattern[0] == '0')
             return result;
+
         // Generate the denominator
         for (i = 0; i < strlen(pattern); ++i)
             result.c += 9 * pow(10, i);
@@ -970,7 +971,7 @@ fraction decimal_to_fraction(double value, bool inverse_process)
             result.c *= pow(10, pattern_start - decimal_point - 1);
         }
         else
-            sscanf(pattern, "%lf", &result.b);
+            sscanf(pattern, "%d", &result.b);
         reduce_fraction(&result);
         return result;
     }

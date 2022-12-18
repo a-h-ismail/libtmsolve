@@ -122,7 +122,7 @@ typedef struct math_expr
 /// Simple structure to store a fraction of the form a + b / c
 typedef struct fraction
 {
-    double a, b, c;
+    int a, b, c;
 } fraction;
 
 // Global variables
