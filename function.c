@@ -119,7 +119,7 @@ double integrate(char *arguments)
     math_struct = parse_expr(args->arguments[2], true, false);
 
     // Calculating the number of rounds
-    rounds = ceil(delta) * 16384000;
+    rounds = ceil(delta) * 16384;
     if (rounds > 1e7)
         rounds = 1e7;
     // Simpson 3/8 formula:
