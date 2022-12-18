@@ -124,7 +124,7 @@ double complex eval_math_expr(math_expr *M)
             {
                 int length = tmp_subexpr[s_index].solve_end - tmp_subexpr[s_index].solve_start + 1;
                 args = malloc((length + 1) * sizeof(char));
-                memcpy(args, glob_expr + tmp_subexpr[s_index].solve_start, length * sizeof(char));
+                memcpy(args, _glob_expr + tmp_subexpr[s_index].solve_start, length * sizeof(char));
                 args[length] = '\0';
                 // Calling the extended function
                 **(tmp_subexpr[s_index].s_result) = (*(tmp_subexpr[s_index].ext_function_ptr))(args);
@@ -256,6 +256,8 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     int s_index;
     // Use for dynamic growing blocks.
     int buffer_size = 10, buffer_step = 10;
+
+    _glob_expr = expr;
 
     length = strlen(expr);
     m_subexpr *tmp_subexpr;

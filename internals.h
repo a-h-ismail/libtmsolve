@@ -23,7 +23,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define MAX_ERRORS 5
 
 /// @brief Use to store the current expression being processed, used by error_handler() to generate the error prompt.
-extern char *glob_expr;
+extern char *_glob_expr;
 
 /// @brief Stores metadata related to extended functions arguments.
 typedef struct arg_list

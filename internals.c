@@ -3,7 +3,7 @@ Copyright (C) 2021-2022 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "internals.h"
-char *glob_expr = NULL;
+char *_glob_expr = NULL;
 
 int error_handler(char *error, int arg1, ...)
 {
@@ -38,13 +38,13 @@ int error_handler(char *error, int arg1, ...)
                 // Center the error in the string
                 if (position > 49)
                 {
-                    strncpy(error_table[error_count].err_str, glob_expr + position - 24, 49);
+                    strncpy(error_table[error_count].err_str, _glob_expr + position - 24, 49);
                     error_table[error_count].err_str[49] = '\0';
                     error_table[error_count].error_index = 24;
                 }
                 else
                 {
-                    strcpy(error_table[error_count].err_str, glob_expr);
+                    strcpy(error_table[error_count].err_str, _glob_expr);
                     error_table[error_count].error_index = position;
                 }
             }
