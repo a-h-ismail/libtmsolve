@@ -1,7 +1,4 @@
-Improve error handler and error_print
-Add support for more than one variable
-Add the ability to save a parsed expression for quick loading
-Allow decimal to fraction convertion for numbers larger than 32 bit int
+Improve UX of matrix mode.
 
 Low priority:
 Add support for more than one variable
