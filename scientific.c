@@ -24,10 +24,14 @@ double complex carg_z(double complex z)
 {
     return carg(z);
 }
+double complex ccbrt_cpow(double complex z)
+{
+    return cpow(z, 1 / 3);
+}
 char *r_function_name[] =
-    {"fact", "abs", "ceil", "floor", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log"};
+    {"fact", "abs", "ceil", "floor", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log"};
 double (*r_function_ptr[])(double) =
-    {factorial, fabs, ceil, floor, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, cos, sin, tan, log, log10};
+    {factorial, fabs, ceil, floor, sqrt, cbrt, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, cos, sin, tan, log, log10};
 // Extended functions, may take more than one parameter (stored in a comma separated string)
 char *ext_function_name[] = {"int", "der"};
 double (*ext_math_function[])(char *) =
@@ -35,9 +39,9 @@ double (*ext_math_function[])(char *) =
 
 // Complex functions
 char *cmplx_function_name[] =
-    {"abs", "arg", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "log"};
+    {"abs", "arg", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "log"};
 double complex (*cmplx_function_ptr[])(double complex) =
-    {cabs_z, carg_z, cacosh, casinh, catanh, cacos, casin, catan, ccosh, csinh, ctanh, ccos, csin, ctan, clog};
+    {cabs_z, carg_z, csqrt, ccbrt_cpow, cacosh, casinh, catanh, cacos, casin, catan, ccosh, csinh, ctanh, ccos, csin, ctan, clog};
 
 double factorial(double value)
 {

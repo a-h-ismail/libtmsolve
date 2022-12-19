@@ -246,4 +246,6 @@ void reduce_fraction(fraction *fraction_r);
  * @return The fraction form of the value.
  */
 fraction decimal_to_fraction(double value, bool inverse_process);
+
+double complex ccbrt_cpow(double complex z);
 #endif
