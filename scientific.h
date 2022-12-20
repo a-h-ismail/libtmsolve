@@ -162,6 +162,7 @@ double factorial(double value);
  * @brief Calculates a mathematical expression and returns the answer.
  * @param expr The string containing the math expression.
  * @param enable_complex Enables complex number calculation, set to false if you don't need complex values.
+ * @note This function does not affect the global variable ans, you have to explicitly assign the return value to ans.
  * @return The answer of the math expression, or NaN in case of failure.
  */
 double complex calculate_expr(char *expr, bool enable_complex);
@@ -181,6 +182,7 @@ double complex eval_math_expr(math_expr *M);
  * @return true if the variable x was found at either operands of x_node, false otherwise.
  */
 bool set_variable_metadata(char *expr, op_node *x_node, char operand);
+
 /**
  * @brief Parses a math expression into a structure.
  * @warning You should call parenthesis_check() and implicit_multiplication() before calling this function,
