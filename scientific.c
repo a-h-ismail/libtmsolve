@@ -91,62 +91,37 @@ double complex eval_math_expr(math_expr *M)
 {
     op_node *i_node;
     int s_index = 0, s_count = M->subexpr_count;
-    m_subexpr *tmp_subexpr = M->subexpr_ptr;
-    /*
-    #ifdef DEBUG
-        // Dumping op_node data
-        do
-        {
-            if (i_node == NULL)
-            {
-                puts("Special function");
-            }
-            else
-            {
-                i_node = subexpr_ptr[subexpr_index].subexpr_nodes + subexpr_ptr[subexpr_index].start_node;
-                while (i_node != NULL)
-                {
-                    printf("%.8g %c %.8g -> ", (double)i_node->left_operand, i_node->operator, (double)i_node->right_operand);
-                    i_node = i_node->next;
-                }
-                printf("Function: %lli", subexpr_ptr[subexpr_index].function_ptr);
-                puts("|");
-            }
-            ++subexpr_index;
-        } while (subexpr_ptr[subexpr_index - 1].last_subexp == false);
-        puts("End");
-        fflush(stdout);
-    #endif
-    */
+    // Subexpression pointer to access the subexpression array.
+    m_subexpr *S = M->subexpr_ptr;
     while (s_index < s_count)
     {
         // Case with special function
-        if (tmp_subexpr[s_index].subexpr_nodes == NULL)
+        if (S[s_index].subexpr_nodes == NULL)
         {
             char *args;
-            if (tmp_subexpr[s_index].execute_extended)
+            if (S[s_index].execute_extended)
             {
-                int length = tmp_subexpr[s_index].solve_end - tmp_subexpr[s_index].solve_start + 1;
+                int length = S[s_index].solve_end - S[s_index].solve_start + 1;
                 args = malloc((length + 1) * sizeof(char));
-                memcpy(args, _glob_expr + tmp_subexpr[s_index].solve_start, length * sizeof(char));
+                memcpy(args, _glob_expr + S[s_index].solve_start, length * sizeof(char));
                 args[length] = '\0';
                 // Calling the extended function
-                **(tmp_subexpr[s_index].s_result) = (*(tmp_subexpr[s_index].ext_function_ptr))(args);
-                if (isnan((double)**(tmp_subexpr[s_index].s_result)))
+                **(S[s_index].s_result) = (*(S[s_index].ext_function_ptr))(args);
+                if (isnan((double)**(S[s_index].s_result)))
                 {
-                    error_handler(MATH_ERROR, 1, 0, tmp_subexpr[s_index].solve_start);
+                    error_handler(MATH_ERROR, 1, 0, S[s_index].solve_start);
                     return NAN;
                 }
-                tmp_subexpr[s_index].execute_extended = false;
+                S[s_index].execute_extended = false;
                 free(args);
             }
             ++s_index;
 
             continue;
         }
-        i_node = tmp_subexpr[s_index].subexpr_nodes + tmp_subexpr[s_index].start_node;
+        i_node = S[s_index].subexpr_nodes + S[s_index].start_node;
 
-        if (tmp_subexpr[s_index].op_count == 0)
+        if (S[s_index].op_count == 0)
             *(i_node->node_result) = i_node->left_operand;
         else
             while (i_node != NULL)
@@ -191,19 +166,59 @@ double complex eval_math_expr(math_expr *M)
             }
         // Executing function on the subexpression result
         // Complex function
-        if (M->enable_complex && tmp_subexpr[s_index].cmplx_function_ptr != NULL)
-            **(tmp_subexpr[s_index].s_result) = (*(tmp_subexpr[s_index].cmplx_function_ptr))(**(tmp_subexpr[s_index].s_result));
+        if (M->enable_complex && S[s_index].cmplx_function_ptr != NULL)
+            **(S[s_index].s_result) = (*(S[s_index].cmplx_function_ptr))(**(S[s_index].s_result));
         // Real function
-        else if (!M->enable_complex && tmp_subexpr[s_index].function_ptr != NULL)
-            **(tmp_subexpr[s_index].s_result) = (*(tmp_subexpr[s_index].function_ptr))(**(tmp_subexpr[s_index].s_result));
+        else if (!M->enable_complex && S[s_index].function_ptr != NULL)
+            **(S[s_index].s_result) = (*(S[s_index].function_ptr))(**(S[s_index].s_result));
 
-        if (isnan((double)**(tmp_subexpr[s_index].s_result)))
+        if (isnan((double)**(S[s_index].s_result)))
         {
-            error_handler(MATH_ERROR, 1, 0, tmp_subexpr[s_index].solve_start);
+            error_handler(MATH_ERROR, 1, 0, S[s_index].solve_start);
             return NAN;
         }
         ++s_index;
     }
+#ifdef DEBUG
+    s_index = 0;
+    puts("Dumping expression data:\n");
+    while (s_index < s_count)
+    {
+        printf("subexpr %d:\n s_function = %p, c_function = %p, e_function = %p, depth = %d\n",
+               s_index, S[s_index].function_ptr, S[s_index].cmplx_function_ptr, S[s_index].ext_function_ptr, S[s_index].depth);
+        // Lookup result pointer location
+        for (int i = 0; i < s_count; ++i)
+        {
+            for (int j = 0; j < S[i].op_count; ++j)
+            {
+                if (S[i].subexpr_nodes[j].node_result == *(S[s_index].s_result))
+                {
+                    printf("s_result at subexpr %d, node %d\n\n", i, j);
+                    break;
+                }
+            }
+            // Case of a no op expression
+            if (S[i].op_count == 0 && S[i].subexpr_nodes[0].node_result == *(S[s_index].s_result))
+                printf("s_result at subexpr %d, node 0\n\n", i);
+        }
+        i_node = S[s_index].subexpr_nodes + S[s_index].start_node;
+        // Dump nodes data
+        while (i_node != NULL)
+        {
+
+            printf("%d: ", i_node->node_index);
+            // This line is too long, should do something about it.
+            if (M->enable_complex)
+                printf("%.14g + %.14gi %c %.14g + %.14gi -> ", creal(i_node->left_operand), cimag(i_node->left_operand), i_node->operator, creal(i_node->right_operand), cimag(i_node->right_operand));
+            else
+                printf("%.14g %c %.14g -> ", creal(i_node->left_operand), i_node->operator, creal(i_node->right_operand));
+            i_node = i_node->next;
+        }
+        ++s_index;
+        puts("end\n");
+    }
+
+#endif
     return M->answer;
 }
 
