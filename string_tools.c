@@ -342,7 +342,7 @@ bool implicit_multiplication(char **expr)
 
     // If no parenthesis is found, return immediately.
     // If left to continue, any sqaure bracket will become a parenthesis, bypassing the previous parenthesis_check
-    if(i==-1)
+    if (i == -1)
         return true;
     // Implicit multiplication with parenthesis
     while (i != -1)
@@ -694,15 +694,15 @@ int find_startofnumber(char *expr, int end)
 
 int f_search(char *str, char *keyword, int index)
 {
-    int length = strlen(keyword);
-    while (str[index] != '\0')
+    int keylen = strlen(keyword), s_length = strlen(str);
+    while (index<s_length)
     {
         if (str[index] == keyword[0])
         {
-            if (strncmp(str + index, keyword, length) == 0)
+            if (strncmp(str + index, keyword, keylen) == 0)
                 return index;
             else
-                ++index;
+                index += keylen;
         }
         else
             ++index;
@@ -714,7 +714,7 @@ int f_search(char *str, char *keyword, int index)
 int r_search(char *str, char *keyword, int index, bool adjacent_search)
 {
     int length = strlen(keyword), i = index;
-    while (i != -1)
+    while (i > -1)
     {
         if (adjacent_search == true && i == index - length)
             return -1;
@@ -803,9 +803,9 @@ bool parenthesis_check(char *expr)
     qsort(close_position, k, sizeof(int), compare_ints_reverse);
     // Case of no open parenthesis, check if a close parenthesis is present
     if (k == 0)
-        close = f_search(expr,")", 0);
+        close = f_search(expr, ")", 0);
     else
-        close = f_search(expr,")", close_position[0] + 1);
+        close = f_search(expr, ")", close_position[0] + 1);
 
     if (close != -1)
     {
