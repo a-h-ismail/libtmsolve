@@ -148,6 +148,8 @@ extern char *ext_function_name[];
 /// @brief Contains the function pointers of scientific functions.
 extern double (*ext_math_function[])(char *);
 
+extern int total_functions;
+
 /// @brief Comparator function for use with qsort(), compares the depth of 2 subexpressions.
 /// @return 1 if a.depth < b.depth; -1 if a.depth > b.depth; 0 otherwise.
 int compare_subexps_depth(const void *a, const void *b);

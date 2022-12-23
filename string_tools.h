@@ -8,7 +8,7 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @brief Declares all string handling related macros, structures, globals and functions.
 */
 // Errors
-#define PARAMETER_MISSING "The function expects more arguments."
+#define PARENTHESIS_MISSING "Expected ( for function call."
 #define PARENTHESIS_EMPTY "Empty parenthesis pair."
 #define PARENTHESIS_NOT_CLOSED "Open parenthesis has no closing parenthesis."
 #define PARENTHESIS_NOT_OPEN "Extra closing parenthesis."
@@ -53,14 +53,15 @@ int next_op(char *expr, int i);
 void remove_whitespace(char *str);
 
 /**
- * @brief Resizes the 
- * @param str 
- * @param o_end 
- * @param n_end 
+ * @brief Moves all characters starting from old_end to a new index: new_end
+ * @param str The string to operate on.
+ * @param old_end
+ * @param n_end
  */
-void resize_zone(char *str, int o_end, int n_end);
-bool implicit_multiplication(char **expr);
-bool var_implicit_multiplication(char *expr);
+void resize_zone(char *str, int old_end, int new_end);
+
+// bool implicit_multiplication(char **expr);
+// bool _var_implicit_multiplication(char *expr);
 
 /**
  * @brief Checks if the character c is a digit.
@@ -134,9 +135,13 @@ int find_add_subtract(char *expr, int i);
 /**
  * @brief Checks that each open parenthesis has a closing parenthesis and that no empty parenthesis pair exists.
  * @param expr The expression to check.
- * @return true if the check doesn't find errors, false otherwise.
+ * @return
  */
 bool parenthesis_check(char *expr);
+
+/// @brief Checks the syntax of the expression, runs parenthesis_check implicitly.
+/// @return true if the check doesn't find errors, false otherwise.
+bool syntax_check(char *expr);
 
 /**
  * @brief Combines adjacent add/subtract symbols into one (ex: ++++ becomes + and +-+ becomes -).
@@ -158,7 +163,7 @@ bool part_of_keyword(char *expr, char *keyword1, char *keyword2, int index);
 int compare_priority(char operator1, char operator2);
 
 /**
- * @brief Extracts arguments separated by "," from a string.
+ * @brief Extracts arguments separated by ";" from a string.
  * @param string The string containing the arguments.
  * @return A structure containing the arguments stored in separate strings.
  */

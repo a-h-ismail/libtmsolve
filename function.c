@@ -78,8 +78,6 @@ double derivative(char *arguments)
         return false;
     }
     double x, f_prime, fx1, fx2;
-    // Perform implied multiplication because the special function was skipped
-    implicit_multiplication(&(args->arguments[1]));
 
     x = calculate_expr(args->arguments[1], false);
     math_struct = parse_expr(args->arguments[0], true, false);
@@ -112,8 +110,6 @@ double integrate(char *arguments)
         lower_bound = delta + lower_bound;
         delta = -delta;
     }
-    // Perform implied multiplication because the special function was skipped
-    implicit_multiplication(&(args->arguments[2]));
 
     // Compile the expression to the desired structure
     math_struct = parse_expr(args->arguments[2], true, false);

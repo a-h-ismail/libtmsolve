@@ -246,20 +246,23 @@ void resize_zone(char *str, int o_end, int n_end)
     else
         memmove(str + n_end + 1, str + o_end + 1, strlen(str + o_end));
 }
-// Simple function that checks if the character is a number
-bool is_digit(char c)
+inline bool is_digit(char c)
 {
     if (c >= '0' && c <= '9')
         return true;
     else
         return false;
 }
-bool is_alphabetic(char c)
+inline bool is_alphabetic(char c)
 {
     if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
         return true;
     else
         return false;
+}
+inline bool isalphanum(char c)
+{
+    return is_digit(c) && is_alphabetic(c);
 }
 
 // Checks if keyword1 found at index of expr is a part of keyword2
@@ -324,291 +327,6 @@ bool is_valid_number(char *expr, int start)
         return true;
     else
         return false;
-}
-// Function that converts implicit multiplication to explicit multiplication, may change the length of expr
-bool implicit_multiplication(char **expr)
-{
-    int i, j, k, symbol;
-    bool condition_met;
-    char *expr_ptr;
-    *expr = realloc(*expr, 4 * strlen(*expr) * sizeof(char));
-    expr_ptr = *expr;
-    if (var_implicit_multiplication(expr_ptr) == false)
-    {
-        *expr = realloc(*expr, (strlen(*expr) + 1) * sizeof(char));
-        return false;
-    }
-    i = f_search(expr_ptr, "(", 0);
-
-    // If no parenthesis is found, return immediately.
-    // If left to continue, any sqaure bracket will become a parenthesis, bypassing the previous parenthesis_check
-    if (i == -1)
-        return true;
-    // Implicit multiplication with parenthesis
-    while (i != -1)
-    {
-        symbol = -1;
-        if (symbol != -1)
-        {
-            k = find_closing_parenthesis(expr_ptr, i);
-            expr_ptr[i] = '[';
-            expr_ptr[k] = ']';
-            i = k + 1;
-            k = find_closing_parenthesis(expr_ptr, i);
-            if (k == -1)
-                return false;
-            expr_ptr[i] = '[';
-            expr_ptr[k] = ']';
-            resize_zone(expr_ptr, k, k + 2);
-            memmove(expr + symbol + 1, expr + symbol, k - symbol + 1);
-            expr_ptr[symbol] = '(';
-            expr_ptr[k + 2] = ')';
-            i = symbol;
-        }
-        j = find_closing_parenthesis(expr_ptr, i);
-        condition_met = true;
-
-        if (i != 0)
-        {
-            // Case where the implicit multiplication is with a number
-            if (is_digit(expr_ptr[i - 1]) || expr_ptr[i - 1] == 'i')
-                k = find_startofnumber(expr_ptr, i);
-            // Case where the implicit multiplication is with a closed parenthesis
-            else if (expr_ptr[i - 1] == ')')
-                k = find_opening_parenthesis(expr_ptr, i - 1);
-            // Other cases
-            else
-                condition_met = false;
-            if (condition_met)
-                shift_and_multiply(expr_ptr, &k, &i, &j, 'l');
-        }
-        condition_met = true;
-        if (expr_ptr[j + 1] != '\0')
-        {
-            // Case where implicit multiplication is with a number or a variable
-            if (is_digit(expr_ptr[j + 1]) || is_alphabetic(expr_ptr[j + 1]))
-                k = find_endofnumber(expr_ptr, j + 1);
-            else if (expr_ptr[j + 1] == '(')
-                k = find_closing_parenthesis(expr_ptr, j + 1);
-            else
-                condition_met = false;
-            if (condition_met)
-                shift_and_multiply(expr_ptr, &i, &j, &k, 'r');
-        }
-        i = f_search(expr_ptr, "(", i + 1);
-    }
-    // Restore parenthesis
-    for (i = 0; expr_ptr[i] != '\0'; ++i)
-    {
-        if (expr_ptr[i] == '[')
-            expr_ptr[i] = '(';
-        else if (expr_ptr[i] == ']')
-            expr_ptr[i] = ')';
-    }
-    *expr = realloc(*expr, (strlen(*expr) + 1) * sizeof(char));
-    return true;
-}
-bool var_implicit_multiplication(char *expr)
-{
-    char *keyword[] = {"ans", "expr", "pi", "x", "i", "sin", "ceil", "dx"};
-    char *function_name[] =
-        {"fact", "abs", "arg", "ceil", "floor", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log"};
-    int keylen[] = {3, 3, 2, 1, 1, 3, 4, 2}, i, current, k, p1, p2, p3, temp;
-    // keyword[current] is the current variable being tested
-    for (current = 0; current < 5; ++current)
-    {
-        // search the first match of keyword[current]
-        i = f_search(expr, keyword[current], 0);
-        while (i != -1)
-        {
-            // Checking that keyword[current] is not part of another keyword, like x being part of expr
-            for (k = 0; k < 8; ++k)
-            {
-                if (part_of_keyword(expr, keyword[current], keyword[k], i) == true)
-                    goto endl1;
-            }
-            // Implicit multiplication on the left
-            if (i != 0)
-            {
-                // current<4 condition guarantees that no implicit multiplication checks are done on "i" with numbers
-                // read_complex can read the complex number without * mark
-                if (current < 4)
-                {
-                    if (is_digit(expr[i - 1]))
-                    {
-                        p1 = find_startofnumber(expr, i - 1);
-                        p2 = i;
-                        p3 = i + keylen[current] - 1;
-                        shift_and_multiply(expr, &p1, &p2, &p3, 'l');
-                        i += 2;
-                    }
-                    else if (expr[i - 1] == ')')
-                    {
-                        p1 = find_opening_parenthesis(expr, i - 1);
-                        p2 = i;
-                        p3 = i + keylen[current] - 1;
-                        shift_and_multiply(expr, &p1, &p2, &p3, 'l');
-                        i += 2;
-                    }
-                }
-                // keyword[k] is the variable being checked if it is being implicitly multiplied with keyword[j]
-                for (k = 0; k < 5; ++k)
-                {
-                    if (i - keylen[k] < 0)
-                        continue;
-                    temp = strncmp(keyword[k], expr + i - keylen[k], keylen[k]);
-                    if (temp == 0)
-                    {
-                        p1 = i - keylen[k];
-                        p2 = i;
-                        p3 = i + keylen[current] - 1;
-                        shift_and_multiply(expr, &p1, &p2, &p3, 'l');
-                        i += 2;
-                        break;
-                    }
-                }
-            }
-            // Implicit multiplication on the right
-            // i + keylen[j] is the index of the first element after the keyword found
-            if (expr[i + keylen[current]] != '\0')
-            {
-                if (current < 4)
-                {
-                    if (is_digit(expr[i + keylen[current]]) == true)
-                    {
-                        p1 = i;
-                        p2 = i + keylen[current] - 1;
-                        p3 = find_endofnumber(expr, p2 + 1);
-                        shift_and_multiply(expr, &p1, &p2, &p3, 'r');
-                        ++i;
-                    }
-                    else if (expr[i + keylen[current]] == '(')
-                    {
-                        p1 = i;
-                        p2 = i + keylen[current] - 1;
-                        p3 = find_closing_parenthesis(expr, p2 + 1);
-                        shift_and_multiply(expr, &p1, &p2, &p3, 'r');
-                        ++i;
-                    }
-                }
-                // keyword[k] is the variable being checked if it is being implicitly multiplied with keyword[j]
-                for (k = 0; k < 5; ++k)
-                {
-                    temp = strncmp(keyword[k], expr + i + keylen[current], keylen[k]);
-                    if (temp == 0)
-                    {
-                        p1 = i;
-                        p2 = i + keylen[current] - 1;
-                        p3 = p2 + keylen[k];
-                        shift_and_multiply(expr, &p1, &p2, &p3, 'r');
-                        break;
-                    }
-                }
-            }
-        endl1:;
-            // Find next match of keyword[j]
-            i = f_search(expr, keyword[current], i + keylen[current]);
-        }
-    }
-    int length;
-
-    // Implicit multiplication with scientific functions
-    for (current = 0; current < 19; ++current)
-    {
-        length = strlen(function_name[current]);
-        i = f_search(expr, function_name[current], 0);
-        while (i != -1)
-        {
-            p2 = i;
-            if (i != 0)
-            {
-                // Checking that the keyword is not a part of another keyword
-                for (k = 4; k < 16; ++k)
-                {
-                    if (part_of_keyword(expr, function_name[current], function_name[k], i) == true)
-                        goto endl2;
-                }
-            }
-            // Add enclosing parenthesis for cases like cos x
-            if (expr[i + length] != '(')
-            {
-                int start = i + length, end;
-                if (expr[start] == '\0' || (expr[start] != '-' && expr[start] != '+' && is_op(expr[start])))
-                {
-                    error_handler(PARAMETER_MISSING, 1, 1, start);
-                    return false;
-                }
-                // Number following a scientific function
-                if (is_valid_number(expr, start))
-                    end = find_endofnumber(expr, start);
-                else if (is_op(expr[start + 1]) == false)
-                {
-                    // Variable following a scientific function
-                    end = next_op(expr, start + 1) - 1;
-                    if (end == -2)
-                        end = strlen(expr) - 1;
-                    if (end == start - 1)
-                    {
-                        error_handler(PARAMETER_MISSING, 1, 1, start);
-                        return false;
-                    }
-                }
-                // Other cases
-                else
-                    end = -1;
-
-                if (end != -1)
-                {
-                    // Shifting after the function to make room for enclosing parenthesis
-                    resize_zone(expr, end, end + 2);
-                    memmove(expr + start + 1, expr + start, end - start + 1);
-                    expr[start] = '(';
-                    expr[end + 2] = ')';
-                    p3 = end + 2;
-                }
-            }
-            // Implicit multiplication on the left
-            if (i != 0)
-            {
-                if (is_digit(expr[i - 1]) == false && is_op(expr[i - 1]) == false)
-                {
-                    bool success = false;
-                    for (k = 0; k < 4; ++k)
-                    {
-                        // Verifying that the scientific function is not preceded by any variable (ans,pi,expr,x)
-                        if (i >= keylen[k] && r_search(expr, keyword[k], i, true) != i - keylen[k])
-                        {
-                            p1 = i - keylen[k];
-                            success = true;
-                            break;
-                        }
-                    }
-                    // Case where a scientific function is preceded by another scientific function (or possibly garbage)
-                    if (success == false)
-                    {
-                        resize_zone(expr, p3, p3 + 2);
-                        memmove(expr + p2 + 1, expr + p2, p3 - p2 + 1);
-                        // Encasing the function in parenthesis
-                        expr[p2] = '(';
-                        expr[p3 + 2] = ')';
-                        i = f_search(expr, function_name[current], i + length + 1);
-                        continue;
-                    }
-                }
-                // Case where the scientific function is preceded by a number
-                // Add a * sign after the number
-                else if (is_digit(expr[i - 1]) || expr[i - 1] == 'i')
-                {
-                    resize_zone(expr, i - 1, i);
-                    expr[i++] = '*';
-                }
-            }
-        // Initializing the next run
-        endl2:;
-            i = f_search(expr, function_name[current], i + length);
-        }
-    }
-    return true;
 }
 
 int find_endofnumber(char *expr, int start)
@@ -695,7 +413,7 @@ int find_startofnumber(char *expr, int end)
 int f_search(char *str, char *keyword, int index)
 {
     int keylen = strlen(keyword), s_length = strlen(str);
-    while (index<s_length)
+    while (index < s_length)
     {
         if (str[index] == keyword[0])
         {
@@ -818,6 +536,98 @@ bool parenthesis_check(char *expr)
     free(open_position);
     free(close_position);
     return true;
+}
+
+bool syntax_check(char *expr)
+{
+    int length = strlen(expr), i, j;
+    static bool init = true;
+    static int function_count;
+    static char **all_functions;
+    _glob_expr = expr;
+    if (init == true)
+    {
+        // Get the number of functions.
+        for (i = 0; r_function_name[i] != NULL; ++i)
+            ++function_count;
+        for (i = 0; cmplx_function_name[i] != NULL; ++i)
+            ++function_count;
+        for (i = 0; ext_function_name[i] != NULL; ++i)
+            ++function_count;
+
+        // Generate the all functions array, avoiding repetition.
+        char *tmp[function_count];
+        // Copy r_function_name
+        for (i = 0; r_function_name[i] != NULL; ++i)
+            tmp[i] = r_function_name[i];
+        bool found = false;
+        // Copy what wasn't already copied
+        for (int j = 0; cmplx_function_name[j] != NULL; ++j)
+        {
+            for (int k = 0; r_function_name[k] != NULL; ++k)
+            {
+                if (r_function_name[k] == cmplx_function_name[j])
+                    found = true;
+            }
+            if (found)
+            {
+                tmp[i++] = cmplx_function_name[j];
+                found = false;
+            }
+        }
+        for (int j = 0; ext_function_name[j] != NULL; ++j)
+        {
+            for (int k = 0; r_function_name[k] != NULL; ++k)
+            {
+                if (r_function_name[k] == ext_function_name[j])
+                    found = true;
+            }
+            if (found)
+            {
+                tmp[i++] = ext_function_name[j];
+                found = false;
+            }
+        }
+        all_functions = malloc(i * sizeof(char *));
+        function_count = i;
+        for (i = 0; i < function_count; ++i)
+            all_functions[i] = tmp[i];
+        init = false;
+    }
+    // First check: all function calls have parenthesis.
+    for (i = 0; i < function_count; ++i)
+    {
+        j = f_search(expr, all_functions[i], 0);
+        while (j != -1)
+        {
+            if (expr[j + strlen(all_functions[i])] != '(')
+            {
+                error_handler(PARENTHESIS_MISSING, 1, 1, j + strlen(all_functions[i]));
+                return false;
+            }
+            j = f_search(expr, all_functions[i], j + 1);
+        }
+    }
+    // Check for incorrect syntax or implied multiplication.
+    for (i = 0; i < length; ++i)
+    {
+        if (is_digit(expr[i]))
+        {
+            int end = find_endofnumber(expr, i);
+            if (i > 0 && !is_op(expr[i - 1]) && expr[i - 1] != '(' && expr[i - 1] != ',')
+            {
+                error_handler(SYNTAX_ERROR, 1, 1, i - 1);
+                return false;
+            }
+            if (expr[end + 1] != '\0' && !is_op(expr[end + 1]) && expr[end + 1] != ')' && expr[end + 1] != ',')
+            {
+                error_handler(SYNTAX_ERROR, 1, 1, end + 1);
+                return false;
+            }
+            i = end + 1;
+        }
+    }
+    return parenthesis_check(expr);
 }
 
 int compare_priority(char operator1, char operator2)
