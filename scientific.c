@@ -16,6 +16,7 @@ int compare_subexps_depth(const void *a, const void *b)
     else
         return 0;
 }
+// Some simple wrapper functions.
 double complex cabs_z(double complex z)
 {
     return cabs(z);
@@ -29,20 +30,21 @@ double complex ccbrt_cpow(double complex z)
     return cpow(z, 1 / 3);
 }
 char *r_function_name[] =
-    {"fact", "abs", "ceil", "floor", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log"};
+    {"fact", "abs", "ceil", "floor", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log", NULL};
 double (*r_function_ptr[])(double) =
     {factorial, fabs, ceil, floor, sqrt, cbrt, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, cos, sin, tan, log, log10};
 // Extended functions, may take more than one parameter (stored in a comma separated string)
-char *ext_function_name[] = {"int", "der"};
+char *ext_function_name[] = {"int", "der", NULL};
 double (*ext_math_function[])(char *) =
     {integrate, derivative};
 
 // Complex functions
 char *cmplx_function_name[] =
-    {"abs", "arg", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "log"};
+    {"abs", "arg", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "log", NULL};
 double complex (*cmplx_function_ptr[])(double complex) =
     {cabs_z, carg_z, csqrt, ccbrt_cpow, cacosh, casinh, catanh, cacos, casin, catan, ccosh, csinh, ctanh, ccos, csin, ctan, clog};
 
+int total_functions = (sizeof(r_function_name) + sizeof(cmplx_function_name) + sizeof(ext_function_name)) / sizeof(char *);
 double factorial(double value)
 {
     double result = 1;
@@ -65,16 +67,12 @@ double complex calculate_expr(char *expr, bool enable_complex)
     }
     // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
     combine_add_subtract(expr_local, 0, strlen(expr_local) - 2);
-    if (parenthesis_check(expr_local) == false)
+    if (syntax_check(expr_local) == false)
     {
         free(expr_local);
         return NAN;
     }
-    if (implicit_multiplication(&expr_local) == false)
-    {
-        free(expr_local);
-        return NAN;
-    }
+
     math_struct = parse_expr(expr_local, false, enable_complex);
     if (math_struct == NULL)
     {
