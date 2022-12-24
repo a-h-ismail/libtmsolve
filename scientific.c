@@ -44,7 +44,6 @@ char *cmplx_function_name[] =
 double complex (*cmplx_function_ptr[])(double complex) =
     {cabs_z, carg_z, csqrt, ccbrt_cpow, cacosh, casinh, catanh, cacos, casin, catan, ccosh, csinh, ctanh, ccos, csin, ctan, clog};
 
-int total_functions = (sizeof(r_function_name) + sizeof(cmplx_function_name) + sizeof(ext_function_name)) / sizeof(char *);
 double factorial(double value)
 {
     double result = 1;
