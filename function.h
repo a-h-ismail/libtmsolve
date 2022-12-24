@@ -15,14 +15,12 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @param M The math_struct used to generate and store the metadata.
  * @remark You won't need to call this manually, the parser will call it if variables are enabled.
  */
-void set_var_data(math_expr *M);
+void _set_var_data(math_expr *M);
 
 /**
  * @brief Sets a value to all the variable members of math_struct.
- * @param math_struct 
- * @param value 
  */
-void set_variable(math_expr *math_struct, double complex value);
+void set_variable(math_expr *M, double complex value);
 
 /**
  * @brief Calculates the derivative of a function at a specific point.

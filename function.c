@@ -6,7 +6,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "string_tools.h"
 #include "function.h"
 #include <math.h>
-void set_var_data(math_expr *M)
+void _set_var_data(math_expr *M)
 {
     int i = 0, s_index, buffer_size = 50, buffer_step = 50;
     var_op_data *vars = malloc(buffer_size * sizeof(var_op_data));

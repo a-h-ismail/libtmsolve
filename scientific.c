@@ -754,7 +754,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     }
     // Set the variables metadata
     if (enable_variables)
-        set_var_data(math_struct);
+        _set_var_data(math_struct);
     return math_struct;
 }
 
