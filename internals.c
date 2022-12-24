@@ -61,7 +61,7 @@ int error_handler(char *error, int arg1, ...)
         {
             puts(error_table[i].error_msg);
             if (error_table[i].fatal_error == true && error_table[i].error_index != -1)
-                error_print(error_table[i].err_str, error_table[i].error_index);
+                print_errors(error_table[i].err_str, error_table[i].error_index);
         }
         error_handler(NULL, 3, 0);
 
@@ -161,13 +161,13 @@ int error_handler(char *error, int arg1, ...)
     return -1;
 }
 
-void error_print(char *expr, int error_pos)
+void print_errors(char *expr, int error_pos)
 {
     int i;
     puts(expr);
     for (i = 0; i < error_pos; ++i)
-        printf("~");
-    puts("^\n");
+        fprintf(stderr, "~");
+    fprintf(stderr, "^\n\n");
 }
 
 int compare_ints(const void *a, const void *b)
