@@ -179,10 +179,10 @@ bool set_variable_metadata(char *expr, op_node *x_node, char operand);
 
 /**
  * @brief Parses a math expression into a structure.
- * @warning You should call parenthesis_check() and implicit_multiplication() before calling this function,
- *  because it depends on having a reasonably valid expression.
+ * @warning You should call syntax_check() before calling this function, because it depends on having an expression with valid syntax.
  * @param expr The string containing the math expression.
- * @param enable_variables When set to true, the parser will look for variables (currently x only) and set its metadata in the corresponding nodes.
+ * @param enable_variables When set to true, the parser will look for variables (currently x only) and set its metadata in the corresponding nodes.\n
+ * Use set_variable() from function.h to specify the value taken by the variable.
  * @param enable_complex When set to true, enables the parser to read complex values and set complex variant of scientific functions (disables integration, derivation, modulo and factorial).
  * @return A (malloc'd) pointer to the generated math structure.
  */
