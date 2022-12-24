@@ -42,7 +42,7 @@ void system_solver(double *A, double *b, int degree)
     puts("\nSolution:\n");
     for (i = 0; i < degree; ++i)
     {
-        copy = matrix_copy(system);
+        copy = matrix_dup(system);
         replace_matrix_column(copy, B, i);
         temp = matrix_det(copy) / det;
         printf("x%d = %.14g\n", i + 1, temp);

@@ -74,7 +74,7 @@ void replace_matrix_column(matrix_str *matrix, matrix_str *column_matrix, int co
         matrix->data[i][column] = column_matrix->data[i][0];
 }
 // Create a copy of matrix and returns a pointer to the copy
-matrix_str *matrix_copy(matrix_str *matrix)
+matrix_str *matrix_dup(matrix_str *matrix)
 {
     matrix_str *copy;
     if (matrix == NULL)

@@ -80,4 +80,4 @@ void replace_matrix_column(matrix_str *matrix, matrix_str *column_matrix, int co
  * @brief Duplicates a matrix
  * @return An identical malloc'd matrix.
  */
-matrix_str *matrix_copy(matrix_str *matrix);
+matrix_str *matrix_dup(matrix_str *matrix);
