@@ -509,7 +509,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                     status = set_variable_metadata(expr + solve_start, node_block, 'l');
                     if (!status)
                     {
-                        error_handler(SYNTAX_ERROR, 1, 1, solve_start);
+                        error_handler(UNDEFINED_SYMBOL, 1, 1, solve_start);
                         delete_math_expr(math_struct);
                         return NULL;
                     }
@@ -562,7 +562,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                     status = find_subexpr_by_start(tmp_subexpr, solve_start, s_index, 1);
                     if (status == -1)
                     {
-                        error_handler(SYNTAX_ERROR, 1, 1, solve_start);
+                        error_handler(UNDEFINED_SYMBOL, 1, 1, solve_start);
                         delete_math_expr(math_struct);
                         return NULL;
                     }
@@ -592,7 +592,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                         status = find_subexpr_by_start(tmp_subexpr, node_block[i].operator_index + 1, s_index, 1);
                         if (status == -1)
                         {
-                            error_handler(SYNTAX_ERROR, 1, 1, node_block[i].operator_index + 1);
+                            error_handler(UNDEFINED_SYMBOL, 1, 1, node_block[i].operator_index + 1);
                             delete_math_expr(math_struct);
                             return NULL;
                         }
@@ -619,7 +619,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                         status = find_subexpr_by_start(tmp_subexpr, node_block[i].operator_index + 1, s_index, 1);
                         if (status == -1)
                         {
-                            error_handler(SYNTAX_ERROR, 1, 1, node_block[i].operator_index + 1);
+                            error_handler(UNDEFINED_SYMBOL, 1, 1, node_block[i].operator_index + 1);
                             delete_math_expr(math_struct);
                             return NULL;
                         }
@@ -645,7 +645,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 status = find_subexpr_by_start(tmp_subexpr, node_block[op_count - 1].operator_index + 1, s_index, 1);
                 if (status == -1)
                 {
-                    error_handler(SYNTAX_ERROR, 1, 1, node_block[i].operator_index + 1);
+                    error_handler(UNDEFINED_SYMBOL, 1, 1, node_block[i].operator_index + 1);
                     return NULL;
                 }
                 *(tmp_subexpr[status].s_result) = &(node_block[op_count - 1].right_operand);

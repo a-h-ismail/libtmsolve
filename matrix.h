@@ -8,8 +8,7 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @file
  * @brief Declares all matrix related macros, structures, globals and functions.
 */
-// Errors
-#define INVALID_MATRIX "Invalid matrix."
+
 /**
  * @brief Stores the metadata of a 2D matrix.
  */

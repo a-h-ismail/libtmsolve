@@ -6,12 +6,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 /**
  * @file
  * @brief Declares all string handling related macros, structures, globals and functions.
-*/
-// Errors
-#define PARENTHESIS_MISSING "Expected ( for function call."
-#define PARENTHESIS_EMPTY "Empty parenthesis pair."
-#define PARENTHESIS_NOT_CLOSED "Open parenthesis has no closing parenthesis."
-#define PARENTHESIS_NOT_OPEN "Extra closing parenthesis."
+ */
 // Function declarations
 bool is_infinite(char *expr, int index);
 
@@ -59,9 +54,6 @@ void remove_whitespace(char *str);
  * @param n_end
  */
 void resize_zone(char *str, int old_end, int new_end);
-
-// bool implicit_multiplication(char **expr);
-// bool _var_implicit_multiplication(char *expr);
 
 /**
  * @brief Checks if the character c is a digit.
