@@ -564,29 +564,32 @@ bool syntax_check(char *expr)
         // Copy what wasn't already copied
         for (int j = 0; cmplx_function_name[j] != NULL; ++j)
         {
+            found = false;
             for (int k = 0; r_function_name[k] != NULL; ++k)
             {
-                if (r_function_name[k] == cmplx_function_name[j])
+                if (strcmp(r_function_name[k], cmplx_function_name[j]) == 0)
+                {
                     found = true;
+                    break;
+                }
             }
-            if (found)
-            {
+            if (!found)
                 tmp[i++] = cmplx_function_name[j];
-                found = false;
-            }
         }
+
         for (int j = 0; ext_function_name[j] != NULL; ++j)
         {
+            found = false;
             for (int k = 0; r_function_name[k] != NULL; ++k)
             {
-                if (r_function_name[k] == ext_function_name[j])
+                if (strcmp(r_function_name[k], ext_function_name[j]) == 0)
+                {
                     found = true;
+                    break;
+                }
             }
-            if (found)
-            {
+            if (!found)
                 tmp[i++] = ext_function_name[j];
-                found = false;
-            }
         }
         all_functions = malloc(i * sizeof(char *));
         function_count = i;
