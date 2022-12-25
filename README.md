@@ -25,4 +25,4 @@ For functions that assist in manipulating strings (char *), refer to `string_too
 For functions used to manipulate variables and the calculator functions, refer to `function.h`.
 
 # Note
-The library uses double precision floating point values with complex extension for its operations.
+The library uses double precision floating point variables with complex extension for its operations.
