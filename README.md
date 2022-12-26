@@ -30,3 +30,6 @@ For functions used to manipulate variables and the calculator functions, refer t
 
 # Note
 The library uses double precision floating point variables with complex extension for its operations.
+
+# License
+This library is licensed under the GNU LGPL-2.1-only.
