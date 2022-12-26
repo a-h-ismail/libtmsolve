@@ -17,25 +17,25 @@ typedef struct int_factor
     int power;
 } int_factor;
 
-/// @brief Operator node, stores the required metadata for an operator and its operators.
+/// @brief Operator node, stores the required metadata for an operator and its operands.
 typedef struct op_node
 {
-    /// The operator of this op_node
+    /// The operator of this op_node.
     char operator;
-    /// Index of the operator in the expression
+    /// Index of the operator in the expression.
     int operator_index;
-    /// Index of the op_node in the op_node array
+    /// Index of the op_node in the op_node array.
     int node_index;
     /**
      *  Used to store data about variable operands as follows:
-     *  b0:left_operand, b1:right_operand, b2:left_operand_negative, b3:right_operand_negative
+     *  b0:left_operand, b1:right_operand, b2:left_operand_negative, b3:right_operand_negative.
      */
     uint8_t var_metadata;
-    /// Node operator priority
+    /// Node operator priority.
     uint8_t priority;
 
     double complex left_operand, right_operand, *node_result;
-    /// Points to the next op_node in evaluation order
+    /// Points to the next op_node in evaluation order.
     struct op_node *next;
 } op_node;
 
@@ -68,7 +68,7 @@ typedef struct m_subexpr
     /// @brief The end index of the subexpression, just before the close parenthesis.
     int solve_end;
 
-    /// Index of the op_node at which the subexpression parsing starts
+    /// Index of the op_node at which the subexpression parsing starts.
     int start_node;
 
     /// The array of op_nodes composing this subexpression.
@@ -103,13 +103,13 @@ typedef struct math_expr
     /// Number of variable operands.
     int var_count;
 
-    /// Array of variable operands metadata
+    /// Array of variable operands metadata.
     var_op_data *var_data;
 
-    /// Answer of the expression
+    /// Answer of the expression.
     double complex answer;
 
-    /// Toggles complex support
+    /// Toggles complex support.
     bool enable_complex;
 } math_expr;
 
@@ -119,7 +119,7 @@ typedef struct fraction
     int a, b, c;
 } fraction;
 
-// Global variables
+// Global variables.
 
 /// @brief Stores the answer of the last calculation to allow reuse in future calculations.
 extern double complex ans;
