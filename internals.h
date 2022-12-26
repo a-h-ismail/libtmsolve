@@ -8,7 +8,7 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @file
  * @brief Defines the functions necessary for the general operation of the calculator, some general error messages and all the headers needed.
 */
-#include "m_errors.h"
+#include <tmsolve/m_errors.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>

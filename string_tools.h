@@ -2,7 +2,7 @@
 Copyright (C) 2021-2022 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#include "internals.h"
+#include <tmsolve/internals.h>
 /**
  * @file
  * @brief Declares all string handling related macros, structures, globals and functions.
@@ -113,7 +113,7 @@ int r_search(char *str, char *keyword, int index, bool adjacent_search);
 double complex read_value(char *expr, int start, bool enable_complex);
 
 /// Helps with printing formatted equations to stdout.
-/// @remark Currently unused
+/// @remark Currently unused.
 void nice_print(char *format, double value, bool is_first);
 
 /**
