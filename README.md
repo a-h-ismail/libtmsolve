@@ -6,7 +6,7 @@ The most important feature is the ability to parse an expression into a structur
 # Basic use
 To simply evaluate an expression and get the answer:
 ```
-#include <libtmsolve/libtmsolve.h>
+#include <tmsolve/libtmsolve.h>
 double answer;
 // enable_complex toggles support for complex numbers, set to false if not needed.
 answer = calculate_expr(expr, enable_complex);
