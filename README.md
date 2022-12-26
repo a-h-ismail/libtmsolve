@@ -11,6 +11,10 @@ double answer;
 // enable_complex toggles support for complex numbers, set to false if not needed.
 answer = calculate_expr(expr, enable_complex);
 ```
+
+To build your binary and link to this library:
+`gcc -ltmsolve <other options>`
+
 # Tips
 Documentation about the parser, evaluator, and some useful features like factorization can be found in `scientific.h`.
 
