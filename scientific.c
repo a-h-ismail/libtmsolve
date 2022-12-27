@@ -99,6 +99,7 @@ double complex eval_math_expr(math_expr *M)
             if (S[s_index].execute_extended)
             {
                 int length = S[s_index].solve_end - S[s_index].solve_start + 1;
+                // Copy args from the expression to a separate array.
                 args = malloc((length + 1) * sizeof(char));
                 memcpy(args, _glob_expr + S[s_index].solve_start, length * sizeof(char));
                 args[length] = '\0';

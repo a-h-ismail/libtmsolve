@@ -1,2 +1,1 @@
 - Scientific notation does not support floating point exponent (ignores decimal part)
-- Nesting special functions causes the calculator to hang (due to mixed separators)
