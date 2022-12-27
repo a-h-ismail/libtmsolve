@@ -15,6 +15,8 @@ answer = calculate_expr(expr, enable_complex);
 To build your binary and link to this library:
 `gcc -ltmsolve <other options>`
 
+Full documentation is available at: https://a-h-ismail.gitlab.io/libtmsolve-docs/
+
 # Tips
 Documentation about the parser, evaluator, and some useful features like factorization can be found in `scientific.h`.
 
