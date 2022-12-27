@@ -661,33 +661,37 @@ int compare_priority(char operator1, char operator2)
 
 arg_list *get_arguments(char *string)
 {
-    arg_list *current_args = malloc(sizeof(arg_list));
-    int length = strlen(string), current, prev, max_args = 10, count;
-    // You could use current_args.arg_count but this improves readability (the compiler should optimize this)
+    arg_list *args = malloc(sizeof(arg_list));
+    int length = strlen(string), max_args = 10, count;
+    // The start/end of each argument.
+    int start, end;
+    // You could use args.arg_count but this improves readability (the compiler should optimize this).
     count = 0;
-    current_args->arguments = malloc(max_args * sizeof(char *));
-    for (current = prev = 0; current < length; ++current)
+    args->arguments = malloc(max_args * sizeof(char *));
+    for (end = start = 0; end < length; ++end)
     {
-        if (current == max_args)
+        if (count == max_args)
         {
             max_args += 10;
-            current_args = realloc(current_args, max_args * sizeof(arg_list));
+            args = realloc(args, max_args * sizeof(arg_list));
         }
-        if (string[current] == ',')
+        if (string[end] == '(')
+            end = find_closing_parenthesis(string, end) + 1;
+        else if (string[end] == ',')
         {
-            current_args->arguments[count] = malloc(current - prev + 1);
-            strncpy(current_args->arguments[count], string + prev, current - prev);
-            current_args->arguments[count][current - prev] = '\0';
-            prev = current + 1;
+            args->arguments[count] = malloc(end - start + 1);
+            strncpy(args->arguments[count], string + start, end - start);
+            args->arguments[count][end - start] = '\0';
+            start = end + 1;
             ++count;
         }
     }
-    current_args->arguments[count] = malloc(current - prev + 1);
-    strncpy(current_args->arguments[count], string + prev, current - prev);
-    current_args->arguments[count][current - prev] = '\0';
+    args->arguments[count] = malloc(end - start + 1);
+    strncpy(args->arguments[count], string + start, end - start);
+    args->arguments[count][end - start] = '\0';
     ++count;
-    current_args->arg_count = count;
-    return current_args;
+    args->arg_count = count;
+    return args;
 }
 // Frees the argument list array of char *
 // Can also free the list itself if it was allocated with malloc
