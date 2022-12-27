@@ -4,6 +4,11 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include <math.h>
 #include <stdlib.h>
+#ifndef LOCAL_BUILD
+#include <tmsolve/internals.h>
+#else
+#include "internals.h"
+#endif
 /**
  * @file
  * @brief Declares all matrix related macros, structures, globals and functions.

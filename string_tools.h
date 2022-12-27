@@ -2,7 +2,11 @@
 Copyright (C) 2021-2022 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
+#ifndef LOCAL_BUILD
 #include <tmsolve/internals.h>
+#else
+#include "internals.h"
+#endif
 /**
  * @file
  * @brief Declares all string handling related macros, structures, globals and functions.

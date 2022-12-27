@@ -4,7 +4,12 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #ifndef FUNCTION_H
 #define FUNCTION_H
+
+#ifndef LOCAL_BUILD
 #include <tmsolve/internals.h>
+#else
+#include "internals.h"
+#endif
 /**
  * @file
  * @brief Function handling

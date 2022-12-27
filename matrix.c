@@ -3,7 +3,6 @@ Copyright (C) 2021-2022 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "matrix.h"
-#include "internals.h"
 // Generate a matrix with dimensions
 matrix_str *new_matrix(int rows, int columns)
 {
