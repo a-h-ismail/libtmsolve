@@ -876,7 +876,7 @@ void reduce_fraction(fraction *fraction_str)
 // Converts a floating point value to decimal representation a*b/c
 fraction decimal_to_fraction(double value, bool inverse_process)
 {
-    int decimal_point = 1, i, j, decimal_length;
+    int decimal_point = 1, p_start, p_end, decimal_length;
     bool success = false;
     char pattern[11], printed_value[23];
     fraction result;
@@ -901,7 +901,7 @@ fraction decimal_to_fraction(double value, bool inverse_process)
 
     sprintf(printed_value, "%.14lf", value);
     // Removing trailing zeros
-    for (i = strlen(printed_value) - 1; i > decimal_point; --i)
+    for (int i = strlen(printed_value) - 1; i > decimal_point; --i)
     {
         // Stop at the first non zero value and null terminate
         if (*(printed_value + i) != '0')
@@ -915,30 +915,33 @@ fraction decimal_to_fraction(double value, bool inverse_process)
     if (decimal_length >= 10)
     {
         // Look for a pattern to detect fractions from periodic decimals
-        for (i = decimal_point + 1; i - decimal_point < decimal_length / 2; ++i)
+        for (p_start = decimal_point + 1; p_start - decimal_point < decimal_length / 2; ++p_start)
         {
             // First number in the pattern (to the right of the decimal_point)
-            pattern[0] = printed_value[i];
+            pattern[0] = printed_value[p_start];
             pattern[1] = '\0';
-            j = i + 1;
+            p_end = p_start + 1;
             while (true)
             {
                 // First case: the "pattern" is smaller than the remaining decimal digits.
-                if (strlen(printed_value) - j > strlen(pattern))
+                if (strlen(printed_value) - p_end > strlen(pattern))
                 {
                     // If the pattern is found again in the remaining decimal digits, jump over it.
-                    if (strncmp(pattern, printed_value + j, strlen(pattern)) == 0)
-                        j += strlen(pattern);
-                    // If not, copy the digits between i and j to the pattern for further testing
+                    if (strncmp(pattern, printed_value + p_end, strlen(pattern)) == 0)
+                    {
+                        p_start += strlen(pattern);
+                        p_end += strlen(pattern);
+                    }
+                    // If not, copy the digits between p_start and p_end to the pattern.
                     else
                     {
-                        strncpy(pattern, printed_value + i, j - i + 1);
-                        pattern[j - i + 1] = '\0';
-                        ++j;
+                        strncpy(pattern, printed_value + p_start, p_end - p_start + 1);
+                        pattern[p_end - p_start + 1] = '\0';
+                        ++p_end;
                     }
-                    // If the pattern matches the last decimal digits, stop the execution with SUCCESS
-                    if (strlen(printed_value) - j == strlen(pattern) &&
-                        strncmp(pattern, printed_value + strlen(printed_value) + j, strlen(pattern)) == 0)
+                    // If the pattern matches the last decimal digits, stop the execution with success.
+                    if (strlen(printed_value) - p_end == strlen(pattern) &&
+                        strncmp(pattern, printed_value + p_end, strlen(pattern)) == 0)
                     {
                         success = true;
                         break;
@@ -947,8 +950,8 @@ fraction decimal_to_fraction(double value, bool inverse_process)
                 // Second case: the pattern is bigger than the remaining digits.
                 else
                 {
-                    // Consider a SUCCESS the case where the remaining digits except the last one match the leftmost digits of the pattern
-                    if (strncmp(pattern, printed_value + j, strlen(printed_value) - j - 1) == 0)
+                    // Consider a success the case where the remaining digits except the last one match the leftmost digits of the pattern.
+                    if (strncmp(pattern, printed_value + p_end, strlen(printed_value) - p_end - 1) == 0)
                     {
                         success = true;
                         break;
@@ -978,8 +981,8 @@ fraction decimal_to_fraction(double value, bool inverse_process)
             return result;
 
         // Generate the denominator
-        for (i = 0; i < strlen(pattern); ++i)
-            result.c += 9 * pow(10, i);
+        for (p_start = 0; p_start < strlen(pattern); ++p_start)
+            result.c += 9 * pow(10, p_start);
         // Find the pattern start in case it doesn't start right after the decimal point (like 0.79999)
         pattern_start = f_search(printed_value, pattern, decimal_point + 1);
         if (pattern_start > decimal_point + 1)
