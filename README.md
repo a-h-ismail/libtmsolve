@@ -1,7 +1,7 @@
 # Introduction
 libtmsolve is a math library for expression evaluation, basic manipulation of matrices and some other useful features.
 
-The most important feature is the ability to parse an expression into a structure called `math_expr`, which allows reuse, supports variable operands and function calls.
+The most useful feature is the ability to parse an expression into a structure called `math_expr`, which allows reuse, supports variable operands and function calls.
 
 # Basic use
 To simply evaluate an expression and get the answer:
