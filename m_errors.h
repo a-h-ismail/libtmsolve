@@ -21,6 +21,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define MATH_ERROR "Math error."
 #define RIGHT_OP_MISSING "Missing right operand."
 #define UNDEFINED_SYMBOL "Variable or function isn't defined."
-#define INTERNAL_ERROR "Internal error, please report this as a bug ad send the expression that caused the issue."
+#define INTERNAL_ERROR "Internal error, please report this as a bug and include the expression that caused the issue."
 
 #endif
