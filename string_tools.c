@@ -65,13 +65,13 @@ int find_min(int a, int b)
 // Returns the value of the number or variable (can be constant like pi or variable like ans) starting at (expr + start)
 double complex read_value(char *expr, int start, bool enable_complex)
 {
-    double complex variable_values[] = {M_PI, M_E, ans};
+    double complex var_values[] = {M_PI, M_E, ans};
     complex double value;
     bool is_negative, is_complex = false;
     int flag = 0;
-    char *variable_names[] = {"pi",
-                              "exp",
-                              "ans"};
+    char *var_names[] = {"pi",
+                         "exp",
+                         "ans"};
     if (expr[start] == '-')
     {
         is_negative = true;
@@ -81,11 +81,22 @@ double complex read_value(char *expr, int start, bool enable_complex)
         is_negative = false;
 
     int i;
-    for (i = 0; i < sizeof(variable_names) / sizeof(*variable_names); ++i)
+    for (i = 0; i < sizeof(var_names) / sizeof(*var_names); ++i)
     {
-        if (strncmp(expr + start, variable_names[i], strlen(variable_names[i])) == 0)
+        if (strncmp(expr + start, var_names[i], strlen(var_names[i])) == 0)
         {
-            value = variable_values[i];
+            if (start > 0 && is_alphabetic(expr[start - 1]))
+            {
+                error_handler(SYNTAX_ERROR, 1, 1, start);
+                return NAN;
+            }
+            int end = start + strlen(var_names[i]);
+            if (!(is_op(expr[end]) || expr[end] == '\0' || expr[end] == ')'))
+            {
+                error_handler(SYNTAX_ERROR, 1, 1, end);
+                return NAN;
+            }
+            value = var_values[i];
             flag = 2;
             break;
         }
