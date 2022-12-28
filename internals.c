@@ -61,7 +61,10 @@ int error_handler(char *error, int arg1, ...)
         {
             puts(error_table[i].error_msg);
             if (error_table[i].fatal_error == true && error_table[i].error_index != -1)
+            {
                 print_errors(error_table[i].err_str, error_table[i].error_index);
+                break;
+            }
         }
         error_handler(NULL, 3, 0);
 
