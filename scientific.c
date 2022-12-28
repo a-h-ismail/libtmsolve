@@ -124,6 +124,11 @@ double complex eval_math_expr(math_expr *M)
         else
             while (i_node != NULL)
             {
+                if (i_node->node_result == NULL)
+                {
+                    error_handler(INTERNAL_ERROR, 1, 1, -1);
+                    return NAN;
+                }
                 switch (i_node->operator)
                 {
                 case '+':
@@ -215,7 +220,6 @@ double complex eval_math_expr(math_expr *M)
         ++s_index;
         puts("end\n");
     }
-
 #endif
     return M->answer;
 }
