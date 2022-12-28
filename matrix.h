@@ -2,8 +2,6 @@
 Copyright (C) 2021-2022 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#include <math.h>
-#include <stdlib.h>
 #ifndef LOCAL_BUILD
 #include <tmsolve/internals.h>
 #else
@@ -12,7 +10,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 /**
  * @file
  * @brief Declares all matrix related macros, structures, globals and functions.
-*/
+ */
 
 /**
  * @brief Stores the metadata of a 2D matrix.
@@ -37,7 +35,7 @@ matrix_str *new_matrix(int rows, int columns);
 
 /**
  * @brief Deletes a matrix generated using new_matrix().
- * @param matrix The mtrix to delete.
+ * @param matrix The matrix to delete.
  */
 void delete_matrix(matrix_str *matrix);
 
