@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2021-2022 Ahmad Ismail
+Copyright (C) 2021-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #ifndef INTERNALS_H
@@ -8,11 +8,6 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @file
  * @brief Defines the functions necessary for the general operation of the calculator, some general error messages and all the headers needed.
 */
-#ifndef LOCAL_BUILD
-#include <tmsolve/m_errors.h>
-#else
-#include "m_errors.h"
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,6 +17,13 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <math.h>
 #include <complex.h>
 #include <string.h>
+#ifndef LOCAL_BUILD
+#include <tmsolve/m_errors.h>
+#else
+#include "m_errors.h"
+#endif
+
+
 
 #define MAX_ERRORS 5
 
