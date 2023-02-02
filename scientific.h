@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2021-2022 Ahmad Ismail
+Copyright (C) 2021-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #ifndef SCIENTIFIC_H
@@ -248,4 +248,12 @@ void reduce_fraction(fraction *fraction_r);
 fraction decimal_to_fraction(double value, bool inverse_process);
 
 double complex ccbrt_cpow(double complex z);
+
+/// @brief Dumps the data of the math expression M.
+/// @details The dumped data includes: \n
+/// - Subexpression depth and function pointers. \n
+/// - Left and right operands of each node (and the operator). \n
+/// - Nodes ordered by evaluation order. \n
+/// - Result pointer of each subepression.
+void dump_expr_data(math_expr *M);
 #endif
