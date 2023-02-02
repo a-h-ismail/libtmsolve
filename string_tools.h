@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2021-2022 Ahmad Ismail
+Copyright (C) 2021-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #ifndef LOCAL_BUILD
@@ -116,10 +116,6 @@ int r_search(char *str, char *keyword, int index, bool adjacent_search);
  */
 double complex read_value(char *expr, int start, bool enable_complex);
 
-/// Helps with printing formatted equations to stdout.
-/// @remark Currently unused.
-void nice_print(char *format, double value, bool is_first);
-
 /**
  * @brief Finds the next occurence of add or subtract sign.
  * @param expr The string to be searched.
@@ -134,6 +130,10 @@ int find_add_subtract(char *expr, int i);
  * @return
  */
 bool parenthesis_check(char *expr);
+
+/// @brief Prints a value to standard output in a clean way.
+/// @param value 
+void print_value(double complex value);
 
 /// @brief Checks the syntax of the expression, runs parenthesis_check implicitly.
 /// @return true if the check doesn't find errors, false otherwise.

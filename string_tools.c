@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2021-2022 Ahmad Ismail
+Copyright (C) 2021-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "string_tools.h"
@@ -460,27 +460,30 @@ int r_search(char *str, char *keyword, int index, bool adjacent_search)
     return -1;
 }
 
-void nice_print(char *format, double value, bool is_first)
+void print_value(double complex value)
 {
-    // Printing nothing if the value is 0 or -0
-    if (fabs(value) == 0)
-        return;
-    if (is_first == true)
+    if (creal(value) != 0)
     {
-        if (value > 0)
-            printf(" ");
+        printf("%g", creal(value));
+        if (cimag(value) != 0)
+        {
+            if (cimag(value) > 0)
+                printf(" + %g * i", cimag(value));
+            else
+                printf(" - %g * i", fabs(cimag(value)));
+        }
+    }
+    else if (cimag(value) != 0)
+    {
+        if (cimag(value) > 0)
+            printf("%g * i", cimag(value));
         else
-            printf(" - ");
+            printf("- %g * i", fabs(cimag(value)));
     }
     else
-    {
-        if (value > 0)
-            printf(" + ");
-        else
-            printf(" - ");
-    }
-    printf(format, fabs(value));
+        printf("0");
 }
+
 
 // Function that checks the existence of value in an int array of "count" ints
 bool int_search(int *array, int value, int count)
