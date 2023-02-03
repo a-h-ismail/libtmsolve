@@ -1,9 +1,73 @@
 /*
-Copyright (C) 2021-2022 Ahmad Ismail
+Copyright (C) 2021-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "internals.h"
+#include "scientific.h"
 char *_glob_expr = NULL;
+
+bool init = true;
+int function_count=0;
+char **all_functions=NULL;
+double complex **variable_values=NULL;
+char **variable_names=NULL;
+
+void tmsolve_init()
+{
+    int i;
+    if (init == true)
+    {
+        // Get the number of functions.
+        for (i = 0; r_function_name[i] != NULL; ++i)
+            ++function_count;
+        for (i = 0; cmplx_function_name[i] != NULL; ++i)
+            ++function_count;
+        for (i = 0; ext_function_name[i] != NULL; ++i)
+            ++function_count;
+
+        // Generate the all functions array, avoiding repetition.
+        char *tmp[function_count];
+        // Copy r_function_name
+        for (i = 0; r_function_name[i] != NULL; ++i)
+            tmp[i] = r_function_name[i];
+        bool found = false;
+        // Copy what wasn't already copied
+        for (int j = 0; cmplx_function_name[j] != NULL; ++j)
+        {
+            found = false;
+            for (int k = 0; r_function_name[k] != NULL; ++k)
+            {
+                if (strcmp(r_function_name[k], cmplx_function_name[j]) == 0)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+                tmp[i++] = cmplx_function_name[j];
+        }
+
+        for (int j = 0; ext_function_name[j] != NULL; ++j)
+        {
+            found = false;
+            for (int k = 0; r_function_name[k] != NULL; ++k)
+            {
+                if (strcmp(r_function_name[k], ext_function_name[j]) == 0)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+                tmp[i++] = ext_function_name[j];
+        }
+        all_functions = malloc(i * sizeof(char *));
+        function_count = i;
+        for (i = 0; i < function_count; ++i)
+            all_functions[i] = tmp[i];
+        init = false;
+    }
+}
 
 int error_handler(char *error, int arg1, ...)
 {
@@ -136,7 +200,7 @@ int error_handler(char *error, int arg1, ...)
     // Backup errors, useful if data is processed in another way to prevent mixing of errors
     case 6:
         // Clear the previous backup
-        error_handler(NULL,3, 1);
+        error_handler(NULL, 3, 1);
         // Copy the current error database to the backup database
         for (i = 0; i < error_count; ++i)
             backup[i] = error_table[i];

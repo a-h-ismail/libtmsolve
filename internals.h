@@ -30,6 +30,12 @@ SPDX-License-Identifier: LGPL-2.1-only
 /// @brief Use to store the current expression being processed, used by error_handler() to generate the error prompt.
 extern char *_glob_expr;
 
+extern bool init;
+extern int function_count;
+extern char **all_functions;
+extern double complex **variable_values;
+extern char **variable_names;
+
 /// @brief Stores metadata related to extended functions arguments.
 typedef struct arg_list
 {
@@ -38,6 +44,8 @@ typedef struct arg_list
     // Array of C strings, stores the arguments.
     char **arguments;
 } arg_list;
+
+void tmsolve_init();
 
 /**
  * @brief Error handling function, collects and manages errors.

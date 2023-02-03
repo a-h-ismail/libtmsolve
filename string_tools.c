@@ -555,62 +555,7 @@ bool parenthesis_check(char *expr)
 bool syntax_check(char *expr)
 {
     int length = strlen(expr), i, j;
-    static bool init = true;
-    static int function_count;
-    static char **all_functions;
-    _glob_expr = expr;
-    if (init == true)
-    {
-        // Get the number of functions.
-        for (i = 0; r_function_name[i] != NULL; ++i)
-            ++function_count;
-        for (i = 0; cmplx_function_name[i] != NULL; ++i)
-            ++function_count;
-        for (i = 0; ext_function_name[i] != NULL; ++i)
-            ++function_count;
-
-        // Generate the all functions array, avoiding repetition.
-        char *tmp[function_count];
-        // Copy r_function_name
-        for (i = 0; r_function_name[i] != NULL; ++i)
-            tmp[i] = r_function_name[i];
-        bool found = false;
-        // Copy what wasn't already copied
-        for (int j = 0; cmplx_function_name[j] != NULL; ++j)
-        {
-            found = false;
-            for (int k = 0; r_function_name[k] != NULL; ++k)
-            {
-                if (strcmp(r_function_name[k], cmplx_function_name[j]) == 0)
-                {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found)
-                tmp[i++] = cmplx_function_name[j];
-        }
-
-        for (int j = 0; ext_function_name[j] != NULL; ++j)
-        {
-            found = false;
-            for (int k = 0; r_function_name[k] != NULL; ++k)
-            {
-                if (strcmp(r_function_name[k], ext_function_name[j]) == 0)
-                {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found)
-                tmp[i++] = ext_function_name[j];
-        }
-        all_functions = malloc(i * sizeof(char *));
-        function_count = i;
-        for (i = 0; i < function_count; ++i)
-            all_functions[i] = tmp[i];
-        init = false;
-    }
+    tmsolve_init();
     // First check: all function calls have parenthesis.
     for (i = 0; i < function_count; ++i)
     {
