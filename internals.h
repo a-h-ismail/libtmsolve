@@ -31,9 +31,9 @@ SPDX-License-Identifier: LGPL-2.1-only
 extern char *_glob_expr;
 
 extern bool init;
-extern int function_count;
+extern int function_count,variable_count,variable_max;
 extern char **all_functions;
-extern double complex **variable_values;
+extern double complex *variable_values;
 extern char **variable_names;
 
 /// @brief Stores metadata related to extended functions arguments.
