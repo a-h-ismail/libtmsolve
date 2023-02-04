@@ -107,6 +107,9 @@ typedef struct math_expr
     /// Number of variable operands.
     int var_count;
 
+    /// Indicates the index of variable_values to copy the answer to.
+    int variable_index;
+
     /// Array of variable operands metadata.
     var_op_data *var_data;
 

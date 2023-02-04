@@ -4,6 +4,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "string_tools.h"
 #include "scientific.h"
+#include "internals.h"
 // Simple function to detect the word "inf", almost useless since the same can be accomplished with f_search
 bool is_infinite(char *expr, int index)
 {
@@ -65,13 +66,10 @@ int find_min(int a, int b)
 // Returns the value of the number or variable (can be constant like pi or variable like ans) starting at (expr + start)
 double complex read_value(char *expr, int start, bool enable_complex)
 {
-    double complex var_values[] = {M_PI, M_E, ans};
-    complex double value;
+    double complex value;
     bool is_negative, is_complex = false;
     int flag = 0;
-    char *var_names[] = {"pi",
-                         "exp",
-                         "ans"};
+
     if (expr[start] == '-')
     {
         is_negative = true;
@@ -81,22 +79,26 @@ double complex read_value(char *expr, int start, bool enable_complex)
         is_negative = false;
 
     int i;
-    for (i = 0; i < sizeof(var_names) / sizeof(*var_names); ++i)
+    for (i = 0; i < variable_count; ++i)
     {
-        if (strncmp(expr + start, var_names[i], strlen(var_names[i])) == 0)
+        if (strncmp(expr + start, variable_names[i], strlen(variable_names[i])) == 0)
         {
             if (start > 0 && is_alphabetic(expr[start - 1]))
             {
                 error_handler(SYNTAX_ERROR, 1, 1, start);
                 return NAN;
             }
-            int end = start + strlen(var_names[i]);
+            int end = start + strlen(variable_names[i]);
             if (!(is_op(expr[end]) || expr[end] == '\0' || expr[end] == ')'))
             {
                 error_handler(SYNTAX_ERROR, 1, 1, end);
                 return NAN;
             }
-            value = var_values[i];
+            // ans is a special case.
+            if (i == 2)
+                value = ans;
+            else
+                value = variable_values[i];
             flag = 2;
             break;
         }
@@ -157,6 +159,8 @@ bool is_op(char c)
     case '!':
         return true;
     case '%':
+        return true;
+    case '=':
         return true;
     default:
         return false;
@@ -484,7 +488,6 @@ void print_value(double complex value)
         printf("0");
 }
 
-
 // Function that checks the existence of value in an int array of "count" ints
 bool int_search(int *array, int value, int count)
 {
@@ -556,6 +559,7 @@ bool syntax_check(char *expr)
 {
     int length = strlen(expr), i, j;
     tmsolve_init();
+    _glob_expr=expr;
     // First check: all function calls have parenthesis.
     for (i = 0; i < function_count; ++i)
     {

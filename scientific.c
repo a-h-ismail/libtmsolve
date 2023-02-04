@@ -182,7 +182,10 @@ double complex eval_math_expr(math_expr *M)
         }
         ++s_index;
     }
-    //dump_expr_data(M);
+    // dump_expr_data(M);
+
+    if (M->variable_index != -1)
+        variable_values[M->variable_index] = M->answer;
     return M->answer;
 }
 
@@ -239,10 +242,56 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     int s_index;
     // Use for dynamic growing blocks.
     int buffer_size = 10, buffer_step = 10;
+    // Used to store the index of the variable to assign the answer to.
+    int variable_index = -1;
+    // Local expression may be offset compared to the expression due to the assignment operator (if it exists).
+    char *local_expr;
 
-    _glob_expr = expr;
-
-    length = strlen(expr);
+    i = f_search(expr, "=", 0);
+    if (i != -1)
+    {
+        if (i == 0)
+        {
+            error_handler(SYNTAX_ERROR, 1, 1, 0);
+            return NULL;
+        }
+        else
+        {
+            j = f_search(expr, "=", i + 1);
+            _glob_expr = expr;
+            if (j != -1)
+            {
+                error_handler(MULTIPLE_ASSIGNMENT_ERROR, 1, 1, j);
+                return NULL;
+            }
+            // Add the variable name to the variable_name array
+            // To do: Watch out for the array size
+            // Avoid keywords like cos
+            // Detect re assignment operation
+            char *tmp = malloc((i + 1) * sizeof(char));
+            strncpy(tmp, expr, i);
+            tmp[i] = '\0';
+            for (j = 0; j < variable_count; ++j)
+            {
+                if (strcmp(variable_names[j], tmp) == 0)
+                {
+                    variable_index = j;
+                    break;
+                }
+            }
+            // If the loop exited due to break instead of its condition.
+            if (j == variable_count)
+            {
+                variable_names[variable_count] = tmp;
+                variable_index = variable_count++;
+            }
+            local_expr = expr + i + 1;
+        }
+    }
+    else
+        local_expr = expr;
+    _glob_expr = local_expr;
+    length = strlen(local_expr);
     // Pointer to subexpressions heap array
     m_subexpr *S;
     op_node *node_block, *tmp_node;
@@ -274,19 +323,19 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             buffer_size += buffer_step;
             S = realloc(S, buffer_size * sizeof(m_subexpr));
         }
-        if (expr[i] == '(')
+        if (local_expr[i] == '(')
         {
             S[s_index].ext_function_ptr = NULL;
             // Treat extended functions as a subexpression
             for (j = 0; j < sizeof(ext_math_function) / sizeof(*ext_math_function); ++j)
             {
                 int temp;
-                temp = r_search(expr, ext_function_name[j], i - 1, true);
+                temp = r_search(local_expr, ext_function_name[j], i - 1, true);
                 if (temp != -1)
                 {
                     S[s_index].subexpr_start = temp;
                     S[s_index].solve_start = i + 1;
-                    i = find_closing_parenthesis(expr, i);
+                    i = find_closing_parenthesis(local_expr, i);
                     S[s_index].solve_end = i - 1;
                     S[s_index].depth = depth + 1;
                     S[s_index].ext_function_ptr = ext_math_function[j];
@@ -304,10 +353,10 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             S[s_index].depth = depth;
             // The expression start is the parenthesis, may change if a function is found
             S[s_index].subexpr_start = i;
-            S[s_index].solve_end = find_closing_parenthesis(expr, i) - 1;
+            S[s_index].solve_end = find_closing_parenthesis(local_expr, i) - 1;
             ++s_index;
         }
-        else if (expr[i] == ')')
+        else if (local_expr[i] == ')')
             --depth;
     }
     // + 1 for the subexpression with depth 0
@@ -369,20 +418,20 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         for (i = solve_start + 1, op_count = 0; i <= solve_end; ++i)
         {
             // Skipping over an already processed expression
-            if (expr[i] == '(')
+            if (local_expr[i] == '(')
             {
                 int previous_subexp;
                 previous_subexp = find_subexpr_by_start(S, i + 1, s_index, 2);
                 if (previous_subexp != -1)
                     i = S[previous_subexp].solve_end + 1;
             }
-            else if (is_digit(expr[i]))
+            else if (is_digit(local_expr[i]))
                 continue;
 
-            else if (is_op(expr[i]))
+            else if (is_op(local_expr[i]))
             {
                 // Skipping a + or - used in scientific notation (like 1e+5)
-                if (i > 0 && (expr[i - 1] == 'e' || expr[i - 1] == 'E') && (expr[i] == '+' || expr[i] == '-'))
+                if (i > 0 && (local_expr[i - 1] == 'e' || local_expr[i - 1] == 'E') && (local_expr[i] == '+' || local_expr[i] == '-'))
                 {
                     ++i;
                     continue;
@@ -395,7 +444,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 }
                 operator_index[op_count] = i;
                 // Skipping a + or - coming just after an operator
-                if (expr[i + 1] == '-' || expr[i + 1] == '+')
+                if (local_expr[i + 1] == '-' || local_expr[i + 1] == '+')
                     ++i;
                 ++op_count;
             }
@@ -410,7 +459,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 int total = sizeof(r_function_ptr) / sizeof(*r_function_ptr);
                 for (i = 0; i < total; ++i)
                 {
-                    j = r_search(expr, r_function_name[i], solve_start - 2, true);
+                    j = r_search(local_expr, r_function_name[i], solve_start - 2, true);
                     if (j != -1)
                     {
                         S[s_index].function_ptr = r_function_ptr[i];
@@ -426,7 +475,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 int total = sizeof(cmplx_function_ptr) / sizeof(*cmplx_function_ptr);
                 for (i = 0; i < total; ++i)
                 {
-                    j = r_search(expr, cmplx_function_name[i], solve_start - 2, true);
+                    j = r_search(local_expr, cmplx_function_name[i], solve_start - 2, true);
                     if (j != -1)
                     {
                         S[s_index].cmplx_function_ptr = cmplx_function_ptr[i];
@@ -459,7 +508,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         for (i = 0; i < op_count; ++i)
         {
             node_block[i].operator_index = operator_index[i];
-            node_block[i].operator= expr[operator_index[i]];
+            node_block[i].operator= local_expr[operator_index[i]];
         }
         free(operator_index);
 
@@ -473,10 +522,10 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 *(S[i].s_result) = &(node_block->left_operand);
             else
             {
-                node_block->left_operand = read_value(expr, solve_start, enable_complex);
+                node_block->left_operand = read_value(local_expr, solve_start, enable_complex);
                 if (isnan((double)node_block->left_operand))
                 {
-                    status = set_variable_metadata(expr + solve_start, node_block, 'l');
+                    status = set_variable_metadata(local_expr + solve_start, node_block, 'l');
                     if (!status)
                     {
                         error_handler(UNDEFINED_SYMBOL, 1, 1, solve_start);
@@ -510,13 +559,13 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         }
 
         // Reading the first number
-        node_block[0].left_operand = read_value(expr, solve_start, enable_complex);
+        node_block[0].left_operand = read_value(local_expr, solve_start, enable_complex);
         // If reading a value fails, it is probably a variable like x
         if (isnan((double)node_block[0].left_operand))
         {
             // Checking for the variable 'x'
             if (enable_variables == true)
-                status = set_variable_metadata(expr + solve_start, node_block, 'l');
+                status = set_variable_metadata(local_expr + solve_start, node_block, 'l');
             else
                 status = false;
             // Variable x not found, the left operand is probably another subexpression
@@ -539,13 +588,13 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         {
             if (node_block[i].priority >= node_block[i + 1].priority)
             {
-                node_block[i].right_operand = read_value(expr, node_block[i].operator_index + 1, enable_complex);
+                node_block[i].right_operand = read_value(local_expr, node_block[i].operator_index + 1, enable_complex);
                 // Case of reading the number to the right operand of a op_node
                 if (isnan((double)node_block[i].right_operand))
                 {
                     // Checking for the variable 'x'
                     if (enable_variables == true)
-                        status = set_variable_metadata(expr + node_block[i].operator_index + 1, node_block + i, 'r');
+                        status = set_variable_metadata(local_expr + node_block[i].operator_index + 1, node_block + i, 'r');
                     else
                         status = false;
                     if (!status)
@@ -567,12 +616,12 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             else
             {
                 // Read number
-                node_block[i + 1].left_operand = read_value(expr, node_block[i].operator_index + 1, enable_complex);
+                node_block[i + 1].left_operand = read_value(local_expr, node_block[i].operator_index + 1, enable_complex);
                 if (isnan((double)node_block[i + 1].left_operand))
                 {
                     // Checking for the variable 'x'
                     if (enable_variables == true)
-                        status = set_variable_metadata(expr + node_block[i].operator_index + 1, node_block + i + 1, 'l');
+                        status = set_variable_metadata(local_expr + node_block[i].operator_index + 1, node_block + i + 1, 'l');
                     else
                         status = false;
                     // Again a subexpression
@@ -593,12 +642,12 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         }
         // Placing the last number in the last op_node
         // Read a value
-        node_block[op_count - 1].right_operand = read_value(expr, node_block[op_count - 1].operator_index + 1, enable_complex);
+        node_block[op_count - 1].right_operand = read_value(local_expr, node_block[op_count - 1].operator_index + 1, enable_complex);
         if (isnan((double)node_block[op_count - 1].right_operand))
         {
             // Checking for the variable 'x'
             if (enable_variables == true)
-                status = set_variable_metadata(expr + node_block[op_count - 1].operator_index + 1, node_block + op_count - 1, 'r');
+                status = set_variable_metadata(local_expr + node_block[op_count - 1].operator_index + 1, node_block + op_count - 1, 'r');
             else
                 status = false;
             if (!status)
@@ -718,6 +767,11 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     // Set the variables metadata
     if (enable_variables)
         _set_var_data(M);
+
+    if (local_expr != expr)
+        M->variable_index = variable_index;
+    else
+        M->variable_index = -1;
     return M;
 }
 
