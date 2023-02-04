@@ -7,14 +7,15 @@ SPDX-License-Identifier: LGPL-2.1-only
 char *_glob_expr = NULL;
 
 bool init = true;
-int function_count = 0, variable_count = 3, variable_max = 10;
 char **all_functions;
 double complex *variable_values;
 char **variable_names;
 
-// Do not move the position of ans here as it is an independant variable
+// Do not move the position of ans here as it is an independant variable, read_value depends on it being on index 2
 char *hardcoded_variable_names[] = {"pi", "exp", "ans"};
 double complex hardcoded_variable_values[] = {M_PI, M_E, 0};
+int function_count = 0, variable_count = 3, variable_max = 10;
+int hardcoded_variable_count=sizeof(hardcoded_variable_names)/sizeof(*hardcoded_variable_names);
 
 void tmsolve_init()
 {

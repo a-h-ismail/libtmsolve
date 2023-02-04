@@ -279,6 +279,11 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                     break;
                 }
             }
+            if (j < hardcoded_variable_count)
+            {
+                error_handler(OVERWRITE_BUILTIN_VARIABLE, 1, 1, i);
+                return NULL;
+            }
             // If the loop exited due to break instead of its condition.
             if (j == variable_count)
             {
