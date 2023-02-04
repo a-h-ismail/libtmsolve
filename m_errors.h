@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2021-2022 Ahmad Ismail
+Copyright (C) 2021-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 
@@ -22,5 +22,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define RIGHT_OP_MISSING "Missing right operand."
 #define UNDEFINED_SYMBOL "Variable or function isn't defined."
 #define INTERNAL_ERROR "Internal error, please report this as a bug and include the expression that caused the issue."
+#define MULTIPLE_ASSIGNMENT_ERROR "Multiple assignment operators not supported."
 
 #endif
