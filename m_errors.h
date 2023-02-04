@@ -23,5 +23,5 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define UNDEFINED_SYMBOL "Variable or function isn't defined."
 #define INTERNAL_ERROR "Internal error, please report this as a bug and include the expression that caused the issue."
 #define MULTIPLE_ASSIGNMENT_ERROR "Multiple assignment operators are not supported."
-
+#define OVERWRITE_BUILTIN_VARIABLE "Overwriting built in variables is not allowed."
 #endif
