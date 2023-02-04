@@ -7,16 +7,29 @@ SPDX-License-Identifier: LGPL-2.1-only
 char *_glob_expr = NULL;
 
 bool init = true;
-int function_count=0;
-char **all_functions=NULL;
-double complex **variable_values=NULL;
-char **variable_names=NULL;
+int function_count = 0, variable_count = 3, variable_max = 10;
+char **all_functions;
+double complex *variable_values;
+char **variable_names;
+
+// Do not move the position of ans here as it is an independant variable
+char *hardcoded_variable_names[] = {"pi", "exp", "ans"};
+double complex hardcoded_variable_values[] = {M_PI, M_E, 0};
 
 void tmsolve_init()
 {
     int i;
     if (init == true)
     {
+        // Initialize variable names and values arrays
+        variable_names = malloc(10 * sizeof(char *));
+        variable_values = malloc(10 * sizeof(double complex));
+        for (i = 0; i < variable_count; ++i)
+        {
+            variable_names[i] = hardcoded_variable_names[i];
+            variable_values[i] = hardcoded_variable_values[i];
+        }
+
         // Get the number of functions.
         for (i = 0; r_function_name[i] != NULL; ++i)
             ++function_count;
