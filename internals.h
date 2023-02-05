@@ -23,18 +23,35 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "m_errors.h"
 #endif
 
-
-
+/// Maximum number of errors in error_handler
 #define MAX_ERRORS 5
 
 /// @brief Use to store the current expression being processed, used by error_handler() to generate the error prompt.
 extern char *_glob_expr;
 
-extern bool init;
-extern int function_count,variable_count,variable_max;
+/// @brief Indicates if the library intialization function should be run.
+extern bool do_init;
+
+/// @brief Total number of functions, those with complex variant are counted once.
+extern int function_count;
+
+/// @brief Total number of variables, including built in ones.
+extern int variable_count;
+
+/// @brief Current maximum variable capacity, use to dynamically resize variable storage.
+extern int variable_max;
+
+/// @brief All function names, including built in, extended, and user defined functions.
 extern char **all_functions;
+
+/// @brief Contains all variable values except ans which has its own variable.
 extern double complex *variable_values;
+
+/// @brief Contains all variable names including built in ones.
 extern char **variable_names;
+
+/// @brief Number of hardcoded variables.
+extern int hardcoded_variable_count;
 
 /// @brief Stores metadata related to extended functions arguments.
 typedef struct arg_list
@@ -45,6 +62,8 @@ typedef struct arg_list
     char **arguments;
 } arg_list;
 
+/// @brief Initializes the variables required for the proper operation of the calculator.
+/// @details The variables to initialize are: all_functions, function_count
 void tmsolve_init();
 
 /**
