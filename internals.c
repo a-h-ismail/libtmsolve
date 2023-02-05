@@ -6,7 +6,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "scientific.h"
 char *_glob_expr = NULL;
 
-bool init = true;
+bool do_init = true;
 char **all_functions;
 double complex *variable_values;
 char **variable_names;
@@ -15,12 +15,12 @@ char **variable_names;
 char *hardcoded_variable_names[] = {"pi", "exp", "ans"};
 double complex hardcoded_variable_values[] = {M_PI, M_E, 0};
 int function_count = 0, variable_count = 3, variable_max = 10;
-int hardcoded_variable_count=sizeof(hardcoded_variable_names)/sizeof(*hardcoded_variable_names);
+int hardcoded_variable_count = sizeof(hardcoded_variable_names) / sizeof(*hardcoded_variable_names);
 
 void tmsolve_init()
 {
     int i;
-    if (init == true)
+    if (do_init == true)
     {
         // Initialize variable names and values arrays
         variable_names = malloc(10 * sizeof(char *));
@@ -79,7 +79,7 @@ void tmsolve_init()
         function_count = i;
         for (i = 0; i < function_count; ++i)
             all_functions[i] = tmp[i];
-        init = false;
+        do_init = false;
     }
 }
 
