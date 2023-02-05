@@ -63,7 +63,7 @@ typedef struct arg_list
 } arg_list;
 
 /// @brief Initializes the variables required for the proper operation of the calculator.
-/// @details The variables to initialize are: all_functions, function_count
+/// @details The variables to initialize are: all_functions, function_count, variable_names, variable_count.
 void tmsolve_init();
 
 /**
