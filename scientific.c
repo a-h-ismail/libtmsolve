@@ -29,10 +29,40 @@ double complex ccbrt_cpow(double complex z)
 {
     return cpow(z, 1 / 3);
 }
+
+// Wrapper functions for cos, sin and tan to round for very small values
+
+double rd_cos(double __x)
+{
+    __x = cos(__x);
+    if (fabs(__x) < 1e-10)
+        return 0;
+    else
+        return __x;
+}
+
+double rd_sin(double __x)
+{
+    __x = sin(__x);
+    if (fabs(__x) < 1e-10)
+        return 0;
+    else
+        return __x;    
+}
+
+double rd_tan(double __x)
+{
+    __x = sin(__x);
+    if (fabs(__x) < 1e-10)
+        return 0;
+    else
+        return __x;    
+}
+
 char *r_function_name[] =
     {"fact", "abs", "ceil", "floor", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log", NULL};
 double (*r_function_ptr[])(double) =
-    {factorial, fabs, ceil, floor, sqrt, cbrt, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, cos, sin, tan, log, log10};
+    {factorial, fabs, ceil, floor, sqrt, cbrt, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, rd_cos, rd_sin, rd_tan, log, log10};
 // Extended functions, may take more than one parameter (stored in a comma separated string)
 char *ext_function_name[] = {"int", "der", NULL};
 double (*ext_math_function[])(char *) =
@@ -420,7 +450,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
 
         operator_index = (int *)malloc(buffer_size * sizeof(int));
         // Count number of operators and store it's indexes
-        for (i = solve_start + 1, op_count = 0; i <= solve_end; ++i)
+        for (i = solve_start, op_count = 0; i <= solve_end; ++i)
         {
             // Skipping over an already processed expression
             if (local_expr[i] == '(')
