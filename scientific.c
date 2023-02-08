@@ -47,7 +47,7 @@ double rd_sin(double __x)
     if (fabs(__x) < 1e-10)
         return 0;
     else
-        return __x;    
+        return __x;
 }
 
 double rd_tan(double __x)
@@ -56,7 +56,7 @@ double rd_tan(double __x)
     if (fabs(__x) < 1e-10)
         return 0;
     else
-        return __x;    
+        return __x;
 }
 
 char *r_function_name[] =
@@ -463,7 +463,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             else if (is_digit(local_expr[i]))
                 continue;
 
-            else if (is_op(local_expr[i]))
+            else if (is_op(local_expr[i]) && i != solve_start)
             {
                 // Skipping a + or - used in scientific notation (like 1e+5)
                 if (i > 0 && (local_expr[i - 1] == 'e' || local_expr[i - 1] == 'E') && (local_expr[i] == '+' || local_expr[i] == '-'))
