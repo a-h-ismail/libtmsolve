@@ -23,6 +23,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "m_errors.h"
 #endif
 
+#define array_length(z) (sizeof(z)/sizeof(*z))
 /// Maximum number of errors in error_handler
 #define MAX_ERRORS 5
 
@@ -69,16 +70,16 @@ void tmsolve_init();
 /**
  * @brief Error handling function, collects and manages errors.
  * @param error The error message to store.
- * @param arg The list of argumets to pass to the error handler.\n
- * arg 1:\n
- * 1: Save the *error to the errors database, arg 2: ( 0: not fatal, stack; 1: fatal, stack).\n
- * For fatal errors, arg3 must have the index of the error (-1 means don't print_errors).\n
- * 2: Print the errors to stdout and clear the database, return number of errors printed.\n
- * 3: Clear the error database. arg 2: clear (0: main; 1: backup; 2: all).\n
- * 4: Search for *error in the errors database, return 1 on match in main, 2 in backup. arg 2: search (0: main; 1: backup; 2: all).\n
- * 5: Return the amount of errors in the database. arg 2: errors in (0: main; 1: backup; 2: all).\n
- * 6: Backup current errors, making room for new ones.\n
- * 7: Restore the backed up errors, clearing the current errors in the process.\n
+ * @param arg The list of argumets to pass to the error handler.
+ * arg 1: \n
+ * 1: Save the *error to the errors database, arg 2: ( 0: not fatal, stack; 1: fatal, stack). \n
+ * For fatal errors, arg3 must have the index of the error (-1 means don't print_errors). \n
+ * 2: Print the errors to stdout and clear the database, return number of errors printed. \n
+ * 3: Clear the error database. arg 2: clear (0: main; 1: backup; 2: all). \n
+ * 4: Search for *error in the errors database, return 1 on match in main, 2 in backup. arg 2: search (0: main; 1: backup; 2: all). \n
+ * 5: Return the amount of errors in the main database. arg 2: 0: non-fatal; 1: fatal; 2:all . \n
+ * 6: Backup current errors, making room for new ones. \n
+ * 7: Restore the backed up errors, clearing the current errors in the process. \n
 
  * @return Depends on the argument list.
  */
