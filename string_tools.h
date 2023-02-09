@@ -95,7 +95,7 @@ int find_startofnumber(char *expr, int end);
  * @param index The index from which the search will start.
  * @return The index of the first match of keyword in str, or -1 if no match is found.
  */
-int f_search(char *str, char *keyword, int index);
+int f_search(char *str, char *keyword, int index, bool match_word);
 
 /**
  * @brief Reverse search for a specified keyword.
@@ -164,5 +164,12 @@ int compare_priority(char operator1, char operator2);
  * @return A structure containing the arguments stored in separate strings.
  */
 arg_list* get_arguments(char *string);
+
+
+/**
+ * @brief Ensures the expression is not empty, checks syntax and merges extra +/- signs.
+ * @return true if the checks pass, false otherwise.
+*/
+bool pre_parse_routine(char *expr);
 
 void free_arg_list(arg_list *list, bool list_on_heap);

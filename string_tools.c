@@ -425,7 +425,7 @@ int find_startofnumber(char *expr, int end)
     return start;
 }
 
-int f_search(char *str, char *keyword, int index)
+int f_search(char *str, char *keyword, int index, bool match_word)
 {
     int keylen = strlen(keyword), s_length = strlen(str);
     while (index < s_length)
@@ -433,7 +433,19 @@ int f_search(char *str, char *keyword, int index)
         if (str[index] == keyword[0])
         {
             if (strncmp(str + index, keyword, keylen) == 0)
+            {
+                // match_word: keyword match isn't adjacent to alphanumeric or underscore characters.
+                if (match_word)
+                {
+                    if ((index > 0 && (isalphanum(str[index - 1]) == true || str[index - 1] == '_')) ||
+                        (isalphanum(str[index + keylen]) == true || str[index + keylen] == '_'))
+                    {
+                        index += keylen;
+                        continue;
+                    }
+                }
                 return index;
+            }
             else
                 index += keylen;
         }
@@ -510,7 +522,7 @@ bool parenthesis_check(char *expr)
     open_position = (int *)malloc(length * sizeof(int));
     close_position = (int *)malloc(length * sizeof(int));
     *open_position = *close_position = -2;
-    open = f_search(expr, "(", 0);
+    open = f_search(expr, "(", 0, false);
     // Check if every open parenthesis has a close parenthesis and log their indexes
     while (open != -1)
     {
@@ -531,16 +543,16 @@ bool parenthesis_check(char *expr)
         }
         open_position[k] = open;
         close_position[k] = close;
-        open = f_search(expr, "(", open + 1);
+        open = f_search(expr, "(", open + 1, false);
         ++k;
     }
     qsort(open_position, k, sizeof(int), compare_ints);
     qsort(close_position, k, sizeof(int), compare_ints_reverse);
     // Case of no open parenthesis, check if a close parenthesis is present
     if (k == 0)
-        close = f_search(expr, ")", 0);
+        close = f_search(expr, ")", 0, false);
     else
-        close = f_search(expr, ")", close_position[0] + 1);
+        close = f_search(expr, ")", close_position[0] + 1, false);
 
     if (close != -1)
     {
@@ -559,11 +571,11 @@ bool syntax_check(char *expr)
 {
     int length = strlen(expr), i, j;
     tmsolve_init();
-    _glob_expr=expr;
+    _glob_expr = expr;
     // First check: all function calls have parenthesis.
     for (i = 0; i < function_count; ++i)
     {
-        j = f_search(expr, all_functions[i], 0);
+        j = f_search(expr, all_functions[i], 0, true);
         while (j != -1)
         {
             if (expr[j + strlen(all_functions[i])] != '(')
@@ -571,7 +583,7 @@ bool syntax_check(char *expr)
                 error_handler(PARENTHESIS_MISSING, 1, 1, j + strlen(all_functions[i]));
                 return false;
             }
-            j = f_search(expr, all_functions[i], j + 1);
+            j = f_search(expr, all_functions[i], j + 1, true);
         }
     }
     // Check for incorrect syntax or implied multiplication.
@@ -665,4 +677,20 @@ void free_arg_list(arg_list *list, bool list_on_heap)
     free(list->arguments);
     if (list_on_heap)
         free(list);
+}
+
+bool pre_parse_routine(char *expr)
+{
+    // Check for empty input
+    if (expr[0] == '\0')
+    {
+        error_handler(NO_INPUT, 1, 1, -1);
+        return false;
+    }
+    // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
+    combine_add_subtract(expr, 0, strlen(expr) - 2);
+    if (syntax_check(expr) == false)
+        return false;
+    
+    return true;
 }
