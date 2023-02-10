@@ -72,6 +72,12 @@ bool is_digit(char c);
 bool is_alphabetic(char c);
 
 /**
+ * @brief Checks if the character c is a letter or digit.
+ * @return true if c is a letter (A-Z) or (a-z) or a digit.
+ */
+bool is_alphanum(char c);
+
+/**
  * @brief Finds the end of a number knowing its start in the expression.
  * @param expr The expression to search.
  * @param start The start index of the number.
