@@ -439,7 +439,7 @@ int f_search(char *str, char *keyword, int index, bool match_word)
                 {
                     
                     if ((index > 0 && (is_alphabetic(str[index - 1]) == true || str[index - 1] == '_')) ||
-                        ((is_alphabetic(str[index + keylen]) == true || str[index + keylen] != '_')))
+                        ((is_alphabetic(str[index + keylen]) == true || str[index + keylen] == '_')))
                     {
                         index += keylen;
                         continue;
