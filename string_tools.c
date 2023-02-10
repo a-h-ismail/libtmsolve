@@ -275,7 +275,7 @@ inline bool is_alphabetic(char c)
     else
         return false;
 }
-inline bool isalphanum(char c)
+inline bool is_alphanum(char c)
 {
     return is_digit(c) && is_alphabetic(c);
 }
@@ -434,11 +434,12 @@ int f_search(char *str, char *keyword, int index, bool match_word)
         {
             if (strncmp(str + index, keyword, keylen) == 0)
             {
-                // match_word: keyword match isn't adjacent to alphanumeric or underscore characters.
+                // match_word: keyword match isn't adjacent to alphabetic or underscore characters.
                 if (match_word)
                 {
-                    if ((index > 0 && (isalphanum(str[index - 1]) == true || str[index - 1] == '_')) ||
-                        (isalphanum(str[index + keylen]) == true || str[index + keylen] == '_'))
+                    
+                    if ((index > 0 && (is_alphabetic(str[index - 1]) == true || str[index - 1] == '_')) ||
+                        ((is_alphabetic(str[index + keylen]) == true || str[index + keylen] != '_')))
                     {
                         index += keylen;
                         continue;
