@@ -1,1 +1,2 @@
-- Scientific notation does not support floating point exponent (ignores decimal part)
+- Scientific notation does not support floating point exponent (ignores decimal part).
+- A user defined variable with a complex value may still be processed with complex disabled.
