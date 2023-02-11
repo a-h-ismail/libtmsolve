@@ -141,7 +141,7 @@ matrix_str *comatrix(matrix_str *M)
         return NULL;
     if (M->rows < 2 || M->rows != M->columns)
     {
-        error_handler(INVALID_MATRIX, 1, 1);
+        error_handler(INVALID_MATRIX, 1, 1, -1);
         return NULL;
     }
     comatrix = new_matrix(M->rows, M->columns);
