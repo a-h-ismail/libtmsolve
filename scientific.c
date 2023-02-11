@@ -86,36 +86,192 @@ double complex calculate_expr(char *expr, bool enable_complex)
 {
     double complex result;
     math_expr *math_struct;
-    char *expr_local = strdup(expr);
-    // Check for empty input
-    if (expr_local[0] == '\0')
-    {
-        error_handler(NO_INPUT, 1, 1, -1);
-        free(expr_local);
-        return NAN;
-    }
-    // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
-    combine_add_subtract(expr_local, 0, strlen(expr_local) - 2);
-    if (syntax_check(expr_local) == false)
-    {
-        free(expr_local);
-        return NAN;
-    }
 
-    math_struct = parse_expr(expr_local, false, enable_complex);
-    if (math_struct == NULL)
-    {
-        free(expr_local);
+    if (pre_parse_routine(expr) == false)
         return NAN;
-    }
+    math_struct = parse_expr(expr, false, enable_complex);
+    if (math_struct == NULL)
+        return NAN;
     result = eval_math_expr(math_struct);
     delete_math_expr(math_struct);
-    free(expr_local);
     return result;
+}
+
+double complex calculate_expr_auto(char *expr)
+{
+    char *real_exclusive[] = {"%"};
+    int i, j;
+    // 0: can't be complex due to real exclusive operations like modulo.
+    // 1: can be complex, mostly 2n roots of negative numbers.
+    // 2: Is complex, imaginary number appears in the expression, or complex exclusive operations like arg().
+    uint8_t likely_complex = 1;
+
+    if (!pre_parse_routine(expr))
+        return NAN;
+
+    // Look for real exclusive operations
+    for (i = 0; i < array_length(real_exclusive); ++i)
+    {
+        j = f_search(expr, real_exclusive[i], 0, false);
+        if (j != -1)
+        {
+            likely_complex = 0;
+            break;
+        }
+    }
+    // We have some hope that this is a complex expression
+    i = f_search(expr, "i", 0, true);
+    if (i != -1)
+    {
+        // The complex number was found despite having a real expression, report the problem.
+        if (likely_complex == 0)
+        {
+            error_handler(ILLEGAL_COMPLEX_OP, 1, 1, i);
+            return NAN;
+        }
+        else
+            likely_complex = 2;
+    }
+
+    math_expr *M;
+    double complex result;
+    switch (likely_complex)
+    {
+    case 0:
+    {
+        M = parse_expr(expr, false, false);
+        result = eval_math_expr(M);
+        delete_math_expr(M);
+        return result;
+    }
+    case 1:
+        M = parse_expr(expr, false, false);
+        result = eval_math_expr(M);
+        if (isnan(creal(result)))
+        {
+            // Check if the errors are fatal (like malformed syntax, division by zero...)
+            int fatal_error = error_handler(NULL, 5, 1);
+            if (fatal_error > 0)
+                return NAN;
+
+            // Clear errors caused by the first evaluation.
+            error_handler(NULL, 3, 0);
+
+            // The errors weren't fatal, possibly a complex answer.
+            // Convert the math_struct to use complex functions.
+            if (M != NULL)
+            {
+                convert_real_to_complex(M);
+                // If the conversion failed due to real only functions, return a failure.
+                if (M->enable_complex == false)
+                {
+                    delete_math_expr(M);
+                    return NAN;
+                }
+            }
+            else
+                M = parse_expr(expr, false, true);
+
+            result = eval_math_expr(M);
+            delete_math_expr(M);
+            return result;
+        }
+        else
+        {
+            delete_math_expr(M);
+            return result;
+        }
+    case 2:
+        M = parse_expr(expr, false, true);
+        result = eval_math_expr(M);
+        delete_math_expr(M);
+        return result;
+    }
+    // Unlikely to fall out of the switch.
+    error_handler(INTERNAL_ERROR, 1, 1, 0);
+    return NAN;
+}
+
+char *lookup_function_name(void *function, bool is_complex)
+{
+    int i;
+    if (is_complex)
+    {
+        for (i = 0; i < array_length(cmplx_function_ptr); ++i)
+        {
+            if (function == (void *)(cmplx_function_ptr[i]))
+                break;
+        }
+        if (i < array_length(cmplx_function_ptr))
+            return cmplx_function_name[i];
+    }
+    else
+    {
+        for (i = 0; i < array_length(r_function_ptr); ++i)
+        {
+            if (function == (void *)(r_function_ptr[i]))
+                break;
+        }
+        if (i < array_length(r_function_ptr))
+            return r_function_name[i];
+    }
+
+    return NULL;
+}
+
+void *lookup_function_pointer(char *function_name, bool is_complex)
+{
+    int i;
+    if (is_complex)
+    {
+        for (i = 0; i < array_length(cmplx_function_name); ++i)
+        {
+            if (strcmp(cmplx_function_name[i], function_name) == 0)
+                break;
+        }
+        if (i < array_length(cmplx_function_name))
+            return cmplx_function_ptr[i];
+    }
+    else
+    {
+        for (i = 0; i < array_length(r_function_name); ++i)
+        {
+            if (strcmp(r_function_name[i], function_name) == 0)
+                break;
+        }
+        if (i < array_length(r_function_name))
+            return r_function_ptr[i];
+    }
+
+    return NULL;
+}
+
+void convert_real_to_complex(math_expr *M)
+{
+    // You need to swap real functions for their complex counterparts.
+    m_subexpr *S = M->subexpr_ptr;
+    if (S != NULL)
+    {
+        int s_index;
+        char *function_name;
+        for (s_index = 0; s_index < M->subexpr_count; ++s_index)
+        {
+            // Lookup the name of the real function and find the equivalent function pointer
+            function_name = lookup_function_name(S[s_index].function_ptr, false);
+            if (function_name == NULL)
+                return;
+            S->cmplx_function_ptr = lookup_function_pointer(function_name, true);
+        }
+    }
+    M->enable_complex = true;
 }
 
 double complex eval_math_expr(math_expr *M)
 {
+    // No NULL pointer dereference allowed.
+    if (M == NULL)
+        return NAN;
+
     op_node *i_node;
     int s_index = 0, s_count = M->subexpr_count;
     // Subexpression pointer to access the subexpression array.
@@ -137,7 +293,7 @@ double complex eval_math_expr(math_expr *M)
                 **(S[s_index].s_result) = (*(S[s_index].ext_function_ptr))(args);
                 if (isnan((double)**(S[s_index].s_result)))
                 {
-                    error_handler(MATH_ERROR, 1, 0, S[s_index].solve_start);
+                    error_handler(MATH_ERROR, 1, 0, S[s_index].solve_start, -1);
                     return NAN;
                 }
                 S[s_index].execute_extended = false;
@@ -192,6 +348,20 @@ double complex eval_math_expr(math_expr *M)
                     break;
 
                 case '^':
+                    // Workaround for the edge case where something like (6i)^2 is producing a small imaginary part
+                    if (cimag(i_node->right_operand) == 0 && round(creal(i_node->right_operand)) - creal(i_node->right_operand) == 0)
+                    {
+                        *(i_node->node_result) = 1;
+                        int i;
+                        if (creal(i_node->right_operand) > 0)
+                            for (i = 0; i < creal(i_node->right_operand); ++i)
+                                *(i_node->node_result) *= i_node->left_operand;
+                    
+                        else if (creal(i_node->right_operand) < 0)
+                            for (i = 0; i > creal(i_node->right_operand); --i)
+                                *(i_node->node_result) /= i_node->left_operand;
+                    }
+                    else
                     *(i_node->node_result) = cpow(i_node->left_operand, i_node->right_operand);
                     break;
                 }
@@ -207,7 +377,7 @@ double complex eval_math_expr(math_expr *M)
 
         if (isnan((double)**(S[s_index].s_result)))
         {
-            error_handler(MATH_ERROR, 1, 0, S[s_index].solve_start);
+            error_handler(MATH_ERROR, 1, 0, S[s_index].solve_start, -1);
             return NAN;
         }
         ++s_index;
@@ -277,7 +447,8 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     // Local expression may be offset compared to the expression due to the assignment operator (if it exists).
     char *local_expr;
 
-    i = f_search(expr, "=", 0);
+    // Search for assignment operator, to enable user defined variables
+    i = f_search(expr, "=", 0, false);
     if (i != -1)
     {
         if (i == 0)
@@ -287,17 +458,14 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         }
         else
         {
-            j = f_search(expr, "=", i + 1);
+            j = f_search(expr, "=", i + 1, false);
             _glob_expr = expr;
             if (j != -1)
             {
                 error_handler(MULTIPLE_ASSIGNMENT_ERROR, 1, 1, j);
                 return NULL;
             }
-            // Add the variable name to the variable_name array
-            // To do: Watch out for the array size
             // Avoid keywords like cos
-            // Detect re assignment operation
             char *tmp = malloc((i + 1) * sizeof(char));
             strncpy(tmp, expr, i);
             tmp[i] = '\0';
@@ -486,7 +654,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         }
 
         // Searching for any function preceding the expression to set the function pointer
-        if (solve_start > 1)
+        if (solve_start > 1 && (is_alphabetic(expr[solve_start - 2]) || expr[solve_start - 2] == '_'))
         {
             if (!enable_complex)
             {
@@ -503,6 +671,13 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                         break;
                     }
                 }
+                // The function isn't defined for real operations
+                if (S[s_index].function_ptr == NULL)
+                {
+                    error_handler(UNDEFINED_FUNCTION, 1, 0, solve_start - 2);
+                    delete_math_expr(M);
+                    return NULL;
+                }
             }
             else
             {
@@ -517,6 +692,13 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                         S[s_index].subexpr_start = j;
                         break;
                     }
+                }
+                // The function is not defined in the complex domain
+                if (S[s_index].cmplx_function_ptr == NULL)
+                {
+                    error_handler(UNDEFINED_FUNCTION, 1, 0, solve_start - 2);
+                    delete_math_expr(M);
+                    return NULL;
                 }
             }
         }
@@ -563,7 +745,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                     status = set_variable_metadata(local_expr + solve_start, node_block, 'l');
                     if (!status)
                     {
-                        error_handler(UNDEFINED_SYMBOL, 1, 1, solve_start);
+                        error_handler(UNDEFINED_VARIABLE, 1, 1, solve_start);
                         delete_math_expr(M);
                         return NULL;
                     }
@@ -609,7 +791,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 status = find_subexpr_by_start(S, solve_start, s_index, 1);
                 if (status == -1)
                 {
-                    error_handler(UNDEFINED_SYMBOL, 1, 1, solve_start);
+                    error_handler(UNDEFINED_VARIABLE, 1, 1, solve_start);
                     delete_math_expr(M);
                     return NULL;
                 }
@@ -638,7 +820,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                         status = find_subexpr_by_start(S, node_block[i].operator_index + 1, s_index, 1);
                         if (status == -1)
                         {
-                            error_handler(UNDEFINED_SYMBOL, 1, 1, node_block[i].operator_index + 1);
+                            error_handler(UNDEFINED_VARIABLE, 1, 1, node_block[i].operator_index + 1);
                             delete_math_expr(M);
                             return NULL;
                         }
@@ -665,7 +847,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                         status = find_subexpr_by_start(S, node_block[i].operator_index + 1, s_index, 1);
                         if (status == -1)
                         {
-                            error_handler(UNDEFINED_SYMBOL, 1, 1, node_block[i].operator_index + 1);
+                            error_handler(UNDEFINED_VARIABLE, 1, 1, node_block[i].operator_index + 1);
                             delete_math_expr(M);
                             return NULL;
                         }
@@ -691,7 +873,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 status = find_subexpr_by_start(S, node_block[op_count - 1].operator_index + 1, s_index, 1);
                 if (status == -1)
                 {
-                    error_handler(UNDEFINED_SYMBOL, 1, 1, node_block[i].operator_index + 1);
+                    error_handler(UNDEFINED_VARIABLE, 1, 1, node_block[i].operator_index + 1);
                     return NULL;
                 }
                 *(S[status].s_result) = &(node_block[op_count - 1].right_operand);
@@ -810,19 +992,22 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     return M;
 }
 
-void delete_math_expr(math_expr *math_struct)
+void delete_math_expr(math_expr *M)
 {
+    if (M == NULL)
+        return;
+
     int i = 0;
-    m_subexpr *subexps = math_struct->subexpr_ptr;
-    for (i = 0; i < math_struct->subexpr_count; ++i)
+    m_subexpr *subexps = M->subexpr_ptr;
+    for (i = 0; i < M->subexpr_count; ++i)
     {
         if (subexps[i].ext_function_ptr != NULL)
             free(subexps[i].s_result);
         free(subexps[i].subexpr_nodes);
     }
     free(subexps);
-    free(math_struct->var_data);
-    free(math_struct);
+    free(M->var_data);
+    free(M);
 }
 
 int_factor *find_factors(int32_t value)
@@ -1035,7 +1220,7 @@ fraction decimal_to_fraction(double value, bool inverse_process)
         for (p_start = 0; p_start < strlen(pattern); ++p_start)
             result.c += 9 * pow(10, p_start);
         // Find the pattern start in case it doesn't start right after the decimal point (like 0.79999)
-        pattern_start = f_search(printed_value, pattern, decimal_point + 1);
+        pattern_start = f_search(printed_value, pattern, decimal_point + 1, false);
         if (pattern_start > decimal_point + 1)
         {
             result.b = round(value * (pow(10, pattern_start - decimal_point - 1 + strlen(pattern)) - pow(10, pattern_start - decimal_point - 1)));
