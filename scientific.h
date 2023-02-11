@@ -169,6 +169,38 @@ double factorial(double value);
 double complex calculate_expr(char *expr, bool enable_complex);
 
 /**
+ * @brief Calculates a mathematical expression and returns the answer, automatically handles complex numbers.
+ * @param expr The string containing the math expression.
+ * @note This function does not affect the global variable ans, you have to explicitly assign the return value to ans.
+ * @return The answer of the math expression, or NaN in case of failure.
+ */
+double complex calculate_expr_auto(char *expr);
+
+/**
+ * @brief Returns the name of the function possessing the specified pointer.
+ * @param function The function pointer to look for.
+ * @param is_complex Toggles between searching real and complex functions.
+ * @return A pointer to the name, or NULL if nothing is found.
+ */
+char *lookup_function_name(void *function, bool is_complex);
+
+/**
+ * @brief Returns the pointer to a function knowing its name.
+ * @param function_name The name of the function.
+ * @param is_complex Toggles between searching real and complex functions.
+ * @return The function pointer, or NULL in case of failure.
+ */
+void *lookup_function_pointer(char *function_name, bool is_complex);
+
+/**
+ * @brief Coverts a math_expr parsed with complex disabled into a complex enabled one.
+ * @param M The math expression to change
+ * @note If the function fails to convert the math_expr from real to complex, it won't change the M->enable_complex struct member,
+ * use it to verify if the conversion succeeded.
+ */
+void convert_real_to_complex(math_expr *M);
+
+/**
  * @brief Evaluates a math_expr structure and calculates the result.
  * @param M The math structure to evaluate.
  * @return The answer of the math expression, or NaN in case of failure.
