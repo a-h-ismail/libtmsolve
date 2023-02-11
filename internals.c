@@ -110,26 +110,27 @@ int error_handler(char *error, int arg1, ...)
             break;
         case 1:
             error_table[error_count].fatal_error = true;
-            int position = va_arg(arguments, int);
-            if (position != -1)
-            {
-                // Center the error in the string
-                if (position > 49)
-                {
-                    strncpy(error_table[error_count].err_str, _glob_expr + position - 24, 49);
-                    error_table[error_count].err_str[49] = '\0';
-                    error_table[error_count].error_index = 24;
-                }
-                else
-                {
-                    strcpy(error_table[error_count].err_str, _glob_expr);
-                    error_table[error_count].error_index = position;
-                }
-            }
             ++fatal;
             break;
         default:
             return -1;
+        }
+        
+        int position = va_arg(arguments, int);
+        if (position != -1)
+        {
+            // Center the error in the string
+            if (position > 49)
+            {
+                strncpy(error_table[error_count].err_str, _glob_expr + position - 24, 49);
+                error_table[error_count].err_str[49] = '\0';
+                error_table[error_count].error_index = 24;
+            }
+            else
+            {
+                strcpy(error_table[error_count].err_str, _glob_expr);
+                error_table[error_count].error_index = position;
+            }
         }
         error_count = fatal + non_fatal;
         return 0;
@@ -138,11 +139,9 @@ int error_handler(char *error, int arg1, ...)
         for (i = 0; i < error_count; ++i)
         {
             puts(error_table[i].error_msg);
-            if (error_table[i].fatal_error == true && error_table[i].error_index != -1)
-            {
+            if (error_table[i].error_index != -1)
+            
                 print_errors(error_table[i].err_str, error_table[i].error_index);
-                break;
-            }
         }
         error_handler(NULL, 3, 0);
 
