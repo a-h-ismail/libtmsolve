@@ -1,15 +1,19 @@
 # Introduction
+
 libtmsolve is a math library for expression evaluation, basic manipulation of matrices and some other useful features.
+The design is pretty modular
 
-The most useful feature is the ability to parse an expression into a structure called `math_expr`, which allows reuse, supports variable operands and function calls.
+## Basic use
 
-# Basic use
 To simply evaluate an expression and get the answer:
-```
+
+```C
 #include <tmsolve/libtmsolve.h>
 double answer;
-// enable_complex toggles support for complex numbers, set to false if not needed.
-answer = calculate_expr(expr, enable_complex);
+// Here we calculate light speed in the vaccum as an example:
+char light_speed[]={"sqrt(1/(8.8541878128e-12*(4e-7*pi)))"};
+// Expected answer: 299792458.08161
+answer = calculate_expr_auto(light_speed);
 ```
 
 To build your binary and link to this library:
@@ -17,7 +21,8 @@ To build your binary and link to this library:
 
 Full documentation is available [here](https://a-h-ismail.gitlab.io/libtmsolve-docs/).
 
-# Tips
+## Tips
+
 Documentation about the parser, evaluator, and some useful features like factorization can be found in `scientific.h`.
 
 For matrix related features, refer to `matrix.h`.
@@ -30,8 +35,10 @@ For functions that assist in manipulating strings (char *), refer to `string_too
 
 For functions used to manipulate variables and the calculator functions, refer to `function.h`.
 
-# Note
+## Note
+
 The library uses double precision floating point variables with complex extension for its operations.
 
-# License
+## License
+
 This library is licensed under the GNU LGPL-2.1-only.
