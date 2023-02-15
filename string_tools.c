@@ -63,11 +63,11 @@ int find_min(int a, int b)
     else
         return b;
 }
-// Returns the value of the number or variable (can be constant like pi or variable like ans) starting at (expr + start)
+
 double complex read_value(char *expr, int start, bool enable_complex)
 {
     double complex value;
-    bool is_negative, is_complex = false;
+    bool is_negative, is_complex = false,is_variable=false;
     int flag = 0;
 
     if (expr[start] == '-')
@@ -94,19 +94,33 @@ double complex read_value(char *expr, int start, bool enable_complex)
                 error_handler(SYNTAX_ERROR, 1, 1, end);
                 return NAN;
             }
-            // ans is a special case.
-            if (i == 2)
-                value = ans;
-            else
-                value = variable_values[i];
-            flag = 2;
+            value = variable_values[i];
+            is_variable=true;
             break;
         }
     }
 
-    if (flag == 0)
+    // ans is a special case
+    if (strncmp(expr + start, "ans", 3) == 0)
     {
-        // Check for complex number
+        if (start > 0 && is_alphabetic(expr[start - 1]))
+        {
+            error_handler(SYNTAX_ERROR, 1, 1, start);
+            return NAN;
+        }
+        int end = start + 3;
+        if (!(is_op(expr[end]) || expr[end] == '\0' || expr[end] == ')'))
+        {
+            error_handler(SYNTAX_ERROR, 1, 1, end);
+            return NAN;
+        }
+        value = ans;
+        is_variable=true;
+    }
+
+    if (is_variable==false)
+    {
+        // Check for the complex number i at the beginning or end of the number.
         if (enable_complex)
         {
             int end = find_endofnumber(expr, start);
@@ -437,7 +451,7 @@ int f_search(char *str, char *keyword, int index, bool match_word)
                 // match_word: keyword match isn't adjacent to alphabetic or underscore characters.
                 if (match_word)
                 {
-                    
+
                     if ((index > 0 && (is_alphabetic(str[index - 1]) == true || str[index - 1] == '_')) ||
                         ((is_alphabetic(str[index + keylen]) == true || str[index + keylen] == '_')))
                     {
@@ -692,6 +706,6 @@ bool pre_parse_routine(char *expr)
     combine_add_subtract(expr, 0, strlen(expr) - 2);
     if (syntax_check(expr) == false)
         return false;
-    
+
     return true;
 }
