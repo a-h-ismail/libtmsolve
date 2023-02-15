@@ -11,20 +11,19 @@ char **all_functions;
 double complex *variable_values;
 char **variable_names;
 
-// Do not move the position of ans here as it is an independant variable, read_value depends on it being on index 2
-char *hardcoded_variable_names[] = {"pi", "exp", "ans"};
-double complex hardcoded_variable_values[] = {M_PI, M_E, 0};
-int function_count = 0, variable_count = 3, variable_max = 10;
-int hardcoded_variable_count = sizeof(hardcoded_variable_names) / sizeof(*hardcoded_variable_names);
-
+char *hardcoded_variable_names[] = {"pi", "exp"};
+double complex hardcoded_variable_values[] = {M_PI, M_E};
+int hardcoded_variable_count = array_length(hardcoded_variable_names);
+int function_count = 0, variable_count, variable_max = 8;
 void tmsolve_init()
 {
     int i;
     if (do_init == true)
     {
         // Initialize variable names and values arrays
-        variable_names = malloc(10 * sizeof(char *));
-        variable_values = malloc(10 * sizeof(double complex));
+        variable_names = malloc(8 * sizeof(char *));
+        variable_values = malloc(8 * sizeof(double complex));
+        variable_count = hardcoded_variable_count;
         for (i = 0; i < variable_count; ++i)
         {
             variable_names[i] = hardcoded_variable_names[i];
@@ -115,7 +114,7 @@ int error_handler(char *error, int arg1, ...)
         default:
             return -1;
         }
-        
+
         int position = va_arg(arguments, int);
         if (position != -1)
         {
@@ -140,7 +139,7 @@ int error_handler(char *error, int arg1, ...)
         {
             puts(error_table[i].error_msg);
             if (error_table[i].error_index != -1)
-            
+
                 print_errors(error_table[i].err_str, error_table[i].error_index);
         }
         error_handler(NULL, 3, 0);
