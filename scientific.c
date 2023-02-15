@@ -356,13 +356,13 @@ double complex eval_math_expr(math_expr *M)
                         if (creal(i_node->right_operand) > 0)
                             for (i = 0; i < creal(i_node->right_operand); ++i)
                                 *(i_node->node_result) *= i_node->left_operand;
-                    
+
                         else if (creal(i_node->right_operand) < 0)
                             for (i = 0; i > creal(i_node->right_operand); --i)
                                 *(i_node->node_result) /= i_node->left_operand;
                     }
                     else
-                    *(i_node->node_result) = cpow(i_node->left_operand, i_node->right_operand);
+                        *(i_node->node_result) = cpow(i_node->left_operand, i_node->right_operand);
                     break;
                 }
                 i_node = i_node->next;
@@ -441,7 +441,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     // Used for indexing of subexpressions
     int s_index;
     // Use for dynamic growing blocks.
-    int buffer_size = 10, buffer_step = 10;
+    int buffer_size = 8;
     // Used to store the index of the variable to assign the answer to.
     int variable_index = -1;
     // Local expression may be offset compared to the expression due to the assignment operator (if it exists).
@@ -458,6 +458,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         }
         else
         {
+            // Check if another assignment operator is used
             j = f_search(expr, "=", i + 1, false);
             _glob_expr = expr;
             if (j != -1)
@@ -465,12 +466,13 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 error_handler(MULTIPLE_ASSIGNMENT_ERROR, 1, 1, j);
                 return NULL;
             }
-            // Avoid keywords like cos
-            char *tmp = malloc((i + 1) * sizeof(char));
+            // Store the variable name in this array
+            char tmp[i + 1];
             strncpy(tmp, expr, i);
             tmp[i] = '\0';
             for (j = 0; j < variable_count; ++j)
             {
+                // An existing variable is found
                 if (strcmp(variable_names[j], tmp) == 0)
                 {
                     variable_index = j;
@@ -482,9 +484,16 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 error_handler(OVERWRITE_BUILTIN_VARIABLE, 1, 1, i);
                 return NULL;
             }
-            // If the loop exited due to break instead of its condition.
+            // Create a new variable
             if (j == variable_count)
             {
+                // Dynamically expand size
+                if (variable_count == variable_max)
+                {
+                    variable_max *= 2;
+                    variable_names = realloc(variable_names, variable_max * sizeof(char *));
+                    variable_values = realloc(variable_values, variable_max * sizeof(double complex));
+                }
                 variable_names[variable_count] = tmp;
                 variable_index = variable_count++;
             }
@@ -523,7 +532,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         // Resize the subexpr array on the fly
         if (s_index == buffer_size)
         {
-            buffer_size += buffer_step;
+            buffer_size *= 2;
             S = realloc(S, buffer_size * sizeof(m_subexpr));
         }
         if (local_expr[i] == '(')
@@ -588,7 +597,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     qsort(S, s_count, sizeof(m_subexpr), compare_subexps_depth);
 
     int *operator_index, solve_start, solve_end, op_count, status;
-    buffer_size = buffer_step = 1000;
+    buffer_size = 16;
 
     /*
     How to parse a subexpression:
@@ -642,7 +651,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 // Varying the array size on demand
                 if (op_count == buffer_size)
                 {
-                    buffer_size += buffer_step;
+                    buffer_size *= 2;
                     operator_index = realloc(operator_index, buffer_size * sizeof(int));
                 }
                 operator_index[op_count] = i;
@@ -676,6 +685,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 {
                     error_handler(UNDEFINED_FUNCTION, 1, 0, solve_start - 2);
                     delete_math_expr(M);
+                    free(operator_index);
                     return NULL;
                 }
             }
@@ -697,6 +707,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 if (S[s_index].cmplx_function_ptr == NULL)
                 {
                     error_handler(UNDEFINED_FUNCTION, 1, 0, solve_start - 2);
+                    free(operator_index);
                     delete_math_expr(M);
                     return NULL;
                 }
