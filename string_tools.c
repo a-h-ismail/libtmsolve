@@ -67,7 +67,7 @@ int find_min(int a, int b)
 double complex read_value(char *expr, int start, bool enable_complex)
 {
     double complex value;
-    bool is_negative, is_complex = false,is_variable=false;
+    bool is_negative, is_complex = false, is_variable = false;
     int flag = 0;
 
     if (expr[start] == '-')
@@ -95,7 +95,7 @@ double complex read_value(char *expr, int start, bool enable_complex)
                 return NAN;
             }
             value = variable_values[i];
-            is_variable=true;
+            is_variable = true;
             break;
         }
     }
@@ -115,10 +115,10 @@ double complex read_value(char *expr, int start, bool enable_complex)
             return NAN;
         }
         value = ans;
-        is_variable=true;
+        is_variable = true;
     }
 
-    if (is_variable==false)
+    if (is_variable == false)
     {
         // Check for the complex number i at the beginning or end of the number.
         if (enable_complex)
@@ -707,5 +707,15 @@ bool pre_parse_routine(char *expr)
     if (syntax_check(expr) == false)
         return false;
 
+    return true;
+}
+
+bool valid_name(char *name)
+{
+    for(int i=0;i<strlen(name);++i)
+    {
+        if(is_alphabetic(name[i])==false||name[i]!='_')
+        return false;
+    }
     return true;
 }

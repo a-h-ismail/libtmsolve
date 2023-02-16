@@ -178,4 +178,10 @@ arg_list* get_arguments(char *string);
 */
 bool pre_parse_routine(char *expr);
 
+/**
+ * @brief Checks if the name conforms to variable name rules.
+ * @return true if the name is valid, false otherwise.
+ */
+bool valid_name(char *name);
+
 void free_arg_list(arg_list *list, bool list_on_heap);
