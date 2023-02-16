@@ -131,6 +131,8 @@ int error_handler(char *error, int arg1, ...)
                 error_table[error_count].error_index = position;
             }
         }
+        else
+            error_table[error_count].error_index = -1;
         error_count = fatal + non_fatal;
         return 0;
     // Print errors
@@ -139,8 +141,9 @@ int error_handler(char *error, int arg1, ...)
         {
             puts(error_table[i].error_msg);
             if (error_table[i].error_index != -1)
-
                 print_errors(error_table[i].err_str, error_table[i].error_index);
+            else
+                printf("\n");
         }
         error_handler(NULL, 3, 0);
 
