@@ -11,8 +11,8 @@ char **all_functions;
 double complex *variable_values;
 char **variable_names;
 
-char *hardcoded_variable_names[] = {"pi", "exp"};
-double complex hardcoded_variable_values[] = {M_PI, M_E};
+char *hardcoded_variable_names[] = {"pi", "exp", "c"};
+double complex hardcoded_variable_values[] = {M_PI, M_E, 299792458};
 int hardcoded_variable_count = array_length(hardcoded_variable_names);
 int function_count = 0, variable_count, variable_max = 8;
 void tmsolve_init()
