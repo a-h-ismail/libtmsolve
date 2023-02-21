@@ -70,7 +70,7 @@ void tmsolve_init();
 /**
  * @brief Error handling function, collects and manages errors.
  * @param error The error message to store.
- * @param arg The list of argumets to pass to the error handler.
+ * @param arg The list of argumets to pass to the error handler. \n
  * arg 1: \n
  * 1: Save the *error to the errors database, arg 2: ( 0: not fatal, stack; 1: fatal, stack). \n
  * For fatal errors, arg3 must have the index of the error (-1 means don't print_errors). \n
