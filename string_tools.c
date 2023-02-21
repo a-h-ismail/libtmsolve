@@ -712,10 +712,10 @@ bool pre_parse_routine(char *expr)
 
 bool valid_name(char *name)
 {
-    for(int i=0;i<strlen(name);++i)
+    for (int i = 0; i < strlen(name); ++i)
     {
-        if(is_alphabetic(name[i])==false||name[i]!='_')
-        return false;
+        if (is_alphabetic(name[i]) == false && name[i] != '_')
+            return false;
     }
     return true;
 }
