@@ -470,9 +470,9 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             char tmp[i + 1];
             strncpy(tmp, expr, i);
             tmp[i] = '\0';
-            if(valid_name(tmp)==false)
+            if (valid_name(tmp) == false)
             {
-                error_handler(INVALID_VARIABLE_NAME,1,1,-1);
+                error_handler(INVALID_VARIABLE_NAME, 1, 1, -1);
                 return NULL;
             }
             for (j = 0; j < variable_count; ++j)
@@ -499,7 +499,8 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                     variable_names = realloc(variable_names, variable_max * sizeof(char *));
                     variable_values = realloc(variable_values, variable_max * sizeof(double complex));
                 }
-                variable_names[variable_count] = tmp;
+                variable_names[variable_count]=malloc((strlen(tmp)+1)*sizeof(char));
+                strcpy(variable_names[variable_count], tmp);
                 variable_index = variable_count++;
             }
             local_expr = expr + i + 1;
