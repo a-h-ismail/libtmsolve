@@ -8,7 +8,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <math.h>
 void _set_var_data(math_expr *M)
 {
-    int i = 0, s_index, buffer_size = 50, buffer_step = 50;
+    int i = 0, s_index, buffer_size = 16;
     var_op_data *vars = malloc(buffer_size * sizeof(var_op_data));
     m_subexpr *subexpr_ptr = M->subexpr_ptr;
     op_node *i_node;
@@ -20,7 +20,7 @@ void _set_var_data(math_expr *M)
         {
             if (i == buffer_size)
             {
-                buffer_size += buffer_step;
+                buffer_size *= 2;
                 vars = realloc(vars, buffer_size * sizeof(var_op_data));
             }
             // Case of variable left operand
@@ -33,6 +33,7 @@ void _set_var_data(math_expr *M)
                 vars[i].var_ptr = &(i_node->left_operand);
                 ++i;
             }
+            // Case of a variable right operand
             if (i_node->var_metadata & 0b10)
             {
                 if (i_node->var_metadata & 0b1000)
@@ -96,7 +97,7 @@ double derivative(char *arguments)
 
 double integrate(char *arguments)
 {
-    math_expr *math_struct;
+    math_expr *M;
     arg_list *args = get_arguments(arguments);
     int n;
     double lower_bound, upper_bound, result, an, fn, rounds, tmp, delta;
@@ -112,23 +113,24 @@ double integrate(char *arguments)
     }
 
     // Compile the expression to the desired structure
-    math_struct = parse_expr(args->arguments[2], true, false);
+    M = parse_expr(args->arguments[2], true, false);
 
     // Calculating the number of rounds
-    rounds = ceil(delta) * 16384;
-    if (rounds > 1e7)
-        rounds = 1e7;
+    rounds = ceil(delta) * 65536;
+
+    if (rounds > 1e8)
+        rounds = 1e8;
     // Simpson 3/8 formula:
     // 3h/8[(y0 + yn) + 3(y1 + y2 + y4 + y5 + … + yn-1) + 2(y3 + y6 + y9 + … + yn-3)]
     // First step: y0 + yn
-    set_variable(math_struct, lower_bound);
-    result = eval_math_expr(math_struct);
-    set_variable(math_struct, lower_bound + delta);
-    result += eval_math_expr(math_struct);
+    set_variable(M, lower_bound);
+    result = eval_math_expr(M);
+    set_variable(M, lower_bound + delta);
+    result += eval_math_expr(M);
     if (isnan(result) == true)
     {
         error_handler("Error while calculating integral, make sure the function is defined on the integration interval.", 1, 1, -1);
-        delete_math_expr(math_struct);
+        delete_math_expr(M);
         return NAN;
     }
     for (n = 1, tmp = 0; n < rounds; ++n)
@@ -136,12 +138,12 @@ double integrate(char *arguments)
         if (n % 3 == 0)
             continue;
         an = lower_bound + delta * n / rounds;
-        set_variable(math_struct, an);
-        fn = eval_math_expr(math_struct);
+        set_variable(M, an);
+        fn = eval_math_expr(M);
         if (isnan(fn) == true)
         {
             error_handler("Error while calculating integral, make sure the function is defined on the integration interval.", 1, 1, -1);
-            delete_math_expr(math_struct);
+            delete_math_expr(M);
             return NAN;
         }
         tmp += fn;
@@ -150,19 +152,19 @@ double integrate(char *arguments)
     for (n = 3, tmp = 0; n < rounds; n += 3)
     {
         an = lower_bound + delta * n / rounds;
-        set_variable(math_struct, an);
-        fn = eval_math_expr(math_struct);
+        set_variable(M, an);
+        fn = eval_math_expr(M);
         if (isnan(fn) == true)
         {
             error_handler("Error while calculating integral, make sure the function is defined on the integration interval.", 1, 1, -1);
-            delete_math_expr(math_struct);
+            delete_math_expr(M);
             return NAN;
         }
         tmp += fn;
     }
     result += 2 * tmp;
     result *= 0.375 * (delta / rounds);
-    delete_math_expr(math_struct);
+    delete_math_expr(M);
     free_arg_list(args, true);
     return result;
 }
