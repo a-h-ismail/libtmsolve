@@ -1,6 +1,5 @@
-Improve UX of matrix mode.
-
 Low priority:
-Add support for more than one variable
-Add the ability of loading a parsed expression with variable substitution
-Add a proper equation mode
+
+Add support for more than one variable.
+Add the ability of loading a parsed expression with variable substitution.
+Add a proper equation mode.
