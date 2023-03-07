@@ -499,7 +499,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                     variable_names = realloc(variable_names, variable_max * sizeof(char *));
                     variable_values = realloc(variable_values, variable_max * sizeof(double complex));
                 }
-                variable_names[variable_count]=malloc((strlen(tmp)+1)*sizeof(char));
+                variable_names[variable_count] = malloc((strlen(tmp) + 1) * sizeof(char));
                 strcpy(variable_names[variable_count], tmp);
                 variable_index = variable_count++;
             }
@@ -947,12 +947,12 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             {
                 if (left_node == prev_index)
                 {
+                    // Optimize the edge case of successive <= priority nodes like a+a+a+a+a+a+a+a by using previous results
                     left_node = prev_left;
                     break;
                 }
                 else if (tmp_node->priority <= node_block[left_node].priority)
                     --left_node;
-                // Optimize the edge case of successive <= priority nodes like a+a+a+a+a+a+a+a by using previous results
                 else
                     break;
             }
@@ -961,15 +961,16 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             {
                 if (right_node == prev_index)
                 {
+                    // Similar idea to the above
                     right_node = prev_right;
                     break;
                 }
                 else if (tmp_node->priority < node_block[right_node].priority)
                     ++right_node;
-                // Similar idea to the above
                 else
                     break;
             }
+            
             // Case of the first op_node or a op_node with no left candidate
             if (left_node == -1)
                 tmp_node->node_result = &(node_block[right_node].left_operand);
