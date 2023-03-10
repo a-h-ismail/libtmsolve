@@ -674,8 +674,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             if (!enable_complex)
             {
                 // Determining the number of functions to check at runtime
-                int total = sizeof(r_function_ptr) / sizeof(*r_function_ptr);
-                for (i = 0; i < total; ++i)
+                for (i = 0; i < array_length(r_function_ptr); ++i)
                 {
                     j = r_search(local_expr, r_function_name[i], solve_start - 2, true);
                     if (j != -1)
@@ -686,8 +685,8 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                         break;
                     }
                 }
-                // The function isn't defined for real operations
-                if (S[s_index].function_ptr == NULL)
+                // The function isn't defined for real operations (loop exited due to condition instead of break)
+                if (i == array_length(r_function_ptr) + 1)
                 {
                     error_handler(UNDEFINED_FUNCTION, 1, 0, solve_start - 2);
                     delete_math_expr(M);
@@ -710,7 +709,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                     }
                 }
                 // The function is not defined in the complex domain
-                if (S[s_index].cmplx_function_ptr == NULL)
+                if (i == array_length(cmplx_function_ptr) + 1)
                 {
                     error_handler(UNDEFINED_FUNCTION, 1, 0, solve_start - 2);
                     free(operator_index);
@@ -970,7 +969,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                 else
                     break;
             }
-            
+
             // Case of the first op_node or a op_node with no left candidate
             if (left_node == -1)
                 tmp_node->node_result = &(node_block[right_node].left_operand);
