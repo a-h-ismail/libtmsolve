@@ -1,7 +1,6 @@
 # Introduction
 
-libtmsolve is a math library for expression evaluation, basic manipulation of matrices and some other useful features.
-The design is pretty modular
+libtmsolve is a math library for expression evaluation, basic manipulation of matrices and some other useful features (function manipulation, factorization...).
 
 ## Basic use
 
