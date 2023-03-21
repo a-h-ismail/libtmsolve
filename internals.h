@@ -6,7 +6,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define INTERNALS_H
 /**
  * @file
- * @brief Defines the functions necessary for the general operation of the calculator, some general error messages and all the headers needed.
+ * @brief Declares general purpose functions and globals used in the calculator. Includes all required standard library headers.
 */
 
 #include <stdio.h>
