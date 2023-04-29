@@ -60,7 +60,7 @@ matrix_str *matrix_multiply(matrix_str *A, matrix_str *B)
         for (j = 0; j < B->columns; ++j)
         {
             result->data[i][j] = 0;
-            // In the next loop: i, j are constant, k sweeps the column of the B matrix
+            // In the next loop: k sweeps the row 'i' of the left operand and column 'j' of the right operand
             for (k = 0; k < B->rows; ++k)
                 result->data[i][j] += A->data[i][k] * B->data[k][j];
         }
