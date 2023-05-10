@@ -165,7 +165,7 @@ bool part_of_keyword(char *expr, char *keyword1, char *keyword2, int index);
 int compare_priority(char operator1, char operator2);
 
 /**
- * @brief Extracts arguments separated by ";" from a string.
+ * @brief Extracts arguments separated by "," from a string.
  * @param string The string containing the arguments.
  * @return A structure containing the arguments stored in separate strings.
  */
