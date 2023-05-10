@@ -665,6 +665,8 @@ arg_list *get_arguments(char *string)
             max_args += 10;
             args = realloc(args, max_args * sizeof(arg_list));
         }
+        // Skip parenthesis pairs to allow easy nesting of argument lists
+        // Think of something like int(0,2,x+int(0,1,x^2))
         if (string[end] == '(')
             end = find_closing_parenthesis(string, end) + 1;
         else if (string[end] == ',')
