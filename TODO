@@ -1,4 +1,4 @@
+Use a union for function pointers.
 Optimize variable expressions by calculating invariable paths once.
 Add support for more than one variable.
 Add the ability of loading a parsed expression with variable substitution.
-Add a proper equation mode.
