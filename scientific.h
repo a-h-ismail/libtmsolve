@@ -52,7 +52,7 @@ typedef struct var_op_data
     bool is_negative;
 } var_op_data;
 
-// Union to store function pointers
+/// @brief Union to store function pointers
 typedef union mfunc_pointers
 {
     double (*real)(double);
@@ -90,10 +90,10 @@ typedef struct m_subexpr
     /// @details The op_node does not need to be in the same instance of the subexpr struct.
     double complex **s_result;
 
-    // Stores the pointer of the function to execute
+    /// Stores the pointer of the function to execute
     fptr func;
 
-    // Stores the type of the function to execute (0: none, 1:real, 2:cmplx, 3:extended)
+    /// Stores the type of the function to execute (0: none, 1: real, 2: cmplx, 3: extended)
     uint8_t func_type;
 
     /// Enables execution of extended function, used to optimizing of nested extended functions like integration without thrashing performance.
