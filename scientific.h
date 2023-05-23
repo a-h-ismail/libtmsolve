@@ -52,6 +52,14 @@ typedef struct var_op_data
     bool is_negative;
 } var_op_data;
 
+// Union to store function pointers
+typedef union mfunc_pointers
+{
+    double (*real)(double);
+    double complex (*cmplx)(double complex);
+    double (*extended)(char *);
+} fptr;
+
 /// @brief Holds the metadata of a subexpression.
 typedef struct m_subexpr
 {
@@ -82,17 +90,14 @@ typedef struct m_subexpr
     /// @details The op_node does not need to be in the same instance of the subexpr struct.
     double complex **s_result;
 
-    /// Function to execute on the subexpression result.
-    double (*function_ptr)(double);
+    // Stores the pointer of the function to execute
+    fptr func;
 
-    /// Complex function to execute on the subexpression result.
-    double complex (*cmplx_function_ptr)(double complex);
+    // Stores the type of the function to execute (0: none, 1:real, 2:cmplx, 3:extended)
+    uint8_t func_type;
 
-    /// Extended function to execute.
-    double (*ext_function_ptr)(char *);
-
-    /// Enables execution of extended function, allows optimizing of nested extended functions like integration without thrashing performance.
-    bool execute_extended;
+    /// Enables execution of extended function, used to optimizing of nested extended functions like integration without thrashing performance.
+    bool exec_extendedf;
 } m_subexpr;
 
 /// The standalone structure to hold all of an expression's metadata.
@@ -246,7 +251,7 @@ void priority_fill(op_node *list, int op_count);
  * @param start The starting index of the subexpression in the string.
  * @param s_index The index in the subexpression array to initiate searching, should be the index of the subexpression you are currently processing.
  * @param mode Determines if the value passed by start is the expression_start (mode==1) or solve_start (mode==2).
- * @return Depends on the mode, either 
+ * @return Depends on the mode, either
  */
 int find_subexpr_by_start(m_subexpr *S, int start, int s_index, int mode);
 
@@ -256,7 +261,7 @@ int find_subexpr_by_start(m_subexpr *S, int start, int s_index, int mode);
  * @param end The end index of the subexpression in the string.
  * @param s_index The index in the subexpression array to initiate searching, should be the index of the subexpression you are currently processing.
  * @param s_count The number of subexpressions in the expression.
- * @return 
+ * @return
  */
 int find_subexpr_by_end(m_subexpr *S, int end, int s_index, int s_count);
 

@@ -150,8 +150,8 @@ double complex calculate_expr_auto(char *expr)
         if (isnan(creal(result)))
         {
             // Check if the errors are fatal (like malformed syntax, division by zero...)
-            int fatal_error = error_handler(NULL, 5, 1);
-            if (fatal_error > 0)
+            int fatal = error_handler(NULL, 5, 1);
+            if (fatal > 0)
                 return NAN;
 
             // Clear errors caused by the first evaluation.
@@ -257,10 +257,11 @@ void convert_real_to_complex(math_expr *M)
         for (s_index = 0; s_index < M->subexpr_count; ++s_index)
         {
             // Lookup the name of the real function and find the equivalent function pointer
-            function_name = lookup_function_name(S[s_index].function_ptr, false);
+            function_name = lookup_function_name(S[s_index].func.real, false);
             if (function_name == NULL)
                 return;
-            S->cmplx_function_ptr = lookup_function_pointer(function_name, true);
+            S->func.cmplx = lookup_function_pointer(function_name, true);
+            S->func_type = 2;
         }
     }
     M->enable_complex = true;
@@ -282,7 +283,7 @@ double complex eval_math_expr(math_expr *M)
         if (S[s_index].subexpr_nodes == NULL)
         {
             char *args;
-            if (S[s_index].execute_extended)
+            if (S[s_index].exec_extendedf)
             {
                 int length = S[s_index].solve_end - S[s_index].solve_start + 1;
                 // Copy args from the expression to a separate array.
@@ -290,13 +291,13 @@ double complex eval_math_expr(math_expr *M)
                 memcpy(args, _glob_expr + S[s_index].solve_start, length * sizeof(char));
                 args[length] = '\0';
                 // Calling the extended function
-                **(S[s_index].s_result) = (*(S[s_index].ext_function_ptr))(args);
+                **(S[s_index].s_result) = (*(S[s_index].func.extended))(args);
                 if (isnan((double)**(S[s_index].s_result)))
                 {
                     error_handler(MATH_ERROR, 1, 0, S[s_index].solve_start, -1);
                     return NAN;
                 }
-                S[s_index].execute_extended = false;
+                S[s_index].exec_extendedf = false;
                 free(args);
             }
             ++s_index;
@@ -367,13 +368,17 @@ double complex eval_math_expr(math_expr *M)
                 }
                 i_node = i_node->next;
             }
+
         // Executing function on the subexpression result
-        // Complex function
-        if (M->enable_complex && S[s_index].cmplx_function_ptr != NULL)
-            **(S[s_index].s_result) = (*(S[s_index].cmplx_function_ptr))(**(S[s_index].s_result));
-        // Real function
-        else if (!M->enable_complex && S[s_index].function_ptr != NULL)
-            **(S[s_index].s_result) = (*(S[s_index].function_ptr))(**(S[s_index].s_result));
+        switch (S[s_index].func_type)
+        {
+        case 1:
+            **(S[s_index].s_result) = (*(S[s_index].func.real))(**(S[s_index].s_result));
+            break;
+        case 2:
+            **(S[s_index].s_result) = (*(S[s_index].func.cmplx))(**(S[s_index].s_result));
+            break;
+        }
 
         if (isnan((double)**(S[s_index].s_result)))
         {
@@ -386,6 +391,7 @@ double complex eval_math_expr(math_expr *M)
 
     if (M->variable_index != -1)
         variable_values[M->variable_index] = M->answer;
+
     return M->answer;
 }
 
@@ -543,24 +549,30 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         }
         if (local_expr[i] == '(')
         {
-            S[s_index].ext_function_ptr = NULL;
+            S[s_index].func.extended = NULL;
+            S[s_index].func_type = 0;
+            S[s_index].exec_extendedf=true;
+
             // Treat extended functions as a subexpression
             for (j = 0; j < sizeof(ext_math_function) / sizeof(*ext_math_function); ++j)
             {
-                int temp;
-                temp = r_search(local_expr, ext_function_name[j], i - 1, true);
-                if (temp != -1)
+                int tmp;
+                tmp = r_search(local_expr, ext_function_name[j], i - 1, true);
+
+                // Found an extended function
+                if (tmp != -1)
                 {
-                    S[s_index].subexpr_start = temp;
+                    S[s_index].subexpr_start = tmp;
                     S[s_index].solve_start = i + 1;
                     i = find_closing_parenthesis(local_expr, i);
                     S[s_index].solve_end = i - 1;
                     S[s_index].depth = depth + 1;
-                    S[s_index].ext_function_ptr = ext_math_function[j];
+                    S[s_index].func.extended = ext_math_function[j];
+                    S[s_index].func_type = 3;
                     break;
                 }
             }
-            if (S[s_index].ext_function_ptr != NULL)
+            if (S[s_index].func.extended != NULL)
             {
                 ++s_index;
                 continue;
@@ -569,6 +581,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             ++depth;
             S[s_index].solve_start = i + 1;
             S[s_index].depth = depth;
+
             // The expression start is the parenthesis, may change if a function is found
             S[s_index].subexpr_start = i;
             S[s_index].solve_end = find_closing_parenthesis(local_expr, i) - 1;
@@ -585,19 +598,11 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     M->subexpr_ptr = S;
 
     M->subexpr_count = s_count;
-    for (i = 0; i < s_count; ++i)
-    {
-        S[i].function_ptr = NULL;
-        S[i].cmplx_function_ptr = NULL;
-        S[i].subexpr_nodes = NULL;
-        S[i].execute_extended = true;
-    }
 
     // The whole expression's "subexpression"
     S[s_index].depth = 0;
     S[s_index].solve_start = S[s_index].subexpr_start = 0;
     S[s_index].solve_end = length - 1;
-    S[s_index].ext_function_ptr = NULL;
 
     // Sort by depth (high to low)
     qsort(S, s_count, sizeof(m_subexpr), compare_subexps_depth);
@@ -607,7 +612,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
 
     /*
     How to parse a subexpression:
-    - Handle the special case of extended functions (example: int, der)
+    - Handle the special case of extended functions (currently: int, der)
     - Create an array that determines the location of operators in the string
     - Check if the subexpression has a function to execute on the result, set pointer
     - Allocate the array of nodes
@@ -618,9 +623,10 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     - Set the result pointer of each op_node relying on its position and neighbor priorities
     - Set the subexpr result double pointer to the result pointer of the last calculated op_node
     */
+
     for (s_index = 0; s_index < s_count; ++s_index)
     {
-        if (S[s_index].ext_function_ptr != NULL)
+        if (S[s_index].func_type == 3)
         {
             S[s_index].subexpr_nodes = NULL;
             S[s_index].s_result = malloc(sizeof(double complex *));
@@ -679,7 +685,8 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
                     j = r_search(local_expr, r_function_name[i], solve_start - 2, true);
                     if (j != -1)
                     {
-                        S[s_index].function_ptr = r_function_ptr[i];
+                        S[s_index].func.real = r_function_ptr[i];
+                        S[s_index].func_type = 1;
                         // Setting the start of the subexpression to the start of the function name
                         S[s_index].subexpr_start = j;
                         break;
@@ -696,19 +703,18 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
             }
             else
             {
-                // Determining the number of complex functions to check
-                int total = sizeof(cmplx_function_ptr) / sizeof(*cmplx_function_ptr);
-                for (i = 0; i < total; ++i)
+                for (i = 0; i < array_length(cmplx_function_ptr); ++i)
                 {
                     j = r_search(local_expr, cmplx_function_name[i], solve_start - 2, true);
                     if (j != -1)
                     {
-                        S[s_index].cmplx_function_ptr = cmplx_function_ptr[i];
+                        S[s_index].func.cmplx = cmplx_function_ptr[i];
+                        S[s_index].func_type = 2;
                         S[s_index].subexpr_start = j;
                         break;
                     }
                 }
-                // The function is not defined in the complex domain
+                // The complex function is not defined
                 if (i == array_length(cmplx_function_ptr) + 1)
                 {
                     error_handler(UNDEFINED_FUNCTION, 1, 0, solve_start - 2);
@@ -1018,7 +1024,7 @@ void delete_math_expr(math_expr *M)
     m_subexpr *subexps = M->subexpr_ptr;
     for (i = 0; i < M->subexpr_count; ++i)
     {
-        if (subexps[i].ext_function_ptr != NULL)
+        if (subexps[i].func_type == 3)
             free(subexps[i].s_result);
         free(subexps[i].subexpr_nodes);
     }
@@ -1341,8 +1347,8 @@ void dump_expr_data(math_expr *M)
     puts("Dumping expression data:\n");
     while (s_index < s_count)
     {
-        printf("subexpr %d:\n s_function = %p, c_function = %p, e_function = %p, depth = %d\n",
-               s_index, S[s_index].function_ptr, S[s_index].cmplx_function_ptr, S[s_index].ext_function_ptr, S[s_index].depth);
+        printf("subexpr %d:\n function_type = %u s_function = %p, depth = %d\n",
+               s_index, S[s_index].func_type, S[s_index].func.real, S[s_index].depth);
         // Lookup result pointer location
         for (int i = 0; i < s_count; ++i)
         {
