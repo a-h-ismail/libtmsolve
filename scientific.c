@@ -551,7 +551,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         {
             S[s_index].func.extended = NULL;
             S[s_index].func_type = 0;
-            S[s_index].exec_extendedf=true;
+            S[s_index].exec_extendedf = true;
 
             // Treat extended functions as a subexpression
             for (j = 0; j < sizeof(ext_math_function) / sizeof(*ext_math_function); ++j)
@@ -603,6 +603,9 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     S[s_index].depth = 0;
     S[s_index].solve_start = S[s_index].subexpr_start = 0;
     S[s_index].solve_end = length - 1;
+    S[s_index].func.extended = NULL;
+    S[s_index].func_type = 0;
+    S[s_index].exec_extendedf = true;
 
     // Sort by depth (high to low)
     qsort(S, s_count, sizeof(m_subexpr), compare_subexps_depth);
