@@ -15,7 +15,7 @@ void _set_var_data(math_expr *M)
 
     for (s_index = 0; s_index < M->subexpr_count; ++s_index)
     {
-        i_node = subexpr_ptr[s_index].subexpr_nodes + subexpr_ptr[s_index].start_node;
+        i_node = subexpr_ptr[s_index].nodes + subexpr_ptr[s_index].start_node;
         while (i_node != NULL)
         {
             if (i == buffer_size)
