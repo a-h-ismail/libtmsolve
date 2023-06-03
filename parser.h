@@ -15,6 +15,33 @@ SPDX-License-Identifier: LGPL-2.1-only
 #else
 #include "internals.h"
 
+// Global variables.
+
+/// @brief Stores the answer of the last calculation to allow reuse in future calculations.
+extern double complex ans;
+
+/// @brief Contains the names of scientific functions (for real numbers) like sin, cos...
+extern char *r_function_name[];
+
+/// @brief Contains the function pointers of scientific functions.
+extern double (*r_function_ptr[])(double);
+
+/// @brief Contains the names of complex numbers functions like sin, cos...
+extern char *cmplx_function_name[];
+
+/// @brief Contains the function pointers of scientific functions.
+extern double complex (*cmplx_function_ptr[])(double complex);
+
+/// @brief Contains the names of extended functions (functions with variable number of arguments, passed as a comma separated string).
+extern char *ext_function_name[];
+
+/// @brief Contains the function pointers of scientific functions.
+extern double (*ext_math_function[])(char *);
+
+/// @brief Comparator function for use with qsort(), compares the depth of 2 subexpressions.
+/// @return 1 if a.depth < b.depth; -1 if a.depth > b.depth; 0 otherwise.
+int compare_subexps_depth(const void *a, const void *b);
+
 /// @brief Operator node, stores the required metadata for an operator and its operands.
 typedef struct op_node
 {
