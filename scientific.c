@@ -7,7 +7,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "function.h"
 #include "string_tools.h"
 
-
 double factorial(double value)
 {
     double result = 1;
@@ -34,6 +33,8 @@ double complex calculate_expr(char *expr, bool enable_complex)
 double complex calculate_expr_auto(char *expr)
 {
     char *real_exclusive[] = {"%"};
+    // Offset if the expression has an assignment operator
+    char *local_expr = expr;
     int i, j;
     // 0: can't be complex due to real exclusive operations like modulo.
     // 1: can be complex, mostly 2n roots of negative numbers.
@@ -43,10 +44,14 @@ double complex calculate_expr_auto(char *expr)
     if (!pre_parse_routine(expr))
         return NAN;
 
+    // Skip assignment operator
+    while ((i = f_search(local_expr, "=", 0, false)) != -1)
+        local_expr += i + 1;
+
     // Look for real exclusive operations
     for (i = 0; i < array_length(real_exclusive); ++i)
     {
-        j = f_search(expr, real_exclusive[i], 0, false);
+        j = f_search(local_expr, real_exclusive[i], 0, false);
         if (j != -1)
         {
             likely_complex = 0;
@@ -54,7 +59,7 @@ double complex calculate_expr_auto(char *expr)
         }
     }
     // We have some hope that this is a complex expression
-    i = f_search(expr, "i", 0, true);
+    i = f_search(local_expr, "i", 0, true);
     if (i != -1)
     {
         // The complex number was found despite having a real expression, report the problem.
@@ -67,17 +72,31 @@ double complex calculate_expr_auto(char *expr)
             likely_complex = 2;
     }
 
+    // Look for user defined complex variables
+    for (i = 0; i < variable_count; ++i)
+    {
+        if (cimag(variable_values[i]) != 0)
+        {
+            j = f_search(local_expr, variable_names[i], 0, true);
+            if (j != -1)
+            {
+                likely_complex = 2;
+                break;
+            }
+        }
+    }
+
     math_expr *M;
     double complex result;
     switch (likely_complex)
     {
     case 0:
-    
+
         M = parse_expr(expr, false, false);
         result = eval_math_expr(M);
         delete_math_expr(M);
         return result;
-    
+
     case 1:
         M = parse_expr(expr, false, false);
         result = eval_math_expr(M);
@@ -372,4 +391,3 @@ fraction decimal_to_fraction(double value, bool inverse_process)
     }
     return result;
 }
-
