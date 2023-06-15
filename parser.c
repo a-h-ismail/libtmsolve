@@ -294,8 +294,8 @@ int *_get_operator_indexes(char *local_expr, m_subexpr *S, int s_index)
 bool _set_function_ptr(char *local_expr, math_expr *M, int s_index, int *operator_index)
 {
     int i, j;
-    m_subexpr *S = M->subexpr_ptr;
-    int solve_start = S[s_index].solve_start;
+    m_subexpr *S = &(M->subexpr_ptr[s_index]);
+    int solve_start = S->solve_start;
 
     // Searching for any function preceding the expression to set the function pointer
     if (solve_start > 1 && (is_alphabetic(local_expr[solve_start - 2]) || local_expr[solve_start - 2] == '_'))
@@ -308,10 +308,10 @@ bool _set_function_ptr(char *local_expr, math_expr *M, int s_index, int *operato
                 j = r_search(local_expr, r_function_name[i], solve_start - 2, true);
                 if (j != -1)
                 {
-                    S[s_index].func.real = r_function_ptr[i];
-                    S[s_index].func_type = 1;
+                    S->func.real = r_function_ptr[i];
+                    S->func_type = 1;
                     // Setting the start of the subexpression to the start of the function name
-                    S[s_index].subexpr_start = j;
+                    S->subexpr_start = j;
                     break;
                 }
             }
@@ -331,9 +331,9 @@ bool _set_function_ptr(char *local_expr, math_expr *M, int s_index, int *operato
                 j = r_search(local_expr, cmplx_function_name[i], solve_start - 2, true);
                 if (j != -1)
                 {
-                    S[s_index].func.cmplx = cmplx_function_ptr[i];
-                    S[s_index].func_type = 2;
-                    S[s_index].subexpr_start = j;
+                    S->func.cmplx = cmplx_function_ptr[i];
+                    S->func_type = 2;
+                    S->subexpr_start = j;
                     break;
                 }
             }
@@ -413,28 +413,28 @@ int _init_nodes(char *local_expr, math_expr *M, int s_index, int *operator_index
             return 2;
         }
 
-        // Signal to the parser that processing this subexpression is done
+        // Signal to the parser that processing this subexpression is done (because it has no operators)
         return 1;
     }
     // Case where at least one operator was found
     else
     {
-        // Filling each op_node's priority data
+        // Set each op_node's priority data
         priority_fill(node_block, op_count);
-        // Filling nodes with operands, filling operands index and setting var_metadata to 0
+        
         for (i = 0; i < op_count; ++i)
         {
             node_block[i].node_index = i;
             node_block[i].var_metadata = 0;
         }
     }
-    // Checking if the expression is terminated with an operator
+    // Check if the expression is terminated with an operator
     if (op_count != 0 && operator_index[op_count - 1] == solve_end)
     {
         error_handler(RIGHT_OP_MISSING, 1, 1, operator_index[op_count - 1]);
         return -1;
     }
-    // Filling operations and index data into each op_node
+    // Set operator type and index for each op_node
     for (i = 0; i < op_count; ++i)
     {
         node_block[i].operator_index = operator_index[i];
@@ -530,12 +530,12 @@ int _set_operands(char *local_expr, math_expr *M, int s_index, bool enable_varia
             }
         }
     }
-    // Placing the last number in the last op_node
+    // Place the last number in the last op_node
     // Read a value
     node_block[op_count - 1].right_operand = read_value(local_expr, node_block[op_count - 1].operator_index + 1, M->enable_complex);
     if (isnan((double)node_block[op_count - 1].right_operand))
     {
-        // Checking for the variable 'x'
+        // Check for the variable 'x'
         if (enable_variables == true)
             status = set_variable_metadata(local_expr + node_block[op_count - 1].operator_index + 1, node_block + op_count - 1, 'r');
         else
@@ -579,7 +579,7 @@ void _set_evaluation_order(m_subexpr *S)
     j = i + 1;
     while (target_priority > 0)
     {
-        // Running through the nodes to find a op_node with the target priority
+        // Run through the nodes to find a op_node with the target priority
         while (j < op_count)
         {
             if (node_block[j].priority == target_priority)
@@ -608,7 +608,7 @@ void _set_result_pointers(math_expr *M, int s_index)
     while (tmp_node->next != NULL)
     {
         i = tmp_node->node_index;
-        // Finding the previous and next nodes to compare
+        // Find the previous and next nodes to compare
         left_node = i - 1, right_node = i + 1;
 
         while (left_node != -1)
@@ -629,7 +629,7 @@ void _set_result_pointers(math_expr *M, int s_index)
         {
             if (right_node == prev_index)
             {
-                // Similar idea to the above
+                // Optimization
                 right_node = prev_right;
                 break;
             }
