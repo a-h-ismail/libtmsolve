@@ -706,10 +706,7 @@ bool pre_parse_routine(char *expr)
     }
     // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
     combine_add_subtract(expr, 0, strlen(expr) - 2);
-    if (syntax_check(expr) == false)
-        return false;
-
-    return true;
+    return syntax_check(expr);
 }
 
 bool valid_name(char *name)
