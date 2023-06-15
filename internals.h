@@ -31,7 +31,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 extern char *_glob_expr;
 
 /// @brief Indicates if the library intialization function should be run.
-extern bool do_init;
+extern bool _init_needed;
 
 /// @brief Total number of functions, those with complex variant are counted once.
 extern int function_count;
