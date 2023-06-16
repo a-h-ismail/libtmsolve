@@ -85,6 +85,14 @@ double complex calculate_expr_auto(char *expr)
             }
         }
     }
+    
+    // Special case of ans
+    if (cimag(ans) != 0)
+    {
+        j = f_search(local_expr, "ans", 0, true);
+        if (j != -1)
+            likely_complex = 2;
+    }
 
     math_expr *M;
     double complex result;
