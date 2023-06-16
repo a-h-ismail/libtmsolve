@@ -22,7 +22,7 @@ Full documentation is available [here](https://a-h-ismail.gitlab.io/libtmsolve-d
 
 ## Tips
 
-Documentation about the parser, evaluator, and some useful features like factorization can be found in `scientific.h`.
+Documentation about the parser, evaluator, and some useful features like factorization can be found in `parser.h` and `scientific.h`.
 
 For matrix related features, refer to `matrix.h`.
 
