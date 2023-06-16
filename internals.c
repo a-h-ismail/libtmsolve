@@ -5,6 +5,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "internals.h"
 #include "scientific.h"
 char *_glob_expr = NULL;
+double complex ans = 0;
 
 bool _init_needed = true;
 char **all_functions;
