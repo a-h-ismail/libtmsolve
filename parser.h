@@ -17,9 +17,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 // Global variables
 
-/// @brief Stores the answer of the last calculation to allow reuse in future calculations.
-extern double complex ans;
-
 /// @brief Contains the names of scientific functions (for real numbers) like sin, cos...
 extern char *r_function_name[];
 

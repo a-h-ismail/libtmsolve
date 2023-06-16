@@ -27,6 +27,9 @@ SPDX-License-Identifier: LGPL-2.1-only
 /// Maximum number of errors in error_handler
 #define MAX_ERRORS 5
 
+/// @brief Stores the answer of the last calculation to allow reuse.
+extern double complex ans;
+
 /// @brief Use to store the current expression being processed, used by error_handler() to generate the error prompt.
 extern char *_glob_expr;
 
