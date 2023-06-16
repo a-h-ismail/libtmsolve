@@ -15,6 +15,12 @@ double factorial(double value)
     return result;
 }
 
+void _set_ans(double complex result)
+{
+    if (!isnan(creal(result)) && !isnan(cimag(result)))
+        ans = result;
+}
+
 double complex calculate_expr(char *expr, bool enable_complex)
 {
     double complex result;
@@ -26,6 +32,7 @@ double complex calculate_expr(char *expr, bool enable_complex)
     if (math_struct == NULL)
         return NAN;
     result = eval_math_expr(math_struct);
+    _set_ans(result);
     delete_math_expr(math_struct);
     return result;
 }
@@ -85,7 +92,7 @@ double complex calculate_expr_auto(char *expr)
             }
         }
     }
-    
+
     // Special case of ans
     if (cimag(ans) != 0)
     {
@@ -102,12 +109,14 @@ double complex calculate_expr_auto(char *expr)
 
         M = parse_expr(expr, false, false);
         result = eval_math_expr(M);
+        _set_ans(result);
         delete_math_expr(M);
         return result;
 
     case 1:
         M = parse_expr(expr, false, false);
         result = eval_math_expr(M);
+        _set_ans(result);
         if (isnan(creal(result)))
         {
             // Check if the errors are fatal (like malformed syntax, division by zero...)
@@ -134,6 +143,7 @@ double complex calculate_expr_auto(char *expr)
                 M = parse_expr(expr, false, true);
 
             result = eval_math_expr(M);
+            _set_ans(result);
             delete_math_expr(M);
             return result;
         }
@@ -145,6 +155,7 @@ double complex calculate_expr_auto(char *expr)
     case 2:
         M = parse_expr(expr, false, true);
         result = eval_math_expr(M);
+        _set_ans(result);
         delete_math_expr(M);
         return result;
     }
