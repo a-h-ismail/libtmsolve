@@ -39,7 +39,7 @@ double factorial(double value);
  * @brief Calculates a mathematical expression and returns the answer.
  * @param expr The string containing the math expression.
  * @param enable_complex Enables complex number calculation, set to false if you don't need complex values.
- * @note This function does not affect the global variable ans, you have to explicitly assign the return value to ans.
+ * @note This function updates the global variable ans if no error occurs.
  * @return The answer of the math expression, or NaN in case of failure.
  */
 double complex calculate_expr(char *expr, bool enable_complex);
@@ -47,7 +47,7 @@ double complex calculate_expr(char *expr, bool enable_complex);
 /**
  * @brief Calculates a mathematical expression and returns the answer, automatically handles complex numbers.
  * @param expr The string containing the math expression.
- * @note This function does not affect the global variable ans, you have to explicitly assign the return value to ans.
+ * @note This function updates the global variable ans if no error occurs.
  * @return The answer of the math expression, or NaN in case of failure.
  */
 double complex calculate_expr_auto(char *expr);
