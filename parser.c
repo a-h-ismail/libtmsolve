@@ -263,7 +263,7 @@ int *_get_operator_indexes(char *local_expr, m_subexpr *S, int s_index)
         else if (is_digit(local_expr[i]))
             continue;
 
-        else if (is_op(local_expr[i]) && i != solve_start)
+        else if (is_op(local_expr[i]))
         {
             // Skipping a + or - used in scientific notation (like 1e+5)
             if (i > 0 && (local_expr[i - 1] == 'e' || local_expr[i - 1] == 'E') && (local_expr[i] == '+' || local_expr[i] == '-'))
@@ -421,7 +421,7 @@ int _init_nodes(char *local_expr, math_expr *M, int s_index, int *operator_index
     {
         // Set each op_node's priority data
         priority_fill(node_block, op_count);
-        
+
         for (i = 0; i < op_count; ++i)
         {
             node_block[i].node_index = i;
@@ -452,29 +452,42 @@ int _set_operands(char *local_expr, math_expr *M, int s_index, bool enable_varia
     int solve_start = S[s_index].solve_start;
 
     // Reading the first number
-    node_block[0].left_operand = read_value(local_expr, solve_start, M->enable_complex);
-    // If reading a value fails, it is probably a variable like x
-    if (isnan((double)node_block[0].left_operand))
+    // Treat +x and -x as 0-x and 0+x
+    if (node_block[0].operator_index == S[s_index].solve_start)
     {
-        // Checking for the variable 'x'
-        if (enable_variables == true)
-            status = set_variable_metadata(local_expr + solve_start, node_block, 'l');
+        if (node_block[0].operator== '+' || node_block[0].operator== '-')
+            node_block[0].left_operand = 0;
         else
-            status = false;
-        // Variable x not found, the left operand is probably another subexpression
-        if (!status)
         {
-            status = find_subexpr_by_start(S, solve_start, s_index, 1);
-            if (status == -1)
-            {
-                error_handler(UNDEFINED_VARIABLE, 1, 1, solve_start);
-                return -1;
-            }
-            else
-                *(S[status].s_result) = &(node_block[0].left_operand);
+            error_handler(SYNTAX_ERROR, 1, 1, node_block[0].operator_index);
+            return -1;
         }
     }
-
+    else
+    {
+        node_block[0].left_operand = read_value(local_expr, solve_start, M->enable_complex);
+        // If reading a value fails, it is probably a variable like x
+        if (isnan((double)node_block[0].left_operand))
+        {
+            // Checking for the variable 'x'
+            if (enable_variables == true)
+                status = set_variable_metadata(local_expr + solve_start, node_block, 'l');
+            else
+                status = false;
+            // Variable x not found, the left operand is probably another subexpression
+            if (!status)
+            {
+                status = find_subexpr_by_start(S, solve_start, s_index, 1);
+                if (status == -1)
+                {
+                    error_handler(UNDEFINED_VARIABLE, 1, 1, solve_start);
+                    return -1;
+                }
+                else
+                    *(S[status].s_result) = &(node_block[0].left_operand);
+            }
+        }
+    }
     // Intermediate nodes, read number to the appropriate op_node operand
     for (i = 0; i < op_count - 1; ++i)
     {
@@ -696,7 +709,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
 
     math_expr *M = _init_math_expr(local_expr, enable_complex);
     m_subexpr *S = M->subexpr_ptr;
-    s_count=M->subexpr_count;
+    s_count = M->subexpr_count;
 
     int status;
 
@@ -1016,7 +1029,6 @@ bool set_variable_metadata(char *expr, op_node *x_node, char operand)
     }
     return true;
 }
-
 
 void delete_math_expr(math_expr *M)
 {
