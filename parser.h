@@ -1,9 +1,9 @@
-#ifndef PARSER_H
-#define PARSER_H
 /*
 Copyright (C) 2021-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
+#ifndef PARSER_H
+#define PARSER_H
 
 /**
  * @file
@@ -14,6 +14,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <tmsolve/internals.h>
 #else
 #include "internals.h"
+#endif
 
 // Global variables
 
@@ -233,5 +234,4 @@ int find_subexpr_by_end(m_subexpr *S, int end, int s_index, int s_count);
 /// - Nodes ordered by evaluation order. \n
 /// - Result pointer of each subepression.
 void dump_expr_data(math_expr *M);
-#endif
 #endif
