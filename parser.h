@@ -115,7 +115,7 @@ typedef struct m_subexpr
     /// Stores the type of the function to execute (0: none, 1: real, 2: cmplx, 3: extended)
     uint8_t func_type;
 
-    /// Enables execution of extended function, used to optimizing of nested extended functions like integration without thrashing performance.
+    /// Enables execution of extended function, used to optimize nested extended functions like integration without thrashing performance.
     bool exec_extf;
 } m_subexpr;
 
@@ -143,6 +143,74 @@ typedef struct math_expr
     /// Toggles complex support.
     bool enable_complex;
 } math_expr;
+
+
+/**
+ * @brief First parsing step, detects assignment to runtime variables.
+ * @param eq Index of the assignment operator.
+ * @return Index of the variable in the global array.
+ */
+int _set_runtime_var(char *expr, int eq);
+
+/**
+ * @brief Initializes the math expression structure.
+ * @param local_expr Expression, offset from the assignment operator (if any).
+ * @param enable_complex Set complex support status.
+ * @return Pointer to the initialized structure.
+ */
+math_expr *_init_math_expr(char *local_expr, bool enable_complex);
+
+/**
+ * @brief Locates operators in the current subexpression.
+ * @note The function sets op_count in the processed subexpression
+ * @param local_expr Expression, offset from the assignment operator (if any).
+ * @param S Subexpressions array pointer.
+ * @param s_index Index of the current subexpression.
+ * @return An int array containing the indexes of each operator.
+ */
+int *_get_operator_indexes(char *local_expr, m_subexpr *S, int s_index);
+
+/**
+ * @brief Sets the (non extended) function pointer in the subexpression.
+ * @param local_expr Expression, offset from the assignment operator (if any).
+ * @param M math_expr being processed.
+ * @param s_index Index of the current subexpression.
+ * @return 
+ */
+bool _set_function_ptr(char *local_expr, math_expr *M, int s_index);
+
+/**
+ * @brief Allocates nodes and sets basic metadata.
+ * @param local_expr Expression, offset from the assignment operator (if any).
+ * @param M math_expr being processed.
+ * @param s_index Index of the current subexpression.
+ * @param operator_index Operator indexes obtained using _get_operator_indexes().
+ * @return 0: continue, 1: Subexpression parsing done, 2: All subexpressions are done, -1: Error
+ */
+int _init_nodes(char *local_expr, math_expr *M, int s_index, int *operator_index);
+
+/**
+ * @brief Sets right/left operands and variable operand 'x' for all nodes.
+ * @param local_expr Expression, offset from the assignment operator (if any).
+ * @param M math_expr being processed.
+ * @param s_index Index of the current subexpression.
+ * @param enable_variables Toggles support for variable 'x'
+ * @return -1 in case of failure.
+ */
+int _set_operands(char *local_expr, math_expr *M, int s_index, bool enable_variables);
+
+/**
+ * @brief Sets the *next pointer of all nodes.
+ * @param S current subexpression being processed.
+ */
+void _set_evaluation_order(m_subexpr *S);
+
+/**
+ * @brief Set the operation result pointer for each node.
+ * @param M math_expr being processed.
+ * @param s_index Index of the current subexpression.
+ */
+void _set_result_pointers(math_expr *M, int s_index);
 
 /**
  * @brief Returns the name of the function possessing the specified pointer.
