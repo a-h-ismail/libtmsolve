@@ -16,14 +16,14 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 
 /**
- * @brief Generates a heap allocated array of structure containing all variable members metadata and stores it in the math_struct.
- * @param M The math_struct used to generate and store the metadata.
+ * @brief Generates a heap allocated array of structure containing all variable members metadata and stores it in M.
+ * @param M The math_expr used to generate and store the metadata.
  * @remark You won't need to call this manually, the parser will call it if variables are enabled.
  */
 void _set_var_data(math_expr *M);
 
 /**
- * @brief Sets a value to all the variable members of math_struct.
+ * @brief Sets a value to all the variable members of M.
  */
 void set_variable(math_expr *M, double complex value);
 
