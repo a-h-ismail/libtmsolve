@@ -153,14 +153,6 @@ math_expr *_init_math_expr(char *local_expr, bool enable_complex)
     M->var_data = NULL;
     M->enable_complex = enable_complex;
 
-    /*
-    Parsing steps:
-    - Locate and determine the depth of each subexpression (the whole expression's "subexpression" has a depth of 0)
-    - Fill the expression data (start/end...)
-    - Sort subexpressions by depth (high to low)
-    - Parse subexpressions from high to low depth
-    */
-
     S = malloc(dyn_size * sizeof(m_subexpr));
 
     int depth = 0;
@@ -252,7 +244,7 @@ int *_get_operator_indexes(char *local_expr, m_subexpr *S, int s_index)
     // Count number of operators and store it's indexes
     for (int i = solve_start; i <= solve_end; ++i)
     {
-        // Skipping over an already processed expression
+        // Skip an already processed expression
         if (local_expr[i] == '(')
         {
             int previous_subexp;
@@ -265,7 +257,7 @@ int *_get_operator_indexes(char *local_expr, m_subexpr *S, int s_index)
 
         else if (is_op(local_expr[i]))
         {
-            // Skipping a + or - used in scientific notation (like 1e+5)
+            // Skip a + or - used in scientific notation (like 1e+5)
             if (i > 0 && (local_expr[i - 1] == 'e' || local_expr[i - 1] == 'E') && (local_expr[i] == '+' || local_expr[i] == '-'))
             {
                 ++i;
@@ -278,7 +270,7 @@ int *_get_operator_indexes(char *local_expr, m_subexpr *S, int s_index)
                 operator_index = realloc(operator_index, buffer_size * sizeof(int));
             }
             operator_index[op_count] = i;
-            // Skipping a + or - coming just after an operator
+            // Skip a + or - located just after an operator
             if (local_expr[i + 1] == '-' || local_expr[i + 1] == '+')
                 ++i;
             ++op_count;
@@ -291,7 +283,7 @@ int *_get_operator_indexes(char *local_expr, m_subexpr *S, int s_index)
     return operator_index;
 }
 
-bool _set_function_ptr(char *local_expr, math_expr *M, int s_index, int *operator_index)
+bool _set_function_ptr(char *local_expr, math_expr *M, int s_index)
 {
     int i, j;
     m_subexpr *S = &(M->subexpr_ptr[s_index]);
@@ -319,8 +311,6 @@ bool _set_function_ptr(char *local_expr, math_expr *M, int s_index, int *operato
             if (i == array_length(r_function_ptr) + 1)
             {
                 error_handler(UNDEFINED_FUNCTION, 1, 0, solve_start - 2);
-                delete_math_expr(M);
-                free(operator_index);
                 return false;
             }
         }
@@ -341,8 +331,6 @@ bool _set_function_ptr(char *local_expr, math_expr *M, int s_index, int *operato
             if (i == array_length(cmplx_function_ptr) + 1)
             {
                 error_handler(UNDEFINED_FUNCTION, 1, 0, solve_start - 2);
-                free(operator_index);
-                delete_math_expr(M);
                 return false;
             }
         }
@@ -567,6 +555,7 @@ int _set_operands(char *local_expr, math_expr *M, int s_index, bool enable_varia
     }
     return 0;
 }
+
 void _set_evaluation_order(m_subexpr *S)
 {
     int op_count = S->op_count;
@@ -609,6 +598,7 @@ void _set_evaluation_order(m_subexpr *S)
     // Set the next pointer of the last op_node to NULL
     node_block[i].next = NULL;
 }
+
 void _set_result_pointers(math_expr *M, int s_index)
 {
     m_subexpr *S = M->subexpr_ptr;
@@ -740,7 +730,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         // Get an array of the index of all operators and set their count
         int *operator_index = _get_operator_indexes(local_expr, S, s_index);
 
-        status = _set_function_ptr(local_expr, M, s_index, operator_index);
+        status = _set_function_ptr(local_expr, M, s_index);
         if (!status)
         {
             delete_math_expr(M);
@@ -750,6 +740,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
 
         status = _init_nodes(local_expr, M, s_index, operator_index);
         free(operator_index);
+
         // Exiting due to error
         if (status == -1)
         {
@@ -771,11 +762,12 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         _set_evaluation_order(S + s_index);
         _set_result_pointers(M, s_index);
     }
-    // Set the variables metadata
+
+    // Set variables metadata
     if (enable_variables)
         _set_var_data(M);
 
-    // Detect
+    // Detect assignment operator (local_expr offset from expr)
     if (local_expr != expr)
         M->variable_index = variable_index;
     else
