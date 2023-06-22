@@ -80,7 +80,7 @@ typedef union mfunc_pointers
 } fptr;
 
 /// @brief Holds the metadata of a subexpression.
-typedef struct m_subexpr
+typedef struct math_subexpr
 {
     /// @brief Number of operators in this subexpression.
     int op_count;
@@ -117,13 +117,13 @@ typedef struct m_subexpr
 
     /// Enables execution of extended function, used to optimize nested extended functions like integration without thrashing performance.
     bool exec_extf;
-} m_subexpr;
+} math_subexpr;
 
 /// The standalone structure to hold all of an expression's metadata.
 typedef struct math_expr
 {
     /// The subexpression array created by parsing the math expression.
-    m_subexpr *subexpr_ptr;
+    math_subexpr *subexpr_ptr;
 
     /// Number of subexpression in this math expression.
     int subexpr_count;
@@ -132,7 +132,7 @@ typedef struct math_expr
     int var_count;
 
     /// Indicates the index of variable_values to copy the answer to.
-    int variable_index;
+    int runvar_i;
 
     /// Array of variable operands metadata.
     var_op_data *var_data;
@@ -168,7 +168,7 @@ math_expr *_init_math_expr(char *local_expr, bool enable_complex);
  * @param s_index Index of the current subexpression.
  * @return An int array containing the indexes of each operator.
  */
-int *_get_operator_indexes(char *local_expr, m_subexpr *S, int s_index);
+int *_get_operator_indexes(char *local_expr, math_subexpr *S, int s_index);
 
 /**
  * @brief Sets the (non extended) function pointer in the subexpression.
@@ -203,7 +203,7 @@ int _set_operands(char *local_expr, math_expr *M, int s_index, bool enable_varia
  * @brief Sets the *next pointer of all nodes.
  * @param S current subexpression being processed.
  */
-void _set_evaluation_order(m_subexpr *S);
+void _set_evaluation_order(math_subexpr *S);
 
 /**
  * @brief Set the operation result pointer for each node.
@@ -215,10 +215,10 @@ void _set_result_pointers(math_expr *M, int s_index);
 /**
  * @brief Returns the name of the function possessing the specified pointer.
  * @param function The function pointer to look for.
- * @param is_complex Toggles between searching real and complex functions.
+ * @param func_type Type of the function pointer (1:real, 2:complex, 3: extended)
  * @return A pointer to the name, or NULL if nothing is found.
  */
-char *lookup_function_name(void *function, bool is_complex);
+char *lookup_function_name(void *function, int func_type);
 
 /**
  * @brief Returns the pointer to a function knowing its name.
@@ -284,7 +284,7 @@ void priority_fill(op_node *list, int op_count);
  * @param mode Determines if the value passed by start is the expression_start (mode==1) or solve_start (mode==2).
  * @return Depends on the mode, either
  */
-int find_subexpr_by_start(m_subexpr *S, int start, int s_index, int mode);
+int find_subexpr_by_start(math_subexpr *S, int start, int s_index, int mode);
 
 /**
  * @brief Finds the subexpression that ends at a specific index in the string.
@@ -294,7 +294,7 @@ int find_subexpr_by_start(m_subexpr *S, int start, int s_index, int mode);
  * @param s_count The number of subexpressions in the expression.
  * @return
  */
-int find_subexpr_by_end(m_subexpr *S, int end, int s_index, int s_count);
+int find_subexpr_by_end(math_subexpr *S, int end, int s_index, int s_count);
 /// @brief Dumps the data of the math expression M.
 /// @details The dumped data includes: \n
 /// - Subexpression depth and function pointers. \n

@@ -85,31 +85,32 @@ void tmsolve_init()
 
 int error_handler(char *error, int arg1, ...)
 {
-    static int error_count = 0, fatal = 0, non_fatal = 0, backup_error_count = 0, backup_fatal, backup_non_fatal;
+    static int last_error = 0, fatal = 0, non_fatal = 0, backup_error_count = 0, backup_fatal, backup_non_fatal;
     va_list arguments;
     va_start(arguments, arg1);
     int i, arg2;
     struct error_structure
     {
-        char *error_msg, err_str[50];
+        char *error_msg, bad_snippet[50];
         bool fatal_error;
         int error_index;
     };
+
     static struct error_structure error_table[MAX_ERRORS], backup[MAX_ERRORS];
     switch (arg1)
     {
     // Save mode
     case 1:
-        error_table[error_count].error_msg = error;
+        error_table[last_error].error_msg = error;
         arg2 = va_arg(arguments, int);
         switch (arg2)
         {
         case 0:
-            error_table[error_count].fatal_error = false;
+            error_table[last_error].fatal_error = false;
             ++non_fatal;
             break;
         case 1:
-            error_table[error_count].fatal_error = true;
+            error_table[last_error].fatal_error = true;
             ++fatal;
             break;
         default:
@@ -122,27 +123,27 @@ int error_handler(char *error, int arg1, ...)
             // Center the error in the string
             if (position > 49)
             {
-                strncpy(error_table[error_count].err_str, _glob_expr + position - 24, 49);
-                error_table[error_count].err_str[49] = '\0';
-                error_table[error_count].error_index = 24;
+                strncpy(error_table[last_error].bad_snippet, _glob_expr + position - 24, 49);
+                error_table[last_error].bad_snippet[49] = '\0';
+                error_table[last_error].error_index = 24;
             }
             else
             {
-                strcpy(error_table[error_count].err_str, _glob_expr);
-                error_table[error_count].error_index = position;
+                strcpy(error_table[last_error].bad_snippet, _glob_expr);
+                error_table[last_error].error_index = position;
             }
         }
         else
-            error_table[error_count].error_index = -1;
-        error_count = fatal + non_fatal;
+            error_table[last_error].error_index = -1;
+        last_error = fatal + non_fatal;
         return 0;
     // Print errors
     case 2:
-        for (i = 0; i < error_count; ++i)
+        for (i = 0; i < last_error; ++i)
         {
             puts(error_table[i].error_msg);
             if (error_table[i].error_index != -1)
-                print_errors(error_table[i].err_str, error_table[i].error_index);
+                print_errors(error_table[i].bad_snippet, error_table[i].error_index);
             else
                 printf("\n");
         }
@@ -155,8 +156,8 @@ int error_handler(char *error, int arg1, ...)
         {
         case 0:
             memset(error_table, 0, MAX_ERRORS * sizeof(struct error_structure));
-            i = error_count;
-            error_count = fatal = non_fatal = 0;
+            i = last_error;
+            last_error = fatal = non_fatal = 0;
             break;
         case 1:
             memset(backup, 0, MAX_ERRORS * sizeof(struct error_structure));
@@ -166,31 +167,32 @@ int error_handler(char *error, int arg1, ...)
         case 2:
             memset(error_table, 0, MAX_ERRORS * sizeof(struct error_structure));
             memset(backup, 0, MAX_ERRORS * sizeof(struct error_structure));
-            i = error_count + backup_error_count;
+            i = last_error + backup_error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
-            error_count = fatal = non_fatal = 0;
+            last_error = fatal = non_fatal = 0;
             break;
         default:
             i = -1;
         }
         return i;
-    // Search for a specific error (search by pointer not text)
+    
+    // Search for a specific error (todo: search by pointer not text)
     case 4:
         arg2 = va_arg(arguments, int);
         switch (arg2)
         {
         case 0:
-            for (i = 0; i < error_count; ++i)
+            for (i = 0; i < last_error; ++i)
                 if (strcmp(error, error_table[i].error_msg) == 0)
                     return 1;
             break;
         case 1:
-            for (i = 0; i < error_count; ++i)
+            for (i = 0; i < last_error; ++i)
                 if (strcmp(error, backup[i].error_msg) == 0)
                     return 2;
             break;
         case 2:
-            for (i = 0; i < error_count; ++i)
+            for (i = 0; i < last_error; ++i)
             {
                 if (strcmp(error, error_table[i].error_msg) == 0)
                     return 1;
@@ -218,13 +220,13 @@ int error_handler(char *error, int arg1, ...)
         // Clear the previous backup
         error_handler(NULL, 3, 1);
         // Copy the current error database to the backup database
-        for (i = 0; i < error_count; ++i)
+        for (i = 0; i < last_error; ++i)
             backup[i] = error_table[i];
-        backup_error_count = error_count;
+        backup_error_count = last_error;
         backup_non_fatal = non_fatal;
         backup_fatal = fatal;
         // reset current database error count
-        error_count = fatal = non_fatal = 0;
+        last_error = fatal = non_fatal = 0;
         return 0;
 
     // Overwrite main error database with the backup error database
@@ -233,7 +235,7 @@ int error_handler(char *error, int arg1, ...)
         error_handler(NULL, 3);
         for (i = 0; i < backup_error_count; ++i)
             error_table[i] = backup[i];
-        error_count = backup_error_count;
+        last_error = backup_error_count;
         fatal = backup_fatal;
         non_fatal = backup_non_fatal;
         // Remove all references of the errors from the backup

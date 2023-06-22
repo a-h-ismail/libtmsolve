@@ -10,7 +10,7 @@ void _set_var_data(math_expr *M)
 {
     int i = 0, s_index, buffer_size = 16;
     var_op_data *vars = malloc(buffer_size * sizeof(var_op_data));
-    m_subexpr *subexpr_ptr = M->subexpr_ptr;
+    math_subexpr *subexpr_ptr = M->subexpr_ptr;
     op_node *i_node;
 
     for (s_index = 0; s_index < M->subexpr_count; ++s_index)
@@ -70,7 +70,7 @@ void set_variable(math_expr *math_struct, double complex value)
 // Function that calculates the derivative of f(x) for a specific value of x
 double derivative(char *arguments)
 {
-    math_expr *math_struct;
+    math_expr *M;
     arg_list *args;
     args = get_arguments(arguments);
     if (args->arg_count != 2)
@@ -81,16 +81,16 @@ double derivative(char *arguments)
     double x, f_prime, fx1, fx2;
 
     x = calculate_expr(args->arguments[1], false);
-    math_struct = parse_expr(args->arguments[0], true, false);
+    M = parse_expr(args->arguments[0], true, false);
     // Solve for x
-    set_variable(math_struct, x);
-    fx1 = eval_math_expr(math_struct);
+    set_variable(M, x);
+    fx1 = eval_math_expr(M);
     // Solve for x + (small value)
-    set_variable(math_struct, x + 1e-8);
-    fx2 = eval_math_expr(math_struct);
+    set_variable(M, x + 1e-8);
+    fx2 = eval_math_expr(M);
     // get the derivative
     f_prime = (fx2 - fx1) / (1e-8);
-    delete_math_expr(math_struct);
+    delete_math_expr(M);
     free_arg_list(args, true);
     return f_prime;
 }
