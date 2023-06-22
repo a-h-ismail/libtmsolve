@@ -10,9 +10,9 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 int compare_subexps_depth(const void *a, const void *b)
 {
-    if ((*((m_subexpr *)a)).depth < (*((m_subexpr *)b)).depth)
+    if ((*((math_subexpr *)a)).depth < (*((math_subexpr *)b)).depth)
         return 1;
-    else if ((*((m_subexpr *)a)).depth > (*((m_subexpr *)b)).depth)
+    else if ((*((math_subexpr *)a)).depth > (*((math_subexpr *)b)).depth)
         return -1;
     else
         return 0;
@@ -144,7 +144,7 @@ math_expr *_init_math_expr(char *local_expr, bool enable_complex)
     int dyn_size = 8, i, j, s_index, length = strlen(local_expr), s_count;
 
     // Pointer to subexpressions heap array
-    m_subexpr *S;
+    math_subexpr *S;
 
     // Pointer to the math_expr generated
     math_expr *M = malloc(sizeof(math_expr));
@@ -153,7 +153,7 @@ math_expr *_init_math_expr(char *local_expr, bool enable_complex)
     M->var_data = NULL;
     M->enable_complex = enable_complex;
 
-    S = malloc(dyn_size * sizeof(m_subexpr));
+    S = malloc(dyn_size * sizeof(math_subexpr));
 
     int depth = 0;
     s_index = 0;
@@ -164,7 +164,7 @@ math_expr *_init_math_expr(char *local_expr, bool enable_complex)
         if (s_index == dyn_size)
         {
             dyn_size *= 2;
-            S = realloc(S, dyn_size * sizeof(m_subexpr));
+            S = realloc(S, dyn_size * sizeof(math_subexpr));
         }
         if (local_expr[i] == '(')
         {
@@ -212,7 +212,7 @@ math_expr *_init_math_expr(char *local_expr, bool enable_complex)
     // + 1 for the subexpression with depth 0
     s_count = s_index + 1;
     // Shrink the block to the required size
-    S = realloc(S, s_count * sizeof(m_subexpr));
+    S = realloc(S, s_count * sizeof(math_subexpr));
 
     // Copy the pointer to the structure
     M->subexpr_ptr = S;
@@ -228,11 +228,11 @@ math_expr *_init_math_expr(char *local_expr, bool enable_complex)
     S[s_index].exec_extf = true;
 
     // Sort by depth (high to low)
-    qsort(S, s_count, sizeof(m_subexpr), compare_subexps_depth);
+    qsort(S, s_count, sizeof(math_subexpr), compare_subexps_depth);
     return M;
 }
 
-int *_get_operator_indexes(char *local_expr, m_subexpr *S, int s_index)
+int *_get_operator_indexes(char *local_expr, math_subexpr *S, int s_index)
 {
     // For simplicity
     int solve_start = S[s_index].solve_start;
@@ -286,7 +286,7 @@ int *_get_operator_indexes(char *local_expr, m_subexpr *S, int s_index)
 bool _set_function_ptr(char *local_expr, math_expr *M, int s_index)
 {
     int i, j;
-    m_subexpr *S = &(M->subexpr_ptr[s_index]);
+    math_subexpr *S = &(M->subexpr_ptr[s_index]);
     int solve_start = S->solve_start;
 
     // Searching for any function preceding the expression to set the function pointer
@@ -340,7 +340,7 @@ bool _set_function_ptr(char *local_expr, math_expr *M, int s_index)
 
 int _init_nodes(char *local_expr, math_expr *M, int s_index, int *operator_index)
 {
-    m_subexpr *S = M->subexpr_ptr;
+    math_subexpr *S = M->subexpr_ptr;
     int s_count = M->subexpr_count, op_count = S[s_index].op_count;
     int i, status;
     op_node *node_block;
@@ -433,7 +433,7 @@ int _init_nodes(char *local_expr, math_expr *M, int s_index, int *operator_index
 
 int _set_operands(char *local_expr, math_expr *M, int s_index, bool enable_variables)
 {
-    m_subexpr *S = M->subexpr_ptr;
+    math_subexpr *S = M->subexpr_ptr;
     int op_count = S[s_index].op_count;
     int i, status;
     op_node *node_block = S[s_index].nodes;
@@ -556,7 +556,7 @@ int _set_operands(char *local_expr, math_expr *M, int s_index, bool enable_varia
     return 0;
 }
 
-void _set_evaluation_order(m_subexpr *S)
+void _set_evaluation_order(math_subexpr *S)
 {
     int op_count = S->op_count;
     int i, j;
@@ -601,7 +601,7 @@ void _set_evaluation_order(m_subexpr *S)
 
 void _set_result_pointers(math_expr *M, int s_index)
 {
-    m_subexpr *S = M->subexpr_ptr;
+    math_subexpr *S = M->subexpr_ptr;
     op_node *tmp_node, *node_block = S[s_index].nodes;
 
     int i, op_count = S[s_index].op_count;
@@ -698,7 +698,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
     _glob_expr = local_expr;
 
     math_expr *M = _init_math_expr(local_expr, enable_complex);
-    m_subexpr *S = M->subexpr_ptr;
+    math_subexpr *S = M->subexpr_ptr;
     s_count = M->subexpr_count;
 
     int status;
@@ -769,27 +769,18 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
 
     // Detect assignment operator (local_expr offset from expr)
     if (local_expr != expr)
-        M->variable_index = variable_index;
+        M->runvar_i = variable_index;
     else
-        M->variable_index = -1;
+        M->runvar_i = -1;
     return M;
 }
 
-char *lookup_function_name(void *function, bool is_complex)
+char *lookup_function_name(void *function, int func_type)
 {
     int i;
-    if (is_complex)
+    switch (func_type)
     {
-        for (i = 0; i < array_length(cmplx_function_ptr); ++i)
-        {
-            if (function == (void *)(cmplx_function_ptr[i]))
-                break;
-        }
-        if (i < array_length(cmplx_function_ptr))
-            return cmplx_function_name[i];
-    }
-    else
-    {
+    case 1:
         for (i = 0; i < array_length(r_function_ptr); ++i)
         {
             if (function == (void *)(r_function_ptr[i]))
@@ -797,6 +788,29 @@ char *lookup_function_name(void *function, bool is_complex)
         }
         if (i < array_length(r_function_ptr))
             return r_function_name[i];
+        break;
+
+    case 2:
+        for (i = 0; i < array_length(cmplx_function_ptr); ++i)
+        {
+            if (function == (void *)(cmplx_function_ptr[i]))
+                break;
+        }
+        if (i < array_length(cmplx_function_ptr))
+            return cmplx_function_name[i];
+        break;
+
+    case 3:
+        for (i = 0; i < array_length(ext_math_function); ++i)
+        {
+            if (function == (void *)(ext_math_function[i]))
+                break;
+        }
+        if (i < array_length(ext_math_function))
+            return ext_function_name[i];
+        break;
+    default:
+        error_handler(INTERNAL_ERROR, 1, 1, -1);
     }
 
     return NULL;
@@ -832,7 +846,7 @@ void *lookup_function_pointer(char *function_name, bool is_complex)
 void convert_real_to_complex(math_expr *M)
 {
     // You need to swap real functions for their complex counterparts.
-    m_subexpr *S = M->subexpr_ptr;
+    math_subexpr *S = M->subexpr_ptr;
     if (S != NULL)
     {
         int s_index;
@@ -840,7 +854,7 @@ void convert_real_to_complex(math_expr *M)
         for (s_index = 0; s_index < M->subexpr_count; ++s_index)
         {
             // Lookup the name of the real function and find the equivalent function pointer
-            function_name = lookup_function_name(S[s_index].func.real, false);
+            function_name = lookup_function_name(S[s_index].func.real, 1);
             if (function_name == NULL)
                 return;
             S->func.cmplx = lookup_function_pointer(function_name, true);
@@ -859,8 +873,7 @@ double complex eval_math_expr(math_expr *M)
     op_node *i_node;
     int s_index = 0, s_count = M->subexpr_count;
     // Subexpression pointer to access the subexpression array.
-    m_subexpr *S = M->subexpr_ptr;
-    // dump_expr_data(M);
+    math_subexpr *S = M->subexpr_ptr;
     while (s_index < s_count)
     {
         // Case with special function
@@ -869,6 +882,9 @@ double complex eval_math_expr(math_expr *M)
             char *args;
             if (S[s_index].exec_extf)
             {
+                // Backup the current global expression to let the extended function change it freely for its error reporting
+                char *backup = _glob_expr;
+
                 int length = S[s_index].solve_end - S[s_index].solve_start + 1;
                 // Copy args from the expression to a separate array.
                 args = malloc((length + 1) * sizeof(char));
@@ -876,6 +892,10 @@ double complex eval_math_expr(math_expr *M)
                 args[length] = '\0';
                 // Calling the extended function
                 **(S[s_index].s_result) = (*(S[s_index].func.extended))(args);
+
+                // Restore
+                _glob_expr = backup;
+
                 if (isnan((double)**(S[s_index].s_result)))
                 {
                     error_handler(MATH_ERROR, 1, 0, S[s_index].solve_start, -1);
@@ -972,8 +992,10 @@ double complex eval_math_expr(math_expr *M)
         ++s_index;
     }
 
-    if (M->variable_index != -1)
-        variable_values[M->variable_index] = M->answer;
+    if (M->runvar_i != -1)
+        variable_values[M->runvar_i] = M->answer;
+
+    // dump_expr_data(M);
 
     return M->answer;
 }
@@ -1028,7 +1050,7 @@ void delete_math_expr(math_expr *M)
         return;
 
     int i = 0;
-    m_subexpr *subexps = M->subexpr_ptr;
+    math_subexpr *subexps = M->subexpr_ptr;
     for (i = 0; i < M->subexpr_count; ++i)
     {
         if (subexps[i].func_type == 3)
@@ -1058,7 +1080,7 @@ void priority_fill(op_node *list, int op_count)
     }
 }
 
-int find_subexpr_by_start(m_subexpr *S, int start, int s_index, int mode)
+int find_subexpr_by_start(math_subexpr *S, int start, int s_index, int mode)
 {
     int i;
     i = s_index - 1;
@@ -1085,7 +1107,7 @@ int find_subexpr_by_start(m_subexpr *S, int start, int s_index, int mode)
     return -1;
 }
 // Function that finds the subexpression that ends at 'end'
-int find_subexpr_by_end(m_subexpr *S, int end, int s_index, int s_count)
+int find_subexpr_by_end(math_subexpr *S, int end, int s_index, int s_count)
 {
     int i;
     i = s_index - 1;
@@ -1099,17 +1121,28 @@ int find_subexpr_by_end(m_subexpr *S, int end, int s_index, int s_count)
     return -1;
 }
 
+/**
+ * @brief
+ * @param M
+ */
 void dump_expr_data(math_expr *M)
 {
     int s_index = 0;
     int s_count = M->subexpr_count;
-    m_subexpr *S = M->subexpr_ptr;
+    math_subexpr *S = M->subexpr_ptr;
+    char *tmp = NULL;
     op_node *tmp_node;
     puts("Dumping expression data:\n");
     while (s_index < s_count)
     {
-        printf("subexpr %d:\n function_type = %u fptr = %p, depth = %d\n",
-               s_index, S[s_index].func_type, S[s_index].func.real, S[s_index].depth);
+        // Find the name of the function to execute
+        if (S[s_index].func_type != 0)
+            tmp = lookup_function_name(S[s_index].func.real, S[s_index].func_type);
+        else
+            tmp = NULL;
+
+        printf("subexpr %d:\n ftype = %u, fname = %s, depth = %d\n",
+               s_index, S[s_index].func_type, tmp, S[s_index].depth);
         // Lookup result pointer location
         for (int i = 0; i < s_count; ++i)
         {
@@ -1122,22 +1155,55 @@ void dump_expr_data(math_expr *M)
                 }
             }
             // Case of a no op expression
-            if (S[i].op_count == 0 && S[i].nodes[0].node_result == *(S[s_index].s_result))
+            if (S[i].op_count == 0 && S[i].nodes != NULL && S[i].nodes[0].node_result == *(S[s_index].s_result))
                 printf("s_result at subexpr %d, node 0\n\n", i);
         }
         tmp_node = S[s_index].nodes + S[s_index].start_node;
         // Dump nodes data
         while (tmp_node != NULL)
         {
-
-            printf("%d: ", tmp_node->node_index);
+            printf("[%d]: ", tmp_node->node_index);
             printf("( ");
             print_value(tmp_node->left_operand);
             printf(" )");
-            printf(" %c ", tmp_node->operator);
-            printf("( ");
-            print_value(tmp_node->right_operand);
-            printf(" ) -> ");
+
+            // No one wants to see uninitialized values
+            if (S[s_index].op_count != 0)
+            {
+                printf(" %c ", tmp_node->operator);
+                printf("( ");
+                print_value(tmp_node->right_operand);
+                printf(" )");
+            }
+
+            if (tmp_node->next != NULL)
+            {
+                int i;
+                char left_or_right = '\0';
+                for (i = 0; i < S[s_index].op_count; ++i)
+                {
+                    if (&(S[s_index].nodes[i].right_operand) == tmp_node->node_result)
+                    {
+                        left_or_right = 'R';
+                        break;
+                    }
+                    else if (&(S[s_index].nodes[i].left_operand) == tmp_node->node_result)
+                    {
+                        left_or_right = 'L';
+                        break;
+                    }
+
+                    if (S[s_index].op_count == 0 && &(S[s_index].nodes->right_operand) == tmp_node->node_result)
+                    {
+                        i = 0;
+                        left_or_right = 'R';
+                    }
+                }
+
+                printf(" a: %d%c --> ", i, left_or_right);
+            }
+            else
+                printf(" --> ");
             tmp_node = tmp_node->next;
         }
         ++s_index;
