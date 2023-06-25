@@ -6,6 +6,17 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "string_tools.h"
 #include "function.h"
 #include <math.h>
+
+bool _validate_args_count(int expected, int actual)
+{
+    if (expected == actual)
+        return true;
+    else if (expected > actual)
+        error_handler(TOO_FEW_ARGS, 1, 1, -1);
+    else if (expected < actual)
+        error_handler(TOO_MANY_ARGS, 1, 1, -1);
+    return false;
+}
 void _set_var_data(math_expr *M)
 {
     int i = 0, s_index, buffer_size = 16;
@@ -73,11 +84,9 @@ double derivative(char *arguments)
     math_expr *M;
     arg_list *args;
     args = get_arguments(arguments);
-    if (args->arg_count != 2)
-    {
-        error_handler("Incorrect use of derivation function, provide 2 arguments.", 1, 1, -1);
-        return false;
-    }
+    
+    if (_validate_args_count(2, args->count) == false)
+        return NAN;
     double x, f_prime, fx1, fx2;
 
     x = calculate_expr(args->arguments[1], false);
@@ -99,8 +108,12 @@ double integrate(char *arguments)
 {
     math_expr *M;
     arg_list *args = get_arguments(arguments);
+
+    if (_validate_args_count(3, args->count) == false)
+        return NAN;
+
     int n;
-    double lower_bound, upper_bound, result, an, fn, rounds, tmp, delta;
+    double lower_bound, upper_bound, result, an, fn, rounds, delta;
 
     lower_bound = calculate_expr(args->arguments[0], false);
     upper_bound = calculate_expr(args->arguments[1], false);
@@ -133,36 +146,44 @@ double integrate(char *arguments)
         delete_math_expr(M);
         return NAN;
     }
-    for (n = 1, tmp = 0; n < rounds; ++n)
+
+    double part1 = 0, part2 = 0;
+    // Use i to determine when n is divisible by 3 without doing a mod 3
+    int i=1;
+
+    for (n = 1; n < rounds; ++n)
     {
-        if (n % 3 == 0)
-            continue;
-        an = lower_bound + delta * n / rounds;
-        set_variable(M, an);
-        fn = eval_math_expr(M);
-        if (isnan(fn) == true)
+        if (i == 3)
         {
-            error_handler("Error while calculating integral, make sure the function is defined on the integration interval.", 1, 1, -1);
-            delete_math_expr(M);
-            return NAN;
+            an = lower_bound + delta * n / rounds;
+            set_variable(M, an);
+            fn = eval_math_expr(M);
+            if (isnan(fn) == true)
+            {
+                error_handler("Error while calculating integral, make sure the function is defined on the integration interval.", 1, 1, -1);
+                delete_math_expr(M);
+                return NAN;
+            }
+            part2 += fn;
+            i=1;
         }
-        tmp += fn;
-    }
-    result += 3 * tmp;
-    for (n = 3, tmp = 0; n < rounds; n += 3)
-    {
-        an = lower_bound + delta * n / rounds;
-        set_variable(M, an);
-        fn = eval_math_expr(M);
-        if (isnan(fn) == true)
+        else
         {
-            error_handler("Error while calculating integral, make sure the function is defined on the integration interval.", 1, 1, -1);
-            delete_math_expr(M);
-            return NAN;
+            an = lower_bound + delta * n / rounds;
+            set_variable(M, an);
+            fn = eval_math_expr(M);
+            if (isnan(fn) == true)
+            {
+                error_handler("Error while calculating integral, make sure the function is defined on the integration interval.", 1, 1, -1);
+                delete_math_expr(M);
+                return NAN;
+            }
+            part1 += fn;
+            ++i;
         }
-        tmp += fn;
     }
-    result += 2 * tmp;
+    result += 3 * part1 + 2 * part2;
+
     result *= 0.375 * (delta / rounds);
     delete_math_expr(M);
     free_arg_list(args, true);
