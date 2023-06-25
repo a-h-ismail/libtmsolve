@@ -301,5 +301,5 @@ int find_subexpr_by_end(math_subexpr *S, int end, int s_index, int s_count);
 /// - Left and right operands of each node (and the operator). \n
 /// - Nodes ordered by evaluation order. \n
 /// - Result pointer of each subepression.
-void dump_expr_data(math_expr *M);
+void dump_expr_data(math_expr *M, bool was_evaluated);
 #endif
