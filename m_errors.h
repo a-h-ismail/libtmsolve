@@ -9,6 +9,7 @@ SPDX-License-Identifier: LGPL-2.1-only
  */
 #ifndef M_ERRORS_H
 #define M_ERRORS_H
+
 #define PARENTHESIS_MISSING "Expected ( for function call."
 #define PARENTHESIS_EMPTY "Empty parenthesis pair."
 #define PARENTHESIS_NOT_CLOSED "Open parenthesis has no closing parenthesis."
@@ -27,4 +28,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define MULTIPLE_ASSIGNMENT_ERROR "Multiple assignment operators are not supported."
 #define OVERWRITE_BUILTIN_VARIABLE "Overwriting built in variables is not allowed."
 #define ILLEGAL_COMPLEX_OP "Illegal complex operation."
+#define TOO_MANY_ARGS "Too many arguments in function call."
+#define TOO_FEW_ARGS "Too few arguments in function call."
+#define EXTF_FAILURE "Extended function reported a failure."
 #endif
