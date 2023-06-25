@@ -61,7 +61,7 @@ extern int hardcoded_variable_count;
 typedef struct arg_list
 {
     /// The number of arguments.
-    int arg_count;
+    int count;
     // Array of C strings, stores the arguments.
     char **arguments;
 } arg_list;
