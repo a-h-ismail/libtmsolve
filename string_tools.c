@@ -652,18 +652,19 @@ int compare_priority(char operator1, char operator2)
 arg_list *get_arguments(char *string)
 {
     arg_list *args = malloc(sizeof(arg_list));
-    int length = strlen(string), max_args = 10, count;
+    args->count = 0;
+
+    int length = strlen(string), max_args = 10;
     // The start/end of each argument.
     int start, end;
-    // You could use args.arg_count but this improves readability (the compiler should optimize this).
-    count = 0;
+
     args->arguments = malloc(max_args * sizeof(char *));
     for (end = start = 0; end < length; ++end)
     {
-        if (count == max_args)
+        if (args->count == max_args)
         {
             max_args += 10;
-            args = realloc(args, max_args * sizeof(arg_list));
+            args->arguments = realloc(args->arguments, max_args * sizeof(arg_list));
         }
         // Skip parenthesis pairs to allow easy nesting of argument lists
         // Think of something like int(0,2,x+int(0,1,x^2))
@@ -671,25 +672,24 @@ arg_list *get_arguments(char *string)
             end = find_closing_parenthesis(string, end) + 1;
         else if (string[end] == ',')
         {
-            args->arguments[count] = malloc(end - start + 1);
-            strncpy(args->arguments[count], string + start, end - start);
-            args->arguments[count][end - start] = '\0';
+            args->arguments[args->count] = malloc(end - start + 1);
+            strncpy(args->arguments[args->count], string + start, end - start);
+            args->arguments[args->count][end - start] = '\0';
             start = end + 1;
-            ++count;
+            ++args->count;
         }
     }
-    args->arguments[count] = malloc(end - start + 1);
-    strncpy(args->arguments[count], string + start, end - start);
-    args->arguments[count][end - start] = '\0';
-    ++count;
-    args->arg_count = count;
+    args->arguments[args->count] = malloc(end - start + 1);
+    strncpy(args->arguments[args->count], string + start, end - start);
+    args->arguments[args->count][end - start] = '\0';
+    ++args->count;
     return args;
 }
 // Frees the argument list array of char *
 // Can also free the list itself if it was allocated with malloc
 void free_arg_list(arg_list *list, bool list_on_heap)
 {
-    for (int i = 0; i < list->arg_count; ++i)
+    for (int i = 0; i < list->count; ++i)
         free(list->arguments[i]);
     free(list->arguments);
     if (list_on_heap)
