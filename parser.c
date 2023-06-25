@@ -898,7 +898,7 @@ double complex eval_math_expr(math_expr *M)
 
                 if (isnan((double)**(S[s_index].s_result)))
                 {
-                    error_handler(MATH_ERROR, 1, 0, S[s_index].solve_start, -1);
+                    error_handler(EXTF_FAILURE, 1, 0, S[s_index].subexpr_start);
                     return NAN;
                 }
                 S[s_index].exec_extf = false;
@@ -1050,14 +1050,14 @@ void delete_math_expr(math_expr *M)
         return;
 
     int i = 0;
-    math_subexpr *subexps = M->subexpr_ptr;
+    math_subexpr *S = M->subexpr_ptr;
     for (i = 0; i < M->subexpr_count; ++i)
     {
-        if (subexps[i].func_type == 3)
-            free(subexps[i].s_result);
-        free(subexps[i].nodes);
+        if (S[i].func_type == 3)
+            free(S[i].s_result);
+        free(S[i].nodes);
     }
-    free(subexps);
+    free(S);
     free(M->var_data);
     free(M);
 }
@@ -1125,7 +1125,7 @@ int find_subexpr_by_end(math_subexpr *S, int end, int s_index, int s_count)
  * @brief
  * @param M
  */
-void dump_expr_data(math_expr *M)
+void dump_expr_data(math_expr *M, bool was_evaluated)
 {
     int s_index = 0;
     int s_count = M->subexpr_count;
@@ -1167,7 +1167,7 @@ void dump_expr_data(math_expr *M)
             print_value(tmp_node->left_operand);
             printf(" )");
 
-            // No one wants to see uninitialized values
+            // No one wants to see uninitialized values (skip for nodes used to hold one number)
             if (S[s_index].op_count != 0)
             {
                 printf(" %c ", tmp_node->operator);
