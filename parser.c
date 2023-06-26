@@ -28,7 +28,7 @@ double complex carg_z(double complex z)
 }
 double complex ccbrt_cpow(double complex z)
 {
-    return cpow(z, 1 / 3);
+    return cpow(z, 1.0 / 3);
 }
 
 // Wrapper functions for cos, sin and tan to round for very small values
