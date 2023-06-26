@@ -853,6 +853,8 @@ void convert_real_to_complex(math_expr *M)
         char *function_name;
         for (s_index = 0; s_index < M->subexpr_count; ++s_index)
         {
+            if (S[s_index].func_type != 1)
+                continue;
             // Lookup the name of the real function and find the equivalent function pointer
             function_name = lookup_function_name(S[s_index].func.real, 1);
             if (function_name == NULL)
