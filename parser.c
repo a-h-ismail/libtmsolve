@@ -859,8 +859,8 @@ void convert_real_to_complex(math_expr *M)
             function_name = lookup_function_name(S[s_index].func.real, 1);
             if (function_name == NULL)
                 return;
-            S->func.cmplx = lookup_function_pointer(function_name, true);
-            S->func_type = 2;
+            S[s_index].func.cmplx = lookup_function_pointer(function_name, true);
+            S[s_index].func_type = 2;
         }
     }
     M->enable_complex = true;
