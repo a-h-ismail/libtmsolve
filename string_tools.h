@@ -154,11 +154,6 @@ bool syntax_check(char *expr);
 void combine_add_subtract(char *expr, int a, int b);
 
 /**
- * @brief Checks if keyword1 which is located in expr at index, is a part of keyword2 (like cos which is part of acos).
- */
-bool part_of_keyword(char *expr, char *keyword1, char *keyword2, int index);
-
-/**
  * @brief Compares the priority of 2 operators.
  * @return priority1 - priority2.
  */
@@ -177,6 +172,18 @@ arg_list* get_arguments(char *string);
  * @return true if the checks pass, false otherwise.
 */
 bool pre_parse_routine(char *expr);
+
+bool legal_char_in_name(char c);
+
+/**
+ * @brief Detects if a keyword matches fully in the string at position i
+ * @param str The string to look into.
+ * @param i Index in the string (may be the start or end of the keyword)
+ * @param keyword Pointer to the keyword.
+ * @param match_from_start true if i is at the start of the keyword, false if at the end.
+ * @return 
+ */
+bool match_word(char *str, int i, char *keyword, bool match_from_start);
 
 /**
  * @brief Checks if the name conforms to variable name rules.

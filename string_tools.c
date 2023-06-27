@@ -81,19 +81,8 @@ double complex read_value(char *expr, int start, bool enable_complex)
     int i;
     for (i = 0; i < variable_count; ++i)
     {
-        if (strncmp(expr + start, variable_names[i], strlen(variable_names[i])) == 0)
+        if (match_word(expr, start, variable_names[i], true))
         {
-            if (start > 0 && is_alphabetic(expr[start - 1]))
-            {
-                error_handler(SYNTAX_ERROR, 1, 1, start);
-                return NAN;
-            }
-            int end = start + strlen(variable_names[i]);
-            if (!(is_op(expr[end]) || expr[end] == '\0' || expr[end] == ')'))
-            {
-                error_handler(SYNTAX_ERROR, 1, 1, end);
-                return NAN;
-            }
             value = variable_values[i];
             is_variable = true;
             break;
@@ -101,19 +90,8 @@ double complex read_value(char *expr, int start, bool enable_complex)
     }
 
     // ans is a special case
-    if (strncmp(expr + start, "ans", 3) == 0)
+    if (match_word(expr, start, "ans", true))
     {
-        if (start > 0 && is_alphabetic(expr[start - 1]))
-        {
-            error_handler(SYNTAX_ERROR, 1, 1, start);
-            return NAN;
-        }
-        int end = start + 3;
-        if (!(is_op(expr[end]) || expr[end] == '\0' || expr[end] == ')'))
-        {
-            error_handler(SYNTAX_ERROR, 1, 1, end);
-            return NAN;
-        }
         value = ans;
         is_variable = true;
     }
@@ -294,59 +272,6 @@ inline bool is_alphanum(char c)
     return is_digit(c) && is_alphabetic(c);
 }
 
-// Checks if keyword1 found at index of expr is a part of keyword2
-bool part_of_keyword(char *expr, char *keyword1, char *keyword2, int index)
-{
-    int keylen[2], i;
-    keylen[0] = strlen(keyword1);
-    keylen[1] = strlen(keyword2);
-    // If the length of keyword1 is bigger or equal to keyword2, then no way keyword1 is part of keyword2
-    if (keylen[0] >= keylen[1])
-        return false;
-    i = r_search(expr, keyword2, index, false);
-    if (i == -1)
-        return false;
-    // If the distance between the match of keyword2 and keyword1 is less than the length of keyword2
-    // then keyword1 is included in keyword 2
-    if (index - i < keylen[1])
-        return true;
-    else
-        return false;
-}
-/*
-Function that converts implicit multiplication into explicit multiplication, direction 'r', 'l'
-For left implicit multiplication:
-p1 must be the start of the first operand, p2 the start of the second operand and p3 its end.
-For right implicit multiplication:
-p1 must be the start of the first operand, p2 the end of it, and p3 the end of the second operand.
-*/
-void shift_and_multiply(char *expr, int *p1, int *p2, int *p3, char direction)
-{
-    switch (direction)
-    {
-    case 'l':
-        // Creating 3 empty spaces to accomodate for ( * )
-        resize_zone(expr, *p3, *p3 + 3);
-        memmove(expr + *p2 + 2, expr + *p2, *p3 - *p2 + 1);
-        *p3 += 3;
-        memmove(expr + *p1 + 1, expr + *p1, *p2 - *p1);
-        expr[*p1] = '(';
-        expr[*p2 + 1] = '*';
-        expr[*p3] = ')';
-        *p2 = *p1;
-        break;
-    case 'r':
-        // Creating 3 empty spaces to accomodate for ( * )
-        resize_zone(expr, *p3, *p3 + 3);
-        memmove(expr + *p2 + 3, expr + *p2 + 1, *p3 - *p2);
-        *p3 += 2;
-        memmove(expr + *p1 + 1, expr + *p1, *p2 - *p1 + 1);
-        expr[*p1] = '(';
-        expr[*p3 + 1] = ')';
-        expr[*p2 + 2] = '*';
-        ++*p1;
-    }
-}
 // Function that checks if the number starting at start is valid
 bool is_valid_number(char *expr, int start)
 {
@@ -469,6 +394,7 @@ int f_search(char *str, char *keyword, int index, bool match_word)
     }
     return -1;
 }
+
 // Reverse search function, returns the index of the first match of keyword, or -1 if none is found
 // adjacent_search stops the search if the index is not inside the keyword
 int r_search(char *str, char *keyword, int index, bool adjacent_search)
@@ -489,6 +415,24 @@ int r_search(char *str, char *keyword, int index, bool adjacent_search)
             --i;
     }
     return -1;
+}
+
+bool match_word(char *str, int i, char *keyword, bool match_from_start)
+{
+    int keylen = strlen(keyword);
+    if (!match_from_start)
+        i -= keylen - 1;
+
+    if (strncmp(str + i, keyword, keylen) != 0)
+        return false;
+
+    if (i > 0 && legal_char_in_name(str[i - 1]))
+        return false;
+
+    if (legal_char_in_name(str[i + keylen]))
+        return false;
+
+    return true;
 }
 
 void print_value(double complex value)
@@ -709,11 +653,19 @@ bool pre_parse_routine(char *expr)
     return syntax_check(expr);
 }
 
+bool legal_char_in_name(char c)
+{
+    if (is_alphabetic(c) == true || c == '_')
+        return true;
+    else
+        return false;
+}
+
 bool valid_name(char *name)
 {
     for (int i = 0; i < strlen(name); ++i)
     {
-        if (is_alphabetic(name[i]) == false && name[i] != '_')
+        if (!legal_char_in_name(name[i]))
             return false;
     }
     return true;
