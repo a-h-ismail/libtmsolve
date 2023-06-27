@@ -290,7 +290,7 @@ bool _set_function_ptr(char *local_expr, math_expr *M, int s_index)
     int solve_start = S->solve_start;
 
     // Searching for any function preceding the expression to set the function pointer
-    if (solve_start > 1 && (is_alphabetic(local_expr[solve_start - 2]) || local_expr[solve_start - 2] == '_'))
+    if (solve_start > 1 && legal_char_in_name(local_expr[solve_start - 2]))
     {
         if (!M->enable_complex)
         {
