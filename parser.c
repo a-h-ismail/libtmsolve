@@ -85,7 +85,7 @@ int _set_runtime_var(char *expr, int i)
 
     if (i == 0)
     {
-        error_handler(SYNTAX_ERROR, 1, 1, 0);
+        error_handler(SYNTAX_ERROR, EH_SAVE, EH_FATAL_ERROR, 0);
         return -1;
     }
     else
@@ -95,7 +95,7 @@ int _set_runtime_var(char *expr, int i)
         _glob_expr = expr;
         if (j != -1)
         {
-            error_handler(MULTIPLE_ASSIGNMENT_ERROR, 1, 1, j);
+            error_handler(MULTIPLE_ASSIGNMENT_ERROR, EH_SAVE, EH_FATAL_ERROR, j);
             return -1;
         }
         // Store the variable name in this array
@@ -104,7 +104,7 @@ int _set_runtime_var(char *expr, int i)
         tmp[i] = '\0';
         if (valid_name(tmp) == false)
         {
-            error_handler(INVALID_VARIABLE_NAME, 1, 1, -1);
+            error_handler(INVALID_VARIABLE_NAME, EH_SAVE, EH_FATAL_ERROR, -1);
             return -1;
         }
         for (j = 0; j < variable_count; ++j)
@@ -118,7 +118,7 @@ int _set_runtime_var(char *expr, int i)
         }
         if (j < hardcoded_variable_count)
         {
-            error_handler(OVERWRITE_BUILTIN_VARIABLE, 1, 1, i);
+            error_handler(OVERWRITE_BUILTIN_VARIABLE, EH_SAVE, EH_FATAL_ERROR, i);
             return -1;
         }
         // Create a new variable
@@ -309,7 +309,7 @@ bool _set_function_ptr(char *local_expr, math_expr *M, int s_index)
             // The function isn't defined for real operations (loop exited due to condition instead of break)
             if (i == array_length(r_function_ptr))
             {
-                error_handler(UNDEFINED_FUNCTION, 1, 0, solve_start - 2);
+                error_handler(UNDEFINED_FUNCTION, EH_SAVE, EH_NONFATAL_ERROR, solve_start - 2);
                 return false;
             }
         }
@@ -329,7 +329,7 @@ bool _set_function_ptr(char *local_expr, math_expr *M, int s_index)
             // The complex function is not defined
             if (i == array_length(cmplx_function_ptr))
             {
-                error_handler(UNDEFINED_FUNCTION, 1, 0, solve_start - 2);
+                error_handler(UNDEFINED_FUNCTION, EH_SAVE, EH_NONFATAL_ERROR, solve_start - 2);
                 return false;
             }
         }
@@ -357,7 +357,7 @@ int _init_nodes(char *local_expr, math_expr *M, int s_index, int *operator_index
     // Checking if the expression is terminated with an operator
     if (op_count != 0 && operator_index[op_count - 1] == solve_end)
     {
-        error_handler(RIGHT_OP_MISSING, 1, 1, operator_index[op_count - 1]);
+        error_handler(RIGHT_OP_MISSING, EH_SAVE, EH_FATAL_ERROR, operator_index[op_count - 1]);
         return -1;
     }
     // Filling operations and index data into each op_node
@@ -383,7 +383,7 @@ int _init_nodes(char *local_expr, math_expr *M, int s_index, int *operator_index
                 status = set_variable_metadata(local_expr + solve_start, node_block, 'l');
                 if (!status)
                 {
-                    error_handler(UNDEFINED_VARIABLE, 1, 1, solve_start);
+                    error_handler(UNDEFINED_VARIABLE, EH_SAVE, EH_FATAL_ERROR, solve_start);
                     return -1;
                 }
             }
@@ -418,7 +418,7 @@ int _init_nodes(char *local_expr, math_expr *M, int s_index, int *operator_index
     // Check if the expression is terminated with an operator
     if (op_count != 0 && operator_index[op_count - 1] == solve_end)
     {
-        error_handler(RIGHT_OP_MISSING, 1, 1, operator_index[op_count - 1]);
+        error_handler(RIGHT_OP_MISSING, EH_SAVE, EH_FATAL_ERROR, operator_index[op_count - 1]);
         return -1;
     }
     // Set operator type and index for each op_node
@@ -446,7 +446,7 @@ int _set_operands(char *local_expr, math_expr *M, int s_index, bool enable_varia
             node_block[0].left_operand = 0;
         else
         {
-            error_handler(SYNTAX_ERROR, 1, 1, node_block[0].operator_index);
+            error_handler(SYNTAX_ERROR, EH_SAVE, EH_FATAL_ERROR, node_block[0].operator_index);
             return -1;
         }
     }
@@ -467,7 +467,7 @@ int _set_operands(char *local_expr, math_expr *M, int s_index, bool enable_varia
                 status = find_subexpr_by_start(S, solve_start, s_index, 1);
                 if (status == -1)
                 {
-                    error_handler(UNDEFINED_VARIABLE, 1, 1, solve_start);
+                    error_handler(UNDEFINED_VARIABLE, EH_SAVE, EH_FATAL_ERROR, solve_start);
                     return -1;
                 }
                 else
@@ -495,7 +495,7 @@ int _set_operands(char *local_expr, math_expr *M, int s_index, bool enable_varia
                     status = find_subexpr_by_start(S, node_block[i].operator_index + 1, s_index, 1);
                     if (status == -1)
                     {
-                        error_handler(UNDEFINED_VARIABLE, 1, 1, node_block[i].operator_index + 1);
+                        error_handler(UNDEFINED_VARIABLE, EH_SAVE, EH_FATAL_ERROR, node_block[i].operator_index + 1);
                         return -1;
                     }
                     else
@@ -521,7 +521,7 @@ int _set_operands(char *local_expr, math_expr *M, int s_index, bool enable_varia
                     status = find_subexpr_by_start(S, node_block[i].operator_index + 1, s_index, 1);
                     if (status == -1)
                     {
-                        error_handler(UNDEFINED_VARIABLE, 1, 1, node_block[i].operator_index + 1);
+                        error_handler(UNDEFINED_VARIABLE, EH_SAVE, EH_FATAL_ERROR, node_block[i].operator_index + 1);
                         return -1;
                     }
                     else
@@ -546,7 +546,7 @@ int _set_operands(char *local_expr, math_expr *M, int s_index, bool enable_varia
             status = find_subexpr_by_start(S, node_block[op_count - 1].operator_index + 1, s_index, 1);
             if (status == -1)
             {
-                error_handler(UNDEFINED_VARIABLE, 1, 1, node_block[i].operator_index + 1);
+                error_handler(UNDEFINED_VARIABLE, EH_SAVE, EH_FATAL_ERROR, node_block[i].operator_index + 1);
                 return -1;
             }
             *(S[status].result) = &(node_block[op_count - 1].right_operand);
@@ -809,7 +809,7 @@ char *lookup_function_name(void *function, int func_type)
             return ext_function_name[i];
         break;
     default:
-        error_handler(INTERNAL_ERROR, 1, 1, -1);
+        error_handler(INTERNAL_ERROR, EH_SAVE, EH_FATAL_ERROR, -1);
     }
 
     return NULL;
@@ -899,7 +899,7 @@ double complex eval_math_expr(math_expr *M)
 
                 if (isnan((double)**(S[s_index].result)))
                 {
-                    error_handler(EXTF_FAILURE, 1, 0, S[s_index].subexpr_start);
+                    error_handler(EXTF_FAILURE, EH_SAVE, EH_FATAL_ERROR, S[s_index].subexpr_start);
                     return NAN;
                 }
                 S[s_index].exec_extf = false;
@@ -918,7 +918,7 @@ double complex eval_math_expr(math_expr *M)
             {
                 if (i_node->result == NULL)
                 {
-                    error_handler(INTERNAL_ERROR, 1, 1, -1);
+                    error_handler(INTERNAL_ERROR, EH_SAVE, EH_FATAL_ERROR, -1);
                     return NAN;
                 }
                 switch (i_node->operator)
@@ -938,7 +938,7 @@ double complex eval_math_expr(math_expr *M)
                 case '/':
                     if (i_node->right_operand == 0)
                     {
-                        error_handler(DIVISION_BY_ZERO, 1, 1, i_node->operator_index);
+                        error_handler(DIVISION_BY_ZERO, EH_SAVE, EH_FATAL_ERROR, i_node->operator_index);
                         return NAN;
                     }
                     *(i_node->result) = i_node->left_operand / i_node->right_operand;
@@ -947,7 +947,7 @@ double complex eval_math_expr(math_expr *M)
                 case '%':
                     if (i_node->right_operand == 0)
                     {
-                        error_handler(MODULO_ZERO, 1, 1, i_node->operator_index);
+                        error_handler(MODULO_ZERO, EH_SAVE, EH_FATAL_ERROR, i_node->operator_index);
                         return NAN;
                     }
                     *(i_node->result) = fmod(i_node->left_operand, i_node->right_operand);
@@ -987,7 +987,7 @@ double complex eval_math_expr(math_expr *M)
 
         if (isnan((double)**(S[s_index].result)))
         {
-            error_handler(MATH_ERROR, 1, 0, S[s_index].solve_start, -1);
+            error_handler(MATH_ERROR, EH_SAVE, EH_NONFATAL_ERROR, S[s_index].solve_start, -1);
             return NAN;
         }
         ++s_index;

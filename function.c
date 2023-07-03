@@ -12,9 +12,9 @@ bool _validate_args_count(int expected, int actual)
     if (expected == actual)
         return true;
     else if (expected > actual)
-        error_handler(TOO_FEW_ARGS, 1, 1, -1);
+        error_handler(TOO_FEW_ARGS, EH_SAVE, EH_FATAL_ERROR, -1);
     else if (expected < actual)
-        error_handler(TOO_MANY_ARGS, 1, 1, -1);
+        error_handler(TOO_MANY_ARGS, EH_SAVE, EH_FATAL_ERROR, -1);
     return false;
 }
 void _set_var_data(math_expr *M)
@@ -149,7 +149,7 @@ double integrate(char *arguments)
     result += eval_math_expr(M);
     if (isnan(result) == true)
     {
-        error_handler(INTEGRAl_UNDEFINED, 1, 1, -1);
+        error_handler(INTEGRAl_UNDEFINED, EH_SAVE, EH_FATAL_ERROR, -1);
         delete_math_expr(M);
         return NAN;
     }
@@ -167,7 +167,7 @@ double integrate(char *arguments)
             fn = eval_math_expr(M);
             if (isnan(fn) == true)
             {
-                error_handler("Error while calculating integral, make sure the function is defined on the integration interval.", 1, 1, -1);
+                error_handler(INTEGRAl_UNDEFINED, EH_SAVE, EH_FATAL_ERROR, -1);
                 delete_math_expr(M);
                 return NAN;
             }
@@ -181,7 +181,7 @@ double integrate(char *arguments)
             fn = eval_math_expr(M);
             if (isnan(fn) == true)
             {
-                error_handler("Error while calculating integral, make sure the function is defined on the integration interval.", 1, 1, -1);
+                error_handler(INTEGRAl_UNDEFINED, EH_SAVE, EH_FATAL_ERROR, -1);
                 delete_math_expr(M);
                 return NAN;
             }

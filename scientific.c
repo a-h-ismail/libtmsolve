@@ -72,7 +72,7 @@ double complex calculate_expr_auto(char *expr)
         // The complex number was found despite having a real expression, report the problem.
         if (likely_complex == 0)
         {
-            error_handler(ILLEGAL_COMPLEX_OP, 1, 1, i);
+            error_handler(ILLEGAL_COMPLEX_OP, EH_SAVE, EH_FATAL_ERROR, i);
             return NAN;
         }
         else
@@ -120,12 +120,12 @@ double complex calculate_expr_auto(char *expr)
         if (isnan(creal(result)))
         {
             // Check if the errors are fatal (like malformed syntax, division by zero...)
-            int fatal = error_handler(NULL, 5, 1);
+            int fatal = error_handler(NULL, EH_ERROR_COUNT, EH_MAIN_DB);
             if (fatal > 0)
                 return NAN;
 
             // Clear errors caused by the first evaluation.
-            error_handler(NULL, 3, 0);
+            error_handler(NULL, EH_CLEAR, EH_MAIN_DB);
 
             // The errors weren't fatal, possibly a complex answer.
             // Convert the math_struct to use complex functions.
@@ -160,7 +160,7 @@ double complex calculate_expr_auto(char *expr)
         return result;
     }
     // Unlikely to fall out of the switch.
-    error_handler(INTERNAL_ERROR, 1, 1, 0);
+    error_handler(INTERNAL_ERROR, EH_SAVE, EH_FATAL_ERROR, 0);
     return NAN;
 }
 

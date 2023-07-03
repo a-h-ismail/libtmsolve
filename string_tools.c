@@ -488,14 +488,14 @@ bool parenthesis_check(char *expr)
         close = find_closing_parenthesis(expr, open);
         if (close - open == 1)
         {
-            error_handler(PARENTHESIS_EMPTY, 1, 1, open);
+            error_handler(PARENTHESIS_EMPTY, EH_SAVE, EH_FATAL_ERROR, open);
             free(open_position);
             free(close_position);
             return false;
         }
         if (close == -1)
         {
-            error_handler(PARENTHESIS_NOT_CLOSED, 1, 1, open);
+            error_handler(PARENTHESIS_NOT_CLOSED, EH_SAVE, EH_FATAL_ERROR, open);
             free(open_position);
             free(close_position);
             return false;
@@ -515,7 +515,7 @@ bool parenthesis_check(char *expr)
 
     if (close != -1)
     {
-        error_handler(PARENTHESIS_NOT_OPEN, 1, 1, close);
+        error_handler(PARENTHESIS_NOT_OPEN, EH_SAVE, EH_FATAL_ERROR, close);
         free(open_position);
         free(close_position);
         return false;
@@ -539,7 +539,7 @@ bool syntax_check(char *expr)
         {
             if (expr[j + strlen(all_functions[i])] != '(')
             {
-                error_handler(PARENTHESIS_MISSING, 1, 1, j + strlen(all_functions[i]));
+                error_handler(PARENTHESIS_MISSING, EH_SAVE, EH_FATAL_ERROR, j + strlen(all_functions[i]));
                 return false;
             }
             j = f_search(expr, all_functions[i], j + 1, true);
@@ -553,12 +553,12 @@ bool syntax_check(char *expr)
             int end = find_endofnumber(expr, i);
             if (i > 0 && !is_op(expr[i - 1]) && expr[i - 1] != '(' && expr[i - 1] != ',')
             {
-                error_handler(SYNTAX_ERROR, 1, 1, i - 1);
+                error_handler(SYNTAX_ERROR, EH_SAVE, EH_FATAL_ERROR, i - 1);
                 return false;
             }
             if (expr[end + 1] != '\0' && !is_op(expr[end + 1]) && expr[end + 1] != ')' && expr[end + 1] != ',')
             {
-                error_handler(SYNTAX_ERROR, 1, 1, end + 1);
+                error_handler(SYNTAX_ERROR, EH_SAVE, EH_FATAL_ERROR, end + 1);
                 return false;
             }
             i = end + 1;
@@ -645,7 +645,7 @@ bool pre_parse_routine(char *expr)
     // Check for empty input
     if (expr[0] == '\0')
     {
-        error_handler(NO_INPUT, 1, 1, -1);
+        error_handler(NO_INPUT, EH_SAVE, EH_FATAL_ERROR, -1);
         return false;
     }
     // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)

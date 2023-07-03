@@ -92,25 +92,25 @@ int error_handler(char *error, int arg1, ...)
     struct error_structure
     {
         char *error_msg, bad_snippet[50];
-        bool fatal_error;
+        bool fatal;
         int error_index;
     };
 
     static struct error_structure error_table[MAX_ERRORS], backup[MAX_ERRORS];
     switch (arg1)
     {
-    // Save mode
-    case 1:
+
+    case EH_SAVE:
         error_table[last_error].error_msg = error;
         arg2 = va_arg(arguments, int);
         switch (arg2)
         {
-        case 0:
-            error_table[last_error].fatal_error = false;
+        case EH_NONFATAL_ERROR:
+            error_table[last_error].fatal = false;
             ++non_fatal;
             break;
-        case 1:
-            error_table[last_error].fatal_error = true;
+        case EH_FATAL_ERROR:
+            error_table[last_error].fatal = true;
             ++fatal;
             break;
         default:
@@ -137,8 +137,8 @@ int error_handler(char *error, int arg1, ...)
             error_table[last_error].error_index = -1;
         last_error = fatal + non_fatal;
         return 0;
-    // Print errors
-    case 2:
+
+    case EH_PRINT:
         for (i = 0; i < last_error; ++i)
         {
             puts(error_table[i].error_msg);
@@ -147,24 +147,23 @@ int error_handler(char *error, int arg1, ...)
             else
                 printf("\n");
         }
-        error_handler(NULL, 3, 0);
+        error_handler(NULL, EH_CLEAR, EH_MAIN_DB);
 
-    // Clear errors
-    case 3:
+    case EH_CLEAR:
         arg2 = va_arg(arguments, int);
         switch (arg2)
         {
-        case 0:
+        case EH_MAIN_DB:
             memset(error_table, 0, MAX_ERRORS * sizeof(struct error_structure));
             i = last_error;
             last_error = fatal = non_fatal = 0;
             break;
-        case 1:
+        case EH_BACKUP_DB:
             memset(backup, 0, MAX_ERRORS * sizeof(struct error_structure));
             i = backup_error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
             break;
-        case 2:
+        case EH_ALL_DB:
             memset(error_table, 0, MAX_ERRORS * sizeof(struct error_structure));
             memset(backup, 0, MAX_ERRORS * sizeof(struct error_structure));
             i = last_error + backup_error_count;
@@ -175,23 +174,22 @@ int error_handler(char *error, int arg1, ...)
             i = -1;
         }
         return i;
-    
-    // Search for a specific error (todo: search by pointer not text)
-    case 4:
+
+    case EH_SEARCH:
         arg2 = va_arg(arguments, int);
         switch (arg2)
         {
-        case 0:
+        case EH_MAIN_DB:
             for (i = 0; i < last_error; ++i)
                 if (strcmp(error, error_table[i].error_msg) == 0)
                     return 1;
             break;
-        case 1:
+        case EH_BACKUP_DB:
             for (i = 0; i < last_error; ++i)
                 if (strcmp(error, backup[i].error_msg) == 0)
                     return 2;
             break;
-        case 2:
+        case EH_ALL_DB:
             for (i = 0; i < last_error; ++i)
             {
                 if (strcmp(error, error_table[i].error_msg) == 0)
@@ -203,22 +201,20 @@ int error_handler(char *error, int arg1, ...)
         return -1;
 
     // Return the number of saved errors
-    case 5:
+    case EH_ERROR_COUNT:
         arg2 = va_arg(arguments, int);
         switch (arg2)
         {
-        case 0:
+        case EH_MAIN_DB:
             return non_fatal;
-        case 1:
+        case EH_BACKUP_DB:
             return fatal;
-        case 2:
+        case EH_ALL_DB:
             return non_fatal + fatal;
         }
 
-    // Backup errors, useful if data is processed in another way to prevent mixing of errors
-    case 6:
-        // Clear the previous backup
-        error_handler(NULL, 3, 1);
+    case EH_BACKUP:
+        error_handler(NULL, EH_CLEAR, EH_BACKUP);
         // Copy the current error database to the backup database
         for (i = 0; i < last_error; ++i)
             backup[i] = error_table[i];
@@ -230,9 +226,9 @@ int error_handler(char *error, int arg1, ...)
         return 0;
 
     // Overwrite main error database with the backup error database
-    case 7:
+    case EH_RESTORE:
         // Clear current database
-        error_handler(NULL, 3);
+        error_handler(NULL, EH_CLEAR, EH_MAIN_DB);
         for (i = 0; i < backup_error_count; ++i)
             error_table[i] = backup[i];
         last_error = backup_error_count;
