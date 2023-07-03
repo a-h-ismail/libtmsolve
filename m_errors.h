@@ -31,4 +31,5 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define TOO_MANY_ARGS "Too many arguments in function call."
 #define TOO_FEW_ARGS "Too few arguments in function call."
 #define EXTF_FAILURE "Extended function reported a failure."
+#define INTEGRAl_UNDEFINED "Error while calculating integral, make sure the function is defined within the integration interval."
 #endif
