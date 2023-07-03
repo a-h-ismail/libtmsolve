@@ -27,6 +27,23 @@ SPDX-License-Identifier: LGPL-2.1-only
 /// Maximum number of errors in error_handler
 #define MAX_ERRORS 5
 
+#define EH_SAVE 1
+#define EH_PRINT 2
+#define EH_CLEAR 3
+#define EH_SEARCH 4
+#define EH_ERROR_COUNT 5
+#define EH_BACKUP 6
+#define EH_RESTORE 7
+
+#define EH_MAIN_DB 0
+#define EH_BACKUP_DB 1
+#define EH_ALL_DB 2
+
+#define EH_NONFATAL_ERROR 0
+#define EH_FATAL_ERROR 1
+#define EH_ALL_ERRORS 2
+
+
 /// @brief Stores the answer of the last calculation to allow reuse.
 extern double complex ans;
 
@@ -75,8 +92,8 @@ void tmsolve_init();
  * @param error The error message to store.
  * @param arg The list of argumets to pass to the error handler. \n
  * arg 1: \n
- * 1: Save the *error to the errors database, arg 2: ( 0: not fatal, stack; 1: fatal, stack). \n
- * For fatal errors, arg3 must have the index of the error (-1 means don't print_errors). \n
+ * 1: Save the *error to the errors database, arg 2: 0: not fatal; 1: fatal. \n
+ * For fatal errors, arg3 must have the index of the error (-1 means don't print the error). \n
  * 2: Print the errors to stdout and clear the database, return number of errors printed. \n
  * 3: Clear the error database. arg 2: clear (0: main; 1: backup; 2: all). \n
  * 4: Search for *error in the errors database, return 1 on match in main, 2 in backup. arg 2: search (0: main; 1: backup; 2: all). \n
