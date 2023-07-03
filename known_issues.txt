@@ -1,1 +1,2 @@
 - Scientific notation does not support floating point exponent (ignores decimal part).
+- Not all reserved keywords are restricted from being used as variables
