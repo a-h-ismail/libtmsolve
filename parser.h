@@ -57,7 +57,7 @@ typedef struct op_node
     /// Node operator priority.
     uint8_t priority;
 
-    double complex left_operand, right_operand, *node_result;
+    double complex left_operand, right_operand, *result;
     /// Points to the next op_node in evaluation order.
     struct op_node *next;
 } op_node;
@@ -105,9 +105,9 @@ typedef struct math_subexpr
     /// The array of op_nodes composing this subexpression.
     struct op_node *nodes;
 
-    /// @brief Points at one of the op_nodes result pointer, indicating that the answer of that node is the answer of this subexpression.
+    /// @brief Set to one of the op_nodes result pointer, indicating that the answer of that node is the answer of this subexpression.
     /// @details The op_node does not need to be in the same instance of the subexpr struct.
-    double complex **s_result;
+    double complex **result;
 
     /// Stores the pointer of the function to execute
     fptr func;
@@ -115,7 +115,7 @@ typedef struct math_subexpr
     /// Stores the type of the function to execute (0: none, 1: real, 2: cmplx, 3: extended)
     uint8_t func_type;
 
-    /// Enables execution of extended function, used to optimize nested extended functions like integration without thrashing performance.
+    /// Enables execution of extended function, used to optimize nested extended functions like integration.
     bool exec_extf;
 } math_subexpr;
 

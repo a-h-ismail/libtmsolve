@@ -374,7 +374,7 @@ int _init_nodes(char *local_expr, math_expr *M, int s_index, int *operator_index
         S[s_index].nodes[0].var_metadata = 0;
         // Case of nested no operators expressions, set the result of the deeper expression as the left op of the dummy
         if (i != -1)
-            *(S[i].s_result) = &(node_block->left_operand);
+            *(S[i].result) = &(node_block->left_operand);
         else
         {
             node_block->left_operand = read_value(local_expr, solve_start, M->enable_complex);
@@ -390,12 +390,12 @@ int _init_nodes(char *local_expr, math_expr *M, int s_index, int *operator_index
         }
 
         S[s_index].start_node = 0;
-        S[s_index].s_result = &(node_block->node_result);
+        S[s_index].result = &(node_block->result);
         node_block[0].next = NULL;
         // If the one term expression is the last one, use the math_struct answer
         if (s_index == s_count - 1)
         {
-            node_block[0].node_result = &M->answer;
+            node_block[0].result = &M->answer;
             // Signal to the parser that all subexpressions were completed
             return 2;
         }
@@ -471,7 +471,7 @@ int _set_operands(char *local_expr, math_expr *M, int s_index, bool enable_varia
                     return -1;
                 }
                 else
-                    *(S[status].s_result) = &(node_block[0].left_operand);
+                    *(S[status].result) = &(node_block[0].left_operand);
             }
         }
     }
@@ -499,7 +499,7 @@ int _set_operands(char *local_expr, math_expr *M, int s_index, bool enable_varia
                         return -1;
                     }
                     else
-                        *(S[status].s_result) = &(node_block[i].right_operand);
+                        *(S[status].result) = &(node_block[i].right_operand);
                 }
             }
         }
@@ -525,7 +525,7 @@ int _set_operands(char *local_expr, math_expr *M, int s_index, bool enable_varia
                         return -1;
                     }
                     else
-                        *(S[status].s_result) = &(node_block[i + 1].left_operand);
+                        *(S[status].result) = &(node_block[i + 1].left_operand);
                 }
             }
         }
@@ -549,7 +549,7 @@ int _set_operands(char *local_expr, math_expr *M, int s_index, bool enable_varia
                 error_handler(UNDEFINED_VARIABLE, 1, 1, node_block[i].operator_index + 1);
                 return -1;
             }
-            *(S[status].s_result) = &(node_block[op_count - 1].right_operand);
+            *(S[status].result) = &(node_block[op_count - 1].right_operand);
         }
     }
     return 0;
@@ -643,20 +643,20 @@ void _set_result_pointers(math_expr *M, int s_index)
 
         // Case of the first op_node or a op_node with no left candidate
         if (left_node == -1)
-            tmp_node->node_result = &(node_block[right_node].left_operand);
+            tmp_node->result = &(node_block[right_node].left_operand);
         else if (right_node == op_count)
-            tmp_node->node_result = &(node_block[left_node].right_operand);
+            tmp_node->result = &(node_block[left_node].right_operand);
         // Case of a op_node between 2 nodes
         else if (left_node > -1 && right_node < op_count)
         {
             if (node_block[left_node].priority >= node_block[right_node].priority)
-                tmp_node->node_result = &(node_block[left_node].right_operand);
+                tmp_node->result = &(node_block[left_node].right_operand);
             else
-                tmp_node->node_result = &(node_block[right_node].left_operand);
+                tmp_node->result = &(node_block[right_node].left_operand);
         }
         // Case of the last op_node
         else if (i == op_count - 1)
-            tmp_node->node_result = &(node_block[left_node].right_operand);
+            tmp_node->result = &(node_block[left_node].right_operand);
         tmp_node = tmp_node->next;
 
         prev_index = i;
@@ -664,10 +664,10 @@ void _set_result_pointers(math_expr *M, int s_index)
         prev_right = right_node;
     }
     // Case of the last op_node in the traversal order, set result to be result of the subexpression
-    S[s_index].s_result = &(tmp_node->node_result);
+    S[s_index].result = &(tmp_node->result);
     // The last op_node in the last subexpression should point to math_struct answer
     if (s_index == M->subexpr_count - 1)
-        tmp_node->node_result = &M->answer;
+        tmp_node->result = &M->answer;
 }
 
 math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
@@ -722,7 +722,7 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         if (S[s_index].func_type == 3)
         {
             S[s_index].nodes = NULL;
-            S[s_index].s_result = malloc(sizeof(double complex *));
+            S[s_index].result = malloc(sizeof(double complex *));
             continue;
         }
 
@@ -892,12 +892,12 @@ double complex eval_math_expr(math_expr *M)
                 memcpy(args, _glob_expr + S[s_index].solve_start, length * sizeof(char));
                 args[length] = '\0';
                 // Calling the extended function
-                **(S[s_index].s_result) = (*(S[s_index].func.extended))(args);
+                **(S[s_index].result) = (*(S[s_index].func.extended))(args);
 
                 // Restore
                 _glob_expr = backup;
 
-                if (isnan((double)**(S[s_index].s_result)))
+                if (isnan((double)**(S[s_index].result)))
                 {
                     error_handler(EXTF_FAILURE, 1, 0, S[s_index].subexpr_start);
                     return NAN;
@@ -912,11 +912,11 @@ double complex eval_math_expr(math_expr *M)
         i_node = S[s_index].nodes + S[s_index].start_node;
 
         if (S[s_index].op_count == 0)
-            *(i_node->node_result) = i_node->left_operand;
+            *(i_node->result) = i_node->left_operand;
         else
             while (i_node != NULL)
             {
-                if (i_node->node_result == NULL)
+                if (i_node->result == NULL)
                 {
                     error_handler(INTERNAL_ERROR, 1, 1, -1);
                     return NAN;
@@ -924,15 +924,15 @@ double complex eval_math_expr(math_expr *M)
                 switch (i_node->operator)
                 {
                 case '+':
-                    *(i_node->node_result) = i_node->left_operand + i_node->right_operand;
+                    *(i_node->result) = i_node->left_operand + i_node->right_operand;
                     break;
 
                 case '-':
-                    *(i_node->node_result) = i_node->left_operand - i_node->right_operand;
+                    *(i_node->result) = i_node->left_operand - i_node->right_operand;
                     break;
 
                 case '*':
-                    *(i_node->node_result) = i_node->left_operand * i_node->right_operand;
+                    *(i_node->result) = i_node->left_operand * i_node->right_operand;
                     break;
 
                 case '/':
@@ -941,7 +941,7 @@ double complex eval_math_expr(math_expr *M)
                         error_handler(DIVISION_BY_ZERO, 1, 1, i_node->operator_index);
                         return NAN;
                     }
-                    *(i_node->node_result) = i_node->left_operand / i_node->right_operand;
+                    *(i_node->result) = i_node->left_operand / i_node->right_operand;
                     break;
 
                 case '%':
@@ -950,25 +950,25 @@ double complex eval_math_expr(math_expr *M)
                         error_handler(MODULO_ZERO, 1, 1, i_node->operator_index);
                         return NAN;
                     }
-                    *(i_node->node_result) = fmod(i_node->left_operand, i_node->right_operand);
+                    *(i_node->result) = fmod(i_node->left_operand, i_node->right_operand);
                     break;
 
                 case '^':
                     // Workaround for the edge case where something like (6i)^2 is producing a small imaginary part
                     if (cimag(i_node->right_operand) == 0 && round(creal(i_node->right_operand)) - creal(i_node->right_operand) == 0)
                     {
-                        *(i_node->node_result) = 1;
+                        *(i_node->result) = 1;
                         int i;
                         if (creal(i_node->right_operand) > 0)
                             for (i = 0; i < creal(i_node->right_operand); ++i)
-                                *(i_node->node_result) *= i_node->left_operand;
+                                *(i_node->result) *= i_node->left_operand;
 
                         else if (creal(i_node->right_operand) < 0)
                             for (i = 0; i > creal(i_node->right_operand); --i)
-                                *(i_node->node_result) /= i_node->left_operand;
+                                *(i_node->result) /= i_node->left_operand;
                     }
                     else
-                        *(i_node->node_result) = cpow(i_node->left_operand, i_node->right_operand);
+                        *(i_node->result) = cpow(i_node->left_operand, i_node->right_operand);
                     break;
                 }
                 i_node = i_node->next;
@@ -978,14 +978,14 @@ double complex eval_math_expr(math_expr *M)
         switch (S[s_index].func_type)
         {
         case 1:
-            **(S[s_index].s_result) = (*(S[s_index].func.real))(**(S[s_index].s_result));
+            **(S[s_index].result) = (*(S[s_index].func.real))(**(S[s_index].result));
             break;
         case 2:
-            **(S[s_index].s_result) = (*(S[s_index].func.cmplx))(**(S[s_index].s_result));
+            **(S[s_index].result) = (*(S[s_index].func.cmplx))(**(S[s_index].result));
             break;
         }
 
-        if (isnan((double)**(S[s_index].s_result)))
+        if (isnan((double)**(S[s_index].result)))
         {
             error_handler(MATH_ERROR, 1, 0, S[s_index].solve_start, -1);
             return NAN;
@@ -1055,7 +1055,7 @@ void delete_math_expr(math_expr *M)
     for (i = 0; i < M->subexpr_count; ++i)
     {
         if (S[i].func_type == 3)
-            free(S[i].s_result);
+            free(S[i].result);
         free(S[i].nodes);
     }
     free(S);
@@ -1129,15 +1129,18 @@ bool _print_operand_source(math_subexpr *S, double complex *operand_ptr, int s_i
     {
         for (n = 0; n < S[s_index].op_count; ++n)
         {
-            if (operand_ptr == S[s_index].nodes[n].node_result)
+            if (operand_ptr == S[s_index].nodes[n].result)
             {
                 printf("[S%d;N%d]", s_index, n);
                 if (was_evaluated)
+                {
+                    printf(" = ");
                     print_value(*operand_ptr);
+                }
                 return true;
             }
         }
-        if (operand_ptr == *(S[s_index].s_result))
+        if (operand_ptr == *(S[s_index].result))
         {
             printf("[S:%d]", s_index);
             return true;
@@ -1170,15 +1173,15 @@ void dump_expr_data(math_expr *M, bool was_evaluated)
         {
             for (int j = 0; j < S[i].op_count; ++j)
             {
-                if (S[i].nodes[j].node_result == *(S[s_index].s_result))
+                if (S[i].nodes[j].result == *(S[s_index].result))
                 {
-                    printf("s_result at subexpr %d, node %d\n\n", i, j);
+                    printf("result at subexpr %d, node %d\n\n", i, j);
                     break;
                 }
             }
             // Case of a no op expression
-            if (S[i].op_count == 0 && S[i].nodes != NULL && S[i].nodes[0].node_result == *(S[s_index].s_result))
-                printf("s_result at subexpr %d, node 0\n\n", i);
+            if (S[i].op_count == 0 && S[i].nodes != NULL && S[i].nodes[0].result == *(S[s_index].result))
+                printf("result at subexpr %d, node 0\n\n", i);
         }
         tmp_node = S[s_index].nodes + S[s_index].start_node;
 
@@ -1188,7 +1191,7 @@ void dump_expr_data(math_expr *M, bool was_evaluated)
             printf("[%d]: ", tmp_node->node_index);
             printf("( ");
 
-            if (_print_operand_source(S, &(tmp_node->left_operand), s_index,was_evaluated) == false)
+            if (_print_operand_source(S, &(tmp_node->left_operand), s_index, was_evaluated) == false)
                 print_value(tmp_node->left_operand);
 
             printf(" )");
@@ -1198,7 +1201,7 @@ void dump_expr_data(math_expr *M, bool was_evaluated)
                 printf(" %c ", tmp_node->operator);
                 printf("( ");
 
-                if (_print_operand_source(S, &(tmp_node->right_operand), s_index,was_evaluated) == false)
+                if (_print_operand_source(S, &(tmp_node->right_operand), s_index, was_evaluated) == false)
                     print_value(tmp_node->right_operand);
 
                 printf(" )");
@@ -1210,18 +1213,18 @@ void dump_expr_data(math_expr *M, bool was_evaluated)
                 char left_or_right = '\0';
                 for (i = 0; i < S[s_index].op_count; ++i)
                 {
-                    if (&(S[s_index].nodes[i].right_operand) == tmp_node->node_result)
+                    if (&(S[s_index].nodes[i].right_operand) == tmp_node->result)
                     {
                         left_or_right = 'R';
                         break;
                     }
-                    else if (&(S[s_index].nodes[i].left_operand) == tmp_node->node_result)
+                    else if (&(S[s_index].nodes[i].left_operand) == tmp_node->result)
                     {
                         left_or_right = 'L';
                         break;
                     }
 
-                    if (S[s_index].op_count == 0 && &(S[s_index].nodes->right_operand) == tmp_node->node_result)
+                    if (S[s_index].op_count == 0 && &(S[s_index].nodes->right_operand) == tmp_node->result)
                     {
                         i = 0;
                         left_or_right = 'R';
@@ -1232,6 +1235,7 @@ void dump_expr_data(math_expr *M, bool was_evaluated)
             }
             else
                 printf(" --> ");
+            printf("\n");
             tmp_node = tmp_node->next;
         }
         ++s_index;
