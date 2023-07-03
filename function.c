@@ -84,13 +84,17 @@ double derivative(char *arguments)
     math_expr *M;
     arg_list *args;
     args = get_arguments(arguments);
-    
+
     if (_validate_args_count(2, args->count) == false)
         return NAN;
     double x, f_prime, fx1, fx2;
 
     x = calculate_expr(args->arguments[1], false);
     M = parse_expr(args->arguments[0], true, false);
+
+    if (M == NULL)
+        return NAN;
+
     // Solve for x
     set_variable(M, x);
     fx1 = eval_math_expr(M);
@@ -128,6 +132,9 @@ double integrate(char *arguments)
     // Compile the expression to the desired structure
     M = parse_expr(args->arguments[2], true, false);
 
+    if (M == NULL)
+        return NAN;
+
     // Calculating the number of rounds
     rounds = ceil(delta) * 65536;
 
@@ -142,14 +149,14 @@ double integrate(char *arguments)
     result += eval_math_expr(M);
     if (isnan(result) == true)
     {
-        error_handler("Error while calculating integral, make sure the function is defined on the integration interval.", 1, 1, -1);
+        error_handler(INTEGRAl_UNDEFINED, 1, 1, -1);
         delete_math_expr(M);
         return NAN;
     }
 
     double part1 = 0, part2 = 0;
     // Use i to determine when n is divisible by 3 without doing a mod 3
-    int i=1;
+    int i = 1;
 
     for (n = 1; n < rounds; ++n)
     {
@@ -165,7 +172,7 @@ double integrate(char *arguments)
                 return NAN;
             }
             part2 += fn;
-            i=1;
+            i = 1;
         }
         else
         {
