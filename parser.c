@@ -289,12 +289,11 @@ bool _set_function_ptr(char *local_expr, math_expr *M, int s_index)
     math_subexpr *S = &(M->subexpr_ptr[s_index]);
     int solve_start = S->solve_start;
 
-    // Searching for any function preceding the expression to set the function pointer
+    // Search for any function preceding the expression to set the function pointer
     if (solve_start > 1 && legal_char_in_name(local_expr[solve_start - 2]))
     {
         if (!M->enable_complex)
         {
-            // Determining the number of functions to check at runtime
             for (i = 0; i < array_length(r_function_ptr); ++i)
             {
                 j = r_search(local_expr, r_function_name[i], solve_start - 2, true);
@@ -308,7 +307,7 @@ bool _set_function_ptr(char *local_expr, math_expr *M, int s_index)
                 }
             }
             // The function isn't defined for real operations (loop exited due to condition instead of break)
-            if (i == array_length(r_function_ptr) + 1)
+            if (i == array_length(r_function_ptr))
             {
                 error_handler(UNDEFINED_FUNCTION, 1, 0, solve_start - 2);
                 return false;
@@ -328,7 +327,7 @@ bool _set_function_ptr(char *local_expr, math_expr *M, int s_index)
                 }
             }
             // The complex function is not defined
-            if (i == array_length(cmplx_function_ptr) + 1)
+            if (i == array_length(cmplx_function_ptr))
             {
                 error_handler(UNDEFINED_FUNCTION, 1, 0, solve_start - 2);
                 return false;
@@ -997,7 +996,7 @@ double complex eval_math_expr(math_expr *M)
     if (M->runvar_i != -1)
         variable_values[M->runvar_i] = M->answer;
 
-    // dump_expr_data(M);
+    // dump_expr_data(M, true);
 
     return M->answer;
 }
@@ -1123,10 +1122,31 @@ int find_subexpr_by_end(math_subexpr *S, int end, int s_index, int s_count)
     return -1;
 }
 
-/**
- * @brief
- * @param M
- */
+bool _print_operand_source(math_subexpr *S, double complex *operand_ptr, int s_index, bool was_evaluated)
+{
+    int n;
+    while (s_index != -1)
+    {
+        for (n = 0; n < S[s_index].op_count; ++n)
+        {
+            if (operand_ptr == S[s_index].nodes[n].node_result)
+            {
+                printf("[S%d;N%d]", s_index, n);
+                if (was_evaluated)
+                    print_value(*operand_ptr);
+                return true;
+            }
+        }
+        if (operand_ptr == *(S[s_index].s_result))
+        {
+            printf("[S:%d]", s_index);
+            return true;
+        }
+        --s_index;
+    }
+    return false;
+}
+
 void dump_expr_data(math_expr *M, bool was_evaluated)
 {
     int s_index = 0;
@@ -1161,20 +1181,26 @@ void dump_expr_data(math_expr *M, bool was_evaluated)
                 printf("s_result at subexpr %d, node 0\n\n", i);
         }
         tmp_node = S[s_index].nodes + S[s_index].start_node;
+
         // Dump nodes data
         while (tmp_node != NULL)
         {
             printf("[%d]: ", tmp_node->node_index);
             printf("( ");
-            print_value(tmp_node->left_operand);
-            printf(" )");
 
+            if (_print_operand_source(S, &(tmp_node->left_operand), s_index,was_evaluated) == false)
+                print_value(tmp_node->left_operand);
+
+            printf(" )");
             // No one wants to see uninitialized values (skip for nodes used to hold one number)
             if (S[s_index].op_count != 0)
             {
                 printf(" %c ", tmp_node->operator);
                 printf("( ");
-                print_value(tmp_node->right_operand);
+
+                if (_print_operand_source(S, &(tmp_node->right_operand), s_index,was_evaluated) == false)
+                    print_value(tmp_node->right_operand);
+
                 printf(" )");
             }
 
