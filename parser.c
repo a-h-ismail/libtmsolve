@@ -157,7 +157,7 @@ math_expr *_init_math_expr(char *local_expr, bool enable_complex)
 
     int depth = 0;
     s_index = 0;
-    // Determining the depth and start/end of each subexpression parenthesis
+    // Determine the depth and start/end of each subexpression parenthesis
     for (i = 0; i < length; ++i)
     {
         // Resize the subexpr array on the fly
@@ -171,6 +171,7 @@ math_expr *_init_math_expr(char *local_expr, bool enable_complex)
             S[s_index].func.extended = NULL;
             S[s_index].func_type = 0;
             S[s_index].exec_extf = true;
+            S[s_index].nodes = NULL;
 
             // Treat extended functions as a subexpression
             for (j = 0; j < sizeof(ext_math_function) / sizeof(*ext_math_function); ++j)
@@ -224,6 +225,7 @@ math_expr *_init_math_expr(char *local_expr, bool enable_complex)
     S[s_index].solve_start = S[s_index].subexpr_start = 0;
     S[s_index].solve_end = length - 1;
     S[s_index].func.extended = NULL;
+    S[s_index].nodes = NULL;
     S[s_index].func_type = 0;
     S[s_index].exec_extf = true;
 
@@ -721,7 +723,6 @@ math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex)
         // Special case of extended functions
         if (S[s_index].func_type == 3)
         {
-            S[s_index].nodes = NULL;
             S[s_index].result = malloc(sizeof(double complex *));
             continue;
         }
