@@ -89,17 +89,10 @@ int error_handler(char *error, int arg1, ...)
     va_list arguments;
     va_start(arguments, arg1);
     int i, arg2;
-    struct error_structure
-    {
-        char *error_msg, bad_snippet[50];
-        bool fatal;
-        int error_index;
-    };
 
-    static struct error_structure error_table[MAX_ERRORS], backup[MAX_ERRORS];
+    static error_data error_table[MAX_ERRORS], backup[MAX_ERRORS];
     switch (arg1)
     {
-
     case EH_SAVE:
         error_table[last_error].error_msg = error;
         arg2 = va_arg(arguments, int);
@@ -125,16 +118,16 @@ int error_handler(char *error, int arg1, ...)
             {
                 strncpy(error_table[last_error].bad_snippet, _glob_expr + position - 24, 49);
                 error_table[last_error].bad_snippet[49] = '\0';
-                error_table[last_error].error_index = 24;
+                error_table[last_error].index = 24;
             }
             else
             {
                 strcpy(error_table[last_error].bad_snippet, _glob_expr);
-                error_table[last_error].error_index = position;
+                error_table[last_error].index = position;
             }
         }
         else
-            error_table[last_error].error_index = -1;
+            error_table[last_error].index = -1;
         last_error = fatal + non_fatal;
         return 0;
 
@@ -142,8 +135,8 @@ int error_handler(char *error, int arg1, ...)
         for (i = 0; i < last_error; ++i)
         {
             puts(error_table[i].error_msg);
-            if (error_table[i].error_index != -1)
-                print_errors(error_table[i].bad_snippet, error_table[i].error_index);
+            if (error_table[i].index != -1)
+                print_errors(error_table[i].bad_snippet, error_table[i].index);
             else
                 printf("\n");
         }
@@ -154,18 +147,18 @@ int error_handler(char *error, int arg1, ...)
         switch (arg2)
         {
         case EH_MAIN_DB:
-            memset(error_table, 0, MAX_ERRORS * sizeof(struct error_structure));
+            memset(error_table, 0, MAX_ERRORS * sizeof(struct error_data));
             i = last_error;
             last_error = fatal = non_fatal = 0;
             break;
         case EH_BACKUP_DB:
-            memset(backup, 0, MAX_ERRORS * sizeof(struct error_structure));
+            memset(backup, 0, MAX_ERRORS * sizeof(struct error_data));
             i = backup_error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
             break;
         case EH_ALL_DB:
-            memset(error_table, 0, MAX_ERRORS * sizeof(struct error_structure));
-            memset(backup, 0, MAX_ERRORS * sizeof(struct error_structure));
+            memset(error_table, 0, MAX_ERRORS * sizeof(struct error_data));
+            memset(backup, 0, MAX_ERRORS * sizeof(struct error_data));
             i = last_error + backup_error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
             last_error = fatal = non_fatal = 0;
