@@ -7,7 +7,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 /**
  * @file
  * @brief Declares general purpose functions and globals used in the calculator. Includes all required standard library headers.
-*/
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,7 +23,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "m_errors.h"
 #endif
 
-#define array_length(z) (sizeof(z)/sizeof(*z))
+#define array_length(z) (sizeof(z) / sizeof(*z))
 /// Maximum number of errors in error_handler
 #define MAX_ERRORS 5
 
@@ -35,14 +35,13 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define EH_BACKUP 6
 #define EH_RESTORE 7
 
-#define EH_MAIN_DB 0
-#define EH_BACKUP_DB 1
-#define EH_ALL_DB 2
+#define EH_MAIN_DB 8
+#define EH_BACKUP_DB 9
+#define EH_ALL_DB 10
 
-#define EH_NONFATAL_ERROR 0
-#define EH_FATAL_ERROR 1
-#define EH_ALL_ERRORS 2
-
+#define EH_NONFATAL_ERROR 11
+#define EH_FATAL_ERROR 12
+#define EH_ALL_ERRORS 13
 
 /// @brief Stores the answer of the last calculation to allow reuse.
 extern double complex ans;
@@ -83,6 +82,16 @@ typedef struct arg_list
     char **arguments;
 } arg_list;
 
+/**
+ * @brief Error metadata structure.
+ */
+typedef struct error_data
+{
+    char *error_msg, bad_snippet[50];
+    bool fatal;
+    int index;
+} error_data;
+
 /// @brief Initializes the variables required for the proper operation of the calculator.
 /// @details The variables to initialize are: all_functions, function_count, variable_names, variable_count.
 void tmsolve_init();
@@ -90,16 +99,16 @@ void tmsolve_init();
 /**
  * @brief Error handling function, collects and manages errors.
  * @param error The error message to store.
- * @param arg The list of argumets to pass to the error handler. \n
- * arg 1: \n
- * 1: Save the *error to the errors database, arg 2: 0: not fatal; 1: fatal. \n
- * For fatal errors, arg3 must have the index of the error (-1 means don't print the error). \n
- * 2: Print the errors to stdout and clear the database, return number of errors printed. \n
- * 3: Clear the error database. arg 2: clear (0: main; 1: backup; 2: all). \n
- * 4: Search for *error in the errors database, return 1 on match in main, 2 in backup. arg 2: search (0: main; 1: backup; 2: all). \n
- * 5: Return the amount of errors in the main database. arg 2: 0: non-fatal; 1: fatal; 2:all . \n
- * 6: Backup current errors, making room for new ones. \n
- * 7: Restore the backed up errors, clearing the current errors in the process. \n
+ * @param arg The list of argumets to pass to the error handler.
+ * @details
+ * Possible arguments:
+ * EH_SAVE, EH_FATAL_ERROR | EH_NONFATAL_ERROR, error_index \n
+ * EH_PRINT (returns number of printed errors). \n
+ * EH_CLEAR, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB \n
+ * EH_SEARCH, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB (returns 1 on match in main, 2 on match in backup). \n
+ * EH_ERROR_COUNT, EH_FATAL_ERROR | EH_NONFATAL_ERROR | EH_ALL_ERRORS (returns number of errors specified). \n
+ * EH_BACKUP \n
+ * EH_RESTORE \n
 
  * @return Depends on the argument list.
  */
