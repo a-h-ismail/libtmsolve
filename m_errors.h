@@ -17,6 +17,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define INVALID_MATRIX "Invalid matrix."
 #define SYNTAX_ERROR "Syntax error."
 #define INVALID_VARIABLE_NAME "Invalid variable name, allowed characters: alphabetic + underscore."
+#define ILLEGAL_VARIABLE_NAME "Illegal variable name."
 #define NO_INPUT "Empty input."
 #define DIVISION_BY_ZERO "Division by zero isn't defined."
 #define MODULO_ZERO "Modulo zero implies a division by zero."
