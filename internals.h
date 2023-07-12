@@ -71,7 +71,13 @@ extern double complex *variable_values;
 extern char **variable_names;
 
 /// @brief Number of hardcoded variables.
-extern int hardcoded_variable_count;
+extern const int hardcoded_variable_count;
+
+/// @brief Names that should not be usable for variables.
+extern char *illegal_names[];
+
+/// @brief Number of illegal names (for use in loops);
+extern const int illegal_names_count;
 
 /// @brief Stores metadata related to extended functions arguments.
 typedef struct arg_list
@@ -101,7 +107,7 @@ void tmsolve_init();
  * @param error The error message to store.
  * @param arg The list of argumets to pass to the error handler.
  * @details
- * Possible arguments:
+ * Possible arguments: \n
  * EH_SAVE, EH_FATAL_ERROR | EH_NONFATAL_ERROR, error_index \n
  * EH_PRINT (returns number of printed errors). \n
  * EH_CLEAR, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB \n
