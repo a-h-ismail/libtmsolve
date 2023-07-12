@@ -166,13 +166,15 @@ int compare_priority(char operator1, char operator2);
  */
 arg_list* get_arguments(char *string);
 
-
 /**
  * @brief Ensures the expression is not empty, checks syntax and merges extra +/- signs.
  * @return true if the checks pass, false otherwise.
 */
 bool pre_parse_routine(char *expr);
 
+/**
+ * @brief Determines if the specified character is allowed in variable names.
+ */
 bool legal_char_in_name(char c);
 
 /**
