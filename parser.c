@@ -102,9 +102,21 @@ int _set_runtime_var(char *expr, int i)
         char tmp[i + 1];
         strncpy(tmp, expr, i);
         tmp[i] = '\0';
+
+        // Check if the name is allowed
+        for (i = 0; i < illegal_names_count; ++i)
+        {
+            if (strcmp(tmp, illegal_names[i]) == 0)
+            {
+                error_handler(ILLEGAL_VARIABLE_NAME, EH_SAVE, EH_FATAL_ERROR, 0);
+                return -1;
+            }
+        }
+
+        // Check if the name has illegal characters
         if (valid_name(tmp) == false)
         {
-            error_handler(INVALID_VARIABLE_NAME, EH_SAVE, EH_FATAL_ERROR, -1);
+            error_handler(INVALID_VARIABLE_NAME, EH_SAVE, EH_FATAL_ERROR, 0);
             return -1;
         }
         for (j = 0; j < variable_count; ++j)
