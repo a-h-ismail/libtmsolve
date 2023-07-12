@@ -83,6 +83,12 @@ double complex read_value(char *expr, int start, bool enable_complex)
     {
         if (match_word(expr, start, variable_names[i], true))
         {
+            // Complex variable in real only mode
+            if (!enable_complex && cimag(variable_values[i]) != 0)
+            {
+                error_handler(MATH_ERROR, EH_SAVE, EH_FATAL_ERROR, start);
+                return NAN;
+            }
             value = variable_values[i];
             is_variable = true;
             break;
@@ -132,7 +138,7 @@ double complex read_value(char *expr, int start, bool enable_complex)
     if (enable_complex && is_complex)
         return value * I;
     else
-        return value;
+    return value;
 }
 bool is_op(char c)
 {
