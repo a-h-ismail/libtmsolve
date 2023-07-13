@@ -15,7 +15,7 @@ char **variable_names;
 char *hardcoded_variable_names[] = {"pi", "exp", "c"};
 double complex hardcoded_variable_values[] = {M_PI, M_E, 299792458};
 const int hardcoded_variable_count = array_length(hardcoded_variable_names);
-char *illegal_names[] = {"e", "i"};
+char *illegal_names[] = {"e", "E", "i"};
 const int illegal_names_count = array_length(illegal_names);
 int function_count = 0, variable_count, variable_max = 8;
 void tmsolve_init()
@@ -136,6 +136,11 @@ int error_handler(char *error, int arg1, ...)
     case EH_PRINT:
         for (i = 0; i < last_error; ++i)
         {
+            if (error_table[i].error_msg == NULL)
+            {
+                puts(INTERNAL_ERROR);
+                return -1;
+            }
             puts(error_table[i].error_msg);
             if (error_table[i].index != -1)
                 print_errors(error_table[i].bad_snippet, error_table[i].index);
@@ -240,7 +245,7 @@ int error_handler(char *error, int arg1, ...)
 void print_errors(char *expr, int error_pos)
 {
     int i;
-    puts(expr);
+    fputs(expr, stderr);
     for (i = 0; i < error_pos; ++i)
         fprintf(stderr, "~");
     fprintf(stderr, "^\n\n");
