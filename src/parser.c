@@ -1083,7 +1083,7 @@ void tms_set_priority(tms_op_node *list, int op_count)
     int i, j;
     for (i = 0; i < op_count; ++i)
     {
-        for (j = 0; j < 7; ++j)
+        for (j = 0; j < array_length(operators); ++j)
         {
             if (list[i].operator== operators[j])
             {
