@@ -12,7 +12,7 @@ double answer;
 // Here we calculate light speed in the vaccum as an example:
 char light_speed[]={"sqrt(1/(8.8541878128e-12*(4e-7*pi)))"};
 // Expected answer: 299792458.08161
-answer = calculate_expr_auto(light_speed);
+answer = tms_solve(light_speed);
 ```
 
 To build your binary and link to this library:
