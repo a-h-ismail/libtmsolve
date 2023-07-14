@@ -19,29 +19,29 @@ SPDX-License-Identifier: LGPL-2.1-only
 // Global variables
 
 /// @brief Contains the names of scientific functions (for real numbers) like sin, cos...
-extern char *r_function_name[];
+extern char *tms_r_func_name[];
 
 /// @brief Contains the function pointers of scientific functions.
-extern double (*r_function_ptr[])(double);
+extern double (*tms_r_func_ptr[])(double);
 
 /// @brief Contains the names of complex numbers functions like sin, cos...
-extern char *cmplx_function_name[];
+extern char *tms_cmplx_func_name[];
 
 /// @brief Contains the function pointers of scientific functions.
-extern double complex (*cmplx_function_ptr[])(double complex);
+extern double complex (*tms_cmplx_func_ptr[])(double complex);
 
 /// @brief Contains the names of extended functions (functions with variable number of arguments, passed as a comma separated string).
-extern char *ext_function_name[];
+extern char *tms_ext_func_name[];
 
 /// @brief Contains the function pointers of scientific functions.
-extern double (*ext_math_function[])(char *);
+extern double (*tms_ext_func[])(char *);
 
 /// @brief Comparator function for use with qsort(), compares the depth of 2 subexpressions.
 /// @return 1 if a.depth < b.depth; -1 if a.depth > b.depth; 0 otherwise.
-int compare_subexps_depth(const void *a, const void *b);
+int tms_compare_subexpr_depth(const void *a, const void *b);
 
 /// @brief Operator node, stores the required metadata for an operator and its operands.
-typedef struct op_node
+typedef struct tms_op_node
 {
     /// The operator of this op_node.
     char operator;
@@ -59,20 +59,20 @@ typedef struct op_node
 
     double complex left_operand, right_operand, *result;
     /// Points to the next op_node in evaluation order.
-    struct op_node *next;
-} op_node;
+    struct tms_op_node *next;
+} tms_op_node;
 
 /// @brief Holds the data required to locate and set a value to a variable in the expression.
-typedef struct var_op_data
+typedef struct tms_var_operand
 {
     /// @brief Pointer to the operand set as variable.
     double complex *var_ptr;
     /// @brief Set to true if the operand is negative.
     bool is_negative;
-} var_op_data;
+} tms_var_operand;
 
 /// @brief Union to store function pointers
-typedef union mfunc_pointers
+typedef union tms_mfunc_ptrs
 {
     double (*real)(double);
     double complex (*cmplx)(double complex);
@@ -80,7 +80,7 @@ typedef union mfunc_pointers
 } fptr;
 
 /// @brief Holds the metadata of a subexpression.
-typedef struct math_subexpr
+typedef struct tms_math_subexpr
 {
     /// @brief Number of operators in this subexpression.
     int op_count;
@@ -103,7 +103,7 @@ typedef struct math_subexpr
     int start_node;
 
     /// The array of op_nodes composing this subexpression.
-    struct op_node *nodes;
+    struct tms_op_node *nodes;
 
     /// @brief Set to one of the op_nodes result pointer, indicating that the answer of that node is the answer of this subexpression.
     /// @details The op_node does not need to be in the same instance of the subexpr struct.
@@ -117,13 +117,13 @@ typedef struct math_subexpr
 
     /// Enables execution of extended function, used to optimize nested extended functions like integration.
     bool exec_extf;
-} math_subexpr;
+} tms_math_subexpr;
 
 /// The standalone structure to hold all of an expression's metadata.
-typedef struct math_expr
+typedef struct tms_math_expr
 {
     /// The subexpression array created by parsing the math expression.
-    math_subexpr *subexpr_ptr;
+    tms_math_subexpr *subexpr_ptr;
 
     /// Number of subexpression in this math expression.
     int subexpr_count;
@@ -131,18 +131,18 @@ typedef struct math_expr
     /// Number of variable operands.
     int var_count;
 
-    /// Indicates the index of variable_values to copy the answer to.
+    /// Indicates the index of tms_g_var_values to copy the answer to.
     int runvar_i;
 
     /// Array of variable operands metadata.
-    var_op_data *var_data;
+    tms_var_operand *var_data;
 
     /// Answer of the expression.
     double complex answer;
 
     /// Toggles complex support.
     bool enable_complex;
-} math_expr;
+} tms_math_expr;
 
 
 /**
@@ -150,7 +150,7 @@ typedef struct math_expr
  * @param eq Index of the assignment operator.
  * @return Index of the variable in the global array.
  */
-int _set_runtime_var(char *expr, int eq);
+int _tms_set_runtime_var(char *expr, int eq);
 
 /**
  * @brief Initializes the math expression structure.
@@ -158,7 +158,7 @@ int _set_runtime_var(char *expr, int eq);
  * @param enable_complex Set complex support status.
  * @return Pointer to the initialized structure.
  */
-math_expr *_init_math_expr(char *local_expr, bool enable_complex);
+tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex);
 
 /**
  * @brief Locates operators in the current subexpression.
@@ -168,26 +168,26 @@ math_expr *_init_math_expr(char *local_expr, bool enable_complex);
  * @param s_index Index of the current subexpression.
  * @return An int array containing the indexes of each operator.
  */
-int *_get_operator_indexes(char *local_expr, math_subexpr *S, int s_index);
+int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_index);
 
 /**
  * @brief Sets the (non extended) function pointer in the subexpression.
  * @param local_expr Expression, offset from the assignment operator (if any).
- * @param M math_expr being processed.
+ * @param M tms_math_expr being processed.
  * @param s_index Index of the current subexpression.
  * @return 
  */
-bool _set_function_ptr(char *local_expr, math_expr *M, int s_index);
+bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index);
 
 /**
  * @brief Allocates nodes and sets basic metadata.
  * @param local_expr Expression, offset from the assignment operator (if any).
  * @param M math_expr being processed.
  * @param s_index Index of the current subexpression.
- * @param operator_index Operator indexes obtained using _get_operator_indexes().
+ * @param operator_index Operator indexes obtained using _tms_get_operator_indexes().
  * @return 0: continue, 1: Subexpression parsing done, 2: All subexpressions are done, -1: Error
  */
-int _init_nodes(char *local_expr, math_expr *M, int s_index, int *operator_index);
+int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operator_index);
 
 /**
  * @brief Sets right/left operands and variable operand 'x' for all nodes.
@@ -197,20 +197,20 @@ int _init_nodes(char *local_expr, math_expr *M, int s_index, int *operator_index
  * @param enable_variables Toggles support for variable 'x'
  * @return -1 in case of failure.
  */
-int _set_operands(char *local_expr, math_expr *M, int s_index, bool enable_variables);
+int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enable_variables);
 
 /**
  * @brief Sets the *next pointer of all nodes.
  * @param S current subexpression being processed.
  */
-void _set_evaluation_order(math_subexpr *S);
+void _tms_set_evaluation_order(tms_math_subexpr *S);
 
 /**
  * @brief Set the operation result pointer for each node.
  * @param M math_expr being processed.
  * @param s_index Index of the current subexpression.
  */
-void _set_result_pointers(math_expr *M, int s_index);
+void _tms_set_result_pointers(tms_math_expr *M, int s_index);
 
 /**
  * @brief Returns the name of the function possessing the specified pointer.
@@ -218,7 +218,7 @@ void _set_result_pointers(math_expr *M, int s_index);
  * @param func_type Type of the function pointer (1:real, 2:complex, 3: extended)
  * @return A pointer to the name, or NULL if nothing is found.
  */
-char *lookup_function_name(void *function, int func_type);
+char *_tms_lookup_function_name(void *function, int func_type);
 
 /**
  * @brief Returns the pointer to a function knowing its name.
@@ -226,7 +226,7 @@ char *lookup_function_name(void *function, int func_type);
  * @param is_complex Toggles between searching real and complex functions.
  * @return The function pointer, or NULL in case of failure.
  */
-void *lookup_function_pointer(char *function_name, bool is_complex);
+void *_tms_lookup_function_pointer(char *function_name, bool is_complex);
 
 /**
  * @brief Coverts a math_expr parsed with complex disabled into a complex enabled one.
@@ -234,14 +234,14 @@ void *lookup_function_pointer(char *function_name, bool is_complex);
  * @note If the function fails to convert the math_expr from real to complex, it won't change the M->enable_complex struct member,
  * use it to verify if the conversion succeeded.
  */
-void convert_real_to_complex(math_expr *M);
+void tms_convert_real_to_complex(tms_math_expr *M);
 
 /**
  * @brief Evaluates a math_expr structure and calculates the result.
  * @param M The math structure to evaluate.
  * @return The answer of the math expression, or NaN in case of failure.
  */
-double complex eval_math_expr(math_expr *M);
+double complex tms_evaluate(tms_math_expr *M);
 
 /**
  * @brief Sets the variable metadata in x_node to the left and/or right operand.
@@ -250,31 +250,31 @@ double complex eval_math_expr(math_expr *M);
  * @param operand Informs the function which operand to set as variable.
  * @return true if the variable x was found at either operands of x_node, false otherwise.
  */
-bool set_variable_metadata(char *expr, op_node *x_node, char operand);
+bool tms_set_var_metadata(char *expr, tms_op_node *x_node, char operand);
 
 /**
  * @brief Parses a math expression into a structure.
- * @warning You should call syntax_check() before calling this function, because it depends on having an expression with valid syntax.
+ * @warning You should call tms_syntax_check() before calling this function, because it depends on having an expression with valid syntax.
  * @param expr The string containing the math expression.
  * @param enable_variables When set to true, the parser will look for variables (currently x only) and set its metadata in the corresponding nodes.\n
- * Use set_variable() from function.h to specify the value taken by the variable.
+ * Use _tms_set_variable() from function.h to specify the value taken by the variable.
  * @param enable_complex When set to true, enables the parser to read complex values and set complex variant of scientific functions (disables integration, derivation, modulo and factorial).
  * @return A (malloc'd) pointer to the generated math structure.
  */
-math_expr *parse_expr(char *expr, bool enable_variables, bool enable_complex);
+tms_math_expr *tms_parse_expr(char *expr, bool enable_variables, bool enable_complex);
 
 /**
  * @brief Frees the memory used by a math_expr and its members.
  * @param math_struct The math_expr to delete.
  */
-void delete_math_expr(math_expr *math_struct);
+void tms_delete_math_expr(tms_math_expr *math_struct);
 
 /**
- * @brief Fills a op_node array with the priority of each op_node's operator.
- * @param list The op_node array to fill.
- * @param op_count The number of operators in the array. Equal to the number of nodes.
+ * @brief Sets the priority of each op_node's operator in the provided array.
+ * @param list The op_node array.
+ * @param op_count Number of operators in the array. Equal to the number of nodes.
  */
-void priority_fill(op_node *list, int op_count);
+void tms_set_priority(tms_op_node *list, int op_count);
 
 /**
  * @brief Finds the subexpression that starts at a specific index in the string.
@@ -284,7 +284,7 @@ void priority_fill(op_node *list, int op_count);
  * @param mode Determines if the value passed by start is the expression_start (mode==1) or solve_start (mode==2).
  * @return Depends on the mode, either
  */
-int find_subexpr_by_start(math_subexpr *S, int start, int s_index, int mode);
+int tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_index, int mode);
 
 /**
  * @brief Finds the subexpression that ends at a specific index in the string.
@@ -294,12 +294,12 @@ int find_subexpr_by_start(math_subexpr *S, int start, int s_index, int mode);
  * @param s_count The number of subexpressions in the expression.
  * @return
  */
-int find_subexpr_by_end(math_subexpr *S, int end, int s_index, int s_count);
+int tms_find_subexpr_ending_at(tms_math_subexpr *S, int end, int s_index, int s_count);
 /// @brief Dumps the data of the math expression M.
 /// @details The dumped data includes: \n
 /// - Subexpression depth and function pointers. \n
 /// - Left and right operands of each node (and the operator). \n
 /// - Nodes ordered by evaluation order. \n
 /// - Result pointer of each subepression.
-void dump_expr_data(math_expr *M, bool was_evaluated);
+void tms_dump_expr(tms_math_expr *M, bool was_evaluated);
 #endif

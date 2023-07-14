@@ -24,7 +24,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #endif
 
 #define array_length(z) (sizeof(z) / sizeof(*z))
-/// Maximum number of errors in error_handler
+/// Maximum number of errors in tms_error_handler
 #define MAX_ERRORS 5
 
 #define EH_SAVE 1
@@ -44,62 +44,68 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define EH_ALL_ERRORS 13
 
 /// @brief Stores the answer of the last calculation to allow reuse.
-extern double complex ans;
+extern double complex tms_g_ans;
 
-/// @brief Use to store the current expression being processed, used by error_handler() to generate the error prompt.
-extern char *_glob_expr;
+/// @brief Use to store the current expression being processed, used by tms_error_handler() to generate the error prompt.
+extern char *_tms_g_expr;
 
-/// @brief Indicates if the library intialization function should be run.
-extern bool _init_needed;
+/// @brief Indicates if the library initialization function should be run.
+extern bool _tms_init;
 
 /// @brief Total number of functions, those with complex variant are counted once.
-extern int function_count;
+extern int tms_g_func_count;
 
 /// @brief Total number of variables, including built in ones.
-extern int variable_count;
+extern int tms_g_var_count;
 
 /// @brief Current maximum variable capacity, use to dynamically resize variable storage.
-extern int variable_max;
+extern int tms_g_var_max;
 
 /// @brief All function names, including built in, extended, and user defined functions.
-extern char **all_functions;
+extern char **tms_g_all_func_names;
 
 /// @brief Contains all variable values except ans which has its own variable.
-extern double complex *variable_values;
+extern double complex *tms_g_var_values;
 
 /// @brief Contains all variable names including built in ones.
-extern char **variable_names;
+extern char **tms_g_var_names;
 
-/// @brief Number of hardcoded variables.
-extern const int hardcoded_variable_count;
+/// @brief 
+extern char *tms_builtin_var_names[];
+
+/// @brief
+extern complex double tms_builtin_var_values[] ;
+
+/// @brief Number of built in variables.
+extern const int tms_builtin_var_count;
 
 /// @brief Names that should not be usable for variables.
-extern char *illegal_names[];
+extern char *tms_g_illegal_names[];
 
 /// @brief Number of illegal names (for use in loops);
-extern const int illegal_names_count;
+extern const int tms_g_illegal_names_count;
 
 /// @brief Stores metadata related to extended functions arguments.
-typedef struct arg_list
+typedef struct tms_arg_list
 {
     /// The number of arguments.
     int count;
     // Array of C strings, stores the arguments.
     char **arguments;
-} arg_list;
+} tms_arg_list;
 
 /**
  * @brief Error metadata structure.
  */
-typedef struct error_data
+typedef struct tms_error_data
 {
     char *error_msg, bad_snippet[50];
     bool fatal;
     int index;
-} error_data;
+} tms_error_data;
 
 /// @brief Initializes the variables required for the proper operation of the calculator.
-/// @details The variables to initialize are: all_functions, function_count, variable_names, variable_count.
+/// @details The variables to initialize are: tms_g_all_func_names, tms_g_func_count, tms_g_var_names, tms_g_var_count.
 void tmsolve_init();
 
 /**
@@ -118,14 +124,14 @@ void tmsolve_init();
 
  * @return Depends on the argument list.
  */
-int error_handler(char *error, int arg, ...);
+int tms_error_handler(char *error, int arg, ...);
 
 /**
  * @brief Prints the expression and points at the location of the error found.
  * @param expr The portion of the expression.
  * @param error_pos The index of the error in expr.
  */
-void print_errors(char *expr, int error_pos);
+void tms_print_errors(char *expr, int error_pos);
 
 /**
  * @brief Simple function to find the minimum of 2 integers.

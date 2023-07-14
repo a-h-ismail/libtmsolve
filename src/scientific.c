@@ -7,7 +7,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "function.h"
 #include "string_tools.h"
 
-double factorial(double value)
+double tms_factorial(double value)
 {
     double result = 1;
     for (int i = 2; i <= value; ++i)
@@ -18,26 +18,26 @@ double factorial(double value)
 void _set_ans(double complex result)
 {
     if (!isnan(creal(result)) && !isnan(cimag(result)))
-        ans = result;
+        tms_g_ans = result;
 }
 
-double complex calculate_expr(char *expr, bool enable_complex)
+double complex tms_solve_e(char *expr, bool enable_complex)
 {
     double complex result;
-    math_expr *math_struct;
+    tms_math_expr *math_struct;
 
-    if (pre_parse_routine(expr) == false)
+    if (tms_pre_parse_routine(expr) == false)
         return NAN;
-    math_struct = parse_expr(expr, false, enable_complex);
+    math_struct = tms_parse_expr(expr, false, enable_complex);
     if (math_struct == NULL)
         return NAN;
-    result = eval_math_expr(math_struct);
+    result = tms_evaluate(math_struct);
     _set_ans(result);
-    delete_math_expr(math_struct);
+    tms_delete_math_expr(math_struct);
     return result;
 }
 
-double complex calculate_expr_auto(char *expr)
+double complex tms_solve(char *expr)
 {
     char *real_exclusive[] = {"%"};
     // Offset if the expression has an assignment operator
@@ -48,17 +48,17 @@ double complex calculate_expr_auto(char *expr)
     // 2: Is complex, imaginary number appears in the expression, or complex exclusive operations like arg().
     uint8_t likely_complex = 1;
 
-    if (!pre_parse_routine(expr))
+    if (!tms_pre_parse_routine(expr))
         return NAN;
 
     // Skip assignment operator
-    while ((i = f_search(local_expr, "=", 0, false)) != -1)
+    while ((i = tms_f_search(local_expr, "=", 0, false)) != -1)
         local_expr += i + 1;
 
     // Look for real exclusive operations
     for (i = 0; i < array_length(real_exclusive); ++i)
     {
-        j = f_search(local_expr, real_exclusive[i], 0, false);
+        j = tms_f_search(local_expr, real_exclusive[i], 0, false);
         if (j != -1)
         {
             likely_complex = 0;
@@ -66,13 +66,13 @@ double complex calculate_expr_auto(char *expr)
         }
     }
     // We have some hope that this is a complex expression
-    i = f_search(local_expr, "i", 0, true);
+    i = tms_f_search(local_expr, "i", 0, true);
     if (i != -1)
     {
         // The complex number was found despite having a real expression, report the problem.
         if (likely_complex == 0)
         {
-            error_handler(ILLEGAL_COMPLEX_OP, EH_SAVE, EH_FATAL_ERROR, i);
+            tms_error_handler(ILLEGAL_COMPLEX_OP, EH_SAVE, EH_FATAL_ERROR, i);
             return NAN;
         }
         else
@@ -80,11 +80,11 @@ double complex calculate_expr_auto(char *expr)
     }
 
     // Look for user defined complex variables
-    for (i = 0; i < variable_count; ++i)
+    for (i = 0; i < tms_g_var_count; ++i)
     {
-        if (cimag(variable_values[i]) != 0)
+        if (cimag(tms_g_var_values[i]) != 0)
         {
-            j = f_search(local_expr, variable_names[i], 0, true);
+            j = tms_f_search(local_expr, tms_g_var_names[i], 0, true);
             if (j != -1)
             {
                 likely_complex = 2;
@@ -94,83 +94,83 @@ double complex calculate_expr_auto(char *expr)
     }
 
     // Special case of ans
-    if (cimag(ans) != 0)
+    if (cimag(tms_g_ans) != 0)
     {
-        j = f_search(local_expr, "ans", 0, true);
+        j = tms_f_search(local_expr, "ans", 0, true);
         if (j != -1)
             likely_complex = 2;
     }
 
-    math_expr *M;
+    tms_math_expr *M;
     double complex result;
     switch (likely_complex)
     {
     case 0:
 
-        M = parse_expr(expr, false, false);
-        result = eval_math_expr(M);
+        M = tms_parse_expr(expr, false, false);
+        result = tms_evaluate(M);
         _set_ans(result);
-        delete_math_expr(M);
+        tms_delete_math_expr(M);
         return result;
 
     case 1:
-        M = parse_expr(expr, false, false);
-        result = eval_math_expr(M);
+        M = tms_parse_expr(expr, false, false);
+        result = tms_evaluate(M);
         _set_ans(result);
         if (isnan(creal(result)))
         {
             // Check if the errors are fatal (like malformed syntax, division by zero...)
-            int fatal = error_handler(NULL, EH_ERROR_COUNT, EH_MAIN_DB);
+            int fatal = tms_error_handler(NULL, EH_ERROR_COUNT, EH_MAIN_DB);
             if (fatal > 0)
                 return NAN;
 
             // Clear errors caused by the first evaluation.
-            error_handler(NULL, EH_CLEAR, EH_MAIN_DB);
+            tms_error_handler(NULL, EH_CLEAR, EH_MAIN_DB);
 
             // The errors weren't fatal, possibly a complex answer.
             // Convert the math_struct to use complex functions.
             if (M != NULL)
             {
-                convert_real_to_complex(M);
+                tms_convert_real_to_complex(M);
                 // If the conversion failed due to real only functions, return a failure.
                 if (M->enable_complex == false)
                 {
-                    delete_math_expr(M);
+                    tms_delete_math_expr(M);
                     return NAN;
                 }
             }
             else
-                M = parse_expr(expr, false, true);
+                M = tms_parse_expr(expr, false, true);
 
-            result = eval_math_expr(M);
+            result = tms_evaluate(M);
             _set_ans(result);
-            delete_math_expr(M);
+            tms_delete_math_expr(M);
             return result;
         }
         else
         {
-            delete_math_expr(M);
+            tms_delete_math_expr(M);
             return result;
         }
     case 2:
-        M = parse_expr(expr, false, true);
-        result = eval_math_expr(M);
+        M = tms_parse_expr(expr, false, true);
+        result = tms_evaluate(M);
         _set_ans(result);
-        delete_math_expr(M);
+        tms_delete_math_expr(M);
         return result;
     }
     // Unlikely to fall out of the switch.
-    error_handler(INTERNAL_ERROR, EH_SAVE, EH_FATAL_ERROR, 0);
+    tms_error_handler(INTERNAL_ERROR, EH_SAVE, EH_FATAL_ERROR, 0);
     return NAN;
 }
 
-int_factor *find_factors(int32_t value)
+tms_int_factor *tms_find_factors(int32_t value)
 {
     int32_t dividend = 2;
-    int_factor *factor_list;
+    tms_int_factor *factor_list;
     int i = 0;
 
-    factor_list = calloc(64, sizeof(int_factor));
+    factor_list = calloc(64, sizeof(tms_int_factor));
     if (value == 0)
         return factor_list;
     factor_list[0].factor = factor_list[0].power = 1;
@@ -219,12 +219,12 @@ int_factor *find_factors(int32_t value)
     return factor_list;
 }
 
-void reduce_fraction(fraction *fraction_str)
+void tms_reduce_fraction(tms_fraction *fraction_str)
 {
     int i = 1, j = 1, min;
-    int_factor *num_factor, *denom_factor;
-    num_factor = find_factors(fraction_str->b);
-    denom_factor = find_factors(fraction_str->c);
+    tms_int_factor *num_factor, *denom_factor;
+    num_factor = tms_find_factors(fraction_str->b);
+    denom_factor = tms_find_factors(fraction_str->c);
     // If a zero was returned by the factorization function, nothing to do.
     if (num_factor->factor == 0 || denom_factor->factor == 0)
     {
@@ -264,12 +264,12 @@ void reduce_fraction(fraction *fraction_str)
     free(denom_factor);
 }
 // Converts a floating point value to decimal representation a*b/c
-fraction decimal_to_fraction(double value, bool inverse_process)
+tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
 {
     int decimal_point = 1, p_start, p_end, decimal_length;
     bool success = false;
     char pattern[11], printed_value[23];
-    fraction result;
+    tms_fraction result;
 
     // Using the denominator as a mean to report failure, if c==0 then the function failed
     result.c = 0;
@@ -359,7 +359,7 @@ fraction decimal_to_fraction(double value, bool inverse_process)
     {
         result.c = pow(10, decimal_length);
         result.b = round(value * result.c);
-        reduce_fraction(&result);
+        tms_reduce_fraction(&result);
         return result;
     }
     // getting the fraction from the "pattern"
@@ -374,7 +374,7 @@ fraction decimal_to_fraction(double value, bool inverse_process)
         for (p_start = 0; p_start < strlen(pattern); ++p_start)
             result.c += 9 * pow(10, p_start);
         // Find the pattern start in case it doesn't start right after the decimal point (like 0.79999)
-        pattern_start = f_search(printed_value, pattern, decimal_point + 1, false);
+        pattern_start = tms_f_search(printed_value, pattern, decimal_point + 1, false);
         if (pattern_start > decimal_point + 1)
         {
             result.b = round(value * (pow(10, pattern_start - decimal_point - 1 + strlen(pattern)) - pow(10, pattern_start - decimal_point - 1)));
@@ -382,7 +382,7 @@ fraction decimal_to_fraction(double value, bool inverse_process)
         }
         else
             sscanf(pattern, "%d", &result.b);
-        reduce_fraction(&result);
+        tms_reduce_fraction(&result);
         return result;
     }
     // trying to get the fraction by inverting it then trying the algorithm again
@@ -399,7 +399,7 @@ fraction decimal_to_fraction(double value, bool inverse_process)
         // Other cases like 3/17 (non periodic but the inverse is periodic)
         else
         {
-            fraction inverted = decimal_to_fraction(inverse_value, true);
+            tms_fraction inverted = tms_decimal_to_fraction(inverse_value, true);
             if (inverted.c != 0)
             {
                 // inverse of a + b / c is c / ( a *c + b )

@@ -4,95 +4,95 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "internals.h"
 #include "scientific.h"
-char *_glob_expr = NULL;
-double complex ans = 0;
+char *_tms_g_expr = NULL;
+double complex tms_g_ans = 0;
 
-bool _init_needed = true;
-char **all_functions;
-double complex *variable_values;
-char **variable_names;
+bool _tms_init = true;
+char **tms_g_all_func_names;
+double complex *tms_g_var_values;
+char **tms_g_var_names;
 
-char *hardcoded_variable_names[] = {"pi", "exp", "c"};
-double complex hardcoded_variable_values[] = {M_PI, M_E, 299792458};
-const int hardcoded_variable_count = array_length(hardcoded_variable_names);
-char *illegal_names[] = {"e", "E", "i"};
-const int illegal_names_count = array_length(illegal_names);
-int function_count = 0, variable_count, variable_max = 8;
+char *tms_builtin_var_names[] = {"pi", "exp", "c"};
+double complex tms_builtin_var_values[] = {M_PI, M_E, 299792458};
+const int tms_builtin_var_count = array_length(tms_builtin_var_names);
+char *tms_g_illegal_names[] = {"e", "E", "i"};
+const int tms_g_illegal_names_count = array_length(tms_g_illegal_names);
+int tms_g_func_count = 0, tms_g_var_count, tms_g_var_max = 8;
 void tmsolve_init()
 {
     int i;
-    if (_init_needed == true)
+    if (_tms_init == true)
     {
         // Initialize variable names and values arrays
-        variable_names = malloc(8 * sizeof(char *));
-        variable_values = malloc(8 * sizeof(double complex));
-        variable_count = hardcoded_variable_count;
-        for (i = 0; i < variable_count; ++i)
+        tms_g_var_names = malloc(8 * sizeof(char *));
+        tms_g_var_values = malloc(8 * sizeof(double complex));
+        tms_g_var_count = tms_builtin_var_count;
+        for (i = 0; i < tms_g_var_count; ++i)
         {
-            variable_names[i] = hardcoded_variable_names[i];
-            variable_values[i] = hardcoded_variable_values[i];
+            tms_g_var_names[i] = tms_builtin_var_names[i];
+            tms_g_var_values[i] = tms_builtin_var_values[i];
         }
 
         // Get the number of functions.
-        for (i = 0; r_function_name[i] != NULL; ++i)
-            ++function_count;
-        for (i = 0; cmplx_function_name[i] != NULL; ++i)
-            ++function_count;
-        for (i = 0; ext_function_name[i] != NULL; ++i)
-            ++function_count;
+        for (i = 0; tms_r_func_name[i] != NULL; ++i)
+            ++tms_g_func_count;
+        for (i = 0; tms_cmplx_func_name[i] != NULL; ++i)
+            ++tms_g_func_count;
+        for (i = 0; tms_ext_func_name[i] != NULL; ++i)
+            ++tms_g_func_count;
 
         // Generate the all functions array, avoiding repetition.
-        char *tmp[function_count];
-        // Copy r_function_name
-        for (i = 0; r_function_name[i] != NULL; ++i)
-            tmp[i] = r_function_name[i];
+        char *tmp[tms_g_func_count];
+        // Copy tms_r_func_name
+        for (i = 0; tms_r_func_name[i] != NULL; ++i)
+            tmp[i] = tms_r_func_name[i];
         bool found = false;
         // Copy what wasn't already copied
-        for (int j = 0; cmplx_function_name[j] != NULL; ++j)
+        for (int j = 0; tms_cmplx_func_name[j] != NULL; ++j)
         {
             found = false;
-            for (int k = 0; r_function_name[k] != NULL; ++k)
+            for (int k = 0; tms_r_func_name[k] != NULL; ++k)
             {
-                if (strcmp(r_function_name[k], cmplx_function_name[j]) == 0)
+                if (strcmp(tms_r_func_name[k], tms_cmplx_func_name[j]) == 0)
                 {
                     found = true;
                     break;
                 }
             }
             if (!found)
-                tmp[i++] = cmplx_function_name[j];
+                tmp[i++] = tms_cmplx_func_name[j];
         }
 
-        for (int j = 0; ext_function_name[j] != NULL; ++j)
+        for (int j = 0; tms_ext_func_name[j] != NULL; ++j)
         {
             found = false;
-            for (int k = 0; r_function_name[k] != NULL; ++k)
+            for (int k = 0; tms_r_func_name[k] != NULL; ++k)
             {
-                if (strcmp(r_function_name[k], ext_function_name[j]) == 0)
+                if (strcmp(tms_r_func_name[k], tms_ext_func_name[j]) == 0)
                 {
                     found = true;
                     break;
                 }
             }
             if (!found)
-                tmp[i++] = ext_function_name[j];
+                tmp[i++] = tms_ext_func_name[j];
         }
-        all_functions = malloc(i * sizeof(char *));
-        function_count = i;
-        for (i = 0; i < function_count; ++i)
-            all_functions[i] = tmp[i];
-        _init_needed = false;
+        tms_g_all_func_names = malloc(i * sizeof(char *));
+        tms_g_func_count = i;
+        for (i = 0; i < tms_g_func_count; ++i)
+            tms_g_all_func_names[i] = tmp[i];
+        _tms_init = false;
     }
 }
 
-int error_handler(char *error, int arg1, ...)
+int tms_error_handler(char *error, int arg1, ...)
 {
     static int last_error = 0, fatal = 0, non_fatal = 0, backup_error_count = 0, backup_fatal, backup_non_fatal;
     va_list arguments;
     va_start(arguments, arg1);
     int i, arg2;
 
-    static error_data error_table[MAX_ERRORS], backup[MAX_ERRORS];
+    static tms_error_data error_table[MAX_ERRORS], backup[MAX_ERRORS];
     switch (arg1)
     {
     case EH_SAVE:
@@ -118,13 +118,13 @@ int error_handler(char *error, int arg1, ...)
             // Center the error in the string
             if (position > 49)
             {
-                strncpy(error_table[last_error].bad_snippet, _glob_expr + position - 24, 49);
+                strncpy(error_table[last_error].bad_snippet, _tms_g_expr + position - 24, 49);
                 error_table[last_error].bad_snippet[49] = '\0';
                 error_table[last_error].index = 24;
             }
             else
             {
-                strcpy(error_table[last_error].bad_snippet, _glob_expr);
+                strcpy(error_table[last_error].bad_snippet, _tms_g_expr);
                 error_table[last_error].index = position;
             }
         }
@@ -143,29 +143,29 @@ int error_handler(char *error, int arg1, ...)
             }
             puts(error_table[i].error_msg);
             if (error_table[i].index != -1)
-                print_errors(error_table[i].bad_snippet, error_table[i].index);
+                tms_print_errors(error_table[i].bad_snippet, error_table[i].index);
             else
                 printf("\n");
         }
-        error_handler(NULL, EH_CLEAR, EH_MAIN_DB);
+        tms_error_handler(NULL, EH_CLEAR, EH_MAIN_DB);
 
     case EH_CLEAR:
         arg2 = va_arg(arguments, int);
         switch (arg2)
         {
         case EH_MAIN_DB:
-            memset(error_table, 0, MAX_ERRORS * sizeof(struct error_data));
+            memset(error_table, 0, MAX_ERRORS * sizeof(struct tms_error_data));
             i = last_error;
             last_error = fatal = non_fatal = 0;
             break;
         case EH_BACKUP_DB:
-            memset(backup, 0, MAX_ERRORS * sizeof(struct error_data));
+            memset(backup, 0, MAX_ERRORS * sizeof(struct tms_error_data));
             i = backup_error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
             break;
         case EH_ALL_DB:
-            memset(error_table, 0, MAX_ERRORS * sizeof(struct error_data));
-            memset(backup, 0, MAX_ERRORS * sizeof(struct error_data));
+            memset(error_table, 0, MAX_ERRORS * sizeof(struct tms_error_data));
+            memset(backup, 0, MAX_ERRORS * sizeof(struct tms_error_data));
             i = last_error + backup_error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
             last_error = fatal = non_fatal = 0;
@@ -214,7 +214,7 @@ int error_handler(char *error, int arg1, ...)
         }
 
     case EH_BACKUP:
-        error_handler(NULL, EH_CLEAR, EH_BACKUP);
+        tms_error_handler(NULL, EH_CLEAR, EH_BACKUP);
         // Copy the current error database to the backup database
         for (i = 0; i < last_error; ++i)
             backup[i] = error_table[i];
@@ -228,7 +228,7 @@ int error_handler(char *error, int arg1, ...)
     // Overwrite main error database with the backup error database
     case EH_RESTORE:
         // Clear current database
-        error_handler(NULL, EH_CLEAR, EH_MAIN_DB);
+        tms_error_handler(NULL, EH_CLEAR, EH_MAIN_DB);
         for (i = 0; i < backup_error_count; ++i)
             error_table[i] = backup[i];
         last_error = backup_error_count;
@@ -242,7 +242,7 @@ int error_handler(char *error, int arg1, ...)
     return -1;
 }
 
-void print_errors(char *expr, int error_pos)
+void tms_print_errors(char *expr, int error_pos)
 {
     int i;
     fputs(expr, stderr);

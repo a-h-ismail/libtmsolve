@@ -20,12 +20,12 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @param M The math_expr used to generate and store the metadata.
  * @remark You won't need to call this manually, the parser will call it if variables are enabled.
  */
-void _set_var_data(math_expr *M);
+void _tms_set_var_data(tms_math_expr *M);
 
 /**
  * @brief Sets a value to all the variable members of M.
  */
-void set_variable(math_expr *M, double complex value);
+void _tms_set_variable(tms_math_expr *M, double complex value);
 
 /**
  * @brief Calculates the derivative of a function at a specific point.
@@ -35,7 +35,7 @@ void set_variable(math_expr *M, double complex value);
  * @param expr The string containing the arguments.
  * @return The value of the derivative at the specified point.
  */
-double derivative(char *expr);
+double tms_derivative(char *expr);
 
 /**
  * @brief Calculates the bounded integral of a function.
@@ -45,5 +45,5 @@ double derivative(char *expr);
  * @param expr The arguments string.
  * @return Integration answer, or NaN in case of failure.
  */
-double integrate(char *expr);
+double tms_integrate(char *expr);
 #endif

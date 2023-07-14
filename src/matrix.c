@@ -4,10 +4,10 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "matrix.h"
 
-matrix_str *new_matrix(int rows, int columns)
+tms_matrix *tms_new_matrix(int rows, int columns)
 {
-    matrix_str *matrix;
-    matrix = malloc(sizeof(matrix_str));
+    tms_matrix *matrix;
+    matrix = malloc(sizeof(tms_matrix));
     matrix->columns = columns;
     matrix->rows = rows;
     matrix->data = malloc(rows * sizeof(double *));
@@ -16,7 +16,7 @@ matrix_str *new_matrix(int rows, int columns)
     return matrix;
 }
 // Delete a matrix structure
-void delete_matrix(matrix_str *matrix)
+void tms_delete_matrix(tms_matrix *matrix)
 {
     for (int i = 0; i < matrix->rows; ++i)
         free(matrix->data[i]);
@@ -24,10 +24,10 @@ void delete_matrix(matrix_str *matrix)
     free(matrix);
 }
 // Generates a new matrix derived from "matrix" excluding row and col
-matrix_str *remove_matrix_row_col(matrix_str *matrix, int row, int col)
+tms_matrix *tms_remove_matrix_row_col(tms_matrix *matrix, int row, int col)
 {
-    matrix_str *derived_matrix;
-    derived_matrix = new_matrix(matrix->rows - 1, matrix->columns - 1);
+    tms_matrix *derived_matrix;
+    derived_matrix = tms_new_matrix(matrix->rows - 1, matrix->columns - 1);
     int parent_row, parent_col, derived_row, derived_col;
     for (parent_row = derived_row = 0; parent_row < matrix->rows; ++parent_row)
     {
@@ -45,16 +45,16 @@ matrix_str *remove_matrix_row_col(matrix_str *matrix, int row, int col)
     return derived_matrix;
 }
 // Multiply matrixes A and B and return a pointer to the resulting matrix, returns NULL in case of error
-matrix_str *matrix_multiply(matrix_str *A, matrix_str *B)
+tms_matrix *tms_matrix_multiply(tms_matrix *A, tms_matrix *B)
 {
     int i, j, k;
-    matrix_str *result;
+    tms_matrix *result;
     if (A->columns != B->rows)
     {
         puts("Cannot multiply, incompatible dimensions.");
         return NULL;
     }
-    result = new_matrix(A->rows, B->columns);
+    result = tms_new_matrix(A->rows, B->columns);
     // i defines the row at which we are working.
     for (i = 0; i < A->rows; ++i)
         for (j = 0; j < B->columns; ++j)
@@ -67,29 +67,29 @@ matrix_str *matrix_multiply(matrix_str *A, matrix_str *B)
     return result;
 }
 
-void replace_matrix_column(matrix_str *matrix, matrix_str *column_matrix, int column)
+void tms_replace_matrix_col(tms_matrix *matrix, tms_matrix *column_matrix, int column)
 {
     for (int i = 0; i < column_matrix->rows; ++i)
         matrix->data[i][column] = column_matrix->data[i][0];
 }
 // Create a copy of matrix and returns a pointer to the copy
-matrix_str *matrix_dup(matrix_str *matrix)
+tms_matrix *tms_matrix_dup(tms_matrix *matrix)
 {
-    matrix_str *copy;
+    tms_matrix *copy;
     if (matrix == NULL)
         return NULL;
 
-    copy = new_matrix(matrix->columns, matrix->rows);
+    copy = tms_new_matrix(matrix->columns, matrix->rows);
     for (int i = 0; i < matrix->rows; ++i)
         memcpy(copy->data[i], matrix->data[i], matrix->columns * sizeof(double));
     return copy;
 }
 
 // Find the determinant of matrix A, returns NaN on error
-double matrix_det(matrix_str *A)
+double tms_matrix_det(tms_matrix *A)
 {
     int i;
-    matrix_str *B;
+    tms_matrix *B;
     double det = 0, tmp;
     if (A->rows != A->columns)
     {
@@ -114,37 +114,37 @@ double matrix_det(matrix_str *A)
                 tmp = -A->data[0][i];
 
             // Get matrix B from matrix A by excluding rows
-            B = remove_matrix_row_col(A, 0, i);
-            det += tmp * matrix_det(B);
-            delete_matrix(B);
+            B = tms_remove_matrix_row_col(A, 0, i);
+            det += tmp * tms_matrix_det(B);
+            tms_delete_matrix(B);
         }
     }
     return det;
 }
 // Get the transpose of matrix M
-matrix_str *matrix_tr(matrix_str *M)
+tms_matrix *tms_matrix_tr(tms_matrix *M)
 {
     int i, j;
-    matrix_str *transpose = new_matrix(M->columns, M->rows);
+    tms_matrix *transpose = tms_new_matrix(M->columns, M->rows);
     for (i = 0; i < M->rows; ++i)
         for (j = 0; j < M->columns; ++j)
             transpose->data[j][i] = M->data[i][j];
     return transpose;
 }
-matrix_str *comatrix(matrix_str *M)
+tms_matrix *tms_comatrix(tms_matrix *M)
 {
     int i, j;
-    matrix_str *comatrix, *minor;
+    tms_matrix *comatrix, *minor;
     double det;
     // Check for empty matrix
     if (M == NULL)
         return NULL;
     if (M->rows < 2 || M->rows != M->columns)
     {
-        error_handler(INVALID_MATRIX, EH_SAVE, EH_FATAL_ERROR, -1);
+        tms_error_handler(INVALID_MATRIX, EH_SAVE, EH_FATAL_ERROR, -1);
         return NULL;
     }
-    comatrix = new_matrix(M->rows, M->columns);
+    comatrix = tms_new_matrix(M->rows, M->columns);
     if (comatrix->rows == 2)
     {
         comatrix->data[0][0] = M->data[1][1];
@@ -156,18 +156,18 @@ matrix_str *comatrix(matrix_str *M)
     for (i = 0; i < M->rows; ++i)
         for (j = 0; j < M->columns; ++j)
         {
-            minor = remove_matrix_row_col(M, i, j);
-            det = matrix_det(minor);
-            delete_matrix(minor);
+            minor = tms_remove_matrix_row_col(M, i, j);
+            det = tms_matrix_det(minor);
+            tms_delete_matrix(minor);
             comatrix->data[i][j] = pow(-1, i + j) * det;
         }
     return comatrix;
 }
-matrix_str *matrix_inv(matrix_str *M)
+tms_matrix *tms_matrix_inv(tms_matrix *M)
 {
     int i, j;
     double det;
-    matrix_str *inverse, *tmp;
+    tms_matrix *inverse, *tmp;
     // Check for empty matrix
     if (M == NULL)
         return NULL;
@@ -176,12 +176,12 @@ matrix_str *matrix_inv(matrix_str *M)
         puts("Can't invert non square matrix.");
         return NULL;
     }
-    inverse = comatrix(M);
+    inverse = tms_comatrix(M);
     // tmp stores the comatrix pointer, otherwise it would be lost and memory leaked
     tmp = inverse;
-    inverse = matrix_tr(inverse);
-    delete_matrix(tmp);
-    det = matrix_det(M);
+    inverse = tms_matrix_tr(inverse);
+    tms_delete_matrix(tmp);
+    det = tms_matrix_det(M);
     if (det == 0)
     {
         puts("Matrix cannot be inverted, determinant = 0.");

@@ -15,7 +15,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 /**
  * @brief Stores the metadata of a 2D matrix.
  */
-typedef struct matrix_str
+typedef struct tms_matrix
 {
     /// Number of rows.
     int rows;
@@ -23,7 +23,7 @@ typedef struct matrix_str
     int columns;
     /// Double array storing the members of the 2D matrix.
     double **data;
-} matrix_str;
+} tms_matrix;
 
 /**
  * @brief Allocates a new matrix with dimensions row*columns.
@@ -31,45 +31,45 @@ typedef struct matrix_str
  * @param columns Number of columns
  * @return A malloc'd pointer to the new matrix.
  */
-matrix_str *new_matrix(int rows, int columns);
+tms_matrix *tms_new_matrix(int rows, int columns);
 
 /**
- * @brief Deletes a matrix generated using new_matrix().
+ * @brief Deletes a matrix generated using tms_new_matrix().
  * @param matrix The matrix to delete.
  */
-void delete_matrix(matrix_str *matrix);
+void tms_delete_matrix(tms_matrix *matrix);
 
-matrix_str *remove_matrix_row_col(matrix_str *matrix, int row, int col);
+tms_matrix *tms_remove_matrix_row_col(tms_matrix *matrix, int row, int col);
 
 /**
  * @brief Multiplies matrixes A and B.
  * @return A new matrix, answer of A*B.
  */
-matrix_str *matrix_multiply(matrix_str *A, matrix_str *B);
+tms_matrix *tms_matrix_multiply(tms_matrix *A, tms_matrix *B);
 
 /**
  * @brief Calculates the determinant of a matrix.
  * @return The determinant, or NaN in case of failure.
  */
-double matrix_det(matrix_str *A);
+double tms_matrix_det(tms_matrix *A);
 
 /**
  * @brief Calculates the comatrix of the matrix M.
  * @return The comatrix, or NULL in case of failure.
  */
-matrix_str *comatrix(matrix_str *M);
+tms_matrix *tms_comatrix(tms_matrix *M);
 
 /**
  * @brief Calculates the transpose of the matrix M.
  * @return The transposed matrix, or NULL in case of failure.
  */
-matrix_str *matrix_tr(matrix_str *M);
+tms_matrix *tms_matrix_tr(tms_matrix *M);
 
 /**
  * @brief Calculates the inverse of the matrix M.
  * @return The inverse matrix, or NULL in case of failure.
  */
-matrix_str *matrix_inv(matrix_str *M);
+tms_matrix *tms_matrix_inv(tms_matrix *M);
 
 /**
  * @brief Replaces the column of the matrix with the matrix_column sent as argument
@@ -77,10 +77,10 @@ matrix_str *matrix_inv(matrix_str *M);
  * @param column_matrix The column matrix, should have the same number of rows as matrix.
  * @param column The column to replace.
  */
-void replace_matrix_column(matrix_str *matrix, matrix_str *column_matrix, int column);
+void tms_replace_matrix_col(tms_matrix *matrix, tms_matrix *column_matrix, int column);
 
 /**
  * @brief Duplicates a matrix
  * @return An identical malloc'd matrix.
  */
-matrix_str *matrix_dup(matrix_str *matrix);
+tms_matrix *tms_matrix_dup(tms_matrix *matrix);
