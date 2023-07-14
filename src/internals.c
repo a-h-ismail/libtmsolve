@@ -124,7 +124,8 @@ int tms_error_handler(char *error, int arg1, ...)
             }
             else
             {
-                strcpy(error_table[last_error].bad_snippet, _tms_g_expr);
+                strncpy(error_table[last_error].bad_snippet, _tms_g_expr, 49);
+                error_table[last_error].bad_snippet[49] = '\0';
                 error_table[last_error].index = position;
             }
         }
