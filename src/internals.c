@@ -92,10 +92,26 @@ int tms_error_handler(char *error, int arg1, ...)
     va_start(arguments, arg1);
     int i, arg2;
 
-    static tms_error_data error_table[MAX_ERRORS], backup[MAX_ERRORS];
+    static tms_error_data error_table[EH_MAX_ERRORS], backup[EH_MAX_ERRORS];
     switch (arg1)
     {
     case EH_SAVE:
+        // Case of error table being full
+        if (last_error == EH_MAX_ERRORS - 1)
+        {
+            // Before ovewriting oldest error, update error counters to reflect the new state
+            if (error_table[0].fatal)
+                --fatal;
+            else
+                --non_fatal;
+
+            // Overwrite the oldest error
+            for (i = 0; i < EH_MAX_ERRORS - 1; ++i)
+                error_table[i] = error_table[i + 1];
+
+            // The last position is free, update last_error
+            --last_error;
+        }
         error_table[last_error].error_msg = error;
         arg2 = va_arg(arguments, int);
         switch (arg2)
@@ -155,18 +171,18 @@ int tms_error_handler(char *error, int arg1, ...)
         switch (arg2)
         {
         case EH_MAIN_DB:
-            memset(error_table, 0, MAX_ERRORS * sizeof(struct tms_error_data));
+            memset(error_table, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
             i = last_error;
             last_error = fatal = non_fatal = 0;
             break;
         case EH_BACKUP_DB:
-            memset(backup, 0, MAX_ERRORS * sizeof(struct tms_error_data));
+            memset(backup, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
             i = backup_error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
             break;
         case EH_ALL_DB:
-            memset(error_table, 0, MAX_ERRORS * sizeof(struct tms_error_data));
-            memset(backup, 0, MAX_ERRORS * sizeof(struct tms_error_data));
+            memset(error_table, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
+            memset(backup, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
             i = last_error + backup_error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
             last_error = fatal = non_fatal = 0;
