@@ -56,7 +56,7 @@ int find_min(int a, int b)
 
 double complex tms_read_value(char *expr, int start, bool enable_complex)
 {
-    double complex value;
+    double complex value = NAN;
     bool is_negative, is_complex = false, is_variable = false;
     int flag = 0;
 
@@ -116,19 +116,24 @@ double complex tms_read_value(char *expr, int start, bool enable_complex)
                 is_complex = is_complex ^ 1;
         }
 
-        double tmp;
-        flag = sscanf(expr + start, "%lf", &tmp);
-        value = tmp;
+        flag = sscanf(expr + start, "%lf", &value);
         // Case where nothing was found even after checking for variables
         if (flag == 0)
             return NAN;
     }
     if (is_negative)
         value = -value;
+
+    if (isnan(creal(value)))
+    {
+        tms_error_handler(SYNTAX_ERROR, EH_SAVE, EH_FATAL_ERROR, start);
+        return NAN;
+    }
+
     if (enable_complex && is_complex)
         return value * I;
     else
-    return value;
+        return value;
 }
 bool tms_is_op(char c)
 {
@@ -474,6 +479,13 @@ Returns true when checks pass
 bool tms_parenthesis_check(char *expr)
 {
     int open, close = -1, k = 0, *open_position, *close_position, length = strlen(expr);
+
+    if (length == 0)
+    {
+        tms_error_handler(NO_INPUT, EH_SAVE, EH_FATAL_ERROR, -1);
+        return false;
+    }
+
     open_position = (int *)malloc(length * sizeof(int));
     close_position = (int *)malloc(length * sizeof(int));
     *open_position = *close_position = -2;
@@ -604,7 +616,7 @@ tms_arg_list *tms_get_args(char *string)
         if (args->count == max_args)
         {
             max_args += 10;
-            args->arguments = realloc(args->arguments, max_args * sizeof(tms_arg_list));
+            args->arguments = realloc(args->arguments, max_args * sizeof(char *));
         }
         // Skip parenthesis pairs to allow easy nesting of argument lists
         // Think of something like int(0,2,x+int(0,1,x^2))
