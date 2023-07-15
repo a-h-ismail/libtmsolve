@@ -57,7 +57,7 @@ int find_min(int a, int b)
 double complex tms_read_value(char *expr, int start, bool enable_complex)
 {
     double complex value = NAN;
-    bool is_negative, is_complex = false, is_variable = false;
+    bool is_negative = false, is_complex = false, is_variable = false;
     int flag = 0;
 
     if (expr[start] == '-')
@@ -115,11 +115,14 @@ double complex tms_read_value(char *expr, int start, bool enable_complex)
                 // Again, XOR toggles between true and false
                 is_complex = is_complex ^ 1;
         }
-
-        flag = sscanf(expr + start, "%lf", &value);
+        // Use tmp because value is of type complex double
+        double tmp;
+        flag = sscanf(expr + start, "%lf", &tmp);
         // Case where nothing was found even after checking for variables
+        // Could be the variable x, so don't call the error handler
         if (flag == 0)
             return NAN;
+        value = tmp;
     }
     if (is_negative)
         value = -value;
