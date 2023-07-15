@@ -144,6 +144,8 @@ int _tms_set_runtime_var(char *expr, int i)
                 tms_g_var_values = realloc(tms_g_var_values, tms_g_var_max * sizeof(double complex));
             }
             tms_g_var_names[tms_g_var_count] = malloc((strlen(tmp) + 1) * sizeof(char));
+            // Initialize the new variable to zero
+            tms_g_var_values[tms_g_var_count] = 0;
             strcpy(tms_g_var_names[tms_g_var_count], tmp);
             variable_index = tms_g_var_count++;
         }
@@ -569,7 +571,7 @@ int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enab
     return 0;
 }
 
-void _tms_set_evaluation_order(tms_math_subexpr *S)
+bool _tms_set_evaluation_order(tms_math_subexpr *S)
 {
     int op_count = S->op_count;
     int i, j;
@@ -590,6 +592,11 @@ void _tms_set_evaluation_order(tms_math_subexpr *S)
     }
 
     i = S->start_node;
+    if (i < 0)
+    {
+        tms_error_handler(INTERNAL_ERROR, EH_SAVE, EH_FATAL_ERROR, 0);
+        return false;
+    }
     int target_priority = node_block[i].priority;
     j = i + 1;
     while (target_priority > 0)
@@ -610,6 +617,7 @@ void _tms_set_evaluation_order(tms_math_subexpr *S)
     }
     // Set the next pointer of the last op_node to NULL
     node_block[i].next = NULL;
+    return true;
 }
 
 void _tms_set_result_pointers(tms_math_expr *M, int s_index)
@@ -771,7 +779,12 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_variables, bool enable_com
             return NULL;
         }
 
-        _tms_set_evaluation_order(S + s_index);
+        status = _tms_set_evaluation_order(S + s_index);
+        if (status == false)
+        {
+            tms_delete_math_expr(M);
+            return NULL;
+        }
         _tms_set_result_pointers(M, s_index);
     }
 

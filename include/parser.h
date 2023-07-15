@@ -203,7 +203,7 @@ int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enab
  * @brief Sets the *next pointer of all nodes.
  * @param S current subexpression being processed.
  */
-void _tms_set_evaluation_order(tms_math_subexpr *S);
+bool _tms_set_evaluation_order(tms_math_subexpr *S);
 
 /**
  * @brief Set the operation result pointer for each node.
