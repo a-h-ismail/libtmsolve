@@ -12,8 +12,8 @@ char **tms_g_all_func_names;
 double complex *tms_g_var_values;
 char **tms_g_var_names;
 
-char *tms_builtin_var_names[] = {"pi", "exp", "c"};
-double complex tms_builtin_var_values[] = {M_PI, M_E, 299792458};
+const char *tms_builtin_var_names[] = {"pi", "exp", "c"};
+const double complex tms_builtin_var_values[] = {M_PI, M_E, 299792458};
 const int tms_builtin_var_count = array_length(tms_builtin_var_names);
 char *tms_g_illegal_names[] = {"e", "E", "i"};
 const int tms_g_illegal_names_count = array_length(tms_g_illegal_names);
@@ -29,7 +29,7 @@ void tmsolve_init()
         tms_g_var_count = tms_builtin_var_count;
         for (i = 0; i < tms_g_var_count; ++i)
         {
-            tms_g_var_names[i] = tms_builtin_var_names[i];
+            tms_g_var_names[i] = (char *)tms_builtin_var_names[i];
             tms_g_var_values[i] = tms_builtin_var_values[i];
         }
 
@@ -262,7 +262,7 @@ int tms_error_handler(char *error, int arg1, ...)
 void tms_print_errors(char *expr, int error_pos)
 {
     int i;
-    fputs(expr, stderr);
+    fprintf(stderr, "%s\n", expr);
     for (i = 0; i < error_pos; ++i)
         fprintf(stderr, "~");
     fprintf(stderr, "^\n\n");
