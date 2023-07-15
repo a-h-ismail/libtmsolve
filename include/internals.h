@@ -70,11 +70,11 @@ extern double complex *tms_g_var_values;
 /// @brief Contains all variable names including built in ones.
 extern char **tms_g_var_names;
 
-/// @brief 
-extern char *tms_builtin_var_names[];
+/// @brief Names of built in variables.
+extern const char *tms_builtin_var_names[];
 
-/// @brief
-extern complex double tms_builtin_var_values[] ;
+/// @brief Values of built in variables.
+extern const complex double tms_builtin_var_values[] ;
 
 /// @brief Number of built in variables.
 extern const int tms_builtin_var_count;
