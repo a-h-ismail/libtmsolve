@@ -176,7 +176,7 @@ bool tms_pre_parse_routine(char *expr);
 bool tms_legal_char_in_name(char c);
 
 /**
- * @brief Detects if a keyword matches fully in the string at position i
+ * @brief Detects if a keyword matches in the string at position i
  * @param str The string to look into.
  * @param i Index in the string (may be the start or end of the keyword)
  * @param keyword Pointer to the keyword.
