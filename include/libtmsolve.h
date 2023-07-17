@@ -16,6 +16,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <tmsolve/function.h>
 #include <tmsolve/matrix.h>
 #include <tmsolve/m_errors.h>
+#include <tmsolve/version.h>
 #else
 #include "scientific.h"
 #include "string_tools.h"
@@ -23,5 +24,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "function.h"
 #include "matrix.h"
 #include "m_errors.h"
+#include "version.h"
 #endif
 #endif
