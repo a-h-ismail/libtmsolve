@@ -370,33 +370,28 @@ int tms_find_startofnumber(char *expr, int end)
 
 int tms_f_search(char *str, char *keyword, int index, bool match_word)
 {
-    int keylen = strlen(keyword), s_length = strlen(str);
-    while (index < s_length)
+    char *match;
+    // Search for the needle in the haystack
+    match = strstr(str + index, keyword);
+    if (match == NULL)
+        return -1;
+    else
     {
-        if (str[index] == keyword[0])
+        if (match_word)
         {
-            if (strncmp(str + index, keyword, keylen) == 0)
+            int keylen = strlen(keyword);
+            do
             {
-                // match_word: keyword match isn't adjacent to alphabetic or underscore characters.
-                if (match_word)
-                {
-
-                    if ((index > 0 && (tms_is_alpha(str[index - 1]) == true || str[index - 1] == '_')) ||
-                        ((tms_is_alpha(str[index + keylen]) == true || str[index + keylen] == '_')))
-                    {
-                        index += keylen;
-                        continue;
-                    }
-                }
-                return index;
-            }
-            else
-                index += keylen;
+                if ((match != str && tms_legal_char_in_name(match[-1])) && tms_legal_char_in_name(match[keylen]))
+                    return match - str;
+                else
+                    match = strstr(match + keylen, keyword);
+            } while (match != NULL);
+            return -1;
         }
         else
-            ++index;
+            return match - str;
     }
-    return -1;
 }
 
 // Reverse search function, returns the index of the first match of keyword, or -1 if none is found
