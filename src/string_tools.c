@@ -382,7 +382,7 @@ int tms_f_search(char *str, char *keyword, int index, bool match_word)
             int keylen = strlen(keyword);
             do
             {
-                if ((match != str && tms_legal_char_in_name(match[-1])) && tms_legal_char_in_name(match[keylen]))
+                if ((match != str && !tms_legal_char_in_name(match[-1])) && !tms_legal_char_in_name(match[keylen]))
                     return match - str;
                 else
                     match = strstr(match + keylen, keyword);
