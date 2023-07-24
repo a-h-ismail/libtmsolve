@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4.0)
+cmake_minimum_required(VERSION 3.5)
 
 project(tmsolve)
 
@@ -20,8 +20,13 @@ target_link_libraries(${PROJECT_NAME} m)
 # Build from the headers I got here
 add_compile_definitions(LOCAL_BUILD)
 
-# Install library
-install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
+# Install rules
+if(LINUX)
+    install(TARGETS ${PROJECT_NAME} DESTINATION /usr/lib64)
+    install(CODE "execute_process(COMMAND ldconfig)")
+else if(WIN32)
+    install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+endif()
 
 # Install library headers
 file(GLOB HEADERS include/*.h)
