@@ -4,7 +4,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "internals.h"
 #include "scientific.h"
-char *tms_lib_version = {"0.1.1"};
+char *tms_lib_version = {"0.1.2"};
 
 char *_tms_g_expr = NULL;
 double complex tms_g_ans = 0;
