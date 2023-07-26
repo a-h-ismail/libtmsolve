@@ -257,31 +257,13 @@ void tms_resize_zone(char *str, int o_end, int n_end)
     else
         memmove(str + n_end + 1, str + o_end + 1, strlen(str + o_end));
 }
-inline bool tms_is_digit(char c)
-{
-    if (c >= '0' && c <= '9')
-        return true;
-    else
-        return false;
-}
-inline bool tms_is_alpha(char c)
-{
-    if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
-        return true;
-    else
-        return false;
-}
-inline bool tms_is_alphanum(char c)
-{
-    return tms_is_digit(c) && tms_is_alpha(c);
-}
 
 // Function that checks if the number starting at start is valid
 bool is_valid_number(char *expr, int start)
 {
     if (expr[start] == '+' || expr[start] == '-')
         ++start;
-    if (tms_is_digit(expr[start]) || expr[start] == 'i')
+    if (isdigit(expr[start]) || expr[start] == 'i')
         return true;
     else
         return false;
@@ -302,7 +284,7 @@ int tms_find_endofnumber(char *expr, int start)
     */
     while (1)
     {
-        if (tms_is_digit(expr[end + 1]) == true && expr[end + 1] != '\0')
+        if (isdigit(expr[end + 1]) == true && expr[end + 1] != '\0')
             ++end;
         else
         {
@@ -344,7 +326,7 @@ int tms_find_startofnumber(char *expr, int end)
     {
         if (start == 0)
             break;
-        if (tms_is_digit(expr[start - 1]) == true)
+        if (isdigit(expr[start - 1]) == true)
             --start;
         else
         {
@@ -554,7 +536,7 @@ bool tms_syntax_check(char *expr)
     // Check for incorrect syntax or implied multiplication.
     for (i = 0; i < length; ++i)
     {
-        if (tms_is_digit(expr[i]))
+        if (isdigit(expr[i]))
         {
             int end = tms_find_endofnumber(expr, i);
             if (i > 0 && !tms_is_op(expr[i - 1]) && expr[i - 1] != '(' && expr[i - 1] != ',')
@@ -661,7 +643,7 @@ bool tms_pre_parse_routine(char *expr)
 
 bool tms_legal_char_in_name(char c)
 {
-    if (tms_is_alpha(c) == true || c == '_')
+    if (isalpha(c) == true || c == '_')
         return true;
     else
         return false;

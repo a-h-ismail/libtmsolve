@@ -7,6 +7,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #else
 #include "internals.h"
 #endif
+#include <ctype.h>
 /**
  * @file
  * @brief Declares all string handling related macros, structures, globals and functions.
@@ -56,24 +57,6 @@ void tms_remove_whitespace(char *str);
  * @param n_end
  */
 void tms_resize_zone(char *str, int old_end, int new_end);
-
-/**
- * @brief Checks if the character c is a digit.
- * @return true if c is a digit (0-9), false otherwise.
- */
-bool tms_is_digit(char c);
-
-/**
- * @brief Checks if the character c is a letter.
- * @return true if c is a letter (A-Z) or (a-z).
- */
-bool tms_is_alpha(char c);
-
-/**
- * @brief Checks if the character c is a letter or digit.
- * @return true if c is a letter (A-Z) or (a-z) or a digit.
- */
-bool tms_is_alphanum(char c);
 
 /**
  * @brief Finds the end of a number knowing its start in the expression.

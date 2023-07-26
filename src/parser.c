@@ -268,7 +268,7 @@ int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_inde
             if (previous_subexp != -1)
                 i = S[previous_subexp].solve_end + 1;
         }
-        else if (tms_is_digit(local_expr[i]))
+        else if (isdigit(local_expr[i]))
             continue;
 
         else if (tms_is_op(local_expr[i]))
