@@ -24,8 +24,8 @@ add_compile_definitions(LOCAL_BUILD)
 if(LINUX)
     install(TARGETS ${PROJECT_NAME} DESTINATION /usr/lib64)
     install(CODE "execute_process(COMMAND ldconfig)")
-else if(WIN32)
-    install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+elseif(WIN32)
+    install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif()
 
 # Install library headers
