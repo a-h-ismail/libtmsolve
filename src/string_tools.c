@@ -233,10 +233,10 @@ void tms_remove_whitespace(char *str)
     length = strlen(str);
     for (start = 0; start < length; ++start)
     {
-        if (str[start] == ' ')
+        if (isspace(str[start]))
         {
             end = start;
-            while (str[end] == ' ')
+            while (isspace(str[end]))
                 ++end;
             memmove(str + start, str + end, length - end + 1);
             length -= end - start;
