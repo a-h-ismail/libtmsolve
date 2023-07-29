@@ -224,11 +224,11 @@ int tms_error_handler(char *error, int arg1, ...)
         arg2 = va_arg(arguments, int);
         switch (arg2)
         {
-        case EH_MAIN_DB:
+        case EH_NONFATAL_ERROR:
             return non_fatal;
-        case EH_BACKUP_DB:
+        case EH_FATAL_ERROR:
             return fatal;
-        case EH_ALL_DB:
+        case EH_ALL_ERRORS:
             return non_fatal + fatal;
         }
 
