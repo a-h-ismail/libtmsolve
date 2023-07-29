@@ -53,10 +53,17 @@ void tms_remove_whitespace(char *str);
 /**
  * @brief Moves all characters starting from old_end to a new index: new_end
  * @param str The string to operate on.
- * @param old_end
- * @param n_end
+ * @param old_end The old end index of the region to resize.
+ * @param new_end The desired end index.
+ * @warning Make sure that your string has enough space to handle an increase in the string length.
  */
 void tms_resize_zone(char *str, int old_end, int new_end);
+
+/**
+ * @brief Checks if the string at *number is a valid number (ex: 1.5; 1e3; 1E4).
+ * @param number The string to check, offset to the start index.
+ */
+bool tms_is_valid_number(char *number);
 
 /**
  * @brief Finds the end of a number knowing its start in the expression.
@@ -73,7 +80,6 @@ int tms_find_endofnumber(char *expr, int start);
  * @return The index of the number's start, or -1 in case of failure.
  */
 int tms_find_startofnumber(char *expr, int end);
-// Function to find the first occurence of a string starting from i
 
 /**
  * @brief Forward search for a specified keyword.
