@@ -120,7 +120,7 @@ double complex tms_solve(char *expr)
         if (isnan(creal(result)))
         {
             // Check if the errors are fatal (like malformed syntax, division by zero...)
-            int fatal = tms_error_handler(NULL, EH_ERROR_COUNT, EH_MAIN_DB);
+            int fatal = tms_error_handler(NULL, EH_ERROR_COUNT, EH_FATAL_ERROR);
             if (fatal > 0)
                 return NAN;
 
