@@ -95,7 +95,7 @@ int tms_f_search(char *str, char *keyword, int index, bool match_word);
  * @param str The string to be searched.
  * @param keyword The keyword to look for.
  * @param index The index from which the search will start.
- * @param adjacent_search If set to true, the search will stop after going back strlen(keyword)-1 characters. Otherwise procced normally.
+ * @param adjacent_search If set to true, the search will stop after going back strlen(keyword)-1 characters. Otherwise proceed normally.
  * @return The index of the first match of keyword in str, or -1 if no match is found.
  */
 int tms_r_search(char *str, char *keyword, int index, bool adjacent_search);
