@@ -58,7 +58,6 @@ double complex tms_read_value(char *expr, int start, bool enable_complex)
 {
     double complex value = NAN;
     bool is_negative = false, is_complex = false, is_variable = false;
-    int flag = 0;
 
     if (expr[start] == '-')
     {
@@ -117,10 +116,10 @@ double complex tms_read_value(char *expr, int start, bool enable_complex)
         }
         // Use tmp because value is of type complex double
         double tmp;
-        flag = sscanf(expr + start, "%lf", &tmp);
+        int success = sscanf(expr + start, "%lf", &tmp);
         // Case where nothing was found even after checking for variables
         // Could be the variable x, so don't call the error handler
-        if (flag == 0)
+        if (success == 0)
             return NAN;
         value = tmp;
     }
@@ -243,27 +242,70 @@ void tms_remove_whitespace(char *str)
         }
     }
 }
-/*
-    Utility function to resize a region inside a string
-    This function receives the address of the string (*str),
-    the index of last element of the region (end), the new index of the last element after resize.
-*/
-void tms_resize_zone(char *str, int o_end, int n_end)
+
+void tms_resize_zone(char *str, int old_end, int new_end)
 {
     // case when size remains the same
-    if (o_end == n_end)
+    if (old_end == new_end)
         return;
     // Other cases
     else
-        memmove(str + n_end + 1, str + o_end + 1, strlen(str + o_end));
+        memmove(str + new_end + 1, str + old_end + 1, strlen(str + old_end));
 }
 
-// Function that checks if the number starting at start is valid
-bool is_valid_number(char *expr, int start)
+bool tms_is_valid_number(char *number)
 {
-    if (expr[start] == '+' || expr[start] == '-')
-        ++start;
-    if (isdigit(expr[start]) || expr[start] == 'i')
+    int i = 0, remaining_dots = 1;
+    bool is_scientific = false, is_complex = false;
+
+    // Number starts with + or -
+    if (number[0] == '+' || number[0] == '-')
+        ++i;
+
+    while (number[i] != '\0')
+    {
+        if (isdigit(number[i]))
+        {
+            ++i;
+        }
+        else if (number[i] == '.')
+        {
+            if (remaining_dots == 0)
+                return false;
+            else
+            {
+                ++i;
+                --remaining_dots;
+            }
+        }
+        else if (number[i] == 'e' || number[i] == 'E')
+        {
+            // Found e or E earlier, doesn't happen in a number
+            if (is_scientific)
+                return false;
+
+            is_scientific = true;
+            // Exponential notation may have a dot
+            ++remaining_dots;
+            ++i;
+
+            // For cases such as 1e+1 or 1e-1
+            if (number[i] == '+' || number[i] == '-')
+                ++i;
+        }
+        else if (number[i] == 'i')
+        {
+            if (is_complex)
+                return false;
+
+            is_complex = true;
+            ++i;
+        }
+        else
+            break;
+    }
+
+    if (number[i] == '\0' || tms_is_op(number[i]) || number[i]==')' || number[i]==',')
         return true;
     else
         return false;
@@ -282,9 +324,12 @@ int tms_find_endofnumber(char *expr, int start)
     *
     * If none of the following cases applies, break execution and return end
     */
+    if (tms_is_valid_number(expr + start) == false)
+        return -1;
+
     while (1)
     {
-        if (isdigit(expr[end + 1]) == true && expr[end + 1] != '\0')
+        if (isdigit(expr[end + 1]))
             ++end;
         else
         {
@@ -326,7 +371,7 @@ int tms_find_startofnumber(char *expr, int end)
     {
         if (start == 0)
             break;
-        if (isdigit(expr[start - 1]) == true)
+        if (isdigit(expr[start - 1]))
             --start;
         else
         {
@@ -636,6 +681,7 @@ bool tms_pre_parse_routine(char *expr)
         tms_error_handler(NO_INPUT, EH_SAVE, EH_FATAL_ERROR, -1);
         return false;
     }
+    tms_remove_whitespace(expr);
     // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
     tms_combine_add_sub(expr, 0, strlen(expr) - 2);
     return tms_syntax_check(expr);
@@ -643,7 +689,7 @@ bool tms_pre_parse_routine(char *expr)
 
 bool tms_legal_char_in_name(char c)
 {
-    if (isalpha(c) == true || c == '_')
+    if (isalpha(c) || c == '_')
         return true;
     else
         return false;
