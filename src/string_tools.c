@@ -97,6 +97,8 @@ double complex tms_read_value(char *expr, int start, bool enable_complex)
         if (enable_complex)
         {
             int end = tms_find_endofnumber(expr, start);
+            if (end == -1)
+                return NAN;
             if (expr[start] == 'i')
             {
                 // Using XOR to flip the boolean from false to true
@@ -305,7 +307,7 @@ bool tms_is_valid_number(char *number)
             break;
     }
 
-    if (number[i] == '\0' || tms_is_op(number[i]) || number[i]==')' || number[i]==',')
+    if (number[i] == '\0' || tms_is_op(number[i]) || number[i] == ')' || number[i] == ',')
         return true;
     else
         return false;
