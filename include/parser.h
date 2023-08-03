@@ -144,6 +144,10 @@ typedef struct tms_math_expr
     bool enable_complex;
 } tms_math_expr;
 
+#define TMS_CONTINUE 1
+#define TMS_SUCCESS 0
+#define TMS_BREAK 2
+#define TMS_ERROR -1
 
 /**
  * @brief First parsing step, detects assignment to runtime variables.
@@ -175,7 +179,7 @@ int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_inde
  * @param local_expr Expression, offset from the assignment operator (if any).
  * @param M tms_math_expr being processed.
  * @param s_index Index of the current subexpression.
- * @return 
+ * @return true on success, false on failure.
  */
 bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index);
 
