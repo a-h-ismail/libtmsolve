@@ -630,20 +630,20 @@ int tms_compare_priority(char operator1, char operator2)
 
 tms_arg_list *tms_get_args(char *string)
 {
-    tms_arg_list *args = malloc(sizeof(tms_arg_list));
-    args->count = 0;
+    tms_arg_list *A = malloc(sizeof(tms_arg_list));
+    A->count = 0;
 
     int length = strlen(string), max_args = 10;
     // The start/end of each argument.
     int start, end;
 
-    args->arguments = malloc(max_args * sizeof(char *));
+    A->arguments = malloc(max_args * sizeof(char *));
     for (end = start = 0; end < length; ++end)
     {
-        if (args->count == max_args)
+        if (A->count == max_args)
         {
             max_args += 10;
-            args->arguments = realloc(args->arguments, max_args * sizeof(char *));
+            A->arguments = realloc(A->arguments, max_args * sizeof(char *));
         }
         // Skip parenthesis pairs to allow easy nesting of argument lists
         // Think of something like int(0,2,x+int(0,1,x^2))
@@ -651,18 +651,18 @@ tms_arg_list *tms_get_args(char *string)
             end = tms_find_closing_parenthesis(string, end) + 1;
         else if (string[end] == ',')
         {
-            args->arguments[args->count] = malloc(end - start + 1);
-            strncpy(args->arguments[args->count], string + start, end - start);
-            args->arguments[args->count][end - start] = '\0';
+            A->arguments[A->count] = malloc(end - start + 1);
+            strncpy(A->arguments[A->count], string + start, end - start);
+            A->arguments[A->count][end - start] = '\0';
             start = end + 1;
-            ++args->count;
+            ++A->count;
         }
     }
-    args->arguments[args->count] = malloc(end - start + 1);
-    strncpy(args->arguments[args->count], string + start, end - start);
-    args->arguments[args->count][end - start] = '\0';
-    ++args->count;
-    return args;
+    A->arguments[A->count] = malloc(end - start + 1);
+    strncpy(A->arguments[A->count], string + start, end - start);
+    A->arguments[A->count][end - start] = '\0';
+    ++A->count;
+    return A;
 }
 // Frees the argument list array of char *
 // Can also free the list itself if it was allocated with malloc
