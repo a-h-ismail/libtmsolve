@@ -412,12 +412,11 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
         if (s_index == s_count - 1)
         {
             node_block[0].result = &M->answer;
-            // Signal to the parser that all subexpressions were completed
-            return 2;
+            return TMS_BREAK;
         }
 
         // Signal to the parser that processing this subexpression is done (because it has no operators)
-        return 1;
+        return TMS_CONTINUE;
     }
     // Case where at least one operator was found
     else
@@ -767,9 +766,9 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_variables, bool enable_com
             tms_delete_math_expr(M);
             return NULL;
         }
-        else if (status == 1)
+        else if (status == TMS_CONTINUE)
             continue;
-        else if (status == 2)
+        else if (status == TMS_BREAK)
             break;
 
         status = _tms_set_operands(local_expr, M, s_index, enable_variables);
