@@ -43,6 +43,14 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define EH_FATAL_ERROR 12
 #define EH_ALL_ERRORS 13
 
+/// @brief tmsolve runtime variable metadata.
+typedef struct tms_var
+{
+    char *name;
+    double complex value;
+    bool is_constant;
+} tms_var;
+
 /// @brief Stores the answer of the last calculation to allow reuse.
 extern double complex tms_g_ans;
 
@@ -51,6 +59,12 @@ extern char *_tms_g_expr;
 
 /// @brief Indicates if the library initialization function should be run.
 extern bool _tms_init;
+
+/// @brief Contains all built in variables (like pi).
+extern tms_var builtin_vars[];
+
+/// @brief Contains all variables, including built in ones, dynamically expanded on demand.
+extern tms_var *tms_g_all_vars;
 
 /// @brief Total number of functions, those with complex variant are counted once.
 extern int tms_g_func_count;
@@ -63,21 +77,6 @@ extern int tms_g_var_max;
 
 /// @brief All function names, including built in, extended, and user defined functions.
 extern char **tms_g_all_func_names;
-
-/// @brief Contains all variable values except ans which has its own variable.
-extern double complex *tms_g_var_values;
-
-/// @brief Contains all variable names including built in ones.
-extern char **tms_g_var_names;
-
-/// @brief Names of built in variables.
-extern const char *tms_builtin_var_names[];
-
-/// @brief Values of built in variables.
-extern const complex double tms_builtin_var_values[] ;
-
-/// @brief Number of built in variables.
-extern const int tms_builtin_var_count;
 
 /// @brief Names that should not be usable for variables.
 extern char *tms_g_illegal_names[];
