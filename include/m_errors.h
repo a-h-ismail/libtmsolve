@@ -27,7 +27,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define UNDEFINED_FUNCTION "Undefined function."
 #define INTERNAL_ERROR "Internal error, please report this as a bug and include the expression that caused the issue."
 #define MULTIPLE_ASSIGNMENT_ERROR "Multiple assignment operators are not supported."
-#define OVERWRITE_BUILTIN_VARIABLE "Overwriting built in variables is not allowed."
+#define OVERWRITE_CONST_VARIABLE "Overwriting protected variables is not allowed."
 #define ILLEGAL_COMPLEX_OP "Illegal complex operation."
 #define TOO_MANY_ARGS "Too many arguments in function call."
 #define TOO_FEW_ARGS "Too few arguments in function call."
