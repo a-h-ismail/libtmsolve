@@ -4,6 +4,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "internals.h"
 #include "scientific.h"
+
 char *tms_lib_version = {"0.1.3"};
 
 char *_tms_g_expr = NULL;
@@ -11,29 +12,25 @@ double complex tms_g_ans = 0;
 
 bool _tms_init = true;
 char **tms_g_all_func_names;
-double complex *tms_g_var_values;
-char **tms_g_var_names;
 
-const char *tms_builtin_var_names[] = {"pi", "exp", "c"};
-const double complex tms_builtin_var_values[] = {M_PI, M_E, 299792458};
-const int tms_builtin_var_count = array_length(tms_builtin_var_names);
+tms_var builtin_vars[3] = {{"pi", M_PI, true}, {"exp", M_E, true}, {"c", 299792458, true}};
+tms_var *tms_g_all_vars = NULL;
+
 char *tms_g_illegal_names[] = {"e", "E", "i"};
 const int tms_g_illegal_names_count = array_length(tms_g_illegal_names);
-int tms_g_func_count = 0, tms_g_var_count, tms_g_var_max = 8;
+int tms_g_func_count = 0, tms_g_var_count, tms_g_var_max = array_length(builtin_vars);
+
 void tmsolve_init()
 {
     int i;
     if (_tms_init == true)
     {
         // Initialize variable names and values arrays
-        tms_g_var_names = malloc(8 * sizeof(char *));
-        tms_g_var_values = malloc(8 * sizeof(double complex));
-        tms_g_var_count = tms_builtin_var_count;
+        tms_g_all_vars = malloc(tms_g_var_max * sizeof(tms_var));
+        tms_g_var_count = array_length(builtin_vars);
+
         for (i = 0; i < tms_g_var_count; ++i)
-        {
-            tms_g_var_names[i] = (char *)tms_builtin_var_names[i];
-            tms_g_var_values[i] = tms_builtin_var_values[i];
-        }
+            tms_g_all_vars[i] = builtin_vars[i];
 
         // Get the number of functions.
         for (i = 0; tms_r_func_name[i] != NULL; ++i)

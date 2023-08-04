@@ -119,34 +119,36 @@ int _tms_set_runtime_var(char *expr, int i)
             tms_error_handler(INVALID_VARIABLE_NAME, EH_SAVE, EH_FATAL_ERROR, 0);
             return -1;
         }
+
+        // Check if the variable already exists
         for (j = 0; j < tms_g_var_count; ++j)
         {
-            // An existing variable is found
-            if (strcmp(tms_g_var_names[j], tmp) == 0)
+            if (strcmp(tms_g_all_vars[j].name, tmp) == 0)
             {
+                if (tms_g_all_vars[j].is_constant)
+                {
+                    tms_error_handler(OVERWRITE_CONST_VARIABLE, EH_SAVE, EH_FATAL_ERROR, i);
+                    return -1;
+                }
                 variable_index = j;
                 break;
             }
         }
-        if (j < tms_builtin_var_count)
-        {
-            tms_error_handler(OVERWRITE_BUILTIN_VARIABLE, EH_SAVE, EH_FATAL_ERROR, i);
-            return -1;
-        }
+
         // Create a new variable
         if (j == tms_g_var_count)
         {
-            // Dynamically expand size
+            // Dynamically expand size if required
             if (tms_g_var_count == tms_g_var_max)
             {
                 tms_g_var_max *= 2;
-                tms_g_var_names = realloc(tms_g_var_names, tms_g_var_max * sizeof(char *));
-                tms_g_var_values = realloc(tms_g_var_values, tms_g_var_max * sizeof(double complex));
+                tms_g_all_vars = realloc(tms_g_all_vars, tms_g_var_max * sizeof(tms_var));
             }
-            tms_g_var_names[tms_g_var_count] = malloc((strlen(tmp) + 1) * sizeof(char));
+            tms_g_all_vars[tms_g_var_count].name = malloc((strlen(tmp) + 1) * sizeof(char));
             // Initialize the new variable to zero
-            tms_g_var_values[tms_g_var_count] = 0;
-            strcpy(tms_g_var_names[tms_g_var_count], tmp);
+            tms_g_all_vars[tms_g_var_count].value = 0;
+            tms_g_all_vars[tms_g_var_count].is_constant = false;
+            strcpy(tms_g_all_vars[tms_g_var_count].name, tmp);
             variable_index = tms_g_var_count++;
         }
     }
@@ -1019,7 +1021,7 @@ double complex tms_evaluate(tms_math_expr *M)
     }
 
     if (M->runvar_i != -1)
-        tms_g_var_values[M->runvar_i] = M->answer;
+        tms_g_all_vars[M->runvar_i].value = M->answer;
 
     // tms_dump_expr(M, true);
 
