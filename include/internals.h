@@ -61,10 +61,10 @@ extern char *_tms_g_expr;
 extern bool _tms_init;
 
 /// @brief Contains all built in variables (like pi).
-extern tms_var builtin_vars[];
+extern tms_var tms_g_builtin_vars[];
 
 /// @brief Contains all variables, including built in ones, dynamically expanded on demand.
-extern tms_var *tms_g_all_vars;
+extern tms_var *tms_g_vars;
 
 /// @brief Total number of functions, those with complex variant are counted once.
 extern int tms_g_func_count;

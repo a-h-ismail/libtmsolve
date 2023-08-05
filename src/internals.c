@@ -13,12 +13,12 @@ double complex tms_g_ans = 0;
 bool _tms_init = true;
 char **tms_g_all_func_names;
 
-tms_var builtin_vars[3] = {{"pi", M_PI, true}, {"exp", M_E, true}, {"c", 299792458, true}};
-tms_var *tms_g_all_vars = NULL;
+tms_var tms_g_builtin_vars[] = {{"pi", M_PI, true}, {"exp", M_E, true}, {"c", 299792458, true}};
+tms_var *tms_g_vars = NULL;
 
 char *tms_g_illegal_names[] = {"e", "E", "i"};
 const int tms_g_illegal_names_count = array_length(tms_g_illegal_names);
-int tms_g_func_count = 0, tms_g_var_count, tms_g_var_max = array_length(builtin_vars);
+int tms_g_func_count = 0, tms_g_var_count, tms_g_var_max = array_length(tms_g_builtin_vars);
 
 void tmsolve_init()
 {
@@ -26,11 +26,11 @@ void tmsolve_init()
     if (_tms_init == true)
     {
         // Initialize variable names and values arrays
-        tms_g_all_vars = malloc(tms_g_var_max * sizeof(tms_var));
-        tms_g_var_count = array_length(builtin_vars);
+        tms_g_vars = malloc(tms_g_var_max * sizeof(tms_var));
+        tms_g_var_count = array_length(tms_g_builtin_vars);
 
         for (i = 0; i < tms_g_var_count; ++i)
-            tms_g_all_vars[i] = builtin_vars[i];
+            tms_g_vars[i] = tms_g_builtin_vars[i];
 
         // Get the number of functions.
         for (i = 0; tms_r_func_name[i] != NULL; ++i)

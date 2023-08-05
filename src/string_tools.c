@@ -70,15 +70,15 @@ double complex tms_read_value(char *expr, int start, bool enable_complex)
     int i;
     for (i = 0; i < tms_g_var_count; ++i)
     {
-        if (tms_match_word(expr, start, tms_g_all_vars[i].name, true))
+        if (tms_match_word(expr, start, tms_g_vars[i].name, true))
         {
             // Complex variable in real only mode
-            if (!enable_complex && cimag(tms_g_all_vars[i].value) != 0)
+            if (!enable_complex && cimag(tms_g_vars[i].value) != 0)
             {
                 tms_error_handler(MATH_ERROR, EH_SAVE, EH_FATAL_ERROR, start);
                 return NAN;
             }
-            value = tms_g_all_vars[i].value;
+            value = tms_g_vars[i].value;
             is_variable = true;
             break;
         }
@@ -139,6 +139,7 @@ double complex tms_read_value(char *expr, int start, bool enable_complex)
     else
         return value;
 }
+
 bool tms_is_op(char c)
 {
     switch (c)
