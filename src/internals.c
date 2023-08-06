@@ -13,7 +13,7 @@ double complex tms_g_ans = 0;
 bool _tms_init = true;
 char **tms_g_all_func_names;
 
-tms_var tms_g_builtin_vars[] = {{"pi", M_PI, true}, {"exp", M_E, true}, {"c", 299792458, true}};
+tms_var tms_g_builtin_vars[] = {{"i", I, true}, {"pi", M_PI, true}, {"exp", M_E, true}, {"c", 299792458, true}};
 tms_var *tms_g_vars = NULL;
 
 char *tms_g_illegal_names[] = {"e", "E", "i"};
