@@ -116,7 +116,7 @@ int _tms_set_runtime_var(char *expr, int i)
         // Check if the name has illegal characters
         if (tms_valid_name(tmp) == false)
         {
-            tms_error_handler(INVALID_VARIABLE_NAME, EH_SAVE, EH_FATAL_ERROR,-1);
+            tms_error_handler(INVALID_VARIABLE_NAME, EH_SAVE, EH_FATAL_ERROR, -1);
             return -1;
         }
 
@@ -981,8 +981,11 @@ double complex tms_evaluate(tms_math_expr *M)
                     break;
 
                 case '^':
+                    // Use non complex power function if no imaginary part is found
+                    if (cimag(i_node->left_operand) == 0 && cimag(i_node->right_operand) == 0)
+                        *(i_node->result) = tms_fast_pow(i_node->left_operand, i_node->right_operand);
                     // Workaround for the edge case where something like (6i)^2 is producing a small imaginary part
-                    if (cimag(i_node->right_operand) == 0 && round(creal(i_node->right_operand)) - creal(i_node->right_operand) == 0)
+                    else if (cimag(i_node->right_operand) == 0 && round(creal(i_node->right_operand)) - (int)creal(i_node->right_operand) == 0)
                     {
                         *(i_node->result) = 1;
                         int i;
