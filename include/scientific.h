@@ -36,6 +36,11 @@ typedef struct tms_fraction
 double tms_factorial(double value);
 
 /**
+ * @brief Emulates pow() function with better performance for integer exponants.
+ */
+double tms_fast_pow(double x, double y);
+
+/**
  * @brief Calculates a mathematical expression and returns the answer.
  * @param expr The string containing the math expression.
  * @param enable_complex Enables complex number calculation, set to false if you don't need complex values.
