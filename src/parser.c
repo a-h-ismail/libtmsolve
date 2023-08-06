@@ -395,7 +395,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
             *(S[i].result) = &(node_block->left_operand);
         else
         {
-            node_block->left_operand = tms_read_value(local_expr, solve_start, M->enable_complex);
+            node_block->left_operand = tms_get_operand(local_expr, solve_start, M->enable_complex);
             if (isnan((double)node_block->left_operand))
             {
                 status = tms_set_var_metadata(local_expr + solve_start, node_block, 'l');
@@ -469,7 +469,7 @@ int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enab
     }
     else
     {
-        node_block[0].left_operand = tms_read_value(local_expr, solve_start, M->enable_complex);
+        node_block[0].left_operand = tms_get_operand(local_expr, solve_start, M->enable_complex);
         // If reading a value fails, it is probably a variable like x
         if (isnan((double)node_block[0].left_operand))
         {
@@ -497,7 +497,7 @@ int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enab
     {
         if (node_block[i].priority >= node_block[i + 1].priority)
         {
-            node_block[i].right_operand = tms_read_value(local_expr, node_block[i].operator_index + 1, M->enable_complex);
+            node_block[i].right_operand = tms_get_operand(local_expr, node_block[i].operator_index + 1, M->enable_complex);
             // Case of reading the number to the right operand of a op_node
             if (isnan((double)node_block[i].right_operand))
             {
@@ -524,7 +524,7 @@ int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enab
         else
         {
             // Read number
-            node_block[i + 1].left_operand = tms_read_value(local_expr, node_block[i].operator_index + 1, M->enable_complex);
+            node_block[i + 1].left_operand = tms_get_operand(local_expr, node_block[i].operator_index + 1, M->enable_complex);
             if (isnan((double)node_block[i + 1].left_operand))
             {
                 // Checking for the variable 'x'
@@ -549,7 +549,7 @@ int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enab
     }
     // Place the last number in the last op_node
     // Read a value
-    node_block[op_count - 1].right_operand = tms_read_value(local_expr, node_block[op_count - 1].operator_index + 1, M->enable_complex);
+    node_block[op_count - 1].right_operand = tms_get_operand(local_expr, node_block[op_count - 1].operator_index + 1, M->enable_complex);
     if (isnan((double)node_block[op_count - 1].right_operand))
     {
         // Check for the variable 'x'
