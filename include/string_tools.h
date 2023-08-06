@@ -101,13 +101,21 @@ int tms_f_search(char *str, char *keyword, int index, bool match_word);
 int tms_r_search(char *str, char *keyword, int index, bool adjacent_search);
 
 /**
+ * @brief Emulates the behavior of sscanf with format specifier "%lf".
+ * This implementation is faster than using sscanf and supports decimal exponent in scientific notation.
+ * @param _s Start of the value to read
+ * @return The result or NaN in case of failure.
+ */
+double complex tms_read_value(char *_s);
+
+/**
  * @brief Reads a value from the expression at start, supports numbers, constants and variables.
  * @param expr The string to read the value from.
  * @param start The index where the start of the value is located.
  * @param enable_complex Toggles complex number support.
  * @return The value read from the string, or NaN in case of failure.
  */
-double complex tms_read_value(char *expr, int start, bool enable_complex);
+double complex tms_get_operand(char *expr, int start, bool enable_complex);
 
 /**
  * @brief Finds the next occurence of add or subtract sign.
