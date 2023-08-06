@@ -15,6 +15,34 @@ double tms_factorial(double value)
     return result;
 }
 
+double tms_fast_pow(double x, double y)
+{
+    double result = 1;
+    if (y == 0)
+        return 1;
+    if (y > 0)
+    {
+        if (y <= INT32_MAX && y - (int32_t)y == 0)
+        {
+            for (int i = 0; i < y; ++i)
+                result *= x;
+            return result;
+        }
+    }
+    else
+    {
+        if (y >= INT32_MIN && y - (int32_t)y == 0)
+        {
+            for (int i = 0; i > y; --i)
+                result /= x;
+            return result;
+        }
+    }
+
+    // Neither optimizations worked so fallback to standard C pow
+    return pow(x, y);
+}
+
 void _set_ans(double complex result)
 {
     if (!isnan(creal(result)) && !isnan(cimag(result)))

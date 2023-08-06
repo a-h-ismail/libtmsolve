@@ -131,34 +131,6 @@ bool tms_is_op(char c)
     }
 }
 
-double tms_fast_pow(double x, double y)
-{
-    double result = 1;
-    if (y == 0)
-        return 1;
-    if (y > 0)
-    {
-        if (y <= INT32_MAX && y - (int32_t)y == 0)
-        {
-            for (int i = 0; i < y; ++i)
-                result *= x;
-            return result;
-        }
-    }
-    else
-    {
-        if (y >= INT32_MIN && y - (int32_t)y == 0)
-        {
-            for (int i = 0; i > y; --i)
-                result /= x;
-            return result;
-        }
-    }
-
-    // Neither optimizations worked so fallback to standard C pow
-    return pow(x, y);
-}
-
 uint8_t tms_char_to_int(char c)
 {
     if (isdigit(c) != 0)
