@@ -54,10 +54,10 @@ int find_min(int a, int b)
         return b;
 }
 
-double complex tms_read_value(char *expr, int start, bool enable_complex)
+double complex tms_get_operand(char *expr, int start, bool enable_complex)
 {
     double complex value = NAN;
-    bool is_negative = false, is_complex = false, is_variable = false;
+    bool is_negative = false, is_variable = false;
 
     if (expr[start] == '-')
     {
@@ -93,51 +93,17 @@ double complex tms_read_value(char *expr, int start, bool enable_complex)
 
     if (is_variable == false)
     {
-        // Check for the complex number i at the beginning or end of the number.
-        if (enable_complex)
+        value = tms_read_value(expr + start);
+        if (!enable_complex && cimag(value) != 0)
         {
-            int end = tms_find_endofnumber(expr, start);
-            if (end == -1)
-                return NAN;
-            if (expr[start] == 'i')
-            {
-                // Using XOR to flip the boolean from false to true
-                is_complex = is_complex ^ 1;
-                if (start == end)
-                {
-                    if (is_negative)
-                        return -I;
-                    else
-                        return I;
-                }
-                ++start;
-            }
-            if (expr[end] == 'i')
-                // Again, XOR toggles between true and false
-                is_complex = is_complex ^ 1;
-        }
-        // Use tmp because value is of type complex double
-        double tmp;
-        int success = sscanf(expr + start, "%lf", &tmp);
-        // Case where nothing was found even after checking for variables
-        // Could be the variable x, so don't call the error handler
-        if (success == 0)
+            tms_error_handler(COMPLEX_DISABLED, EH_SAVE, EH_NONFATAL_ERROR, start);
             return NAN;
-        value = tmp;
+        }
     }
+
     if (is_negative)
         value = -value;
-
-    if (isnan(creal(value)))
-    {
-        tms_error_handler(SYNTAX_ERROR, EH_SAVE, EH_FATAL_ERROR, start);
-        return NAN;
-    }
-
-    if (enable_complex && is_complex)
-        return value * I;
-    else
-        return value;
+    return value;
 }
 
 bool tms_is_op(char c)
@@ -162,6 +128,136 @@ bool tms_is_op(char c)
         return true;
     default:
         return false;
+    }
+}
+
+double tms_fast_pow(double x, double y)
+{
+    double result = 1;
+    if (y == 0)
+        return 1;
+    if (y > 0)
+    {
+        if (y <= INT32_MAX && y - (int32_t)y == 0)
+        {
+            for (int i = 0; i < y; ++i)
+                result *= x;
+            return result;
+        }
+    }
+    else
+    {
+        if (y >= INT32_MIN && y - (int32_t)y == 0)
+        {
+            for (int i = 0; i > y; --i)
+                result /= x;
+            return result;
+        }
+    }
+
+    // Neither optimizations worked so fallback to standard C pow
+    return pow(x, y);
+}
+
+uint8_t tms_char_to_int(char c)
+{
+    if (isdigit(c) != 0)
+        return c - '0';
+    else
+        return -1;
+}
+
+double _tms_read_value_simple(char *expr)
+{
+    double value = 0, power = 1;
+    int i, dot = -1, start, length;
+    length = strlen(expr);
+
+    for (i = 0; i < length; ++i)
+    {
+        if (expr[i] == '.')
+        {
+            dot = i;
+            break;
+        }
+    }
+    if (dot != -1)
+        start = dot - 1;
+    else
+        start = length - 1;
+
+    int8_t tmp;
+    for (i = start; i >= 0; --i)
+    {
+        tmp = tms_char_to_int(expr[i]);
+        if (tmp == -1)
+            break;
+        value += tmp * power;
+        power *= 10;
+    }
+    // Reading the decimal part
+    if (dot != -1)
+    {
+        power = 10;
+        for (i = dot + 1; i < length; ++i)
+        {
+            value += tms_char_to_int(expr[i]) / power;
+            power *= 10;
+        }
+    }
+    if (expr[0] == '-')
+        value = -value;
+    return value;
+}
+
+double complex tms_read_value(char *_s)
+{
+    double complex value;
+    int end = tms_find_endofnumber(_s, 0), sci_notation = -1;
+    bool is_complex = false;
+
+    // find_endofnumber will detect invalid syntax
+    if (end == -1)
+        return NAN;
+
+    // Copy the value to a separate array
+    char num_str[end + 2];
+    strncpy(num_str, _s, end + 1);
+    num_str[end + 1] = '\0';
+
+    if (num_str[end] == 'i')
+    {
+        is_complex = true;
+        num_str[end] = '\0';
+    }
+
+    // Check for scientific notation 'e' or 'E'
+    for (int i = 0; num_str[i] != '\0'; ++i)
+    {
+        if (num_str[i] == 'e' || num_str[i] == 'E')
+        {
+            sci_notation = i;
+            break;
+        }
+    }
+
+    // No scientific notation found
+    if (sci_notation == -1)
+    {
+        value = _tms_read_value_simple(num_str);
+        if (is_complex)
+            value *= I;
+        return value;
+    }
+    else
+    {
+        double power;
+        num_str[sci_notation] = '\0';
+        value = _tms_read_value_simple(num_str);
+        power = _tms_read_value_simple(num_str + sci_notation + 1);
+        if (is_complex)
+            value *= I;
+        return value * tms_fast_pow(10, power);
     }
 }
 
@@ -412,7 +508,11 @@ int tms_f_search(char *str, char *keyword, int index, bool match_word)
             int keylen = strlen(keyword);
             do
             {
-                if ((match != str && !tms_legal_char_in_name(match[-1])) && !tms_legal_char_in_name(match[keylen]))
+                // Matched at the beginning
+                if (match == str && !tms_legal_char_in_name(match[keylen]))
+                    return match - str;
+                // Matched elswhere
+                else if (match != str && !tms_legal_char_in_name(match[-1]) && !tms_legal_char_in_name(match[keylen]))
                     return match - str;
                 else
                     match = strstr(match + keylen, keyword);
