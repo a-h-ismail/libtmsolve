@@ -104,8 +104,8 @@ typedef struct tms_error_data
 } tms_error_data;
 
 /// @brief Initializes the variables required for the proper operation of the calculator.
-/// @details The variables to initialize are: tms_g_all_func_names, tms_g_func_count, tms_g_var_names, tms_g_var_count.
-void tmsolve_init();
+/// @details The variables to initialize are: tms_g_all_func_names, tms_g_func_count, tms_g_var_count, tms_vars.
+void tmsolve_init() __attribute__((constructor));
 
 /**
  * @brief Error handling function, collects and manages errors.
@@ -116,7 +116,7 @@ void tmsolve_init();
  * EH_SAVE, EH_FATAL_ERROR | EH_NONFATAL_ERROR, error_index \n
  * EH_PRINT (returns number of printed errors). \n
  * EH_CLEAR, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB \n
- * EH_SEARCH, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB (returns 1 on match in main, 2 on match in backup). \n
+ * EH_SEARCH, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB (returns EH_MAIN_DB on match in main, EH_BACKUP_DB on match in backup). \n
  * EH_ERROR_COUNT, EH_FATAL_ERROR | EH_NONFATAL_ERROR | EH_ALL_ERRORS (returns number of errors specified). \n
  * EH_BACKUP \n
  * EH_RESTORE \n
