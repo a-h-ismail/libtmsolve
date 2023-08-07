@@ -60,12 +60,6 @@ void tms_remove_whitespace(char *str);
 void tms_resize_zone(char *str, int old_end, int new_end);
 
 /**
- * @brief Checks if the string at *number is a valid number (ex: 1.5; 1e3; 1E4).
- * @param number The string to check, offset to the start index.
- */
-bool tms_is_valid_number(char *number);
-
-/**
  * @brief Finds the end of a number knowing its start in the expression.
  * @param expr The expression to search.
  * @param start The start index of the number.
