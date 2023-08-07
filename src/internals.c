@@ -198,20 +198,20 @@ int tms_error_handler(char *error, int arg1, ...)
         case EH_MAIN_DB:
             for (i = 0; i < last_error; ++i)
                 if (strcmp(error, error_table[i].error_msg) == 0)
-                    return 1;
+                    return EH_MAIN_DB;
             break;
         case EH_BACKUP_DB:
             for (i = 0; i < last_error; ++i)
                 if (strcmp(error, backup[i].error_msg) == 0)
-                    return 2;
+                    return EH_BACKUP_DB;
             break;
         case EH_ALL_DB:
             for (i = 0; i < last_error; ++i)
             {
                 if (strcmp(error, error_table[i].error_msg) == 0)
-                    return 1;
+                    return EH_MAIN_DB;
                 else if (strcmp(error, backup[i].error_msg) == 0)
-                    return 2;
+                    return EH_BACKUP_DB;
             }
         }
         return -1;
