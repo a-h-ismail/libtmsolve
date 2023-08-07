@@ -131,7 +131,17 @@ bool tms_is_op(char c)
     }
 }
 
-uint8_t tms_char_to_int(char c)
+int8_t tms_bin_to_int(char c)
+{
+    if (c == '0')
+        return 0;
+    else if (c == '1')
+        return 1;
+    else
+        return -1;
+}
+
+int8_t tms_dec_to_int(char c)
 {
     if (isdigit(c) != 0)
         return c - '0';
@@ -139,11 +149,81 @@ uint8_t tms_char_to_int(char c)
         return -1;
 }
 
-double _tms_read_value_simple(char *expr)
+int8_t tms_oct_to_int(char c)
+{
+    if (c >= '0' && c <= '7')
+        return c - '0';
+    else
+        return -1;
+}
+
+int8_t tms_hex_to_int(char c)
+{
+    if (isdigit(c) != 0)
+        return c - '0';
+    else
+    {
+        c = tolower(c);
+        if (c >= 'a' && c <= 'f')
+            return c - 'a' + 10;
+    }
+    return -1;
+}
+
+int8_t tms_detect_base(char *_s)
+{
+    if (_s[0] == '+' || _s[0] == '-')
+        ++_s;
+
+    // Detect the number base
+    if (_s[0] == '0')
+    {
+        switch (_s[1])
+        {
+        case 'x':
+            return 16;
+        case 'o':
+            return 8;
+        case 'b':
+            return 2;
+        }
+    }
+    // Assume the base is 10 if no prefix is found
+    return 10;
+}
+double _tms_read_value_simple(char *expr, int8_t base)
 {
     double value = 0, power = 1;
     int i, dot = -1, start, length;
+    bool is_negative = false;
+    int8_t (*symbol_resolver)(char);
+    if (expr[0] == '-')
+    {
+        ++expr;
+        is_negative = true;
+    }
+    else if (expr[0] == '+')
+        ++expr;
+
     length = strlen(expr);
+
+    switch (base)
+    {
+    case 10:
+        symbol_resolver = tms_dec_to_int;
+        break;
+    case 2:
+        symbol_resolver = tms_bin_to_int;
+        break;
+    case 8:
+        symbol_resolver = tms_oct_to_int;
+        break;
+    case 16:
+        symbol_resolver = tms_hex_to_int;
+        break;
+    default:
+        return NAN;
+    }
 
     for (i = 0; i < length; ++i)
     {
@@ -161,23 +241,23 @@ double _tms_read_value_simple(char *expr)
     int8_t tmp;
     for (i = start; i >= 0; --i)
     {
-        tmp = tms_char_to_int(expr[i]);
+        tmp = (*symbol_resolver)(expr[i]);
         if (tmp == -1)
-            break;
+            return NAN;
         value += tmp * power;
-        power *= 10;
+        power *= base;
     }
     // Reading the decimal part
     if (dot != -1)
     {
-        power = 10;
+        power = base;
         for (i = dot + 1; i < length; ++i)
         {
-            value += tms_char_to_int(expr[i]) / power;
-            power *= 10;
+            value += (*symbol_resolver)(expr[i]) / power;
+            power *= base;
         }
     }
-    if (expr[0] == '-')
+    if (is_negative)
         value = -value;
     return value;
 }
@@ -185,12 +265,18 @@ double _tms_read_value_simple(char *expr)
 double complex tms_read_value(char *_s)
 {
     double complex value;
-    int end = tms_find_endofnumber(_s, 0), sci_notation = -1;
+    int end, sci_notation = -1, base;
     bool is_complex = false;
 
-    // find_endofnumber will detect invalid syntax
+    end = tms_find_endofnumber(_s, 0);
     if (end == -1)
         return NAN;
+    base = tms_detect_base(_s);
+    if (base != 10)
+    {
+        _s += 2;
+        end -= 2;
+    }
 
     // Copy the value to a separate array
     char num_str[end + 2];
@@ -204,19 +290,20 @@ double complex tms_read_value(char *_s)
     }
 
     // Check for scientific notation 'e' or 'E'
-    for (int i = 0; num_str[i] != '\0'; ++i)
-    {
-        if (num_str[i] == 'e' || num_str[i] == 'E')
+    if (base == 10)
+        for (int i = 0; num_str[i] != '\0'; ++i)
         {
-            sci_notation = i;
-            break;
+            if (num_str[i] == 'e' || num_str[i] == 'E')
+            {
+                sci_notation = i;
+                break;
+            }
         }
-    }
 
-    // No scientific notation found
+    // No scientific notation found (or prevented for non base 10 representations)
     if (sci_notation == -1)
     {
-        value = _tms_read_value_simple(num_str);
+        value = _tms_read_value_simple(num_str, base);
         if (is_complex)
             value *= I;
         return value;
@@ -225,8 +312,8 @@ double complex tms_read_value(char *_s)
     {
         double power;
         num_str[sci_notation] = '\0';
-        value = _tms_read_value_simple(num_str);
-        power = _tms_read_value_simple(num_str + sci_notation + 1);
+        value = _tms_read_value_simple(num_str, 10);
+        power = _tms_read_value_simple(num_str + sci_notation + 1, 10);
         if (is_complex)
             value *= I;
         return value * tms_fast_pow(10, power);
@@ -323,103 +410,89 @@ void tms_resize_zone(char *str, int old_end, int new_end)
     else
         memmove(str + new_end + 1, str + old_end + 1, strlen(str + old_end));
 }
-
-bool tms_is_valid_number(char *number)
+bool tms_valid_digit_for_base(char digit, int8_t base)
 {
-    int i = 0, remaining_dots = 1;
+    switch (base)
+    {
+    case 10:
+        if (isdigit(digit) != 0)
+            return true;
+        break;
+    case 16:
+        if (tms_hex_to_int(digit) != -1)
+            return true;
+        break;
+    case 8:
+        if (tms_oct_to_int(digit) != -1)
+            return true;
+        break;
+    case 2:
+        if (tms_bin_to_int(digit) != -1)
+            return true;
+        break;
+    }
+    return false;
+}
+// [\+-]?\d+(\.\d+)?([eE]?[\+-]*\d)?+i? (May use it one day to detect numbers)
+
+int tms_find_endofnumber(char *number, int start)
+{
+    int end = start, remaining_dots = 1, base = 10;
     bool is_scientific = false, is_complex = false;
 
     // Number starts with + or -
-    if (number[0] == '+' || number[0] == '-')
-        ++i;
+    if (number[start] == '+' || number[start] == '-')
+        ++end;
 
-    while (number[i] != '\0')
+    base = tms_detect_base(number);
+    if (base != 10)
+        end += 2;
+
+    while (number[end] != '\0')
     {
-        if (isdigit(number[i]))
-        {
-            ++i;
-        }
-        else if (number[i] == '.')
+        if (tms_valid_digit_for_base(number[end], base))
+            ++end;
+        else if (number[end] == '.')
         {
             if (remaining_dots == 0)
-                return false;
+                return 0;
             else
             {
-                ++i;
+                ++end;
                 --remaining_dots;
             }
         }
-        else if (number[i] == 'e' || number[i] == 'E')
+        else if (base == 10 && (number[end] == 'e' || number[end] == 'E'))
         {
             // Found e or E earlier, doesn't happen in a number
             if (is_scientific)
-                return false;
+                return 0;
 
             is_scientific = true;
             // Exponential notation may have a dot
             ++remaining_dots;
-            ++i;
+            ++end;
 
             // For cases such as 1e+1 or 1e-1
-            if (number[i] == '+' || number[i] == '-')
-                ++i;
+            if (number[end] == '+' || number[end] == '-')
+                ++end;
         }
-        else if (number[i] == 'i')
+        else if (number[end] == 'i')
         {
             if (is_complex)
-                return false;
+                return 0;
 
             is_complex = true;
-            ++i;
+            ++end;
         }
         else
             break;
     }
 
-    if (number[i] == '\0' || tms_is_op(number[i]) || number[i] == ')' || number[i] == ',')
-        return true;
+    if (number[end] == '\0' || tms_is_op(number[end]) || number[end] == ')' || number[end] == ',')
+        return end - 1;
     else
-        return false;
-}
-
-int tms_find_endofnumber(char *expr, int start)
-{
-    int end = start;
-    /*
-    Algorithm:
-    * Starting from "start" check if the char at end+1 is a number, if true increment end
-    * If not, check the following cases:
-    * expr[end+1] is a point '.' before scientific notation, scientific notations 'e' 'E': increment end
-    * expr[end+1] is the imaginary number 'i': Increment end then break
-    * expr[end+1] is an add/subtract operator following a scientific notation, increment end
-    *
-    * If none of the following cases applies, break execution and return end
-    */
-    if (tms_is_valid_number(expr + start) == false)
         return -1;
-
-    while (1)
-    {
-        if (isdigit(expr[end + 1]))
-            ++end;
-        else
-        {
-            if (expr[end + 1] == 'e' || expr[end + 1] == 'E')
-                ++end;
-            else if (expr[end + 1] == '.')
-                ++end;
-            else if ((expr[end + 1] == '+' || expr[end + 1] == '-') && (expr[end] == 'e' || expr[end] == 'E'))
-                ++end;
-            else if (expr[end + 1] == 'i')
-            {
-                ++end;
-                break;
-            }
-            else
-                break;
-        }
-    }
-    return end;
 }
 
 int tms_find_startofnumber(char *expr, int end)
@@ -666,7 +739,7 @@ bool tms_syntax_check(char *expr)
             }
             if (expr[end + 1] != '\0' && !tms_is_op(expr[end + 1]) && expr[end + 1] != ')' && expr[end + 1] != ',')
             {
-                tms_error_handler(SYNTAX_ERROR, EH_SAVE, EH_FATAL_ERROR, end + 1);
+                tms_error_handler(SYNTAX_ERROR, EH_SAVE, EH_FATAL_ERROR, i);
                 return false;
             }
             i = end + 1;
