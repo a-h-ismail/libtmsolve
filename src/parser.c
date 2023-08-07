@@ -221,6 +221,12 @@ tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)
             // The expression start is the parenthesis, may change if a function is found
             S[s_index].subexpr_start = i;
             S[s_index].solve_end = tms_find_closing_parenthesis(local_expr, i) - 1;
+            if (S[s_index].solve_end == -2)
+            {
+                tms_error_handler(PARENTHESIS_NOT_CLOSED, EH_SAVE, EH_FATAL_ERROR, i);
+                tms_delete_math_expr(M);
+                return NULL;
+            }
             ++s_index;
         }
         else if (local_expr[i] == ')')
