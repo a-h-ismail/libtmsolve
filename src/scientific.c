@@ -24,7 +24,7 @@ double tms_fast_pow(double x, double y)
     {
         if (y <= INT32_MAX && y - (int32_t)y == 0)
         {
-            for (int i = 0; i < y; ++i)
+            for (int32_t i = 0; i < y; ++i)
                 result *= x;
             return result;
         }
@@ -33,7 +33,7 @@ double tms_fast_pow(double x, double y)
     {
         if (y >= INT32_MIN && y - (int32_t)y == 0)
         {
-            for (int i = 0; i > y; --i)
+            for (int32_t i = 0; i > y; --i)
                 result /= x;
             return result;
         }
