@@ -147,6 +147,10 @@ double complex tms_solve(char *expr)
         _set_ans(result);
         if (isnan(creal(result)))
         {
+            // Edge case of not detecting the 'i' due to adjacency with hex digits
+            if (tms_error_handler(COMPLEX_DISABLED, EH_SEARCH, EH_MAIN_DB) == EH_MAIN_DB)
+                tms_error_handler(NULL, EH_CLEAR, EH_MAIN_DB);
+
             // Check if the errors are fatal (like malformed syntax, division by zero...)
             int fatal = tms_error_handler(NULL, EH_ERROR_COUNT, EH_FATAL_ERROR);
             if (fatal > 0)
