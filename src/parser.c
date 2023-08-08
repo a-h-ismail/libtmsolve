@@ -933,6 +933,7 @@ double complex tms_evaluate(tms_math_expr *M)
                 if (isnan((double)**(S[s_index].result)))
                 {
                     tms_error_handler(EXTF_FAILURE, EH_SAVE, EH_FATAL_ERROR, S[s_index].subexpr_start);
+                    free(args);
                     return NAN;
                 }
                 S[s_index].exec_extf = false;
