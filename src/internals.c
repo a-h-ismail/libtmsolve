@@ -84,17 +84,19 @@ void tmsolve_init()
     }
 }
 
-int tms_error_handler(char *error, int arg1, ...)
+int tms_error_handler(int _mode, ...)
 {
     static int last_error = 0, fatal = 0, non_fatal = 0, backup_error_count = 0, backup_fatal, backup_non_fatal;
     va_list arguments;
-    va_start(arguments, arg1);
+    char *error;
+    va_start(arguments, _mode);
     int i, arg2;
 
     static tms_error_data error_table[EH_MAX_ERRORS], backup[EH_MAX_ERRORS];
-    switch (arg1)
+    switch (_mode)
     {
     case EH_SAVE:
+        error = va_arg(arguments, char *);
         // Case of error table being full
         if (last_error == EH_MAX_ERRORS - 1)
         {
@@ -111,7 +113,7 @@ int tms_error_handler(char *error, int arg1, ...)
             // The last position is free, update last_error
             --last_error;
         }
-        error_table[last_error].error_msg = error;
+        error_table[last_error].error_msg = strdup(error);
         arg2 = va_arg(arguments, int);
         switch (arg2)
         {
@@ -163,23 +165,35 @@ int tms_error_handler(char *error, int arg1, ...)
             else
                 printf("\n");
         }
-        tms_error_handler(NULL, EH_CLEAR, EH_MAIN_DB);
+        tms_error_handler(EH_CLEAR, EH_MAIN_DB);
 
     case EH_CLEAR:
         arg2 = va_arg(arguments, int);
         switch (arg2)
         {
         case EH_MAIN_DB:
+            for (i = 0; i < last_error; ++i)
+                free(error_table[i].error_msg);
+
             memset(error_table, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
+            // i carries the number of errors for the return value because the counter is reset here
             i = last_error;
             last_error = fatal = non_fatal = 0;
             break;
         case EH_BACKUP_DB:
+            for (i = 0; i < backup_error_count; ++i)
+                free(error_table[i].error_msg);
+
             memset(backup, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
             i = backup_error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
             break;
         case EH_ALL_DB:
+            for (i = 0; i < last_error; ++i)
+                free(error_table[i].error_msg);
+            for (i = 0; i < backup_error_count; ++i)
+                free(error_table[i].error_msg);
+
             memset(error_table, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
             memset(backup, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
             i = last_error + backup_error_count;
@@ -192,6 +206,7 @@ int tms_error_handler(char *error, int arg1, ...)
         return i;
 
     case EH_SEARCH:
+        error = va_arg(arguments, char *);
         arg2 = va_arg(arguments, int);
         switch (arg2)
         {
@@ -230,7 +245,7 @@ int tms_error_handler(char *error, int arg1, ...)
         }
 
     case EH_BACKUP:
-        tms_error_handler(NULL, EH_CLEAR, EH_BACKUP);
+        tms_error_handler(EH_CLEAR, EH_BACKUP);
         // Copy the current error database to the backup database
         for (i = 0; i < last_error; ++i)
             backup[i] = error_table[i];
@@ -244,7 +259,7 @@ int tms_error_handler(char *error, int arg1, ...)
     // Overwrite main error database with the backup error database
     case EH_RESTORE:
         // Clear current database
-        tms_error_handler(NULL, EH_CLEAR, EH_MAIN_DB);
+        tms_error_handler(EH_CLEAR, EH_MAIN_DB);
         for (i = 0; i < backup_error_count; ++i)
             error_table[i] = backup[i];
         last_error = backup_error_count;
