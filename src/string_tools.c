@@ -108,27 +108,12 @@ double complex tms_get_operand(char *expr, int start, bool enable_complex)
 
 bool tms_is_op(char c)
 {
-    switch (c)
-    {
-    case '/':
-        return true;
-    case '*':
-        return true;
-    case '+':
-        return true;
-    case '-':
-        return true;
-    case '^':
-        return true;
-    case '!':
-        return true;
-    case '%':
-        return true;
-    case '=':
-        return true;
-    default:
-        return false;
-    }
+    char ops[] = {'+', '-', '*', '/', '^', '%', '='};
+    for (int i = 0; i < array_length(ops); ++i)
+        if (c == ops[i])
+            return true;
+
+    return false;
 }
 
 int8_t tms_bin_to_int(char c)
@@ -810,8 +795,7 @@ tms_arg_list *tms_get_args(char *string)
     ++A->count;
     return A;
 }
-// Frees the argument list array of char *
-// Can also free the list itself if it was allocated with malloc
+
 void tms_free_arg_list(tms_arg_list *list, bool list_on_heap)
 {
     for (int i = 0; i < list->count; ++i)
