@@ -86,14 +86,20 @@ double tms_derivative(char *arguments)
     args = tms_get_args(arguments);
 
     if (_validate_args_count(2, args->count) == false)
+    {
+        tms_free_arg_list(args, true);
         return NAN;
+    }
     double x, f_prime, fx1, fx2;
 
     x = tms_solve_e(args->arguments[1], false);
     M = tms_parse_expr(args->arguments[0], true, false);
 
     if (M == NULL)
+    {
+        tms_free_arg_list(args, true);
         return NAN;
+    }
 
     // Solve for x
     _tms_set_variable(M, x);
@@ -114,7 +120,10 @@ double tms_integrate(char *arguments)
     tms_arg_list *args = tms_get_args(arguments);
 
     if (_validate_args_count(3, args->count) == false)
+    {
+        tms_free_arg_list(args, true);
         return NAN;
+    }
 
     int n;
     double lower_bound, upper_bound, result, an, fn, rounds, delta;
@@ -133,7 +142,10 @@ double tms_integrate(char *arguments)
     M = tms_parse_expr(args->arguments[2], true, false);
 
     if (M == NULL)
+    {
+        tms_free_arg_list(args, true);
         return NAN;
+    }
 
     // Calculating the number of rounds
     rounds = ceil(delta) * 65536;
@@ -150,6 +162,7 @@ double tms_integrate(char *arguments)
     if (isnan(result) == true)
     {
         tms_error_handler(INTEGRAl_UNDEFINED, EH_SAVE, EH_FATAL_ERROR, -1);
+        tms_free_arg_list(args, true);
         tms_delete_math_expr(M);
         return NAN;
     }
@@ -168,6 +181,7 @@ double tms_integrate(char *arguments)
             if (isnan(fn) == true)
             {
                 tms_error_handler(INTEGRAl_UNDEFINED, EH_SAVE, EH_FATAL_ERROR, -1);
+                tms_free_arg_list(args, true);
                 tms_delete_math_expr(M);
                 return NAN;
             }
@@ -182,6 +196,7 @@ double tms_integrate(char *arguments)
             if (isnan(fn) == true)
             {
                 tms_error_handler(INTEGRAl_UNDEFINED, EH_SAVE, EH_FATAL_ERROR, -1);
+                tms_free_arg_list(args, true);
                 tms_delete_math_expr(M);
                 return NAN;
             }
