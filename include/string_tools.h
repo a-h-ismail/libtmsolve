@@ -182,4 +182,7 @@ bool tms_match_word(char *str, int i, char *keyword, bool match_from_start);
  */
 bool tms_valid_name(char *name);
 
+/**
+ * @brief Frees the argument list, can also free the list itself if it was allocated with malloc
+ */
 void tms_free_arg_list(tms_arg_list *list, bool list_on_heap);
