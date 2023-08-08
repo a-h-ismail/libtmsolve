@@ -154,7 +154,10 @@ double complex tms_solve(char *expr)
             // Check if the errors are fatal (like malformed syntax, division by zero...)
             int fatal = tms_error_handler(NULL, EH_ERROR_COUNT, EH_FATAL_ERROR);
             if (fatal > 0)
+            {
+                tms_delete_math_expr(M);
                 return NAN;
+            }
 
             // Clear errors caused by the first evaluation.
             tms_error_handler(NULL, EH_CLEAR, EH_MAIN_DB);
