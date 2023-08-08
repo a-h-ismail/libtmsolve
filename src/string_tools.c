@@ -444,7 +444,7 @@ int tms_find_endofnumber(char *number, int start)
     if (number[start] == '+' || number[start] == '-')
         ++end;
 
-    base = tms_detect_base(number);
+    base = tms_detect_base(number + end);
     if (base != 10)
         end += 2;
 
