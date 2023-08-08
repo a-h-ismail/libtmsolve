@@ -141,7 +141,7 @@ tms_matrix *tms_comatrix(tms_matrix *M)
         return NULL;
     if (M->rows < 2 || M->rows != M->columns)
     {
-        tms_error_handler(INVALID_MATRIX, EH_SAVE, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, INVALID_MATRIX, EH_FATAL_ERROR, -1);
         return NULL;
     }
     comatrix = tms_new_matrix(M->rows, M->columns);

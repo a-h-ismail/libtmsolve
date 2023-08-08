@@ -85,7 +85,7 @@ int _tms_set_runtime_var(char *expr, int i)
 
     if (i == 0)
     {
-        tms_error_handler(SYNTAX_ERROR, EH_SAVE, EH_FATAL_ERROR, 0);
+        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, 0);
         return -1;
     }
     else
@@ -95,7 +95,7 @@ int _tms_set_runtime_var(char *expr, int i)
         _tms_g_expr = expr;
         if (j != -1)
         {
-            tms_error_handler(MULTIPLE_ASSIGNMENT_ERROR, EH_SAVE, EH_FATAL_ERROR, j);
+            tms_error_handler(EH_SAVE, MULTIPLE_ASSIGNMENT_ERROR, EH_FATAL_ERROR, j);
             return -1;
         }
         // Store the variable name in this array
@@ -108,7 +108,7 @@ int _tms_set_runtime_var(char *expr, int i)
         {
             if (strcmp(tmp, tms_g_illegal_names[i]) == 0)
             {
-                tms_error_handler(ILLEGAL_VARIABLE_NAME, EH_SAVE, EH_FATAL_ERROR, -1);
+                tms_error_handler(EH_SAVE, ILLEGAL_VARIABLE_NAME, EH_FATAL_ERROR, -1);
                 return -1;
             }
         }
@@ -116,7 +116,7 @@ int _tms_set_runtime_var(char *expr, int i)
         // Check if the name has illegal characters
         if (tms_valid_name(tmp) == false)
         {
-            tms_error_handler(INVALID_VARIABLE_NAME, EH_SAVE, EH_FATAL_ERROR, -1);
+            tms_error_handler(EH_SAVE, INVALID_VARIABLE_NAME, EH_FATAL_ERROR, -1);
             return -1;
         }
 
@@ -127,7 +127,7 @@ int _tms_set_runtime_var(char *expr, int i)
             {
                 if (tms_g_vars[j].is_constant)
                 {
-                    tms_error_handler(OVERWRITE_CONST_VARIABLE, EH_SAVE, EH_FATAL_ERROR, -1);
+                    tms_error_handler(EH_SAVE, OVERWRITE_CONST_VARIABLE, EH_FATAL_ERROR, -1);
                     return -1;
                 }
                 variable_index = j;
@@ -223,7 +223,7 @@ tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)
             S[s_index].solve_end = tms_find_closing_parenthesis(local_expr, i) - 1;
             if (S[s_index].solve_end == -2)
             {
-                tms_error_handler(PARENTHESIS_NOT_CLOSED, EH_SAVE, EH_FATAL_ERROR, i);
+                tms_error_handler(EH_SAVE, PARENTHESIS_NOT_CLOSED, EH_FATAL_ERROR, i);
                 tms_delete_math_expr(M);
                 return NULL;
             }
@@ -333,7 +333,7 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
             // The function isn't defined for real operations (loop exited due to condition instead of break)
             if (i == array_length(tms_r_func_ptr))
             {
-                tms_error_handler(UNDEFINED_FUNCTION, EH_SAVE, EH_NONFATAL_ERROR, solve_start - 2);
+                tms_error_handler(EH_SAVE, UNDEFINED_FUNCTION, EH_NONFATAL_ERROR, solve_start - 2);
                 return false;
             }
         }
@@ -353,7 +353,7 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
             // The complex function is not defined
             if (i == array_length(tms_cmplx_func_ptr))
             {
-                tms_error_handler(UNDEFINED_FUNCTION, EH_SAVE, EH_NONFATAL_ERROR, solve_start - 2);
+                tms_error_handler(EH_SAVE, UNDEFINED_FUNCTION, EH_NONFATAL_ERROR, solve_start - 2);
                 return false;
             }
         }
@@ -381,7 +381,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
     // Checking if the expression is terminated with an operator
     if (op_count != 0 && operator_index[op_count - 1] == solve_end)
     {
-        tms_error_handler(RIGHT_OP_MISSING, EH_SAVE, EH_FATAL_ERROR, operator_index[op_count - 1]);
+        tms_error_handler(EH_SAVE, RIGHT_OP_MISSING, EH_FATAL_ERROR, operator_index[op_count - 1]);
         return -1;
     }
     // Filling operations and index data into each op_node
@@ -407,7 +407,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
                 status = tms_set_var_metadata(local_expr + solve_start, node_block, 'l');
                 if (!status)
                 {
-                    tms_error_handler(UNDEFINED_VARIABLE, EH_SAVE, EH_FATAL_ERROR, solve_start);
+                    tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, solve_start);
                     return -1;
                 }
             }
@@ -441,7 +441,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
     // Check if the expression is terminated with an operator
     if (op_count != 0 && operator_index[op_count - 1] == solve_end)
     {
-        tms_error_handler(RIGHT_OP_MISSING, EH_SAVE, EH_FATAL_ERROR, operator_index[op_count - 1]);
+        tms_error_handler(EH_SAVE, RIGHT_OP_MISSING, EH_FATAL_ERROR, operator_index[op_count - 1]);
         return -1;
     }
     // Set operator type and index for each op_node
@@ -469,7 +469,7 @@ int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enab
             node_block[0].left_operand = 0;
         else
         {
-            tms_error_handler(SYNTAX_ERROR, EH_SAVE, EH_FATAL_ERROR, node_block[0].operator_index);
+            tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, node_block[0].operator_index);
             return -1;
         }
     }
@@ -490,7 +490,7 @@ int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enab
                 status = tms_find_subexpr_starting_at(S, solve_start, s_index, 1);
                 if (status == -1)
                 {
-                    tms_error_handler(UNDEFINED_VARIABLE, EH_SAVE, EH_FATAL_ERROR, solve_start);
+                    tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, solve_start);
                     return -1;
                 }
                 else
@@ -518,7 +518,7 @@ int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enab
                     status = tms_find_subexpr_starting_at(S, node_block[i].operator_index + 1, s_index, 1);
                     if (status == -1)
                     {
-                        tms_error_handler(UNDEFINED_VARIABLE, EH_SAVE, EH_FATAL_ERROR, node_block[i].operator_index + 1);
+                        tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, node_block[i].operator_index + 1);
                         return -1;
                     }
                     else
@@ -544,7 +544,7 @@ int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enab
                     status = tms_find_subexpr_starting_at(S, node_block[i].operator_index + 1, s_index, 1);
                     if (status == -1)
                     {
-                        tms_error_handler(UNDEFINED_VARIABLE, EH_SAVE, EH_FATAL_ERROR, node_block[i].operator_index + 1);
+                        tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, node_block[i].operator_index + 1);
                         return -1;
                     }
                     else
@@ -569,7 +569,7 @@ int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enab
             status = tms_find_subexpr_starting_at(S, node_block[op_count - 1].operator_index + 1, s_index, 1);
             if (status == -1)
             {
-                tms_error_handler(UNDEFINED_VARIABLE, EH_SAVE, EH_FATAL_ERROR, node_block[i].operator_index + 1);
+                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, node_block[i].operator_index + 1);
                 return -1;
             }
             *(S[status].result) = &(node_block[op_count - 1].right_operand);
@@ -601,7 +601,7 @@ bool _tms_set_evaluation_order(tms_math_subexpr *S)
     i = S->start_node;
     if (i < 0)
     {
-        tms_error_handler(INTERNAL_ERROR, EH_SAVE, EH_FATAL_ERROR, 0);
+        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, 0);
         return false;
     }
     int target_priority = node_block[i].priority;
@@ -842,7 +842,7 @@ char *_tms_lookup_function_name(void *function, int func_type)
             return tms_ext_func_name[i];
         break;
     default:
-        tms_error_handler(INTERNAL_ERROR, EH_SAVE, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, -1);
     }
 
     return NULL;
@@ -932,7 +932,7 @@ double complex tms_evaluate(tms_math_expr *M)
 
                 if (isnan((double)**(S[s_index].result)))
                 {
-                    tms_error_handler(EXTF_FAILURE, EH_SAVE, EH_FATAL_ERROR, S[s_index].subexpr_start);
+                    tms_error_handler(EH_SAVE, EXTF_FAILURE, EH_FATAL_ERROR, S[s_index].subexpr_start);
                     free(args);
                     return NAN;
                 }
@@ -952,7 +952,7 @@ double complex tms_evaluate(tms_math_expr *M)
             {
                 if (i_node->result == NULL)
                 {
-                    tms_error_handler(INTERNAL_ERROR, EH_SAVE, EH_FATAL_ERROR, -1);
+                    tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, -1);
                     return NAN;
                 }
                 switch (i_node->operator)
@@ -972,7 +972,7 @@ double complex tms_evaluate(tms_math_expr *M)
                 case '/':
                     if (i_node->right_operand == 0)
                     {
-                        tms_error_handler(DIVISION_BY_ZERO, EH_SAVE, EH_FATAL_ERROR, i_node->operator_index);
+                        tms_error_handler(EH_SAVE, DIVISION_BY_ZERO, EH_FATAL_ERROR, i_node->operator_index);
                         return NAN;
                     }
                     *(i_node->result) = i_node->left_operand / i_node->right_operand;
@@ -981,7 +981,7 @@ double complex tms_evaluate(tms_math_expr *M)
                 case '%':
                     if (i_node->right_operand == 0)
                     {
-                        tms_error_handler(MODULO_ZERO, EH_SAVE, EH_FATAL_ERROR, i_node->operator_index);
+                        tms_error_handler(EH_SAVE, MODULO_ZERO, EH_FATAL_ERROR, i_node->operator_index);
                         return NAN;
                     }
                     *(i_node->result) = fmod(i_node->left_operand, i_node->right_operand);
@@ -1024,7 +1024,7 @@ double complex tms_evaluate(tms_math_expr *M)
 
         if (isnan((double)**(S[s_index].result)))
         {
-            tms_error_handler(MATH_ERROR, EH_SAVE, EH_NONFATAL_ERROR, S[s_index].solve_start, -1);
+            tms_error_handler(EH_SAVE, MATH_ERROR, EH_NONFATAL_ERROR, S[s_index].solve_start, -1);
             return NAN;
         }
         ++s_index;

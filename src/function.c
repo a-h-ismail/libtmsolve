@@ -12,9 +12,9 @@ bool _validate_args_count(int expected, int actual)
     if (expected == actual)
         return true;
     else if (expected > actual)
-        tms_error_handler(TOO_FEW_ARGS, EH_SAVE, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, TOO_FEW_ARGS, EH_FATAL_ERROR, -1);
     else if (expected < actual)
-        tms_error_handler(TOO_MANY_ARGS, EH_SAVE, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, TOO_MANY_ARGS, EH_FATAL_ERROR, -1);
     return false;
 }
 void _tms_set_var_data(tms_math_expr *M)
@@ -161,7 +161,7 @@ double tms_integrate(char *arguments)
     result += tms_evaluate(M);
     if (isnan(result) == true)
     {
-        tms_error_handler(INTEGRAl_UNDEFINED, EH_SAVE, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, INTEGRAl_UNDEFINED, EH_FATAL_ERROR, -1);
         tms_free_arg_list(args, true);
         tms_delete_math_expr(M);
         return NAN;
@@ -180,7 +180,7 @@ double tms_integrate(char *arguments)
             fn = tms_evaluate(M);
             if (isnan(fn) == true)
             {
-                tms_error_handler(INTEGRAl_UNDEFINED, EH_SAVE, EH_FATAL_ERROR, -1);
+                tms_error_handler(EH_SAVE, INTEGRAl_UNDEFINED, EH_FATAL_ERROR, -1);
                 tms_free_arg_list(args, true);
                 tms_delete_math_expr(M);
                 return NAN;
@@ -195,7 +195,7 @@ double tms_integrate(char *arguments)
             fn = tms_evaluate(M);
             if (isnan(fn) == true)
             {
-                tms_error_handler(INTEGRAl_UNDEFINED, EH_SAVE, EH_FATAL_ERROR, -1);
+                tms_error_handler(EH_SAVE, INTEGRAl_UNDEFINED, EH_FATAL_ERROR, -1);
                 tms_free_arg_list(args, true);
                 tms_delete_math_expr(M);
                 return NAN;

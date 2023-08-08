@@ -100,7 +100,7 @@ double complex tms_solve(char *expr)
         // The complex number was found despite having a real expression, report the problem.
         if (likely_complex == 0)
         {
-            tms_error_handler(ILLEGAL_COMPLEX_OP, EH_SAVE, EH_FATAL_ERROR, i);
+            tms_error_handler(EH_SAVE, ILLEGAL_COMPLEX_OP, EH_FATAL_ERROR, i);
             return NAN;
         }
         else
@@ -148,11 +148,11 @@ double complex tms_solve(char *expr)
         if (isnan(creal(result)))
         {
             // Edge case of not detecting the 'i' due to adjacency with hex digits
-            if (tms_error_handler(COMPLEX_DISABLED, EH_SEARCH, EH_MAIN_DB) == EH_MAIN_DB)
-                tms_error_handler(NULL, EH_CLEAR, EH_MAIN_DB);
+            if (tms_error_handler(EH_SEARCH, COMPLEX_DISABLED, EH_MAIN_DB) == EH_MAIN_DB)
+                tms_error_handler(EH_CLEAR, EH_MAIN_DB);
 
             // Check if the errors are fatal (like malformed syntax, division by zero...)
-            int fatal = tms_error_handler(NULL, EH_ERROR_COUNT, EH_FATAL_ERROR);
+            int fatal = tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR);
             if (fatal > 0)
             {
                 tms_delete_math_expr(M);
@@ -160,7 +160,7 @@ double complex tms_solve(char *expr)
             }
 
             // Clear errors caused by the first evaluation.
-            tms_error_handler(NULL, EH_CLEAR, EH_MAIN_DB);
+            tms_error_handler(EH_CLEAR, EH_MAIN_DB);
 
             // The errors weren't fatal, possibly a complex answer.
             // Convert the math_struct to use complex functions.
@@ -195,7 +195,7 @@ double complex tms_solve(char *expr)
         return result;
     }
     // Unlikely to fall out of the switch.
-    tms_error_handler(INTERNAL_ERROR, EH_SAVE, EH_FATAL_ERROR, 0);
+    tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, 0);
     return NAN;
 }
 

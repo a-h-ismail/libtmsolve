@@ -75,7 +75,7 @@ double complex tms_get_operand(char *expr, int start, bool enable_complex)
             // Complex variable in real only mode
             if (!enable_complex && cimag(tms_g_vars[i].value) != 0)
             {
-                tms_error_handler(MATH_ERROR, EH_SAVE, EH_FATAL_ERROR, start);
+                tms_error_handler(EH_SAVE, MATH_ERROR, EH_FATAL_ERROR, start);
                 return NAN;
             }
             value = tms_g_vars[i].value;
@@ -96,7 +96,7 @@ double complex tms_get_operand(char *expr, int start, bool enable_complex)
         value = tms_read_value(expr + start);
         if (!enable_complex && cimag(value) != 0)
         {
-            tms_error_handler(COMPLEX_DISABLED, EH_SAVE, EH_NONFATAL_ERROR, start);
+            tms_error_handler(EH_SAVE, COMPLEX_DISABLED, EH_NONFATAL_ERROR, start);
             return NAN;
         }
     }
@@ -640,7 +640,7 @@ bool tms_parenthesis_check(char *expr)
 
     if (length == 0)
     {
-        tms_error_handler(NO_INPUT, EH_SAVE, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, NO_INPUT, EH_FATAL_ERROR, -1);
         return false;
     }
 
@@ -654,14 +654,14 @@ bool tms_parenthesis_check(char *expr)
         close = tms_find_closing_parenthesis(expr, open);
         if (close - open == 1)
         {
-            tms_error_handler(PARENTHESIS_EMPTY, EH_SAVE, EH_FATAL_ERROR, open);
+            tms_error_handler(EH_SAVE, PARENTHESIS_EMPTY, EH_FATAL_ERROR, open);
             free(open_position);
             free(close_position);
             return false;
         }
         if (close == -1)
         {
-            tms_error_handler(PARENTHESIS_NOT_CLOSED, EH_SAVE, EH_FATAL_ERROR, open);
+            tms_error_handler(EH_SAVE, PARENTHESIS_NOT_CLOSED, EH_FATAL_ERROR, open);
             free(open_position);
             free(close_position);
             return false;
@@ -681,7 +681,7 @@ bool tms_parenthesis_check(char *expr)
 
     if (close != -1)
     {
-        tms_error_handler(PARENTHESIS_NOT_OPEN, EH_SAVE, EH_FATAL_ERROR, close);
+        tms_error_handler(EH_SAVE, PARENTHESIS_NOT_OPEN, EH_FATAL_ERROR, close);
         free(open_position);
         free(close_position);
         return false;
@@ -705,7 +705,7 @@ bool tms_syntax_check(char *expr)
         {
             if (expr[j + strlen(tms_g_all_func_names[i])] != '(')
             {
-                tms_error_handler(PARENTHESIS_MISSING, EH_SAVE, EH_FATAL_ERROR, j + strlen(tms_g_all_func_names[i]));
+                tms_error_handler(EH_SAVE, PARENTHESIS_MISSING, EH_FATAL_ERROR, j + strlen(tms_g_all_func_names[i]));
                 return false;
             }
             j = tms_f_search(expr, tms_g_all_func_names[i], j + 1, true);
@@ -719,12 +719,12 @@ bool tms_syntax_check(char *expr)
             int end = tms_find_endofnumber(expr, i);
             if (i > 0 && !tms_is_op(expr[i - 1]) && expr[i - 1] != '(' && expr[i - 1] != ',')
             {
-                tms_error_handler(SYNTAX_ERROR, EH_SAVE, EH_FATAL_ERROR, i - 1);
+                tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, i - 1);
                 return false;
             }
             if (expr[end + 1] != '\0' && !tms_is_op(expr[end + 1]) && expr[end + 1] != ')' && expr[end + 1] != ',')
             {
-                tms_error_handler(SYNTAX_ERROR, EH_SAVE, EH_FATAL_ERROR, i);
+                tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, i);
                 return false;
             }
             i = end + 1;
@@ -810,7 +810,7 @@ bool tms_pre_parse_routine(char *expr)
     // Check for empty input
     if (expr[0] == '\0')
     {
-        tms_error_handler(NO_INPUT, EH_SAVE, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, NO_INPUT, EH_FATAL_ERROR, -1);
         return false;
     }
     tms_remove_whitespace(expr);
