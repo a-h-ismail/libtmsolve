@@ -109,21 +109,21 @@ void tmsolve_init() __attribute__((constructor));
 
 /**
  * @brief Error handling function, collects and manages errors.
- * @param error The error message to store.
- * @param arg The list of argumets to pass to the error handler.
+ * @param _mode The mode of error handler.
+ * @param arg The list of argumets to pass to the error handler, according to the mode.
  * @details
  * Possible arguments: \n
- * EH_SAVE, EH_FATAL_ERROR | EH_NONFATAL_ERROR, error_index \n
+ * EH_SAVE, char *error, EH_FATAL_ERROR | EH_NONFATAL_ERROR, error_index \n
  * EH_PRINT (returns number of printed errors). \n
  * EH_CLEAR, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB \n
- * EH_SEARCH, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB (returns EH_MAIN_DB on match in main, EH_BACKUP_DB on match in backup). \n
+ * EH_SEARCH, char *error, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB (returns EH_MAIN_DB on match in main, EH_BACKUP_DB on match in backup). \n
  * EH_ERROR_COUNT, EH_FATAL_ERROR | EH_NONFATAL_ERROR | EH_ALL_ERRORS (returns number of errors specified). \n
  * EH_BACKUP \n
  * EH_RESTORE \n
 
  * @return Depends on the argument list.
  */
-int tms_error_handler(char *error, int arg, ...);
+int tms_error_handler(int _mode, ...);
 
 /**
  * @brief Prints the expression and points at the location of the error found.
