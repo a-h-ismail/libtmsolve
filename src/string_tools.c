@@ -796,13 +796,12 @@ tms_arg_list *tms_get_args(char *string)
     return A;
 }
 
-void tms_free_arg_list(tms_arg_list *list, bool list_on_heap)
+void tms_free_arg_list(tms_arg_list *list)
 {
     for (int i = 0; i < list->count; ++i)
         free(list->arguments[i]);
     free(list->arguments);
-    if (list_on_heap)
-        free(list);
+    free(list);
 }
 
 bool tms_pre_parse_routine(char *expr)
