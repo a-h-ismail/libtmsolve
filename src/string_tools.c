@@ -176,21 +176,21 @@ int8_t tms_detect_base(char *_s)
     // Assume the base is 10 if no prefix is found
     return 10;
 }
-double _tms_read_value_simple(char *expr, int8_t base)
+double _tms_read_value_simple(char *number, int8_t base)
 {
     double value = 0, power = 1;
     int i, dot = -1, start, length;
     bool is_negative = false;
     int8_t (*symbol_resolver)(char);
-    if (expr[0] == '-')
+    if (number[0] == '-')
     {
-        ++expr;
+        ++number;
         is_negative = true;
     }
-    else if (expr[0] == '+')
-        ++expr;
+    else if (number[0] == '+')
+        ++number;
 
-    length = strlen(expr);
+    length = strlen(number);
 
     switch (base)
     {
@@ -212,7 +212,7 @@ double _tms_read_value_simple(char *expr, int8_t base)
 
     for (i = 0; i < length; ++i)
     {
-        if (expr[i] == '.')
+        if (number[i] == '.')
         {
             dot = i;
             break;
@@ -226,7 +226,7 @@ double _tms_read_value_simple(char *expr, int8_t base)
     int8_t tmp;
     for (i = start; i >= 0; --i)
     {
-        tmp = (*symbol_resolver)(expr[i]);
+        tmp = (*symbol_resolver)(number[i]);
         if (tmp == -1)
             return NAN;
         value += tmp * power;
@@ -238,7 +238,7 @@ double _tms_read_value_simple(char *expr, int8_t base)
         power = base;
         for (i = dot + 1; i < length; ++i)
         {
-            value += (*symbol_resolver)(expr[i]) / power;
+            value += (*symbol_resolver)(number[i]) / power;
             power *= base;
         }
     }
