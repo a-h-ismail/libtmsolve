@@ -17,6 +17,7 @@ int tms_compare_subexpr_depth(const void *a, const void *b)
     else
         return 0;
 }
+
 // Some simple wrapper functions.
 double complex cabs_z(double complex z)
 {
@@ -66,7 +67,7 @@ double (*tms_r_func_ptr[])(double) =
     {tms_factorial, fabs, ceil, floor, sqrt, cbrt, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, rd_cos, rd_sin, rd_tan, log, log10};
 // Extended functions, may take more than one parameter (stored in a comma separated string)
 char *tms_ext_func_name[] = {"int", "der", NULL};
-double (*tms_ext_func[])(char *) =
+double complex (*tms_ext_func[])(char *) =
     {tms_integrate, tms_derivative};
 
 // Complex functions
@@ -264,6 +265,12 @@ int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_inde
     int buffer_size = 16;
     int op_count = 0;
 
+    if (solve_start > solve_end)
+    {
+        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, solve_start);
+        return NULL;
+    }
+
     int *operator_index = (int *)malloc(buffer_size * sizeof(int));
     // Count number of operators and store it's indexes
     for (int i = solve_start; i <= solve_end; ++i)
@@ -369,6 +376,12 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
     tms_op_node *node_block;
     int solve_start = S[s_index].solve_start;
     int solve_end = S[s_index].solve_end;
+
+    if (op_count < 0)
+    {
+        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, solve_start);
+        return -1;
+    }
 
     // Allocating nodes
     if (op_count == 0)
@@ -726,6 +739,9 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_variables, bool enable_com
     _tms_g_expr = local_expr;
 
     tms_math_expr *M = _tms_init_math_expr(local_expr, enable_complex);
+    if (M == NULL)
+        return NULL;
+
     tms_math_subexpr *S = M->subexpr_ptr;
     s_count = M->subexpr_count;
 
