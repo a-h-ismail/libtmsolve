@@ -67,7 +67,7 @@ double (*tms_r_func_ptr[])(double) =
     {tms_factorial, fabs, ceil, floor, sqrt, cbrt, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, rd_cos, rd_sin, rd_tan, log, log10};
 // Extended functions, may take more than one parameter (stored in a comma separated string)
 char *tms_ext_func_name[] = {"int", "der", NULL};
-double complex (*tms_ext_func[])(char *) =
+double complex (*tms_ext_func[])(tms_arg_list *) =
     {tms_integrate, tms_derivative};
 
 // Complex functions
@@ -225,6 +225,8 @@ tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)
             if (S[s_index].solve_end == -2)
             {
                 tms_error_handler(EH_SAVE, PARENTHESIS_NOT_CLOSED, EH_FATAL_ERROR, i);
+                // S isn't part of M yet
+                free(S);
                 tms_delete_math_expr(M);
                 return NULL;
             }
@@ -926,34 +928,39 @@ double complex tms_evaluate(tms_math_expr *M)
     tms_math_subexpr *S = M->subexpr_ptr;
     while (s_index < s_count)
     {
-        // Case with special function
+        // Extended functions have no nodes
         if (S[s_index].nodes == NULL)
         {
-            char *args;
+
             if (S[s_index].exec_extf)
             {
+                char *arg_str;
                 // Backup the current global expression to let the extended function change it freely for its error reporting
                 char *backup = _tms_g_expr;
+                tms_arg_list *L;
 
                 int length = S[s_index].solve_end - S[s_index].solve_start + 1;
                 // Copy args from the expression to a separate array.
-                args = malloc((length + 1) * sizeof(char));
-                memcpy(args, _tms_g_expr + S[s_index].solve_start, length * sizeof(char));
-                args[length] = '\0';
-                // Calling the extended function
-                **(S[s_index].result) = (*(S[s_index].func.extended))(args);
+                arg_str = malloc((length + 1) * sizeof(char));
+                memcpy(arg_str, _tms_g_expr + S[s_index].solve_start, length * sizeof(char));
+                arg_str[length] = '\0';
 
-                // Restore
+                L = tms_get_args(arg_str);
+                // Calling the extended function
+                **(S[s_index].result) = (*(S[s_index].func.extended))(L);
+
                 _tms_g_expr = backup;
 
                 if (isnan((double)**(S[s_index].result)))
                 {
                     tms_error_handler(EH_SAVE, EXTF_FAILURE, EH_FATAL_ERROR, S[s_index].subexpr_start);
-                    free(args);
+                    free(arg_str);
+                    tms_free_arg_list(L);
                     return NAN;
                 }
                 S[s_index].exec_extf = false;
-                free(args);
+                free(arg_str);
+                tms_free_arg_list(L);
             }
             ++s_index;
 
