@@ -34,7 +34,7 @@ extern double complex (*tms_cmplx_func_ptr[])(double complex);
 extern char *tms_ext_func_name[];
 
 /// @brief Contains the function pointers of scientific functions.
-extern double (*tms_ext_func[])(char *);
+extern double complex (*tms_ext_func[])(char *);
 
 /// @brief Comparator function for use with qsort(), compares the depth of 2 subexpressions.
 /// @return 1 if a.depth < b.depth; -1 if a.depth > b.depth; 0 otherwise.
@@ -76,7 +76,7 @@ typedef union tms_mfunc_ptrs
 {
     double (*real)(double);
     double complex (*cmplx)(double complex);
-    double (*extended)(char *);
+    double complex (*extended)(char *);
 } fptr;
 
 /// @brief Holds the metadata of a subexpression.
