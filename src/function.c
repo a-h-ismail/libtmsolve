@@ -79,15 +79,11 @@ void _tms_set_variable(tms_math_expr *math_struct, double complex value)
     }
 }
 
-double complex tms_base_n(char *number, int8_t base)
+double complex tms_base_n(tms_arg_list *args, int8_t base)
 {
-    tms_arg_list *args;
-    args = tms_get_args(number);
     if (_validate_args_count(1, args->count) == false)
-    {
-        tms_free_arg_list(args, true);
         return NAN;
-    }
+
     double complex value;
     bool is_complex = false;
     int end = strlen(args->arguments[0]);
@@ -97,56 +93,48 @@ double complex tms_base_n(char *number, int8_t base)
         args->arguments[0][end - 1] = '\0';
     }
     value = _tms_read_value_simple(args->arguments[0], base);
-    tms_free_arg_list(args, true);
     if (is_complex)
         value *= I;
     return value;
 }
 
-double complex tms_hex(char *number)
+double complex tms_hex(tms_arg_list *L)
 {
-    return tms_base_n(number, 16);
+    return tms_base_n(L, 16);
 }
 
-double complex tms_oct(char *number)
+double complex tms_oct(tms_arg_list *L)
 {
-    return tms_base_n(number, 8);
+    return tms_base_n(L, 8);
 }
 
-double complex tms_bin(char *number)
+double complex tms_bin(tms_arg_list *L)
 {
-    return tms_base_n(number, 2);
+    return tms_base_n(L, 2);
 }
 
 // Function that calculates the derivative of f(x) for a specific value of x
-double complex tms_derivative(char *arguments)
+double complex tms_derivative(tms_arg_list *args)
 {
     tms_math_expr *M;
-    tms_arg_list *args;
     double epsilon = 1e-9;
-    args = tms_get_args(arguments);
 
     if (_validate_args_count(2, args->count) == false)
-    {
-        tms_free_arg_list(args, true);
         return NAN;
-    }
+
     double x, f_prime, fx1, fx2;
 
     x = tms_solve_e(args->arguments[1], false);
     if (isnan(x))
     {
         tms_error_handler(EH_CLEAR, EH_MAIN_DB);
-        tms_free_arg_list(args, true);
         return NAN;
     }
     M = tms_parse_expr(args->arguments[0], true, false);
 
     if (M == NULL)
-    {
-        tms_free_arg_list(args, true);
         return NAN;
-    }
+
     // Scale epsilon with the dimensions of the required value.
     epsilon = x * epsilon;
 
@@ -159,20 +147,15 @@ double complex tms_derivative(char *arguments)
     // get the derivative
     f_prime = (fx2 - fx1) / (2 * epsilon);
     tms_delete_math_expr(M);
-    tms_free_arg_list(args, true);
     return f_prime;
 }
 
-double complex tms_integrate(char *arguments)
+double complex tms_integrate(tms_arg_list *args)
 {
     tms_math_expr *M;
-    tms_arg_list *args = tms_get_args(arguments);
 
     if (_validate_args_count(3, args->count) == false)
-    {
-        tms_free_arg_list(args, true);
         return NAN;
-    }
 
     int n;
     double lower_bound, upper_bound, result, an, fn, rounds, delta;
@@ -182,7 +165,6 @@ double complex tms_integrate(char *arguments)
     if (isnan(lower_bound) || isnan(upper_bound))
     {
         tms_error_handler(EH_CLEAR, EH_MAIN_DB);
-        tms_free_arg_list(args, true);
         return NAN;
     }
 
@@ -197,10 +179,7 @@ double complex tms_integrate(char *arguments)
     M = tms_parse_expr(args->arguments[2], true, false);
 
     if (M == NULL)
-    {
-        tms_free_arg_list(args, true);
         return NAN;
-    }
 
     // Calculating the number of rounds
     rounds = ceil(delta) * 65536;
@@ -217,7 +196,6 @@ double complex tms_integrate(char *arguments)
     if (isnan(result) == true)
     {
         tms_error_handler(EH_SAVE, INTEGRAl_UNDEFINED, EH_FATAL_ERROR, -1);
-        tms_free_arg_list(args, true);
         tms_delete_math_expr(M);
         return NAN;
     }
@@ -236,7 +214,6 @@ double complex tms_integrate(char *arguments)
             if (isnan(fn) == true)
             {
                 tms_error_handler(EH_SAVE, INTEGRAl_UNDEFINED, EH_FATAL_ERROR, -1);
-                tms_free_arg_list(args, true);
                 tms_delete_math_expr(M);
                 return NAN;
             }
@@ -251,7 +228,6 @@ double complex tms_integrate(char *arguments)
             if (isnan(fn) == true)
             {
                 tms_error_handler(EH_SAVE, INTEGRAl_UNDEFINED, EH_FATAL_ERROR, -1);
-                tms_free_arg_list(args, true);
                 tms_delete_math_expr(M);
                 return NAN;
             }
@@ -263,6 +239,5 @@ double complex tms_integrate(char *arguments)
 
     result *= 0.375 * (delta / rounds);
     tms_delete_math_expr(M);
-    tms_free_arg_list(args, true);
     return result;
 }
