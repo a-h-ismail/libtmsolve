@@ -95,6 +95,13 @@ int tms_f_search(char *str, char *keyword, int index, bool match_word);
 int tms_r_search(char *str, char *keyword, int index, bool adjacent_search);
 
 /**
+ * @brief Reads the value according to the rules of the specified base.
+ * @param base Supported values: 2, 8, 10, 16
+ * @return The value on success, or NaN on failure.
+ */
+double _tms_read_value_simple(char *number, int8_t base);
+
+/**
  * @brief Emulates the behavior of sscanf with format specifier "%lf".
  * This implementation is faster than using sscanf and supports decimal exponent in scientific notation.
  * @param _s Start of the value to read
