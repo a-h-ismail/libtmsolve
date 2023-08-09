@@ -78,8 +78,48 @@ void _tms_set_variable(tms_math_expr *math_struct, double complex value)
             *(math_struct->var_data[i].var_ptr) = value;
     }
 }
+
+double complex tms_base_n(char *number, int8_t base)
+{
+    tms_arg_list *args;
+    args = tms_get_args(number);
+    if (_validate_args_count(1, args->count) == false)
+    {
+        tms_free_arg_list(args, true);
+        return NAN;
+    }
+    double complex value;
+    bool is_complex = false;
+    int end = strlen(args->arguments[0]);
+    if (args->arguments[0][end - 1] == 'i')
+    {
+        is_complex = true;
+        args->arguments[0][end - 1] = '\0';
+    }
+    value = _tms_read_value_simple(args->arguments[0], base);
+    tms_free_arg_list(args, true);
+    if (is_complex)
+        value *= I;
+    return value;
+}
+
+double complex tms_hex(char *number)
+{
+    return tms_base_n(number, 16);
+}
+
+double complex tms_oct(char *number)
+{
+    return tms_base_n(number, 8);
+}
+
+double complex tms_bin(char *number)
+{
+    return tms_base_n(number, 2);
+}
+
 // Function that calculates the derivative of f(x) for a specific value of x
-double tms_derivative(char *arguments)
+double complex tms_derivative(char *arguments)
 {
     tms_math_expr *M;
     tms_arg_list *args;
@@ -114,7 +154,7 @@ double tms_derivative(char *arguments)
     return f_prime;
 }
 
-double tms_integrate(char *arguments)
+double complex tms_integrate(char *arguments)
 {
     tms_math_expr *M;
     tms_arg_list *args = tms_get_args(arguments);
