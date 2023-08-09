@@ -779,7 +779,7 @@ tms_arg_list *tms_get_args(char *string)
         // Skip parenthesis pairs to allow easy nesting of argument lists
         // Think of something like int(0,2,x+int(0,1,x^2))
         if (string[end] == '(')
-            end = tms_find_closing_parenthesis(string, end) + 1;
+            end = tms_find_closing_parenthesis(string, end);
         else if (string[end] == ',')
         {
             A->arguments[A->count] = malloc(end - start + 1);
