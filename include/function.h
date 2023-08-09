@@ -34,11 +34,11 @@ void _tms_set_var_data(tms_math_expr *M);
  */
 void _tms_set_variable(tms_math_expr *M, double complex value);
 
-double complex tms_hex(char *number);
+double complex tms_hex(tms_arg_list *L);
 
-double complex tms_oct(char *number);
+double complex tms_oct(tms_arg_list *L);
 
-double complex tms_bin(char *number);
+double complex tms_bin(tms_arg_list *L);
 
 /**
  * @brief Calculates the derivative of a function at a specific point.
@@ -48,7 +48,7 @@ double complex tms_bin(char *number);
  * @param expr The string containing the arguments.
  * @return The value of the derivative at the specified point.
  */
-double complex tms_derivative(char *expr);
+double complex tms_derivative(tms_arg_list *args);
 
 /**
  * @brief Calculates the bounded integral of a function.
@@ -58,5 +58,5 @@ double complex tms_derivative(char *expr);
  * @param expr The arguments string.
  * @return Integration answer, or NaN in case of failure.
  */
-double complex tms_integrate(char *expr);
+double complex tms_integrate(tms_arg_list *args);
 #endif
