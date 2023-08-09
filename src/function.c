@@ -123,6 +123,7 @@ double complex tms_derivative(char *arguments)
 {
     tms_math_expr *M;
     tms_arg_list *args;
+    double epsilon = 1e-9;
     args = tms_get_args(arguments);
 
     if (_validate_args_count(2, args->count) == false)
@@ -133,6 +134,12 @@ double complex tms_derivative(char *arguments)
     double x, f_prime, fx1, fx2;
 
     x = tms_solve_e(args->arguments[1], false);
+    if (isnan(x))
+    {
+        tms_error_handler(EH_CLEAR, EH_MAIN_DB);
+        tms_free_arg_list(args, true);
+        return NAN;
+    }
     M = tms_parse_expr(args->arguments[0], true, false);
 
     if (M == NULL)
@@ -140,15 +147,17 @@ double complex tms_derivative(char *arguments)
         tms_free_arg_list(args, true);
         return NAN;
     }
+    // Scale epsilon with the dimensions of the required value.
+    epsilon = x * epsilon;
 
     // Solve for x
-    _tms_set_variable(M, x);
+    _tms_set_variable(M, x - epsilon);
     fx1 = tms_evaluate(M);
-    // Solve for x + (small value)
-    _tms_set_variable(M, x + 1e-8);
+    // Solve for x + epsilon
+    _tms_set_variable(M, x + epsilon);
     fx2 = tms_evaluate(M);
     // get the derivative
-    f_prime = (fx2 - fx1) / (1e-8);
+    f_prime = (fx2 - fx1) / (2 * epsilon);
     tms_delete_math_expr(M);
     tms_free_arg_list(args, true);
     return f_prime;
@@ -170,6 +179,12 @@ double complex tms_integrate(char *arguments)
 
     lower_bound = tms_solve_e(args->arguments[0], false);
     upper_bound = tms_solve_e(args->arguments[1], false);
+    if (isnan(lower_bound) || isnan(upper_bound))
+    {
+        tms_error_handler(EH_CLEAR, EH_MAIN_DB);
+        tms_free_arg_list(args, true);
+        return NAN;
+    }
 
     delta = upper_bound - lower_bound;
     if (delta < 0)
