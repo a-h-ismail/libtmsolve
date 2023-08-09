@@ -12,8 +12,15 @@ SPDX-License-Identifier: LGPL-2.1-only
 #endif
 /**
  * @file
- * @brief Function handling
-*/
+ * @brief Contains extended functions definitions and assistant functions.
+ */
+
+typedef struct tms_extf
+{
+    char *name;
+    double complex (*ptr)(char *);
+    bool skip_checks;
+} tms_extf;
 
 /**
  * @brief Generates a heap allocated array of structure containing all variable members metadata and stores it in M.
@@ -27,23 +34,29 @@ void _tms_set_var_data(tms_math_expr *M);
  */
 void _tms_set_variable(tms_math_expr *M, double complex value);
 
+double complex tms_hex(char *number);
+
+double complex tms_oct(char *number);
+
+double complex tms_bin(char *number);
+
 /**
  * @brief Calculates the derivative of a function at a specific point.
- * @details The function expects 2 arguments stored in a string and comma ',' separated.\n 
+ * @details The function expects 2 arguments stored in a string and comma ',' separated.\n
  * The first argument is the function to derivate and the second is the point to calculate the derivative at.\n
  * The derivation is done using the definition of derivative.
  * @param expr The string containing the arguments.
  * @return The value of the derivative at the specified point.
  */
-double tms_derivative(char *expr);
+double complex tms_derivative(char *expr);
 
 /**
  * @brief Calculates the bounded integral of a function.
- * @details The function expects 3 arguments stored in a string and comma ',' separated.\n 
- * Expected arguments: upper_bound, lower_bound, function.\n 
+ * @details The function expects 3 arguments stored in a string and comma ',' separated.\n
+ * Expected arguments: upper_bound, lower_bound, function.\n
  * Numerical integration using Simpson's 3/8 rule.
  * @param expr The arguments string.
  * @return Integration answer, or NaN in case of failure.
  */
-double tms_integrate(char *expr);
+double complex tms_integrate(char *expr);
 #endif
