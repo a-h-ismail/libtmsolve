@@ -1070,7 +1070,8 @@ double complex tms_evaluate(tms_math_expr *M)
     if (M->runvar_i != -1)
         tms_g_vars[M->runvar_i].value = M->answer;
 
-    // tms_dump_expr(M, true);
+    if (_tms_debug)
+        tms_dump_expr(M, true);
 
     return M->answer;
 }
