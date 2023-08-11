@@ -57,7 +57,14 @@ int find_min(int a, int b)
 double complex tms_get_operand(char *expr, int start, bool enable_complex)
 {
     double complex value = NAN;
-    bool is_negative = false, is_variable = false;
+    bool is_negative = false;
+
+    // Catch incorrect start like )5 (no implied multiplication allowed)
+    if (start > 0 && !tms_is_valid_number_start(expr[start - 1]))
+    {
+        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, start - 1);
+        return NAN;
+    }
 
     if (expr[start] == '-')
     {
@@ -67,38 +74,35 @@ double complex tms_get_operand(char *expr, int start, bool enable_complex)
     else
         is_negative = false;
 
-    int i;
-    for (i = 0; i < tms_g_var_count; ++i)
+    value = tms_read_value(expr, start);
+    if (!enable_complex && cimag(value) != 0)
     {
-        if (tms_match_word(expr, start, tms_g_vars[i].name, true))
+        tms_error_handler(EH_SAVE, COMPLEX_DISABLED, EH_NONFATAL_ERROR, start);
+        return NAN;
+    }
+
+    // Failed to read value normally, it is probably a variable
+    if (isnan(creal(value)))
+    {
+        int i;
+        for (i = 0; i < tms_g_var_count; ++i)
         {
-            // Complex variable in real only mode
-            if (!enable_complex && cimag(tms_g_vars[i].value) != 0)
+            if (tms_match_word(expr, start, tms_g_vars[i].name, true))
             {
-                tms_error_handler(EH_SAVE, MATH_ERROR, EH_FATAL_ERROR, start);
-                return NAN;
+                // Complex variable in real only mode
+                if (!enable_complex && cimag(tms_g_vars[i].value) != 0)
+                {
+                    tms_error_handler(EH_SAVE, COMPLEX_DISABLED, EH_FATAL_ERROR, start);
+                    return NAN;
+                }
+                value = tms_g_vars[i].value;
+                break;
             }
-            value = tms_g_vars[i].value;
-            is_variable = true;
-            break;
         }
-    }
 
-    // ans is a special case
-    if (tms_match_word(expr, start, "ans", true))
-    {
-        value = tms_g_ans;
-        is_variable = true;
-    }
-
-    if (is_variable == false)
-    {
-        value = tms_read_value(expr + start);
-        if (!enable_complex && cimag(value) != 0)
-        {
-            tms_error_handler(EH_SAVE, COMPLEX_DISABLED, EH_NONFATAL_ERROR, start);
-            return NAN;
-        }
+        // ans is a special case
+        if (tms_match_word(expr, start, "ans", true))
+            value = tms_g_ans;
     }
 
     if (is_negative)
@@ -113,6 +117,33 @@ bool tms_is_op(char c)
         if (c == ops[i])
             return true;
 
+    return false;
+}
+
+bool tms_is_valid_number_start(char c)
+{
+    switch (c)
+    {
+    case '(':
+    case ',':
+        return true;
+    default:
+        return tms_is_op(c);
+    }
+    return false;
+}
+
+bool tms_is_valid_number_end(char c)
+{
+    switch (c)
+    {
+    case ')':
+    case ',':
+    case '\0':
+        return true;
+    default:
+        return tms_is_op(c);
+    }
     return false;
 }
 
@@ -182,6 +213,11 @@ double _tms_read_value_simple(char *number, int8_t base)
     int i, dot = -1, start, length;
     bool is_negative = false;
     int8_t (*symbol_resolver)(char);
+
+    // Empty string
+    if (number[0] == '\0')
+        return NAN;
+
     if (number[0] == '-')
     {
         ++number;
@@ -247,15 +283,22 @@ double _tms_read_value_simple(char *number, int8_t base)
     return value;
 }
 
-double complex tms_read_value(char *_s)
+double complex tms_read_value(char *_s, int start)
 {
     double complex value;
     int end, sci_notation = -1, base;
     bool is_complex = false;
-
+    _s += start;
     end = tms_find_endofnumber(_s, 0);
     if (end == -1)
         return NAN;
+
+    if (!tms_is_valid_number_end(_s[end + 1]))
+    {
+        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, start + end);
+        return NAN;
+    }
+
     base = tms_detect_base(_s);
     if (base != 10)
     {
@@ -440,7 +483,10 @@ int tms_find_endofnumber(char *number, int start)
         else if (number[end] == '.')
         {
             if (remaining_dots == 0)
-                return 0;
+            {
+                tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, end);
+                return -1;
+            }
             else
             {
                 ++end;
@@ -465,7 +511,7 @@ int tms_find_endofnumber(char *number, int start)
         else if (number[end] == 'i')
         {
             if (is_complex)
-                return 0;
+                return -1;
 
             is_complex = true;
             ++end;
@@ -630,10 +676,6 @@ bool int_search(int *array, int value, int count)
     return false;
 }
 
-/*
-Function that checks if every open parenthesis has a closing parenthesis and that no parenthesis pair is empty.
-Returns true when checks pass
-*/
 bool tms_parenthesis_check(char *expr)
 {
     int open, close = -1, k = 0, *open_position, *close_position, length = strlen(expr);
@@ -694,10 +736,11 @@ bool tms_parenthesis_check(char *expr)
 
 bool tms_syntax_check(char *expr)
 {
-    int length = strlen(expr), i, j;
+    int i, j;
     tmsolve_init();
     _tms_g_expr = expr;
-    // First check: all function calls have parenthesis.
+
+    // Check if all function calls have parenthesis
     for (i = 0; i < tms_g_func_count; ++i)
     {
         j = tms_f_search(expr, tms_g_all_func_names[i], 0, true);
@@ -709,25 +752,6 @@ bool tms_syntax_check(char *expr)
                 return false;
             }
             j = tms_f_search(expr, tms_g_all_func_names[i], j + 1, true);
-        }
-    }
-    // Check for incorrect syntax or implied multiplication.
-    for (i = 0; i < length; ++i)
-    {
-        if (isdigit(expr[i]))
-        {
-            int end = tms_find_endofnumber(expr, i);
-            if (i > 0 && !tms_is_op(expr[i - 1]) && expr[i - 1] != '(' && expr[i - 1] != ',')
-            {
-                tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, i - 1);
-                return false;
-            }
-            if (expr[end + 1] != '\0' && !tms_is_op(expr[end + 1]) && expr[end + 1] != ')' && expr[end + 1] != ',')
-            {
-                tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, i);
-                return false;
-            }
-            i = end + 1;
         }
     }
     return tms_parenthesis_check(expr);
