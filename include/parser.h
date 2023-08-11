@@ -33,7 +33,7 @@ extern double complex (*tms_cmplx_func_ptr[])(double complex);
 /// @brief Contains the names of extended functions (functions with variable number of arguments, passed as a comma separated string).
 extern char *tms_ext_func_name[];
 
-/// @brief Contains the function pointers of scientific functions.
+/// @brief Contains the function pointers of extended functions.
 extern double complex (*tms_ext_func[])(tms_arg_list *);
 
 /// @brief Comparator function for use with qsort(), compares the depth of 2 subexpressions.
