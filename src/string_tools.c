@@ -737,7 +737,6 @@ bool tms_parenthesis_check(char *expr)
 bool tms_syntax_check(char *expr)
 {
     int i, j;
-    tmsolve_init();
     _tms_g_expr = expr;
 
     // Check if all function calls have parenthesis
