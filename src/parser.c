@@ -1028,21 +1028,8 @@ double complex tms_evaluate(tms_math_expr *M)
                     // Use non complex power function if no imaginary part is found
                     if (cimag(i_node->left_operand) == 0 && cimag(i_node->right_operand) == 0)
                         *(i_node->result) = tms_fast_pow(i_node->left_operand, i_node->right_operand);
-                    // Workaround for the edge case where something like (6i)^2 is producing a small imaginary part
-                    else if (cimag(i_node->right_operand) == 0 && round(creal(i_node->right_operand)) - (int)creal(i_node->right_operand) == 0)
-                    {
-                        *(i_node->result) = 1;
-                        int i;
-                        if (creal(i_node->right_operand) > 0)
-                            for (i = 0; i < creal(i_node->right_operand); ++i)
-                                *(i_node->result) *= i_node->left_operand;
-
-                        else if (creal(i_node->right_operand) < 0)
-                            for (i = 0; i > creal(i_node->right_operand); --i)
-                                *(i_node->result) /= i_node->left_operand;
-                    }
                     else
-                        *(i_node->result) = cpow(i_node->left_operand, i_node->right_operand);
+                        *(i_node->result) = tms_fast_cpow(i_node->left_operand, i_node->right_operand);
                     break;
                 }
                 i_node = i_node->next;
