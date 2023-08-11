@@ -15,13 +15,6 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @brief Contains extended functions definitions and assistant functions.
  */
 
-typedef struct tms_extf
-{
-    char *name;
-    double complex (*ptr)(char *);
-    bool skip_checks;
-} tms_extf;
-
 /**
  * @brief Generates a heap allocated array of structure containing all variable members metadata and stores it in M.
  * @param M The math_expr used to generate and store the metadata.
