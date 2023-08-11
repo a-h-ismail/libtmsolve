@@ -58,7 +58,10 @@ extern double complex tms_g_ans;
 extern char *_tms_g_expr;
 
 /// @brief Indicates if the library initialization function should be run.
-extern bool _tms_init;
+extern bool _tms_do_init;
+
+/// @brief Toggles additional debugging information.
+extern bool _tms_debug;
 
 /// @brief Contains all built in variables (like pi).
 extern tms_var tms_g_builtin_vars[];

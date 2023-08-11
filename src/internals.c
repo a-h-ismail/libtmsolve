@@ -8,7 +8,9 @@ SPDX-License-Identifier: LGPL-2.1-only
 char *_tms_g_expr = NULL;
 double complex tms_g_ans = 0;
 
-bool _tms_init = true;
+bool _tms_do_init = true;
+bool _tms_debug = false;
+
 char **tms_g_all_func_names;
 
 tms_var tms_g_builtin_vars[] = {{"i", I, true}, {"pi", M_PI, true}, {"exp", M_E, true}, {"c", 299792458, true}};
@@ -21,7 +23,7 @@ int tms_g_func_count = 0, tms_g_var_count, tms_g_var_max = array_length(tms_g_bu
 void tmsolve_init()
 {
     int i;
-    if (_tms_init == true)
+    if (_tms_do_init == true)
     {
         // Initialize variable names and values arrays
         tms_g_vars = malloc(tms_g_var_max * sizeof(tms_var));
@@ -78,7 +80,7 @@ void tmsolve_init()
         tms_g_func_count = i;
         for (i = 0; i < tms_g_func_count; ++i)
             tms_g_all_func_names[i] = tmp[i];
-        _tms_init = false;
+        _tms_do_init = false;
     }
 }
 
