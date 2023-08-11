@@ -43,6 +43,39 @@ double tms_fast_pow(double x, double y)
     return pow(x, y);
 }
 
+double complex tms_fast_cpow(double complex x, double complex y)
+{
+    double complex result = 1;
+    double y_real = creal(y), y_imag = cimag(y);
+    if (y == 0)
+        return 1;
+
+    if (y_imag == 0)
+    {
+        if (y_real > 0)
+        {
+            if (y_real <= INT32_MAX && y_real - (int32_t)y_real == 0)
+            {
+                for (int32_t i = 0; i < y_real; ++i)
+                    result *= x;
+                return result;
+            }
+        }
+        else
+        {
+            if (y_real >= INT32_MIN && y_real - (int32_t)y_real == 0)
+            {
+                for (int32_t i = 0; i > y_real; --i)
+                    result /= x;
+                return result;
+            }
+        }
+    }
+
+    // Neither optimizations worked so fallback to standard C pow
+    return cpow(x, y);
+}
+
 void _set_ans(double complex result)
 {
     if (!isnan(creal(result)) && !isnan(cimag(result)))
