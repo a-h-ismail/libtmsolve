@@ -75,11 +75,6 @@ double complex tms_get_operand(char *expr, int start, bool enable_complex)
         is_negative = false;
 
     value = tms_read_value(expr, start);
-    if (!enable_complex && cimag(value) != 0)
-    {
-        tms_error_handler(EH_SAVE, COMPLEX_DISABLED, EH_NONFATAL_ERROR, start);
-        return NAN;
-    }
 
     // Failed to read value normally, it is probably a variable
     if (isnan(creal(value)))
@@ -89,12 +84,7 @@ double complex tms_get_operand(char *expr, int start, bool enable_complex)
         {
             if (tms_match_word(expr, start, tms_g_vars[i].name, true))
             {
-                // Complex variable in real only mode
-                if (!enable_complex && cimag(tms_g_vars[i].value) != 0)
-                {
-                    tms_error_handler(EH_SAVE, COMPLEX_DISABLED, EH_FATAL_ERROR, start);
-                    return NAN;
-                }
+
                 value = tms_g_vars[i].value;
                 break;
             }
@@ -103,6 +93,12 @@ double complex tms_get_operand(char *expr, int start, bool enable_complex)
         // ans is a special case
         if (tms_match_word(expr, start, "ans", true))
             value = tms_g_ans;
+    }
+
+    if (!enable_complex && cimag(value) != 0)
+    {
+        tms_error_handler(EH_SAVE, COMPLEX_DISABLED, EH_FATAL_ERROR, start);
+        return NAN;
     }
 
     if (is_negative)
