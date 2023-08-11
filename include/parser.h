@@ -189,9 +189,9 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index);
  * @param M math_expr being processed.
  * @param s_index Index of the current subexpression.
  * @param operator_index Operator indexes obtained using _tms_get_operator_indexes().
- * @return 0: continue, 1: Subexpression parsing done, 2: All subexpressions are done, -1: Error
+ * @return TMS_CONTINUE, TMS_BREAK, TMS_SUCCESS, TMS_ERROR
  */
-int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operator_index);
+int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operator_index, bool enable_variables);
 
 /**
  * @brief Sets right/left operands and variable operand 'x' for all nodes.
@@ -252,9 +252,9 @@ double complex tms_evaluate(tms_math_expr *M);
  * @param expr expr The expression string pointer, offset to the position where x_node left/right operand starts.
  * @param x_node The op_node structure to set the variable in.
  * @param operand Informs the function which operand to set as variable.
- * @return true if the variable x was found at either operands of x_node, false otherwise.
+ * @return 0 if the variable x was found at either operands of x_node, -1 otherwise.
  */
-bool tms_set_var_metadata(char *expr, tms_op_node *x_node, char operand);
+int tms_set_var_metadata(char *expr, tms_op_node *x_node, char operand);
 
 /**
  * @brief Parses a math expression into a structure.
