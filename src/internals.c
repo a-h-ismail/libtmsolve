@@ -241,6 +241,7 @@ int tms_error_handler(int _mode, ...)
         case EH_ALL_ERRORS:
             return non_fatal + fatal;
         }
+        return -1;
 
     case EH_BACKUP:
         tms_error_handler(EH_CLEAR, EH_BACKUP);
