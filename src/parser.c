@@ -66,9 +66,9 @@ char *tms_r_func_name[] =
 double (*tms_r_func_ptr[])(double) =
     {tms_factorial, fabs, ceil, floor, sqrt, cbrt, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, rd_cos, rd_sin, rd_tan, log, log10};
 // Extended functions, may take more than one parameter (stored in a comma separated string)
-char *tms_ext_func_name[] = {"int", "der", NULL};
+char *tms_ext_func_name[] = {"int", "der", "hex", "oct", "bin", NULL};
 double complex (*tms_ext_func[])(tms_arg_list *) =
-    {tms_integrate, tms_derivative};
+    {tms_integrate, tms_derivative, tms_hex, tms_oct, tms_bin};
 
 // Complex functions
 char *tms_cmplx_func_name[] =
@@ -370,7 +370,7 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
     return true;
 }
 
-int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operator_index)
+int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operator_index, bool enable_variables)
 {
     tms_math_subexpr *S = M->subexpr_ptr;
     int s_count = M->subexpr_count, op_count = S[s_index].op_count;
@@ -419,8 +419,14 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
             node_block->left_operand = tms_get_operand(local_expr, solve_start, M->enable_complex);
             if (isnan((double)node_block->left_operand))
             {
-                status = tms_set_var_metadata(local_expr + solve_start, node_block, 'l');
-                if (!status)
+                if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
+                    return -1;
+                if (enable_variables)
+                    status = tms_set_var_metadata(local_expr + solve_start, node_block, 'l');
+                else
+                    status = -1;
+
+                if (status == -1)
                 {
                     tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, solve_start);
                     return -1;
@@ -494,13 +500,15 @@ int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enab
         // If reading a value fails, it is probably a variable like x
         if (isnan((double)node_block[0].left_operand))
         {
+            if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
+                return -1;
             // Checking for the variable 'x'
             if (enable_variables == true)
                 status = tms_set_var_metadata(local_expr + solve_start, node_block, 'l');
             else
-                status = false;
+                status = -1;
             // Variable x not found, the left operand is probably another subexpression
-            if (!status)
+            if (status == -1)
             {
                 status = tms_find_subexpr_starting_at(S, solve_start, s_index, 1);
                 if (status == -1)
@@ -522,12 +530,14 @@ int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enab
             // Case of reading the number to the right operand of a op_node
             if (isnan((double)node_block[i].right_operand))
             {
+                if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
+                    return -1;
                 // Checking for the variable 'x'
                 if (enable_variables == true)
                     status = tms_set_var_metadata(local_expr + node_block[i].operator_index + 1, node_block + i, 'r');
                 else
-                    status = false;
-                if (!status)
+                    status = -1;
+                if (status == -1)
                 {
                     // Case of a subexpression result as right_operand, set its result pointer to right_operand
                     status = tms_find_subexpr_starting_at(S, node_block[i].operator_index + 1, s_index, 1);
@@ -548,13 +558,15 @@ int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enab
             node_block[i + 1].left_operand = tms_get_operand(local_expr, node_block[i].operator_index + 1, M->enable_complex);
             if (isnan((double)node_block[i + 1].left_operand))
             {
+                if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
+                    return -1;
                 // Checking for the variable 'x'
                 if (enable_variables == true)
                     status = tms_set_var_metadata(local_expr + node_block[i].operator_index + 1, node_block + i + 1, 'l');
                 else
-                    status = false;
+                    status = -1;
                 // Again a subexpression
-                if (!status)
+                if (status == -1)
                 {
                     status = tms_find_subexpr_starting_at(S, node_block[i].operator_index + 1, s_index, 1);
                     if (status == -1)
@@ -573,12 +585,14 @@ int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enab
     node_block[op_count - 1].right_operand = tms_get_operand(local_expr, node_block[op_count - 1].operator_index + 1, M->enable_complex);
     if (isnan((double)node_block[op_count - 1].right_operand))
     {
+        if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
+            return -1;
         // Check for the variable 'x'
         if (enable_variables == true)
             status = tms_set_var_metadata(local_expr + node_block[op_count - 1].operator_index + 1, node_block + op_count - 1, 'r');
         else
-            status = false;
-        if (!status)
+            status = -1;
+        if (status == -1)
         {
             // If an expression is the last term, find it and set the pointers
             status = tms_find_subexpr_starting_at(S, node_block[op_count - 1].operator_index + 1, s_index, 1);
@@ -783,7 +797,7 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_variables, bool enable_com
             return NULL;
         }
 
-        status = _tms_init_nodes(local_expr, M, s_index, operator_index);
+        status = _tms_init_nodes(local_expr, M, s_index, operator_index, enable_variables);
         free(operator_index);
 
         // Exiting due to error
@@ -1061,7 +1075,7 @@ double complex tms_evaluate(tms_math_expr *M)
     return M->answer;
 }
 
-bool tms_set_var_metadata(char *expr, tms_op_node *x_node, char operand)
+int tms_set_var_metadata(char *expr, tms_op_node *x_node, char operand)
 {
     bool is_negative = false, is_variable = false;
     if (*expr == 'x')
@@ -1073,11 +1087,11 @@ bool tms_set_var_metadata(char *expr, tms_op_node *x_node, char operand)
         else if (*expr == '-')
             is_variable = is_negative = true;
         else
-            return false;
+            return -1;
     }
     // The value is not the variable x
     else
-        return false;
+        return -1;
     if (is_variable)
     {
         // x as left op
@@ -1102,7 +1116,7 @@ bool tms_set_var_metadata(char *expr, tms_op_node *x_node, char operand)
             exit(2);
         }
     }
-    return true;
+    return 0;
 }
 
 void tms_delete_math_expr(tms_math_expr *M)
