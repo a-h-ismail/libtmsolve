@@ -37,6 +37,16 @@ int tms_find_opening_parenthesis(char *expr, int p);
 bool tms_is_op(char c);
 
 /**
+ * @brief Checks if the character is a correct start delimiter for operators.
+ */
+bool tms_is_valid_number_start(char c);
+
+/**
+ * @brief Checks if the character is a correct end delimiter for operators.
+ */
+bool tms_is_valid_number_end(char c);
+
+/**
  * @brief Finds the next occurence of an operator in the string.
  * @param expr The string to search.
  * @param i The index to begin searching from.
@@ -107,7 +117,7 @@ double _tms_read_value_simple(char *number, int8_t base);
  * @param _s Start of the value to read
  * @return The result or NaN in case of failure.
  */
-double complex tms_read_value(char *_s);
+double complex tms_read_value(char *_s, int start);
 
 /**
  * @brief Reads a value from the expression at start, supports numbers, constants and variables.
