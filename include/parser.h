@@ -189,6 +189,7 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index);
  * @param M math_expr being processed.
  * @param s_index Index of the current subexpression.
  * @param operator_index Operator indexes obtained using _tms_get_operator_indexes().
+ * @param enable_variables Sets support for variables (unknowns) like x.
  * @return TMS_CONTINUE, TMS_BREAK, TMS_SUCCESS, TMS_ERROR
  */
 int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operator_index, bool enable_variables);
@@ -202,6 +203,12 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
  * @return -1 in case of failure.
  */
 int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enable_variables);
+
+/**
+ * @brief Sets the appropriate data for the specified node operand.
+ * @return 0 on success, -1 on failure.
+ */
+int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start, int s_index, char operand, bool enable_variables);
 
 /**
  * @brief Sets the *next pointer of all nodes.

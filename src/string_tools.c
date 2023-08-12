@@ -54,7 +54,7 @@ int find_min(int a, int b)
         return b;
 }
 
-double complex tms_get_operand(char *expr, int start, bool enable_complex)
+double complex _tms_set_operand_value(char *expr, int start, bool enable_complex)
 {
     double complex value = NAN;
     bool is_negative = false;
@@ -340,7 +340,7 @@ double complex tms_read_value(char *_s, int start)
         power = _tms_read_value_simple(num_str + sci_notation + 1, 10);
         if (is_complex)
             value *= I;
-        return value * tms_fast_pow(10, power);
+        return value * pow(10, power);
     }
 }
 

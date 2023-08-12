@@ -126,7 +126,7 @@ double complex tms_read_value(char *_s, int start);
  * @param enable_complex Toggles complex number support.
  * @return The value read from the string, or NaN in case of failure.
  */
-double complex tms_get_operand(char *expr, int start, bool enable_complex);
+double complex _tms_set_operand_value(char *expr, int start, bool enable_complex);
 
 /**
  * @brief Finds the next occurence of add or subtract sign.
