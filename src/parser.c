@@ -956,7 +956,7 @@ double complex tms_evaluate(tms_math_expr *M)
                 int length = S[s_index].solve_end - S[s_index].solve_start + 1;
                 // Copy args from the expression to a separate array.
                 arg_str = malloc((length + 1) * sizeof(char));
-                memcpy(arg_str, _tms_g_expr + S[s_index].solve_start, length * sizeof(char));
+                strncpy(arg_str, _tms_g_expr + S[s_index].solve_start, length);
                 arg_str[length] = '\0';
 
                 L = tms_get_args(arg_str);
@@ -1025,9 +1025,16 @@ double complex tms_evaluate(tms_math_expr *M)
                     break;
 
                 case '^':
-                    // Use non complex power function if no imaginary part is found
-                    if (cimag(i_node->left_operand) == 0 && cimag(i_node->right_operand) == 0)
+                    // Use non complex power function if complex is disabled or no imaginary part is found
+                    if (!M->enable_complex)
+                    {
                         *(i_node->result) = tms_fast_pow(i_node->left_operand, i_node->right_operand);
+                        if (isnan(creal(*(i_node->result))))
+                        {
+                            tms_error_handler(EH_SAVE, MATH_ERROR, EH_NONFATAL_ERROR, i_node->operator_index);
+                            return NAN;
+                        }
+                    }
                     else
                         *(i_node->result) = tms_fast_cpow(i_node->left_operand, i_node->right_operand);
                     break;
