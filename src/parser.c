@@ -385,7 +385,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
         return -1;
     }
 
-    // Allocating nodes
+    // Allocate nodes
     if (op_count == 0)
         S[s_index].nodes = malloc(sizeof(tms_op_node));
     else
@@ -393,13 +393,13 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
 
     node_block = S[s_index].nodes;
 
-    // Checking if the expression is terminated with an operator
+    // Check if the expression is terminated with an operator
     if (op_count != 0 && operator_index[op_count - 1] == solve_end)
     {
         tms_error_handler(EH_SAVE, RIGHT_OP_MISSING, EH_FATAL_ERROR, operator_index[op_count - 1]);
         return -1;
     }
-    // Filling operations and index data into each op_node
+    // Fill operations and index data into each op_node
     for (i = 0; i < op_count; ++i)
     {
         node_block[i].operator_index = operator_index[i];
@@ -416,7 +416,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
             *(S[i].result) = &(node_block->left_operand);
         else
         {
-            node_block->left_operand = tms_get_operand(local_expr, solve_start, M->enable_complex);
+            node_block->left_operand = _tms_set_operand_value(local_expr, solve_start, M->enable_complex);
             if (isnan((double)node_block->left_operand))
             {
                 if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
@@ -482,7 +482,7 @@ int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enab
     tms_op_node *node_block = S[s_index].nodes;
     int solve_start = S[s_index].solve_start;
 
-    // Reading the first number
+    // Read the first number
     // Treat +x and -x as 0-x and 0+x
     if (node_block[0].operator_index == S[s_index].solve_start)
     {
@@ -496,112 +496,77 @@ int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enab
     }
     else
     {
-        node_block[0].left_operand = tms_get_operand(local_expr, solve_start, M->enable_complex);
-        // If reading a value fails, it is probably a variable like x
-        if (isnan((double)node_block[0].left_operand))
-        {
-            if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
-                return -1;
-            // Checking for the variable 'x'
-            if (enable_variables == true)
-                status = tms_set_var_metadata(local_expr + solve_start, node_block, 'l');
-            else
-                status = -1;
-            // Variable x not found, the left operand is probably another subexpression
-            if (status == -1)
-            {
-                status = tms_find_subexpr_starting_at(S, solve_start, s_index, 1);
-                if (status == -1)
-                {
-                    tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, solve_start);
-                    return -1;
-                }
-                else
-                    *(S[status].result) = &(node_block[0].left_operand);
-            }
-        }
+        status = _tms_set_operand(local_expr, M, node_block, solve_start, s_index, 'l', enable_variables);
+        if (status == -1)
+            return -1;
     }
     // Intermediate nodes, read number to the appropriate op_node operand
     for (i = 0; i < op_count - 1; ++i)
     {
+        // Case of reading the number to the right operand of a op_node
         if (node_block[i].priority >= node_block[i + 1].priority)
         {
-            node_block[i].right_operand = tms_get_operand(local_expr, node_block[i].operator_index + 1, M->enable_complex);
-            // Case of reading the number to the right operand of a op_node
-            if (isnan((double)node_block[i].right_operand))
-            {
-                if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
-                    return -1;
-                // Checking for the variable 'x'
-                if (enable_variables == true)
-                    status = tms_set_var_metadata(local_expr + node_block[i].operator_index + 1, node_block + i, 'r');
-                else
-                    status = -1;
-                if (status == -1)
-                {
-                    // Case of a subexpression result as right_operand, set its result pointer to right_operand
-                    status = tms_find_subexpr_starting_at(S, node_block[i].operator_index + 1, s_index, 1);
-                    if (status == -1)
-                    {
-                        tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, node_block[i].operator_index + 1);
-                        return -1;
-                    }
-                    else
-                        *(S[status].result) = &(node_block[i].right_operand);
-                }
-            }
+            status = _tms_set_operand(local_expr, M, node_block + i, node_block[i].operator_index + 1, s_index, 'r', enable_variables);
+            if (status == -1)
+                return -1;
         }
+
         // Case of the op_node[i] having less priority than the next op_node, use next op_node's left_operand
         else
         {
-            // Read number
-            node_block[i + 1].left_operand = tms_get_operand(local_expr, node_block[i].operator_index + 1, M->enable_complex);
-            if (isnan((double)node_block[i + 1].left_operand))
-            {
-                if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
-                    return -1;
-                // Checking for the variable 'x'
-                if (enable_variables == true)
-                    status = tms_set_var_metadata(local_expr + node_block[i].operator_index + 1, node_block + i + 1, 'l');
-                else
-                    status = -1;
-                // Again a subexpression
-                if (status == -1)
-                {
-                    status = tms_find_subexpr_starting_at(S, node_block[i].operator_index + 1, s_index, 1);
-                    if (status == -1)
-                    {
-                        tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, node_block[i].operator_index + 1);
-                        return -1;
-                    }
-                    else
-                        *(S[status].result) = &(node_block[i + 1].left_operand);
-                }
-            }
+            status = _tms_set_operand(local_expr, M, node_block + i + 1, node_block[i].operator_index + 1, s_index, 'l', enable_variables);
+            if (status == -1)
+                return -1;
         }
     }
     // Place the last number in the last op_node
-    // Read a value
-    node_block[op_count - 1].right_operand = tms_get_operand(local_expr, node_block[op_count - 1].operator_index + 1, M->enable_complex);
-    if (isnan((double)node_block[op_count - 1].right_operand))
+    status = _tms_set_operand(local_expr, M, node_block + op_count - 1, node_block[op_count - 1].operator_index + 1, s_index, 'r', enable_variables);
+    if (status == -1)
+        return -1;
+    return 0;
+}
+
+int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start, int s_index, char operand, bool enable_variables)
+{
+    tms_math_subexpr *S = M->subexpr_ptr;
+    double complex *operand_ptr;
+    int status;
+
+    switch (operand)
+    {
+    case 'r':
+        operand_ptr = &(N->right_operand);
+        break;
+    case 'l':
+        operand_ptr = &(N->left_operand);
+        break;
+    default:
+        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, N->operator_index);
+        return -1;
+    }
+
+    *operand_ptr = _tms_set_operand_value(expr, op_start, M->enable_complex);
+    // Case of reading the number to the right operand of a op_node
+    if (isnan((double)*operand_ptr))
     {
         if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
             return -1;
-        // Check for the variable 'x'
+        // Checking for the variable 'x'
         if (enable_variables == true)
-            status = tms_set_var_metadata(local_expr + node_block[op_count - 1].operator_index + 1, node_block + op_count - 1, 'r');
+            status = tms_set_var_metadata(expr + op_start, N, operand);
         else
             status = -1;
         if (status == -1)
         {
-            // If an expression is the last term, find it and set the pointers
-            status = tms_find_subexpr_starting_at(S, node_block[op_count - 1].operator_index + 1, s_index, 1);
+            // Case of a subexpression result as right_operand, set its result pointer to right_operand
+            status = tms_find_subexpr_starting_at(S, op_start, s_index, 1);
             if (status == -1)
             {
-                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, node_block[i].operator_index + 1);
+                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, op_start);
                 return -1;
             }
-            *(S[status].result) = &(node_block[op_count - 1].right_operand);
+            else
+                *(S[status].result) = operand_ptr;
         }
     }
     return 0;
@@ -1028,7 +993,7 @@ double complex tms_evaluate(tms_math_expr *M)
                     // Use non complex power function if complex is disabled or no imaginary part is found
                     if (!M->enable_complex)
                     {
-                        *(i_node->result) = tms_fast_pow(i_node->left_operand, i_node->right_operand);
+                        *(i_node->result) = pow(i_node->left_operand, i_node->right_operand);
                         if (isnan(creal(*(i_node->result))))
                         {
                             tms_error_handler(EH_SAVE, MATH_ERROR, EH_NONFATAL_ERROR, i_node->operator_index);
@@ -1036,7 +1001,7 @@ double complex tms_evaluate(tms_math_expr *M)
                         }
                     }
                     else
-                        *(i_node->result) = tms_fast_cpow(i_node->left_operand, i_node->right_operand);
+                        *(i_node->result) = cpow(i_node->left_operand, i_node->right_operand);
                     break;
                 }
                 i_node = i_node->next;
