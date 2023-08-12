@@ -52,7 +52,12 @@ double complex tms_fast_cpow(double complex x, double complex y)
 
     if (y_imag == 0)
     {
-        if (y_real > 0)
+        // 0.5 power for negative values returns a small real part error
+        if (y_real == 0.5)
+            return csqrt(x);
+        else if (y_real == -0.5)
+            return 1 / csqrt(x);
+        else if (y_real > 0)
         {
             if (y_real <= INT32_MAX && y_real - (int32_t)y_real == 0)
             {
