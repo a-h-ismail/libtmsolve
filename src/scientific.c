@@ -21,6 +21,64 @@ void _set_ans(double complex result)
         tms_g_ans = result;
 }
 
+bool tms_is_integer(double value)
+{
+    if ((value - floor(value)) == 0)
+        return true;
+    else
+        return false;
+}
+
+double complex tms_neglect_real_cmplx(double complex x)
+{
+    double magnitude = creal(x) / cimag(x);
+    if (fabs(magnitude) > 1e10)
+        return creal(x);
+    else if (fabs(magnitude) < 1e-10)
+        return I * cimag(x);
+    else
+        return x;
+}
+
+double complex tms_cpow(double complex x, double complex y)
+{
+    double x_real = creal(x), x_imag = cimag(x), y_real = creal(y), y_imag = cimag(y);
+    if (y == 0)
+        return 1;
+
+    if (y_imag == 0)
+    {
+        if (x_imag == 0)
+        {
+            // n+0.5 powers for negative values returns a small real part error
+            // Fixable by using sqrt()
+            if (x_real < 0)
+            {
+                double y_real_int, y_real_decimal;
+                if (y_real > 0)
+                {
+                    y_real_int = floor(y_real);
+                    y_real_decimal = y_real - y_real_int;
+                }
+                else
+                {
+                    y_real_int = ceil(y_real);
+                    y_real_decimal = y_real - y_real_int;
+                }
+                if (y_real_decimal == 0.5)
+                    return pow(x_real, y_real_int) * I * sqrt(-x_real);
+                else if (y_real_decimal == -0.5)
+                    return 1 / (pow(x_real, y_real_int) * I * sqrt(-x_real));
+            }
+            else
+                return pow(x_real, y_real);
+        }
+    }
+
+    // Normal case
+    return tms_neglect_real_cmplx(cpow(x, y));
+}
+
 double complex tms_solve_e(char *expr, bool enable_complex)
 {
     double complex result;
