@@ -1001,7 +1001,7 @@ double complex tms_evaluate(tms_math_expr *M)
                         }
                     }
                     else
-                        *(i_node->result) = cpow(i_node->left_operand, i_node->right_operand);
+                        *(i_node->result) = tms_cpow(i_node->left_operand, i_node->right_operand);
                     break;
                 }
                 i_node = i_node->next;
