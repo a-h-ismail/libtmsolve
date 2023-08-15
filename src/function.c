@@ -6,6 +6,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "string_tools.h"
 #include "function.h"
 #include <math.h>
+#include <time.h>
 
 bool _validate_args_count(int expected, int actual)
 {
@@ -17,66 +18,43 @@ bool _validate_args_count(int expected, int actual)
         tms_error_handler(EH_SAVE, TOO_MANY_ARGS, EH_FATAL_ERROR, -1);
     return false;
 }
-void _tms_set_var_data(tms_math_expr *M)
-{
-    int i = 0, s_index, buffer_size = 16;
-    tms_var_operand *vars = malloc(buffer_size * sizeof(tms_var_operand));
-    tms_math_subexpr *subexpr_ptr = M->subexpr_ptr;
-    tms_op_node *i_node;
 
-    for (s_index = 0; s_index < M->subexpr_count; ++s_index)
-    {
-        i_node = subexpr_ptr[s_index].nodes + subexpr_ptr[s_index].start_node;
-        while (i_node != NULL)
-        {
-            if (i == buffer_size)
-            {
-                buffer_size *= 2;
-                vars = realloc(vars, buffer_size * sizeof(tms_var_operand));
-            }
-            // Case of variable left operand
-            if (i_node->var_metadata & 0b1)
-            {
-                if (i_node->var_metadata & 0b100)
-                    vars[i].is_negative = true;
-                else
-                    vars[i].is_negative = false;
-                vars[i].var_ptr = &(i_node->left_operand);
-                ++i;
-            }
-            // Case of a variable right operand
-            if (i_node->var_metadata & 0b10)
-            {
-                if (i_node->var_metadata & 0b1000)
-                    vars[i].is_negative = true;
-                else
-                    vars[i].is_negative = false;
-                vars[i].var_ptr = &(i_node->right_operand);
-                ++i;
-            }
-            i_node = i_node->next;
-        }
-    }
-    if (i != 0)
-    {
-        vars = realloc(vars, i * sizeof(tms_var_operand));
-        M->var_count = i;
-        M->var_data = vars;
-    }
-    else
-        free(vars);
-}
-// Function that sets all variables pointed to in the array with "value"
-void _tms_set_variable(tms_math_expr *math_struct, double complex value)
+double complex tms_int(tms_arg_list *args)
 {
-    int i;
-    for (i = 0; i < math_struct->var_count; ++i)
-    {
-        if (math_struct->var_data[i].is_negative)
-            *(math_struct->var_data[i].var_ptr) = -value;
-        else
-            *(math_struct->var_data[i].var_ptr) = value;
-    }
+    double real, imag;
+    double complex result;
+
+    if (_validate_args_count(1, args->count) == false)
+        return NAN;
+    result = tms_solve(args->arguments[0]);
+    real = creal(result);
+    imag = cimag(result);
+    if (isnan(real))
+        return NAN;
+
+    if (real > 0)
+        real = floor(real);
+    else
+        real = ceil(real);
+
+    if (imag > 0)
+        imag = floor(imag);
+    else
+        imag = ceil(imag);
+
+    return real + I * imag;
+}
+
+double complex tms_rand(tms_arg_list *args)
+{
+    if (_validate_args_count(0, args->count) == false)
+        return NAN;
+
+    double tmp = rand();
+    // Generate a decimal part
+    tmp /= pow(10, ceil(log10(tmp)));
+
+    return ((double)rand() + tmp) * pow(-1, rand());
 }
 
 double complex tms_base_n(tms_arg_list *args, int8_t base)
@@ -114,23 +92,23 @@ double complex tms_bin(tms_arg_list *L)
 }
 
 // Function that calculates the derivative of f(x) for a specific value of x
-double complex tms_derivative(tms_arg_list *args)
+double complex tms_derivative(tms_arg_list *L)
 {
     tms_math_expr *M;
     double epsilon = 1e-9;
 
-    if (_validate_args_count(2, args->count) == false)
+    if (_validate_args_count(2, L->count) == false)
         return NAN;
 
     double x, f_prime, fx1, fx2;
 
-    x = tms_solve_e(args->arguments[1], false);
+    x = tms_solve_e(L->arguments[1], false);
     if (isnan(x))
     {
         tms_error_handler(EH_CLEAR, EH_MAIN_DB);
         return NAN;
     }
-    M = tms_parse_expr(args->arguments[0], true, false);
+    M = tms_parse_expr(L->arguments[0], true, false);
 
     if (M == NULL)
         return NAN;
@@ -150,18 +128,18 @@ double complex tms_derivative(tms_arg_list *args)
     return f_prime;
 }
 
-double complex tms_integrate(tms_arg_list *args)
+double complex tms_integrate(tms_arg_list *L)
 {
     tms_math_expr *M;
 
-    if (_validate_args_count(3, args->count) == false)
+    if (_validate_args_count(3, L->count) == false)
         return NAN;
 
     int n;
     double lower_bound, upper_bound, result, an, fn, rounds, delta;
 
-    lower_bound = tms_solve_e(args->arguments[0], false);
-    upper_bound = tms_solve_e(args->arguments[1], false);
+    lower_bound = tms_solve_e(L->arguments[0], false);
+    upper_bound = tms_solve_e(L->arguments[1], false);
     if (isnan(lower_bound) || isnan(upper_bound))
     {
         tms_error_handler(EH_CLEAR, EH_MAIN_DB);
@@ -176,7 +154,7 @@ double complex tms_integrate(tms_arg_list *args)
     }
 
     // Compile the expression to the desired structure
-    M = tms_parse_expr(args->arguments[2], true, false);
+    M = tms_parse_expr(L->arguments[2], true, false);
 
     if (M == NULL)
         return NAN;
