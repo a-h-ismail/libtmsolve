@@ -56,11 +56,14 @@ double complex tms_evaluate(tms_math_expr *M)
         }
         i_node = S[s_index].nodes + S[s_index].start_node;
 
+        // Case of an expression with one operand
         if (S[s_index].op_count == 0)
             *(i_node->result) = i_node->left_operand;
+        // Normal case, iterate through the nodes following the evaluation order.
         else
             while (i_node != NULL)
             {
+                // Probably a parsing bug
                 if (i_node->result == NULL)
                 {
                     tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, -1);
