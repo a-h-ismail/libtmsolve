@@ -7,49 +7,53 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 #ifndef LOCAL_BUILD
 #include <tmsolve/internals.h>
+#include <tmsolve/evaluator.h>
 #else
 #include "internals.h"
+#include "evaluator.h"
 #endif
 /**
  * @file
- * @brief Contains extended functions definitions and assistant functions.
+ * @brief Contains extended functions definitions.
  */
 
 /**
- * @brief Generates a heap allocated array of structure containing all variable members metadata and stores it in M.
- * @param M The math_expr used to generate and store the metadata.
- * @remark You won't need to call this manually, the parser will call it if variables are enabled.
+ * @brief Returns the integer part of the specified value (supports complex), will calculate the expression if provided.
  */
-void _tms_set_var_data(tms_math_expr *M);
+double complex tms_int(tms_arg_list *L);
 
 /**
- * @brief Sets a value to all the variable members of M.
+ * @brief Generates a random decimal value in the range of INT_MIN;INT_MAX
+ * @param L Expects an empty argument list.
  */
-void _tms_set_variable(tms_math_expr *M, double complex value);
+double complex tms_rand(tms_arg_list *L);
 
+/**
+ * @brief Calculates the corresponding value for the provided hexadecimal representation.
+ */
 double complex tms_hex(tms_arg_list *L);
 
+/**
+ * @brief Calculates the corresponding value for the provided octal representation.
+ */
 double complex tms_oct(tms_arg_list *L);
 
+/**
+ * @brief Calculates the corresponding value for the provided binary representation.
+ */
 double complex tms_bin(tms_arg_list *L);
 
 /**
  * @brief Calculates the derivative of a function at a specific point.
- * @details The function expects 2 arguments stored in a string and comma ',' separated.\n
- * The first argument is the function to derivate and the second is the point to calculate the derivative at.\n
- * The derivation is done using the definition of derivative.
- * @param expr The string containing the arguments.
+ * @param L Argument list, expected two arguments.
  * @return The value of the derivative at the specified point.
  */
-double complex tms_derivative(tms_arg_list *args);
+double complex tms_derivative(tms_arg_list *L);
 
 /**
  * @brief Calculates the bounded integral of a function.
- * @details The function expects 3 arguments stored in a string and comma ',' separated.\n
- * Expected arguments: upper_bound, lower_bound, function.\n
- * Numerical integration using Simpson's 3/8 rule.
- * @param expr The arguments string.
- * @return Integration answer, or NaN in case of failure.
+ * @param L Argument list, expected three arguments.
+ * @return integral(lower_bound,upper_bound,expression)
  */
-double complex tms_integrate(tms_arg_list *args);
+double complex tms_integrate(tms_arg_list *L);
 #endif
