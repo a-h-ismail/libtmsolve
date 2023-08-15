@@ -10,9 +10,11 @@ SPDX-License-Identifier: LGPL-2.1-only
  */
 #ifndef LOCAL_BUILD
 #include <tmsolve/parser.h>
+#include <tmsolve/evaluator.h>
 #include <tmsolve/internals.h>
 #else
 #include "parser.h"
+#include "evaluator.h"
 #include "internals.h"
 #endif
 
@@ -42,10 +44,14 @@ double tms_factorial(double value);
 double complex tms_cpow(double complex x, double complex y);
 
 /**
+ * @brief Sets the answer global variable if the provided result is not NaN
+ */
+void tms_set_ans(double complex result);
+
+/**
  * @brief Calculates a mathematical expression and returns the answer.
  * @param expr The string containing the math expression.
  * @param enable_complex Enables complex number calculation, set to false if you don't need complex values.
- * @note This function updates the global variable tms_g_ans if no error occurs.
  * @return The answer of the math expression, or NaN in case of failure.
  */
 double complex tms_solve_e(char *expr, bool enable_complex);
@@ -53,7 +59,6 @@ double complex tms_solve_e(char *expr, bool enable_complex);
 /**
  * @brief Calculates a mathematical expression and returns the answer, automatically handles complex numbers.
  * @param expr The string containing the math expression.
- * @note This function updates the global variable tms_g_ans if no error occurs.
  * @return The answer of the math expression, or NaN in case of failure.
  */
 double complex tms_solve(char *expr);

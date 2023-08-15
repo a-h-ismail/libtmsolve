@@ -15,7 +15,7 @@ double tms_factorial(double value)
     return result;
 }
 
-void _set_ans(double complex result)
+void tms_set_ans(double complex result)
 {
     if (!isnan(creal(result)) && !isnan(cimag(result)))
         tms_g_ans = result;
@@ -90,7 +90,6 @@ double complex tms_solve_e(char *expr, bool enable_complex)
     if (math_struct == NULL)
         return NAN;
     result = tms_evaluate(math_struct);
-    _set_ans(result);
     tms_delete_math_expr(math_struct);
     return result;
 }
@@ -167,14 +166,12 @@ double complex tms_solve(char *expr)
 
         M = tms_parse_expr(expr, false, false);
         result = tms_evaluate(M);
-        _set_ans(result);
         tms_delete_math_expr(M);
         return result;
 
     case 1:
         M = tms_parse_expr(expr, false, false);
         result = tms_evaluate(M);
-        _set_ans(result);
         if (isnan(creal(result)))
         {
             // Edge case of not detecting the 'i' due to adjacency with hex digits
@@ -208,7 +205,6 @@ double complex tms_solve(char *expr)
                 M = tms_parse_expr(expr, false, true);
 
             result = tms_evaluate(M);
-            _set_ans(result);
             tms_delete_math_expr(M);
             return result;
         }
@@ -220,7 +216,6 @@ double complex tms_solve(char *expr)
     case 2:
         M = tms_parse_expr(expr, false, true);
         result = tms_evaluate(M);
-        _set_ans(result);
         tms_delete_math_expr(M);
         return result;
     }
