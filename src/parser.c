@@ -66,9 +66,9 @@ char *tms_r_func_name[] =
 double (*tms_r_func_ptr[])(double) =
     {tms_factorial, fabs, ceil, floor, sqrt, cbrt, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, rd_cos, rd_sin, rd_tan, log, log10};
 // Extended functions, may take more than one parameter (stored in a comma separated string)
-char *tms_ext_func_name[] = {"int", "der", "hex", "oct", "bin", NULL};
+char *tms_ext_func_name[] = {"integrate", "der", "hex", "oct", "bin", "rand", "int", NULL};
 double complex (*tms_ext_func[])(tms_arg_list *) =
-    {tms_integrate, tms_derivative, tms_hex, tms_oct, tms_bin};
+    {tms_integrate, tms_derivative, tms_hex, tms_oct, tms_bin, tms_rand, tms_int};
 
 // Complex functions
 char *tms_cmplx_func_name[] =
@@ -222,6 +222,16 @@ tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)
             // The expression start is the parenthesis, may change if a function is found
             S[s_index].subexpr_start = i;
             S[s_index].solve_end = tms_find_closing_parenthesis(local_expr, i) - 1;
+
+            // Empty parenthesis pair is only allowed for extended functions
+            if (S[s_index].solve_end == i)
+            {
+                tms_error_handler(EH_SAVE, PARENTHESIS_EMPTY, EH_FATAL_ERROR, i);
+                free(S);
+                tms_delete_math_expr(M);
+                return NULL;
+            }
+
             if (S[s_index].solve_end == -2)
             {
                 tms_error_handler(EH_SAVE, PARENTHESIS_NOT_CLOSED, EH_FATAL_ERROR, i);
@@ -370,12 +380,12 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
     return true;
 }
 
-int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operator_index, bool enable_variables)
+int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operator_index, bool enable_vars)
 {
     tms_math_subexpr *S = M->subexpr_ptr;
     int s_count = M->subexpr_count, op_count = S[s_index].op_count;
     int i, status;
-    tms_op_node *node_block;
+    tms_op_node *NB;
     int solve_start = S[s_index].solve_start;
     int solve_end = S[s_index].solve_end;
 
@@ -391,7 +401,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
     else
         S[s_index].nodes = malloc(op_count * sizeof(tms_op_node));
 
-    node_block = S[s_index].nodes;
+    NB = S[s_index].nodes;
 
     // Check if the expression is terminated with an operator
     if (op_count != 0 && operator_index[op_count - 1] == solve_end)
@@ -402,8 +412,8 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
     // Fill operations and index data into each op_node
     for (i = 0; i < op_count; ++i)
     {
-        node_block[i].operator_index = operator_index[i];
-        node_block[i].operator= local_expr[operator_index[i]];
+        NB[i].operator_index = operator_index[i];
+        NB[i].operator= local_expr[operator_index[i]];
     }
 
     // Case of expression with one term, use one op_node with operand1 to hold the number
@@ -413,16 +423,16 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
         S[s_index].nodes[0].var_metadata = 0;
         // Case of nested no operators expressions, set the result of the deeper expression as the left op of the dummy
         if (i != -1)
-            *(S[i].result) = &(node_block->left_operand);
+            *(S[i].result) = &(NB->left_operand);
         else
         {
-            node_block->left_operand = _tms_set_operand_value(local_expr, solve_start, M->enable_complex);
-            if (isnan((double)node_block->left_operand))
+            NB->left_operand = _tms_set_operand_value(local_expr, solve_start, M->enable_complex);
+            if (isnan((double)NB->left_operand))
             {
                 if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
                     return -1;
-                if (enable_variables)
-                    status = tms_set_var_metadata(local_expr + solve_start, node_block, 'l');
+                if (enable_vars)
+                    status = tms_set_var_metadata(local_expr + solve_start, NB, 'l');
                 else
                     status = -1;
 
@@ -435,12 +445,12 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
         }
 
         S[s_index].start_node = 0;
-        S[s_index].result = &(node_block->result);
-        node_block[0].next = NULL;
+        S[s_index].result = &(NB->result);
+        NB[0].next = NULL;
         // If the one term expression is the last one, use the math_struct answer
         if (s_index == s_count - 1)
         {
-            node_block[0].result = &M->answer;
+            NB[0].result = &M->answer;
             return TMS_BREAK;
         }
 
@@ -451,12 +461,12 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
     else
     {
         // Set each op_node's priority data
-        tms_set_priority(node_block, op_count);
+        tms_set_priority(NB, op_count);
 
         for (i = 0; i < op_count; ++i)
         {
-            node_block[i].node_index = i;
-            node_block[i].var_metadata = 0;
+            NB[i].node_index = i;
+            NB[i].var_metadata = 0;
         }
     }
     // Check if the expression is terminated with an operator
@@ -468,65 +478,66 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
     // Set operator type and index for each op_node
     for (i = 0; i < op_count; ++i)
     {
-        node_block[i].operator_index = operator_index[i];
-        node_block[i].operator= local_expr[operator_index[i]];
+        NB[i].operator_index = operator_index[i];
+        NB[i].operator= local_expr[operator_index[i]];
     }
     return 0;
 }
 
-int _tms_set_operands(char *local_expr, tms_math_expr *M, int s_index, bool enable_variables)
+int _tms_set_all_operands(char *local_expr, tms_math_expr *M, int s_index, bool enable_vars)
 {
     tms_math_subexpr *S = M->subexpr_ptr;
     int op_count = S[s_index].op_count;
     int i, status;
-    tms_op_node *node_block = S[s_index].nodes;
+    tms_op_node *NB = S[s_index].nodes;
     int solve_start = S[s_index].solve_start;
 
     // Read the first number
     // Treat +x and -x as 0-x and 0+x
-    if (node_block[0].operator_index == S[s_index].solve_start)
+    if (NB[0].operator_index == S[s_index].solve_start)
     {
-        if (node_block[0].operator== '+' || node_block[0].operator== '-')
-            node_block[0].left_operand = 0;
+        if (NB[0].operator== '+' || NB[0].operator== '-')
+            NB[0].left_operand = 0;
         else
         {
-            tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, node_block[0].operator_index);
+            tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, NB[0].operator_index);
             return -1;
         }
     }
     else
     {
-        status = _tms_set_operand(local_expr, M, node_block, solve_start, s_index, 'l', enable_variables);
+        status = _tms_set_operand(local_expr, M, NB, solve_start, s_index, 'l', enable_vars);
         if (status == -1)
             return -1;
     }
     // Intermediate nodes, read number to the appropriate op_node operand
     for (i = 0; i < op_count - 1; ++i)
     {
-        // Case of reading the number to the right operand of a op_node
-        if (node_block[i].priority >= node_block[i + 1].priority)
+        // x^y+z : y is set in the node containing x (node i) as the right operand
+        // same in case of x-y+z
+        if (NB[i].priority >= NB[i + 1].priority)
         {
-            status = _tms_set_operand(local_expr, M, node_block + i, node_block[i].operator_index + 1, s_index, 'r', enable_variables);
+            status = _tms_set_operand(local_expr, M, NB + i, NB[i].operator_index + 1, s_index, 'r', enable_vars);
             if (status == -1)
                 return -1;
         }
 
-        // Case of the op_node[i] having less priority than the next op_node, use next op_node's left_operand
+        // x+y^z : y is set in the node containing z (node i+1) as the left operand
         else
         {
-            status = _tms_set_operand(local_expr, M, node_block + i + 1, node_block[i].operator_index + 1, s_index, 'l', enable_variables);
+            status = _tms_set_operand(local_expr, M, NB + i + 1, NB[i].operator_index + 1, s_index, 'l', enable_vars);
             if (status == -1)
                 return -1;
         }
     }
-    // Place the last number in the last op_node
-    status = _tms_set_operand(local_expr, M, node_block + op_count - 1, node_block[op_count - 1].operator_index + 1, s_index, 'r', enable_variables);
+    // Set the last operand as the right operand of the last node
+    status = _tms_set_operand(local_expr, M, NB + op_count - 1, NB[op_count - 1].operator_index + 1, s_index, 'r', enable_vars);
     if (status == -1)
         return -1;
     return 0;
 }
 
-int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start, int s_index, char operand, bool enable_variables)
+int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start, int s_index, char operand, bool enable_vars)
 {
     tms_math_subexpr *S = M->subexpr_ptr;
     double complex *operand_ptr;
@@ -552,7 +563,7 @@ int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start,
         if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
             return -1;
         // Checking for the variable 'x'
-        if (enable_variables == true)
+        if (enable_vars == true)
             status = tms_set_var_metadata(expr + op_start, N, operand);
         else
             status = -1;
@@ -576,16 +587,17 @@ bool _tms_set_evaluation_order(tms_math_subexpr *S)
 {
     int op_count = S->op_count;
     int i, j;
-    tms_op_node *node_block = S->nodes;
+    tms_op_node *NB = S->nodes;
+
     // Set the starting op_node by searching the first op_node with the highest priority
     for (i = 3; i > 0; --i)
     {
         for (j = 0; j < op_count; ++j)
         {
-            if (node_block[j].priority == i)
+            if (NB[j].priority == i)
             {
                 S->start_node = j;
-                // Exiting the main loop by setting i outside continue condition
+                // Break from the main loop by setting i outside loop condition
                 i = -1;
                 break;
             }
@@ -598,16 +610,16 @@ bool _tms_set_evaluation_order(tms_math_subexpr *S)
         tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, 0);
         return false;
     }
-    int target_priority = node_block[i].priority;
+    int target_priority = NB[i].priority;
     j = i + 1;
     while (target_priority > 0)
     {
-        // Run through the nodes to find a op_node with the target priority
+        // Run through the nodes to find an op_node with the target priority
         while (j < op_count)
         {
-            if (node_block[j].priority == target_priority)
+            if (NB[j].priority == target_priority)
             {
-                node_block[i].next = node_block + j;
+                NB[i].next = NB + j;
                 // The next run starts from the next node
                 i = j;
             }
@@ -617,18 +629,19 @@ bool _tms_set_evaluation_order(tms_math_subexpr *S)
         j = 0;
     }
     // Set the next pointer of the last op_node to NULL
-    node_block[i].next = NULL;
+    NB[i].next = NULL;
     return true;
 }
 
 void _tms_set_result_pointers(tms_math_expr *M, int s_index)
 {
     tms_math_subexpr *S = M->subexpr_ptr;
-    tms_op_node *tmp_node, *node_block = S[s_index].nodes;
+    tms_op_node *tmp_node, *NB = S[s_index].nodes;
 
     int i, op_count = S[s_index].op_count;
     // Set result pointers for each op_node based on position and priority
-    tmp_node = &(node_block[S[s_index].start_node]);
+    tmp_node = NB + S[s_index].start_node;
+
     int left_node, right_node, prev_index = -2, prev_left = -2, prev_right = -2;
     while (tmp_node->next != NULL)
     {
@@ -636,6 +649,7 @@ void _tms_set_result_pointers(tms_math_expr *M, int s_index)
         // Find the previous and next nodes to compare
         left_node = i - 1, right_node = i + 1;
 
+        // Find the nearest previous node with lower priority
         while (left_node != -1)
         {
             if (left_node == prev_index)
@@ -644,12 +658,13 @@ void _tms_set_result_pointers(tms_math_expr *M, int s_index)
                 left_node = prev_left;
                 break;
             }
-            else if (tmp_node->priority <= node_block[left_node].priority)
+            else if (tmp_node->priority <= NB[left_node].priority)
                 --left_node;
             else
                 break;
         }
 
+        // Find the nearest node with lower or equal priority
         while (right_node < op_count)
         {
             if (right_node == prev_index)
@@ -658,7 +673,7 @@ void _tms_set_result_pointers(tms_math_expr *M, int s_index)
                 right_node = prev_right;
                 break;
             }
-            else if (tmp_node->priority < node_block[right_node].priority)
+            else if (tmp_node->priority < NB[right_node].priority)
                 ++right_node;
             else
                 break;
@@ -666,20 +681,21 @@ void _tms_set_result_pointers(tms_math_expr *M, int s_index)
 
         // Case of the first op_node or a op_node with no left candidate
         if (left_node == -1)
-            tmp_node->result = &(node_block[right_node].left_operand);
+            tmp_node->result = &(NB[right_node].left_operand);
+        // Case of no right candidate
         else if (right_node == op_count)
-            tmp_node->result = &(node_block[left_node].right_operand);
-        // Case of a op_node between 2 nodes
+            tmp_node->result = &(NB[left_node].right_operand);
+        // Case of an op_node between 2 nodes
         else if (left_node > -1 && right_node < op_count)
         {
-            if (node_block[left_node].priority >= node_block[right_node].priority)
-                tmp_node->result = &(node_block[left_node].right_operand);
+            if (NB[left_node].priority >= NB[right_node].priority)
+                tmp_node->result = &(NB[left_node].right_operand);
             else
-                tmp_node->result = &(node_block[right_node].left_operand);
+                tmp_node->result = &(NB[right_node].left_operand);
         }
         // Case of the last op_node
         else if (i == op_count - 1)
-            tmp_node->result = &(node_block[left_node].right_operand);
+            tmp_node->result = &(NB[left_node].right_operand);
         tmp_node = tmp_node->next;
 
         prev_index = i;
@@ -693,7 +709,7 @@ void _tms_set_result_pointers(tms_math_expr *M, int s_index)
         tmp_node->result = &M->answer;
 }
 
-tms_math_expr *tms_parse_expr(char *expr, bool enable_variables, bool enable_complex)
+tms_math_expr *tms_parse_expr(char *expr, bool enable_vars, bool enable_complex)
 {
     int i;
     // Number of subexpressions
@@ -762,7 +778,7 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_variables, bool enable_com
             return NULL;
         }
 
-        status = _tms_init_nodes(local_expr, M, s_index, operator_index, enable_variables);
+        status = _tms_init_nodes(local_expr, M, s_index, operator_index, enable_vars);
         free(operator_index);
 
         // Exiting due to error
@@ -776,7 +792,7 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_variables, bool enable_com
         else if (status == TMS_BREAK)
             break;
 
-        status = _tms_set_operands(local_expr, M, s_index, enable_variables);
+        status = _tms_set_all_operands(local_expr, M, s_index, enable_vars);
         if (status == -1)
         {
             tms_delete_math_expr(M);
@@ -793,7 +809,7 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_variables, bool enable_com
     }
 
     // Set variables metadata
-    if (enable_variables)
+    if (enable_vars)
         _tms_set_var_data(M);
 
     // Detect assignment operator (local_expr offset from expr)
@@ -893,146 +909,6 @@ void tms_convert_real_to_complex(tms_math_expr *M)
         }
     }
     M->enable_complex = true;
-}
-
-double complex tms_evaluate(tms_math_expr *M)
-{
-    // No NULL pointer dereference allowed.
-    if (M == NULL)
-        return NAN;
-
-    tms_op_node *i_node;
-    int s_index = 0, s_count = M->subexpr_count;
-    // Subexpression pointer to access the subexpression array.
-    tms_math_subexpr *S = M->subexpr_ptr;
-    while (s_index < s_count)
-    {
-        // Extended functions have no nodes
-        if (S[s_index].nodes == NULL)
-        {
-
-            if (S[s_index].exec_extf)
-            {
-                char *arg_str;
-                // Backup the current global expression to let the extended function change it freely for its error reporting
-                char *backup = _tms_g_expr;
-                tms_arg_list *L;
-
-                int length = S[s_index].solve_end - S[s_index].solve_start + 1;
-                // Copy args from the expression to a separate array.
-                arg_str = malloc((length + 1) * sizeof(char));
-                strncpy(arg_str, _tms_g_expr + S[s_index].solve_start, length);
-                arg_str[length] = '\0';
-
-                L = tms_get_args(arg_str);
-                // Calling the extended function
-                **(S[s_index].result) = (*(S[s_index].func.extended))(L);
-
-                _tms_g_expr = backup;
-
-                if (isnan((double)**(S[s_index].result)))
-                {
-                    tms_error_handler(EH_SAVE, EXTF_FAILURE, EH_FATAL_ERROR, S[s_index].subexpr_start);
-                    free(arg_str);
-                    tms_free_arg_list(L);
-                    return NAN;
-                }
-                S[s_index].exec_extf = false;
-                free(arg_str);
-                tms_free_arg_list(L);
-            }
-            ++s_index;
-
-            continue;
-        }
-        i_node = S[s_index].nodes + S[s_index].start_node;
-
-        if (S[s_index].op_count == 0)
-            *(i_node->result) = i_node->left_operand;
-        else
-            while (i_node != NULL)
-            {
-                if (i_node->result == NULL)
-                {
-                    tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, -1);
-                    return NAN;
-                }
-                switch (i_node->operator)
-                {
-                case '+':
-                    *(i_node->result) = i_node->left_operand + i_node->right_operand;
-                    break;
-
-                case '-':
-                    *(i_node->result) = i_node->left_operand - i_node->right_operand;
-                    break;
-
-                case '*':
-                    *(i_node->result) = i_node->left_operand * i_node->right_operand;
-                    break;
-
-                case '/':
-                    if (i_node->right_operand == 0)
-                    {
-                        tms_error_handler(EH_SAVE, DIVISION_BY_ZERO, EH_FATAL_ERROR, i_node->operator_index);
-                        return NAN;
-                    }
-                    *(i_node->result) = i_node->left_operand / i_node->right_operand;
-                    break;
-
-                case '%':
-                    if (i_node->right_operand == 0)
-                    {
-                        tms_error_handler(EH_SAVE, MODULO_ZERO, EH_FATAL_ERROR, i_node->operator_index);
-                        return NAN;
-                    }
-                    *(i_node->result) = fmod(i_node->left_operand, i_node->right_operand);
-                    break;
-
-                case '^':
-                    // Use non complex power function if complex is disabled or no imaginary part is found
-                    if (!M->enable_complex)
-                    {
-                        *(i_node->result) = pow(i_node->left_operand, i_node->right_operand);
-                        if (isnan(creal(*(i_node->result))))
-                        {
-                            tms_error_handler(EH_SAVE, MATH_ERROR, EH_NONFATAL_ERROR, i_node->operator_index);
-                            return NAN;
-                        }
-                    }
-                    else
-                        *(i_node->result) = tms_cpow(i_node->left_operand, i_node->right_operand);
-                    break;
-                }
-                i_node = i_node->next;
-            }
-
-        // Executing function on the subexpression result
-        switch (S[s_index].func_type)
-        {
-        case 1:
-            **(S[s_index].result) = (*(S[s_index].func.real))(**(S[s_index].result));
-            break;
-        case 2:
-            **(S[s_index].result) = (*(S[s_index].func.cmplx))(**(S[s_index].result));
-            break;
-        }
-
-        if (isnan((double)**(S[s_index].result)))
-        {
-            tms_error_handler(EH_SAVE, MATH_ERROR, EH_NONFATAL_ERROR, S[s_index].solve_start, -1);
-            return NAN;
-        }
-        ++s_index;
-    }
-
-    if (M->runvar_i != -1)
-        tms_g_vars[M->runvar_i].value = M->answer;
-
-    if (_tms_debug)
-        tms_dump_expr(M, true);
-
-    return M->answer;
 }
 
 int tms_set_var_metadata(char *expr, tms_op_node *x_node, char operand)
@@ -1154,125 +1030,4 @@ int tms_find_subexpr_ending_at(tms_math_subexpr *S, int end, int s_index, int s_
             --i;
     }
     return -1;
-}
-
-bool _print_operand_source(tms_math_subexpr *S, double complex *operand_ptr, int s_index, bool was_evaluated)
-{
-    int n;
-    while (s_index != -1)
-    {
-        for (n = 0; n < S[s_index].op_count; ++n)
-        {
-            if (operand_ptr == S[s_index].nodes[n].result)
-            {
-                printf("[S%d;N%d]", s_index, n);
-                if (was_evaluated)
-                {
-                    printf(" = ");
-                    tms_print_value(*operand_ptr);
-                }
-                return true;
-            }
-        }
-        if (operand_ptr == *(S[s_index].result))
-        {
-            printf("[S:%d]", s_index);
-            return true;
-        }
-        --s_index;
-    }
-    return false;
-}
-
-void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
-{
-    int s_index = 0;
-    int s_count = M->subexpr_count;
-    tms_math_subexpr *S = M->subexpr_ptr;
-    char *tmp = NULL;
-    tms_op_node *tmp_node;
-    puts("Dumping expression data:\n");
-    while (s_index < s_count)
-    {
-        // Find the name of the function to execute
-        if (S[s_index].func_type != 0)
-            tmp = _tms_lookup_function_name(S[s_index].func.real, S[s_index].func_type);
-        else
-            tmp = NULL;
-
-        printf("subexpr %d:\n ftype = %u, fname = %s, depth = %d\n",
-               s_index, S[s_index].func_type, tmp, S[s_index].depth);
-        // Lookup result pointer location
-        for (int i = 0; i < s_count; ++i)
-        {
-            for (int j = 0; j < S[i].op_count; ++j)
-            {
-                if (S[i].nodes[j].result == *(S[s_index].result))
-                {
-                    printf("result at subexpr %d, node %d\n\n", i, j);
-                    break;
-                }
-            }
-            // Case of a no op expression
-            if (S[i].op_count == 0 && S[i].nodes != NULL && S[i].nodes[0].result == *(S[s_index].result))
-                printf("result at subexpr %d, node 0\n\n", i);
-        }
-        tmp_node = S[s_index].nodes + S[s_index].start_node;
-
-        // Dump nodes data
-        while (tmp_node != NULL)
-        {
-            printf("[%d]: ", tmp_node->node_index);
-            printf("( ");
-
-            if (_print_operand_source(S, &(tmp_node->left_operand), s_index, was_evaluated) == false)
-                tms_print_value(tmp_node->left_operand);
-
-            printf(" )");
-            // No one wants to see uninitialized values (skip for nodes used to hold one number)
-            if (S[s_index].op_count != 0)
-            {
-                printf(" %c ", tmp_node->operator);
-                printf("( ");
-
-                if (_print_operand_source(S, &(tmp_node->right_operand), s_index, was_evaluated) == false)
-                    tms_print_value(tmp_node->right_operand);
-
-                printf(" )");
-            }
-
-            if (tmp_node->next != NULL)
-            {
-                int i;
-                char left_or_right = '\0';
-                for (i = 0; i < S[s_index].op_count; ++i)
-                {
-                    if (&(S[s_index].nodes[i].right_operand) == tmp_node->result)
-                    {
-                        left_or_right = 'R';
-                        break;
-                    }
-                    else if (&(S[s_index].nodes[i].left_operand) == tmp_node->result)
-                    {
-                        left_or_right = 'L';
-                        break;
-                    }
-
-                    if (S[s_index].op_count == 0 && &(S[s_index].nodes->right_operand) == tmp_node->result)
-                    {
-                        i = 0;
-                        left_or_right = 'R';
-                    }
-                }
-
-                printf(" a: %d%c --> ", i, left_or_right);
-            }
-            else
-                printf(" --> ");
-            printf("\n");
-            tmp_node = tmp_node->next;
-        }
-        ++s_index;
-        puts("end\n");
-    }
 }
