@@ -690,13 +690,6 @@ bool tms_parenthesis_check(char *expr)
     while (open != -1)
     {
         close = tms_find_closing_parenthesis(expr, open);
-        if (close - open == 1)
-        {
-            tms_error_handler(EH_SAVE, PARENTHESIS_EMPTY, EH_FATAL_ERROR, open);
-            free(open_position);
-            free(close_position);
-            return false;
-        }
         if (close == -1)
         {
             tms_error_handler(EH_SAVE, PARENTHESIS_NOT_CLOSED, EH_FATAL_ERROR, open);
@@ -786,6 +779,12 @@ tms_arg_list *tms_get_args(char *string)
     int length = strlen(string), max_args = 10;
     // The start/end of each argument.
     int start, end;
+
+    if (length == 0)
+    {
+        A->arguments = NULL;
+        return A;
+    }
 
     A->arguments = malloc(max_args * sizeof(char *));
     for (end = start = 0; end < length; ++end)
