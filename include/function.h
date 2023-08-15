@@ -23,6 +23,12 @@ SPDX-License-Identifier: LGPL-2.1-only
 double complex tms_int(tms_arg_list *L);
 
 /**
+ * @brief Generates a random integer value in the range of INT_MIN;INT_MAX
+ * @param L Expects an empty argument list.
+ */
+double complex tms_randint(tms_arg_list *args);
+
+/**
  * @brief Generates a random decimal value in the range of INT_MIN;INT_MAX
  * @param L Expects an empty argument list.
  */

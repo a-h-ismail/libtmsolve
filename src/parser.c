@@ -66,9 +66,9 @@ char *tms_r_func_name[] =
 double (*tms_r_func_ptr[])(double) =
     {tms_factorial, fabs, ceil, floor, sqrt, cbrt, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, rd_cos, rd_sin, rd_tan, log, log10};
 // Extended functions, may take more than one parameter (stored in a comma separated string)
-char *tms_ext_func_name[] = {"integrate", "der", "hex", "oct", "bin", "rand", "int", NULL};
+char *tms_ext_func_name[] = {"integrate", "der", "hex", "oct", "bin", "rand", "randint", "int", NULL};
 double complex (*tms_ext_func[])(tms_arg_list *) =
-    {tms_integrate, tms_derivative, tms_hex, tms_oct, tms_bin, tms_rand, tms_int};
+    {tms_integrate, tms_derivative, tms_hex, tms_oct, tms_bin, tms_rand, tms_randint, tms_int};
 
 // Complex functions
 char *tms_cmplx_func_name[] =

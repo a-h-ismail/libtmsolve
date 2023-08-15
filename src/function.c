@@ -45,6 +45,14 @@ double complex tms_int(tms_arg_list *args)
     return real + I * imag;
 }
 
+double complex tms_randint(tms_arg_list *args)
+{
+    if (_validate_args_count(0, args->count) == false)
+        return NAN;
+
+    return (double)rand() * pow(-1, rand() & 1);
+}
+
 double complex tms_rand(tms_arg_list *args)
 {
     if (_validate_args_count(0, args->count) == false)
@@ -54,7 +62,7 @@ double complex tms_rand(tms_arg_list *args)
     // Generate a decimal part
     tmp /= pow(10, ceil(log10(tmp)));
 
-    return ((double)rand() + tmp) * pow(-1, rand());
+    return ((double)rand() + tmp) * pow(-1, rand() & 1);
 }
 
 double complex tms_base_n(tms_arg_list *args, int8_t base)
