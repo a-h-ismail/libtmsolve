@@ -78,12 +78,6 @@ double complex (*tms_cmplx_func_ptr[])(double complex) =
 
 int _tms_set_runtime_var(char *expr, int i)
 {
-    int j;
-    // Used to store the index of the variable to assign the answer to.
-    int variable_index = -1;
-
-    // Search for assignment operator, to enable user defined variables
-
     if (i == 0)
     {
         tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, 0);
@@ -91,6 +85,7 @@ int _tms_set_runtime_var(char *expr, int i)
     }
     else
     {
+        int j;
         // Check if another assignment operator is used
         j = tms_f_search(expr, "=", i + 1, false);
         _tms_g_expr = expr;
@@ -99,61 +94,12 @@ int _tms_set_runtime_var(char *expr, int i)
             tms_error_handler(EH_SAVE, MULTIPLE_ASSIGNMENT_ERROR, EH_FATAL_ERROR, j);
             return -1;
         }
-        // Store the variable name in this array
-        char tmp[i + 1];
-        strncpy(tmp, expr, i);
-        tmp[i] = '\0';
 
-        // Check if the name is allowed
-        for (i = 0; i < tms_g_illegal_names_count; ++i)
-        {
-            if (strcmp(tmp, tms_g_illegal_names[i]) == 0)
-            {
-                tms_error_handler(EH_SAVE, ILLEGAL_VARIABLE_NAME, EH_FATAL_ERROR, -1);
-                return -1;
-            }
-        }
-
-        // Check if the name has illegal characters
-        if (tms_valid_name(tmp) == false)
-        {
-            tms_error_handler(EH_SAVE, INVALID_VARIABLE_NAME, EH_FATAL_ERROR, -1);
-            return -1;
-        }
-
-        // Check if the variable already exists
-        for (j = 0; j < tms_g_var_count; ++j)
-        {
-            if (strcmp(tms_g_vars[j].name, tmp) == 0)
-            {
-                if (tms_g_vars[j].is_constant)
-                {
-                    tms_error_handler(EH_SAVE, OVERWRITE_CONST_VARIABLE, EH_FATAL_ERROR, -1);
-                    return -1;
-                }
-                variable_index = j;
-                break;
-            }
-        }
-
-        // Create a new variable
-        if (j == tms_g_var_count)
-        {
-            // Dynamically expand size if required
-            if (tms_g_var_count == tms_g_var_max)
-            {
-                tms_g_var_max *= 2;
-                tms_g_vars = realloc(tms_g_vars, tms_g_var_max * sizeof(tms_var));
-            }
-            tms_g_vars[tms_g_var_count].name = malloc((strlen(tmp) + 1) * sizeof(char));
-            // Initialize the new variable to zero
-            tms_g_vars[tms_g_var_count].value = 0;
-            tms_g_vars[tms_g_var_count].is_constant = false;
-            strcpy(tms_g_vars[tms_g_var_count].name, tmp);
-            variable_index = tms_g_var_count++;
-        }
+        char name[i + 1];
+        strncpy(name, expr, i);
+        name[i] = '\0';
+        return tms_new_var(name, false);
     }
-    return variable_index;
 }
 
 tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)

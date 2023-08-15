@@ -87,6 +87,60 @@ void tmsolve_init()
     }
 }
 
+int tms_new_var(char *name, bool is_constant)
+{
+    int i;
+    // Check if the name is allowed
+    for (i = 0; i < tms_g_illegal_names_count; ++i)
+    {
+        if (strcmp(name, tms_g_illegal_names[i]) == 0)
+        {
+            tms_error_handler(EH_SAVE, ILLEGAL_VARIABLE_NAME, EH_FATAL_ERROR, -1);
+            return -1;
+        }
+    }
+
+    // Check if the name has illegal characters
+    if (tms_valid_name(name) == false)
+    {
+        tms_error_handler(EH_SAVE, INVALID_VARIABLE_NAME, EH_FATAL_ERROR, -1);
+        return -1;
+    }
+
+    // Check if the variable already exists
+    for (i = 0; i < tms_g_var_count; ++i)
+    {
+        if (strcmp(tms_g_vars[i].name, name) == 0)
+        {
+            if (tms_g_vars[i].is_constant)
+            {
+                tms_error_handler(EH_SAVE, OVERWRITE_CONST_VARIABLE, EH_FATAL_ERROR, -1);
+                return -1;
+            }
+            return i;
+        }
+    }
+
+    // Create a new variable
+    if (i == tms_g_var_count)
+    {
+        // Dynamically expand size if required
+        if (tms_g_var_count == tms_g_var_max)
+        {
+            tms_g_var_max *= 2;
+            tms_g_vars = realloc(tms_g_vars, tms_g_var_max * sizeof(tms_var));
+        }
+        tms_g_vars[tms_g_var_count].name = malloc((strlen(name) + 1) * sizeof(char));
+        // Initialize the new variable to zero
+        tms_g_vars[tms_g_var_count].value = 0;
+        tms_g_vars[tms_g_var_count].is_constant = is_constant;
+        strcpy(tms_g_vars[tms_g_var_count].name, name);
+        ++tms_g_var_count;
+        return i;
+    }
+    return -1;
+}
+
 int tms_error_handler(int _mode, ...)
 {
     static int last_error = 0, fatal = 0, non_fatal = 0, backup_error_count = 0, backup_fatal, backup_non_fatal;
