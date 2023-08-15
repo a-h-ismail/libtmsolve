@@ -4,6 +4,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "internals.h"
 #include "scientific.h"
+#include <time.h>
 
 char *_tms_g_expr = NULL;
 double complex tms_g_ans = 0;
@@ -25,6 +26,8 @@ void tmsolve_init()
     int i;
     if (_tms_do_init == true)
     {
+        // Seed the random number generator
+        srand(time(NULL));
         // Initialize variable names and values arrays
         tms_g_vars = malloc(tms_g_var_max * sizeof(tms_var));
         tms_g_var_count = array_length(tms_g_builtin_vars);
