@@ -111,6 +111,14 @@ typedef struct tms_error_data
 void tmsolve_init() __attribute__((constructor));
 
 /**
+ * @brief Creates a new variable if it doesn't exist
+ * @param name Name of the variable
+ * @param is_constant Sets the constant bit to protect the variable from being changed by the evaluator
+ * @return The index of the variable in the all vars array (whether it already exists or is newly created)
+ */
+int tms_new_var(char *name, bool is_constant);
+
+/**
  * @brief Error handling function, collects and manages errors.
  * @param _mode The mode of error handler.
  * @param arg The list of argumets to pass to the error handler, according to the mode.
