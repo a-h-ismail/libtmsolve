@@ -42,6 +42,11 @@ void tms_delete_matrix(tms_matrix *matrix);
 tms_matrix *tms_remove_matrix_row_col(tms_matrix *matrix, int row, int col);
 
 /**
+ * @brief Rounds a matrix to the identity matrix if it is close enough
+ */
+void tms_round_to_identity_matrix(tms_matrix *M);
+
+/**
  * @brief Multiplies matrixes A and B.
  * @return A new matrix, answer of A*B.
  */
