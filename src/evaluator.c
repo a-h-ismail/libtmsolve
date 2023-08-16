@@ -138,7 +138,7 @@ double complex tms_evaluate(tms_math_expr *M)
         ++s_index;
     }
 
-    if (M->runvar_i != -1)
+    if (M->runvar_i != -1 && !tms_g_vars[M->runvar_i].is_constant)
         tms_g_vars[M->runvar_i].value = M->answer;
 
     if (_tms_debug)
