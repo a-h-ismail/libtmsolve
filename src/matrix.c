@@ -44,6 +44,32 @@ tms_matrix *tms_remove_matrix_row_col(tms_matrix *matrix, int row, int col)
     }
     return derived_matrix;
 }
+
+void tms_round_to_identity_matrix(tms_matrix *M)
+{
+    int row, column;
+    // Detect the all ones diagonal
+    for (row = 0; row < M->rows; ++row)
+    {
+        column = row;
+        if (fabs(1 - round(M->data[row][column])) < 1e-14)
+            M->data[row][column] = 1;
+        else
+            return;
+    }
+
+    for (row = 0; row < M->rows; ++row)
+        for (column = 0; column < M->columns; ++column)
+        {
+            if (row == column)
+                continue;
+            else if (fabs(M->data[row][column]) < 1e-14)
+                M->data[row][column] = 0;
+            else
+                return;
+        }
+}
+
 // Multiply matrixes A and B and return a pointer to the resulting matrix, returns NULL in case of error
 tms_matrix *tms_matrix_multiply(tms_matrix *A, tms_matrix *B)
 {
@@ -64,6 +90,9 @@ tms_matrix *tms_matrix_multiply(tms_matrix *A, tms_matrix *B)
             for (k = 0; k < B->rows; ++k)
                 result->data[i][j] += A->data[i][k] * B->data[k][j];
         }
+
+    // Remove minor precision loss when multiplying the matrix and its inverse
+    tms_round_to_identity_matrix(result);
     return result;
 }
 
