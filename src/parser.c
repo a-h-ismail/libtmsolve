@@ -62,9 +62,9 @@ double rd_tan(double __x)
 }
 
 char *tms_r_func_name[] =
-    {"fact", "abs", "ceil", "floor", "round", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log", NULL};
+    {"fact", "abs", "ceil", "floor", "round", "sign", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log", NULL};
 double (*tms_r_func_ptr[])(double) =
-    {tms_factorial, fabs, ceil, floor, round, sqrt, cbrt, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, rd_cos, rd_sin, rd_tan, log, log10};
+    {tms_factorial, fabs, ceil, floor, round, tms_sign, sqrt, cbrt, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, rd_cos, rd_sin, rd_tan, log, log10};
 // Extended functions, may take more than one parameter (stored in a comma separated string)
 char *tms_ext_func_name[] = {"integrate", "der", "hex", "oct", "bin", "rand", "randint", "int", NULL};
 double complex (*tms_ext_func[])(tms_arg_list *) =

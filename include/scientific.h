@@ -44,6 +44,12 @@ double tms_factorial(double value);
 double complex tms_cpow(double complex x, double complex y);
 
 /**
+ * @brief Sign function
+ * @return 1 for positive, -1 for negative, 0 otherwise.
+ */
+double tms_sign(double value);
+
+/**
  * @brief Sets the answer global variable if the provided result is not NaN
  */
 void tms_set_ans(double complex result);

@@ -29,6 +29,16 @@ bool tms_is_integer(double value)
         return false;
 }
 
+double tms_sign(double value)
+{
+    if (value == 0)
+        return 0;
+    else if (value > 0)
+        return 1;
+    else
+        return -1;
+}
+
 double complex tms_neglect_real_cmplx(double complex x)
 {
     double magnitude = creal(x) / cimag(x);
