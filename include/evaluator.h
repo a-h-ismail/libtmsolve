@@ -22,16 +22,16 @@ SPDX-License-Identifier: LGPL-2.1-only
 double complex tms_evaluate(tms_math_expr *M);
 
 /**
- * @brief Generates a heap allocated array of structure containing all variable members metadata and stores it in M.
+ * @brief Generates a heap allocated array of structure containing all unknown members metadata and stores it in M.
  * @param M The math_expr used to generate and store the metadata.
- * @remark You won't need to call this manually, the parser will call it if variables are enabled.
+ * @remark You won't need to call this manually, the parser will call it if unknowns are enabled.
  */
-void _tms_set_var_data(tms_math_expr *M);
+void _tms_set_unknowns_data(tms_math_expr *M);
 
 /**
- * @brief Sets a value to all the variable members of M.
+ * @brief Sets a value to all the unknown members of M.
  */
-void _tms_set_variable(tms_math_expr *M, double complex value);
+void tms_set_unknown(tms_math_expr *M, double complex value);
 
 /// @brief Dumps the data of the math expression M.
 /// @details The dumped data includes: \n

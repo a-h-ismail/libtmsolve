@@ -89,7 +89,6 @@ double complex _tms_set_operand_value(char *expr, int start, bool enable_complex
         {
             if (tms_match_word(expr, start, tms_g_vars[i].name, true))
             {
-
                 value = tms_g_vars[i].value;
                 break;
             }

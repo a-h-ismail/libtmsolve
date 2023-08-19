@@ -131,10 +131,10 @@ double complex tms_derivative(tms_arg_list *L)
     epsilon = x * epsilon;
 
     // Solve for x
-    _tms_set_variable(M, x - epsilon);
+    tms_set_unknown(M, x - epsilon);
     fx1 = tms_evaluate(M);
     // Solve for x + epsilon
-    _tms_set_variable(M, x + epsilon);
+    tms_set_unknown(M, x + epsilon);
     fx2 = tms_evaluate(M);
     // get the derivative
     f_prime = (fx2 - fx1) / (2 * epsilon);
@@ -181,9 +181,9 @@ double complex tms_integrate(tms_arg_list *L)
     // Simpson 3/8 formula:
     // 3h/8[(y0 + yn) + 3(y1 + y2 + y4 + y5 + … + yn-1) + 2(y3 + y6 + y9 + … + yn-3)]
     // First step: y0 + yn
-    _tms_set_variable(M, lower_bound);
+    tms_set_unknown(M, lower_bound);
     result = tms_evaluate(M);
-    _tms_set_variable(M, lower_bound + delta);
+    tms_set_unknown(M, lower_bound + delta);
     result += tms_evaluate(M);
     if (isnan(result) == true)
     {
@@ -201,7 +201,7 @@ double complex tms_integrate(tms_arg_list *L)
         if (i == 3)
         {
             an = lower_bound + delta * n / rounds;
-            _tms_set_variable(M, an);
+            tms_set_unknown(M, an);
             fn = tms_evaluate(M);
             if (isnan(fn) == true)
             {
@@ -215,7 +215,7 @@ double complex tms_integrate(tms_arg_list *L)
         else
         {
             an = lower_bound + delta * n / rounds;
-            _tms_set_variable(M, an);
+            tms_set_unknown(M, an);
             fn = tms_evaluate(M);
             if (isnan(fn) == true)
             {

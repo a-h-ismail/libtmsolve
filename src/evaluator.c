@@ -161,10 +161,10 @@ double complex tms_evaluate(tms_math_expr *M)
     return M->answer;
 }
 
-void _tms_set_var_data(tms_math_expr *M)
+void _tms_set_unknowns_data(tms_math_expr *M)
 {
     int i = 0, s_index, buffer_size = 16;
-    tms_var_operand *vars = malloc(buffer_size * sizeof(tms_var_operand));
+    tms_unknown_operand *vars = malloc(buffer_size * sizeof(tms_unknown_operand));
     tms_math_subexpr *subexpr_ptr = M->subexpr_ptr;
     tms_op_node *i_node;
 
@@ -176,26 +176,26 @@ void _tms_set_var_data(tms_math_expr *M)
             if (i == buffer_size)
             {
                 buffer_size *= 2;
-                vars = realloc(vars, buffer_size * sizeof(tms_var_operand));
+                vars = realloc(vars, buffer_size * sizeof(tms_unknown_operand));
             }
-            // Case of variable left operand
-            if (i_node->var_metadata & 0b1)
+            // Case of unknown left operand
+            if (i_node->unknowns_data & 0b1)
             {
-                if (i_node->var_metadata & 0b100)
+                if (i_node->unknowns_data & 0b100)
                     vars[i].is_negative = true;
                 else
                     vars[i].is_negative = false;
-                vars[i].var_ptr = &(i_node->left_operand);
+                vars[i].unknown_ptr = &(i_node->left_operand);
                 ++i;
             }
-            // Case of a variable right operand
-            if (i_node->var_metadata & 0b10)
+            // Case of a unknown right operand
+            if (i_node->unknowns_data & 0b10)
             {
-                if (i_node->var_metadata & 0b1000)
+                if (i_node->unknowns_data & 0b1000)
                     vars[i].is_negative = true;
                 else
                     vars[i].is_negative = false;
-                vars[i].var_ptr = &(i_node->right_operand);
+                vars[i].unknown_ptr = &(i_node->right_operand);
                 ++i;
             }
             i_node = i_node->next;
@@ -203,24 +203,23 @@ void _tms_set_var_data(tms_math_expr *M)
     }
     if (i != 0)
     {
-        vars = realloc(vars, i * sizeof(tms_var_operand));
-        M->var_count = i;
-        M->var_data = vars;
+        vars = realloc(vars, i * sizeof(tms_unknown_operand));
+        M->unknown_count = i;
+        M->x_data = vars;
     }
     else
         free(vars);
 }
 
-// Function that sets all variables pointed to in the array with "value"
-void _tms_set_variable(tms_math_expr *M, double complex value)
+void tms_set_unknown(tms_math_expr *M, double complex value)
 {
     int i;
-    for (i = 0; i < M->var_count; ++i)
+    for (i = 0; i < M->unknown_count; ++i)
     {
-        if (M->var_data[i].is_negative)
-            *(M->var_data[i].var_ptr) = -value;
+        if (M->x_data[i].is_negative)
+            *(M->x_data[i].unknown_ptr) = -value;
         else
-            *(M->var_data[i].var_ptr) = value;
+            *(M->x_data[i].unknown_ptr) = value;
     }
 }
 
