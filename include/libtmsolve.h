@@ -11,6 +11,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 #ifndef LOCAL_BUILD
 #include <tmsolve/scientific.h>
+#include <tmsolve/tms_complex.h>
 #include <tmsolve/string_tools.h>
 #include <tmsolve/parser.h>
 #include <tmsolve/evaluator.h>
@@ -21,6 +22,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <tmsolve/version.h>
 #else
 #include "scientific.h"
+#include "tms_complex.h"
 #include "string_tools.h"
 #include "parser.h"
 #include "evaluator.h"
