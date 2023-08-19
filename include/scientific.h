@@ -8,15 +8,10 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @file
  * @brief Declares all scientific related macros, structures, globals and functions.
  */
-#ifndef LOCAL_BUILD
-#include <tmsolve/parser.h>
-#include <tmsolve/evaluator.h>
-#include <tmsolve/internals.h>
-#else
-#include "parser.h"
-#include "evaluator.h"
-#include "internals.h"
-#endif
+
+#include <complex.h>
+#include <stdbool.h>
+#include <inttypes.h>
 
 /// Holds the data of a factor, for use with factorization related features.
 typedef struct tms_int_factor

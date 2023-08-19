@@ -10,14 +10,8 @@ SPDX-License-Identifier: LGPL-2.1-only
  */
 #ifndef LOCAL_BUILD
 #include <tmsolve/parser.h>
-#include <tmsolve/string_tools.h>
-#include <tmsolve/internals.h>
-#include <tmsolve/scientific.h>
 #else
 #include "parser.h"
-#include "string_tools.h"
-#include "internals.h"
-#include "scientific.h"
 #endif
 
 /**

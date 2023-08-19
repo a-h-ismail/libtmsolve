@@ -2,19 +2,22 @@
 Copyright (C) 2022-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#ifndef LOCAL_BUILD
-#include <tmsolve/internals.h>
-#else
-#include "internals.h"
-#endif
-#include <ctype.h>
 /**
  * @file
  * @brief Declares all string handling related macros, structures, globals and functions.
  */
 
+#ifndef LOCAL_BUILD
+#include <tmsolve/parser.h>
+#else
+#include "parser.h"
+#endif
+#include <stdbool.h>
+#include <complex.h>
+#include <inttypes.h>
+
 /**
- * @brief Finds the closing parenthesis that corresponds to an open parenthesis. 
+ * @brief Finds the closing parenthesis that corresponds to an open parenthesis.
  * @param expr The string to search.
  * @param i The index of the open parenthesis.
  * @return The index of the closing parenthesis, or -1 if an error occured.
@@ -144,7 +147,7 @@ int tms_find_add_subtract(char *expr, int i);
 bool tms_parenthesis_check(char *expr);
 
 /// @brief Prints a value to standard output in a clean way.
-/// @param value 
+/// @param value
 void tms_print_value(double complex value);
 
 /// @brief Checks the syntax of the expression, runs tms_parenthesis_check implicitly.
@@ -170,12 +173,12 @@ int tms_compare_priority(char operator1, char operator2);
  * @param string The string containing the arguments.
  * @return A structure containing the arguments stored in separate strings.
  */
-tms_arg_list* tms_get_args(char *string);
+tms_arg_list *tms_get_args(char *string);
 
 /**
  * @brief Ensures the expression is not empty, checks syntax and merges extra +/- signs.
  * @return true if the checks pass, false otherwise.
-*/
+ */
 bool tms_pre_parse_routine(char *expr);
 
 /**
@@ -189,7 +192,7 @@ bool tms_legal_char_in_name(char c);
  * @param i Index in the string (may be the start or end of the keyword)
  * @param keyword Pointer to the keyword.
  * @param match_from_start true if i is at the start of the keyword, false if at the end.
- * @return 
+ * @return
  */
 bool tms_match_word(char *str, int i, char *keyword, bool match_from_start);
 

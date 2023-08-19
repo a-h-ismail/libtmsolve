@@ -15,6 +15,8 @@ SPDX-License-Identifier: LGPL-2.1-only
 #else
 #include "internals.h"
 #endif
+#include <stdbool.h>
+#include <inttypes.h>
 
 // Global variables
 

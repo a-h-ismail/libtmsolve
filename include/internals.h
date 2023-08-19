@@ -9,14 +9,9 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @brief Declares general purpose functions and globals used in the calculator. Includes all required standard library headers.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <complex.h>
 #include <stdbool.h>
 #include <stdarg.h>
-#include <inttypes.h>
-#include <math.h>
-#include <complex.h>
-#include <string.h>
 #ifndef LOCAL_BUILD
 #include <tmsolve/m_errors.h>
 #else

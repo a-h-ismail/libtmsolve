@@ -2,11 +2,7 @@
 Copyright (C) 2022-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#ifndef LOCAL_BUILD
-#include <tmsolve/internals.h>
-#else
-#include "internals.h"
-#endif
+
 /**
  * @file
  * @brief Declares all matrix related macros, structures, globals and functions.
