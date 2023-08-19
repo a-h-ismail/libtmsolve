@@ -51,6 +51,17 @@ double complex tms_solve_e(char *expr, bool enable_complex);
  */
 double complex tms_solve(char *expr);
 
+/**
+ * @brief Calculates the factorial.
+ * @return value!
+ */
+double tms_fact(double value);
+
+/**
+ * @brief Sign function
+ * @return 1 for positive, -1 for negative, 0 otherwise.
+ */
+double tms_sign(double value);
 
 /**
  * @brief Finds the factors of a signed 32bit integer.
