@@ -5,6 +5,11 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "string_tools.h"
 #include "scientific.h"
 #include "internals.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <ctype.h>
 
 int tms_find_closing_parenthesis(char *expr, int i)
 {

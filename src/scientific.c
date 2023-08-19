@@ -6,6 +6,13 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "internals.h"
 #include "function.h"
 #include "string_tools.h"
+#include "parser.h"
+#include "evaluator.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
 
 double tms_fact(double value)
 {

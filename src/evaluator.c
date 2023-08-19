@@ -3,6 +3,14 @@ Copyright (C) 2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "evaluator.h"
+#include "string_tools.h"
+#include "internals.h"
+#include "scientific.h"
+#include "tms_complex.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
 
 double complex tms_evaluate(tms_math_expr *M)
 {

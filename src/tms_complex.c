@@ -6,6 +6,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "internals.h"
 #include "m_errors.h"
 #include "scientific.h"
+#include <math.h>
 
 double complex tms_neglect_real_cmplx(double complex x)
 {

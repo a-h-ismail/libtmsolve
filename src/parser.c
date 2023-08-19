@@ -7,7 +7,13 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "function.h"
 #include "string_tools.h"
 #include "parser.h"
+#include "evaluator.h"
 #include "tms_complex.h"
+
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
 int tms_compare_subexpr_depth(const void *a, const void *b)
 {
@@ -883,8 +889,8 @@ int tms_set_var_metadata(char *expr, tms_op_node *x_node, char operand)
         }
         else
         {
-            puts("Invaild operand argument.");
-            exit(2);
+            tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, -1);
+            return -1;
         }
     }
     return 0;

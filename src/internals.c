@@ -4,7 +4,13 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "internals.h"
 #include "scientific.h"
+#include "parser.h"
+#include "string_tools.h"
 #include <time.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 char *_tms_g_expr = NULL;
 double complex tms_g_ans = 0;

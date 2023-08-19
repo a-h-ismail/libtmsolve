@@ -3,6 +3,12 @@ Copyright (C) 2021-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "matrix.h"
+#include "internals.h"
+#include "m_errors.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
 
 tms_matrix *tms_new_matrix(int rows, int columns)
 {
