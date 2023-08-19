@@ -98,7 +98,13 @@ double complex tms_evaluate(tms_math_expr *M)
                         tms_error_handler(EH_SAVE, MODULO_ZERO, EH_FATAL_ERROR, i_node->operator_index);
                         return NAN;
                     }
-                    *(i_node->result) = fmod(i_node->left_operand, i_node->right_operand);
+                    if (cimag(i_node->left_operand) != 0 || cimag(i_node->right_operand) != 0)
+                    {
+                        tms_error_handler(EH_SAVE, MODULO_COMPLEX_NOT_SUPPORTED, EH_FATAL_ERROR, i_node->operator_index);
+                        return NAN;
+                    }
+                    else
+                        *(i_node->result) = fmod(i_node->left_operand, i_node->right_operand);
                     break;
 
                 case '^':
@@ -198,15 +204,15 @@ void _tms_set_var_data(tms_math_expr *M)
 }
 
 // Function that sets all variables pointed to in the array with "value"
-void _tms_set_variable(tms_math_expr *math_struct, double complex value)
+void _tms_set_variable(tms_math_expr *M, double complex value)
 {
     int i;
-    for (i = 0; i < math_struct->var_count; ++i)
+    for (i = 0; i < M->var_count; ++i)
     {
-        if (math_struct->var_data[i].is_negative)
-            *(math_struct->var_data[i].var_ptr) = -value;
+        if (M->var_data[i].is_negative)
+            *(M->var_data[i].var_ptr) = -value;
         else
-            *(math_struct->var_data[i].var_ptr) = value;
+            *(M->var_data[i].var_ptr) = value;
     }
 }
 
