@@ -269,7 +269,7 @@ int tms_set_var_metadata(char *expr, tms_op_node *x_node, char operand);
  * @param expr The string containing the math expression.
  * @param enable_vars When set to true, the parser will look for variables (currently x only) and set its metadata in the corresponding nodes.\n
  * Use _tms_set_variable() from function.h to specify the value taken by the variable.
- * @param enable_complex When set to true, enables the parser to read complex values and set complex variant of scientific functions (disables integration, derivation, modulo and factorial).
+ * @param enable_complex When set to true, enables the parser to read complex values and set complex variant of scientific functions.
  * @return A (malloc'd) pointer to the generated math structure.
  */
 tms_math_expr *tms_parse_expr(char *expr, bool enable_vars, bool enable_complex);
