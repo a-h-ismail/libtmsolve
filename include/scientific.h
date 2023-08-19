@@ -32,24 +32,6 @@ typedef struct tms_fraction
 } tms_fraction;
 
 /**
- * @brief Calculates the factorial.
- * @return value!
- */
-double tms_factorial(double value);
-
-/**
- * @brief Emulates cpow() with better performance for real values and less error.
- * @return x^y
- */
-double complex tms_cpow(double complex x, double complex y);
-
-/**
- * @brief Sign function
- * @return 1 for positive, -1 for negative, 0 otherwise.
- */
-double tms_sign(double value);
-
-/**
  * @brief Sets the answer global variable if the provided result is not NaN
  */
 void tms_set_ans(double complex result);
@@ -91,6 +73,4 @@ void tms_reduce_fraction(tms_fraction *fraction_r);
  * @return The fraction form of the value.
  */
 tms_fraction tms_decimal_to_fraction(double value, bool inverse_process);
-
-double complex tms_ccbrt(double complex z);
 #endif

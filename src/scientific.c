@@ -7,7 +7,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "function.h"
 #include "string_tools.h"
 
-double tms_factorial(double value)
+double tms_fact(double value)
 {
     double result = 1;
     for (int i = 2; i <= value; ++i)
@@ -39,56 +39,6 @@ double tms_sign(double value)
         return -1;
 }
 
-double complex tms_neglect_real_cmplx(double complex x)
-{
-    double magnitude = creal(x) / cimag(x);
-    if (fabs(magnitude) > 1e10)
-        return creal(x);
-    else if (fabs(magnitude) < 1e-10)
-        return I * cimag(x);
-    else
-        return x;
-}
-
-double complex tms_cpow(double complex x, double complex y)
-{
-    double x_real = creal(x), x_imag = cimag(x), y_real = creal(y), y_imag = cimag(y);
-    if (y == 0)
-        return 1;
-
-    if (y_imag == 0)
-    {
-        if (x_imag == 0)
-        {
-            // n+0.5 powers for negative values returns a small real part error
-            // Fixable by using sqrt()
-            if (x_real < 0)
-            {
-                double y_real_int, y_real_decimal;
-                if (y_real > 0)
-                {
-                    y_real_int = floor(y_real);
-                    y_real_decimal = y_real - y_real_int;
-                }
-                else
-                {
-                    y_real_int = ceil(y_real);
-                    y_real_decimal = y_real - y_real_int;
-                }
-                if (y_real_decimal == 0.5)
-                    return pow(x_real, y_real_int) * I * sqrt(-x_real);
-                else if (y_real_decimal == -0.5)
-                    return 1 / (pow(x_real, y_real_int) * I * sqrt(-x_real));
-            }
-            else
-                return pow(x_real, y_real);
-        }
-    }
-
-    // Normal case
-    return tms_neglect_real_cmplx(cpow(x, y));
-}
-
 double complex tms_solve_e(char *expr, bool enable_complex)
 {
     double complex result;
@@ -106,7 +56,6 @@ double complex tms_solve_e(char *expr, bool enable_complex)
 
 double complex tms_solve(char *expr)
 {
-    char *real_exclusive[] = {"%"};
     // Offset if the expression has an assignment operator
     char *local_expr = expr;
     int i, j;
@@ -122,29 +71,10 @@ double complex tms_solve(char *expr)
     while ((i = tms_f_search(local_expr, "=", 0, false)) != -1)
         local_expr += i + 1;
 
-    // Look for real exclusive operations
-    for (i = 0; i < array_length(real_exclusive); ++i)
-    {
-        j = tms_f_search(local_expr, real_exclusive[i], 0, false);
-        if (j != -1)
-        {
-            likely_complex = 0;
-            break;
-        }
-    }
     // We have some hope that this is a complex expression
     i = tms_f_search(local_expr, "i", 0, true);
     if (i != -1)
-    {
-        // The complex number was found despite having a real expression, report the problem.
-        if (likely_complex == 0)
-        {
-            tms_error_handler(EH_SAVE, ILLEGAL_COMPLEX_OP, EH_FATAL_ERROR, i);
-            return NAN;
-        }
-        else
-            likely_complex = 2;
-    }
+        likely_complex = 2;
 
     // Look for user defined complex variables
     for (i = 0; i < tms_g_var_count; ++i)
@@ -172,6 +102,7 @@ double complex tms_solve(char *expr)
     double complex result;
     switch (likely_complex)
     {
+        // No longer used, kept for legacy.
     case 0:
 
         M = tms_parse_expr(expr, false, false);
