@@ -7,6 +7,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "function.h"
 #include "string_tools.h"
 #include "parser.h"
+#include "tms_complex.h"
 
 int tms_compare_subexpr_depth(const void *a, const void *b)
 {
@@ -18,22 +19,7 @@ int tms_compare_subexpr_depth(const void *a, const void *b)
         return 0;
 }
 
-// Some simple wrapper functions.
-double complex cabs_z(double complex z)
-{
-    return cabs(z);
-}
-double complex carg_z(double complex z)
-{
-    return carg(z);
-}
-double complex tms_ccbrt(double complex z)
-{
-    return cpow(z, 1.0 / 3);
-}
-
 // Wrapper functions for cos, sin and tan to round for very small values
-
 double rd_cos(double __x)
 {
     __x = cos(__x);
@@ -61,20 +47,23 @@ double rd_tan(double __x)
         return __x;
 }
 
+// Real domain functions
 char *tms_r_func_name[] =
     {"fact", "abs", "ceil", "floor", "round", "sign", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log", NULL};
 double (*tms_r_func_ptr[])(double) =
-    {tms_factorial, fabs, ceil, floor, round, tms_sign, sqrt, cbrt, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, rd_cos, rd_sin, rd_tan, log, log10};
-// Extended functions, may take more than one parameter (stored in a comma separated string)
-char *tms_ext_func_name[] = {"integrate", "der", "hex", "oct", "bin", "rand", "randint", "int", NULL};
+    {tms_fact, fabs, ceil, floor, round, tms_sign, sqrt, cbrt, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, rd_cos, rd_sin, rd_tan, log, log10};
+
+// Extended functions, may take more than one argument (stored in a comma separated string)
+char *tms_ext_func_name[] =
+    {"integrate", "der", "hex", "oct", "bin", "rand", "randint", "int", NULL};
 double complex (*tms_ext_func[])(tms_arg_list *) =
     {tms_integrate, tms_derivative, tms_hex, tms_oct, tms_bin, tms_rand, tms_randint, tms_int};
 
 // Complex functions
 char *tms_cmplx_func_name[] =
-    {"abs", "arg", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "log", NULL};
+    {"fact", "abs", "arg", "ceil", "floor", "round", "sign", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "log", NULL};
 double complex (*tms_cmplx_func_ptr[])(double complex) =
-    {cabs_z, carg_z, csqrt, tms_ccbrt, cacosh, casinh, catanh, cacos, casin, catan, ccosh, csinh, ctanh, ccos, csin, ctan, clog};
+    {tms_cfact, cabs_z, carg_z, tms_cceil, tms_cfloor, tms_cround, tms_csign, csqrt, tms_ccbrt, cacosh, casinh, catanh, cacos, casin, catan, ccosh, csinh, ctanh, ccos, csin, ctan, clog};
 
 int _tms_set_runtime_var(char *expr, int i)
 {
