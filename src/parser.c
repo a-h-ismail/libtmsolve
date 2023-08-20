@@ -362,7 +362,8 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
     {
         i = tms_find_subexpr_starting_at(S, S[s_index].solve_start, s_index, 1);
         S[s_index].nodes[0].unknowns_data = 0;
-        // Case of nested no operators expressions, set the result of the deeper expression as the left op of the dummy
+        S[s_index].nodes[0].node_index = 0;
+        //  Case of nested no operators expressions, set the result of the deeper expression as the left op of the dummy
         if (i != -1)
             *(S[i].result) = &(NB->left_operand);
         else
