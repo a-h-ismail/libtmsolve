@@ -285,7 +285,7 @@ double _tms_read_value_simple(char *number, int8_t base)
 
 double complex tms_read_value(char *_s, int start)
 {
-    double complex value;
+    double value;
     int end, sci_notation = -1, base;
     bool is_complex = false;
     _s += start;
@@ -333,8 +333,9 @@ double complex tms_read_value(char *_s, int start)
     {
         value = _tms_read_value_simple(num_str, base);
         if (is_complex)
-            value *= I;
-        return value;
+            return value * I;
+        else
+            return value;
     }
     else
     {
@@ -343,8 +344,9 @@ double complex tms_read_value(char *_s, int start)
         value = _tms_read_value_simple(num_str, 10);
         power = _tms_read_value_simple(num_str + sci_notation + 1, 10);
         if (is_complex)
-            value *= I;
-        return value * pow(10, power);
+            return value * pow(10, power) * I;
+        else
+            return value * pow(10, power);
     }
 }
 
