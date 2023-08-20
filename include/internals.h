@@ -6,7 +6,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define INTERNALS_H
 /**
  * @file
- * @brief Declares general purpose functions and globals used in the calculator. Includes all required standard library headers.
+ * @brief Declares general purpose functionality like error handling, init and runtime variables.
  */
 
 #include <complex.h>
@@ -38,7 +38,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define EH_FATAL_ERROR 12
 #define EH_ALL_ERRORS 13
 
-/// @brief tmsolve runtime variable metadata.
+/// @brief Runtime variable metadata of tmsolve.
 typedef struct tms_var
 {
     char *name;
