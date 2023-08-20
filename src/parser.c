@@ -46,7 +46,7 @@ double rd_sin(double __x)
 
 double rd_tan(double __x)
 {
-    __x = sin(__x);
+    __x = tan(__x);
     if (fabs(__x) < 1e-10)
         return 0;
     else
