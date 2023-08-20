@@ -33,8 +33,11 @@ tms_matrix *tms_new_matrix(int rows, int columns);
  * @brief Deletes a matrix generated using tms_new_matrix().
  * @param matrix The matrix to delete.
  */
-void tms_delete_matrix(tms_matrix *matrix);
+void tms_delete_matrix(tms_matrix *M);
 
+/**
+ * @brief Create a new matrix from the source excluding the provided row and column.
+ */
 tms_matrix *tms_remove_matrix_row_col(tms_matrix *matrix, int row, int col);
 
 /**
@@ -84,4 +87,4 @@ void tms_replace_matrix_col(tms_matrix *matrix, tms_matrix *column_matrix, int c
  * @brief Duplicates a matrix
  * @return An identical malloc'd matrix.
  */
-tms_matrix *tms_matrix_dup(tms_matrix *matrix);
+tms_matrix *tms_matrix_dup(tms_matrix *M);
