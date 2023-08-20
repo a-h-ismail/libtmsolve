@@ -67,9 +67,9 @@ double complex (*tms_ext_func[])(tms_arg_list *) =
 
 // Complex functions
 char *tms_cmplx_func_name[] =
-    {"fact", "abs", "arg", "ceil", "floor", "round", "sign", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "log", NULL};
+    {"fact", "abs", "arg", "ceil", "floor", "round", "sign", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log", NULL};
 double complex (*tms_cmplx_func_ptr[])(double complex) =
-    {tms_cfact, cabs_z, carg_z, tms_cceil, tms_cfloor, tms_cround, tms_csign, csqrt, tms_ccbrt, cacosh, casinh, catanh, cacos, casin, catan, ccosh, csinh, ctanh, ccos, csin, ctan, clog};
+    {tms_cfact, cabs_z, carg_z, tms_cceil, tms_cfloor, tms_cround, tms_csign, csqrt, tms_ccbrt, cacosh, casinh, catanh, cacos, casin, catan, ccosh, csinh, ctanh, ccos, csin, ctan, tms_cln, tms_clog};
 
 int _tms_set_runtime_var(char *expr, int i)
 {
