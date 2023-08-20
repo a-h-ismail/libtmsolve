@@ -186,6 +186,7 @@ void _tms_set_unknowns_data(tms_math_expr *M)
                 else
                     vars[i].is_negative = false;
                 vars[i].unknown_ptr = &(i_node->left_operand);
+                i_node->left_operand = 0;
                 ++i;
             }
             // Case of a unknown right operand
@@ -196,6 +197,7 @@ void _tms_set_unknowns_data(tms_math_expr *M)
                 else
                     vars[i].is_negative = false;
                 vars[i].unknown_ptr = &(i_node->right_operand);
+                i_node->right_operand = 0;
                 ++i;
             }
             i_node = i_node->next;
