@@ -34,4 +34,10 @@ double complex tms_csign(double complex z);
 double complex tms_cln(double complex z);
 
 double complex tms_clog(double complex z);
+
+double complex tms_ccos(double complex z);
+
+double complex tms_csin(double complex z);
+
+double complex tms_ctan(double complex z);
 #endif

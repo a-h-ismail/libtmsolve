@@ -114,3 +114,27 @@ double complex tms_clog(double complex z)
 {
     return clog(z) / log(10);
 }
+
+double complex tms_ccos(double complex z)
+{
+    if (cimag(z) == 0)
+        return tms_cos(creal(z));
+    else
+        return tms_neglect_real_cmplx(ccos(z));
+}
+
+double complex tms_csin(double complex z)
+{
+    if (cimag(z) == 0)
+        return tm_sin(creal(z));
+    else
+        return tms_neglect_real_cmplx(csin(z));
+}
+
+double complex tms_ctan(double complex z)
+{
+    if (cimag(z) == 0)
+        return tms_tan(creal(z));
+    else
+        return tms_neglect_real_cmplx(ctan(z));
+}
