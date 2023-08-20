@@ -22,7 +22,7 @@ typedef struct tms_matrix
 } tms_matrix;
 
 /**
- * @brief Allocates a new matrix with dimensions row*columns.
+ * @brief Allocates a new matrix of dimensions rows*columns.
  * @param rows Number of rows.
  * @param columns Number of columns
  * @return A malloc'd pointer to the new matrix.
