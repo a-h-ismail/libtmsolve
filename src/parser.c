@@ -25,34 +25,6 @@ int tms_compare_subexpr_depth(const void *a, const void *b)
         return 0;
 }
 
-// Wrapper functions for cos, sin and tan to round for very small values
-double rd_cos(double __x)
-{
-    __x = cos(__x);
-    if (fabs(__x) < 1e-10)
-        return 0;
-    else
-        return __x;
-}
-
-double rd_sin(double __x)
-{
-    __x = sin(__x);
-    if (fabs(__x) < 1e-10)
-        return 0;
-    else
-        return __x;
-}
-
-double rd_tan(double __x)
-{
-    __x = tan(__x);
-    if (fabs(__x) < 1e-10)
-        return 0;
-    else
-        return __x;
-}
-
 // Real domain functions
 char *tms_r_func_name[] =
     {"fact", "abs", "ceil", "floor", "round", "sign", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log", NULL};
