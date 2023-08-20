@@ -58,11 +58,11 @@ double tms_fact(double value);
  */
 double tms_sign(double value);
 
-double rd_cos(double x);
+double tms_cos(double x);
 
-double rd_sin(double x);
+double tm_sin(double x);
 
-double rd_tan(double x);
+double tms_tan(double x);
 
 /**
  * @brief Finds the factors of a signed 32bit integer.

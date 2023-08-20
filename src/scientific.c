@@ -15,7 +15,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <math.h>
 
 // Wrapper functions for cos, sin and tan to round for very small values
-double rd_cos(double __x)
+double tms_cos(double __x)
 {
     __x = cos(__x);
     if (fabs(__x) < 1e-10)
@@ -24,7 +24,7 @@ double rd_cos(double __x)
         return __x;
 }
 
-double rd_sin(double __x)
+double tm_sin(double __x)
 {
     __x = sin(__x);
     if (fabs(__x) < 1e-10)
@@ -33,7 +33,7 @@ double rd_sin(double __x)
         return __x;
 }
 
-double rd_tan(double __x)
+double tms_tan(double __x)
 {
     __x = tan(__x);
     if (fabs(__x) < 1e-10)
