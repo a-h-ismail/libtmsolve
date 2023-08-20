@@ -104,3 +104,13 @@ double complex tms_csign(double complex z)
     else
         return tms_sign(creal(z));
 }
+
+double complex tms_cln(double complex z)
+{
+    return clog(z);
+}
+
+double complex tms_clog(double complex z)
+{
+    return clog(z) / log(10);
+}
