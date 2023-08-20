@@ -29,26 +29,26 @@ void tms_delete_matrix(tms_matrix *matrix)
     free(matrix->data);
     free(matrix);
 }
-// Generates a new matrix derived from "matrix" excluding row and col
-tms_matrix *tms_remove_matrix_row_col(tms_matrix *matrix, int row, int col)
+
+tms_matrix *tms_remove_matrix_row_col(tms_matrix *M, int row, int col)
 {
-    tms_matrix *derived_matrix;
-    derived_matrix = tms_new_matrix(matrix->rows - 1, matrix->columns - 1);
+    tms_matrix *new_M;
+    new_M = tms_new_matrix(M->rows - 1, M->columns - 1);
     int parent_row, parent_col, derived_row, derived_col;
-    for (parent_row = derived_row = 0; parent_row < matrix->rows; ++parent_row)
+    for (parent_row = derived_row = 0; parent_row < M->rows; ++parent_row)
     {
         if (parent_row == row)
             continue;
-        for (parent_col = derived_col = 0; parent_col < matrix->columns; ++parent_col)
+        for (parent_col = derived_col = 0; parent_col < M->columns; ++parent_col)
         {
             if (parent_col == col)
                 continue;
             else
-                derived_matrix->data[derived_row][derived_col++] = matrix->data[parent_row][parent_col];
+                new_M->data[derived_row][derived_col++] = M->data[parent_row][parent_col];
         }
         ++derived_row;
     }
-    return derived_matrix;
+    return new_M;
 }
 
 void tms_round_to_identity_matrix(tms_matrix *M)
@@ -102,12 +102,12 @@ tms_matrix *tms_matrix_multiply(tms_matrix *A, tms_matrix *B)
     return result;
 }
 
-void tms_replace_matrix_col(tms_matrix *matrix, tms_matrix *column_matrix, int column)
+void tms_replace_matrix_col(tms_matrix *M, tms_matrix *column_matrix, int column)
 {
     for (int i = 0; i < column_matrix->rows; ++i)
-        matrix->data[i][column] = column_matrix->data[i][0];
+        M->data[i][column] = column_matrix->data[i][0];
 }
-// Create a copy of matrix and returns a pointer to the copy
+
 tms_matrix *tms_matrix_dup(tms_matrix *matrix)
 {
     tms_matrix *copy;
@@ -120,7 +120,6 @@ tms_matrix *tms_matrix_dup(tms_matrix *matrix)
     return copy;
 }
 
-// Find the determinant of matrix A, returns NaN on error
 double tms_matrix_det(tms_matrix *A)
 {
     int i;
@@ -156,7 +155,7 @@ double tms_matrix_det(tms_matrix *A)
     }
     return det;
 }
-// Get the transpose of matrix M
+
 tms_matrix *tms_matrix_tr(tms_matrix *M)
 {
     int i, j;
@@ -166,6 +165,7 @@ tms_matrix *tms_matrix_tr(tms_matrix *M)
             transpose->data[j][i] = M->data[i][j];
     return transpose;
 }
+
 tms_matrix *tms_comatrix(tms_matrix *M)
 {
     int i, j;
@@ -198,6 +198,7 @@ tms_matrix *tms_comatrix(tms_matrix *M)
         }
     return comatrix;
 }
+
 tms_matrix *tms_matrix_inv(tms_matrix *M)
 {
     int i, j;
