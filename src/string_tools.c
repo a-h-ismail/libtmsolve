@@ -64,6 +64,10 @@ double complex _tms_set_operand_value(char *expr, int start, bool enable_complex
     double complex value = NAN;
     bool is_negative = false;
 
+    // Avoid negative offsets
+    if (start < 0)
+        return NAN;
+
     // Catch incorrect start like )5 (no implied multiplication allowed)
     if (start > 0 && !tms_is_valid_number_start(expr[start - 1]))
     {
