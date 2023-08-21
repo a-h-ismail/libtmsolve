@@ -82,6 +82,8 @@ tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)
     M->unknown_count = 0;
     M->x_data = NULL;
     M->enable_complex = enable_complex;
+    M->subexpr_ptr = NULL;
+    M->subexpr_count = 0;
 
     S = malloc(dyn_size * sizeof(tms_math_subexpr));
 
