@@ -150,12 +150,13 @@ int tms_new_var(char *name, bool is_constant)
 int tms_error_handler(int _mode, ...)
 {
     static int last_error = 0, fatal = 0, non_fatal = 0, backup_error_count = 0, backup_fatal, backup_non_fatal;
+    static tms_error_data main_table[EH_MAX_ERRORS], backup_table[EH_MAX_ERRORS];
+
     va_list arguments;
     char *error;
     va_start(arguments, _mode);
     int i, arg2;
 
-    static tms_error_data error_table[EH_MAX_ERRORS], backup[EH_MAX_ERRORS];
     switch (_mode)
     {
     case EH_SAVE:
@@ -163,72 +164,68 @@ int tms_error_handler(int _mode, ...)
         // Case of error table being full
         if (last_error == EH_MAX_ERRORS - 1)
         {
+            free(main_table[0].error_msg);
             // Before ovewriting oldest error, update error counters to reflect the new state
-            if (error_table[0].fatal)
+            if (main_table[0].fatal)
                 --fatal;
             else
                 --non_fatal;
 
             // Overwrite the oldest error
             for (i = 0; i < EH_MAX_ERRORS - 1; ++i)
-                error_table[i] = error_table[i + 1];
+                main_table[i] = main_table[i + 1];
 
             // The last position is free, update last_error
             --last_error;
         }
-        error_table[last_error].error_msg = strdup(error);
+        main_table[last_error].error_msg = strdup(error);
+        main_table[last_error].expr_len = strlen(_tms_g_expr);
         arg2 = va_arg(arguments, int);
         switch (arg2)
         {
         case EH_NONFATAL_ERROR:
-            error_table[last_error].fatal = false;
+            main_table[last_error].fatal = false;
             ++non_fatal;
             break;
         case EH_FATAL_ERROR:
-            error_table[last_error].fatal = true;
+            main_table[last_error].fatal = true;
             ++fatal;
             break;
         default:
             return -1;
         }
 
-        int position = va_arg(arguments, int);
-        if (position != -1)
+        int err_position = va_arg(arguments, int);
+        if (err_position != -1)
         {
             // Center the error in the string
-            if (position > 49)
+            if (err_position > 49)
             {
-                strncpy(error_table[last_error].bad_snippet, _tms_g_expr + position - 24, 49);
-                error_table[last_error].bad_snippet[49] = '\0';
-                error_table[last_error].index = 24;
+                strncpy(main_table[last_error].bad_snippet, _tms_g_expr + err_position - 24, 49);
+                main_table[last_error].bad_snippet[49] = '\0';
+                main_table[last_error].relative_index = 24;
+                main_table[last_error].real_index = err_position;
             }
             else
             {
-                strncpy(error_table[last_error].bad_snippet, _tms_g_expr, 49);
-                error_table[last_error].bad_snippet[49] = '\0';
-                error_table[last_error].index = position;
+                strncpy(main_table[last_error].bad_snippet, _tms_g_expr, 49);
+                main_table[last_error].bad_snippet[49] = '\0';
+                main_table[last_error].relative_index = err_position;
+                main_table[last_error].real_index = err_position;
             }
         }
         else
-            error_table[last_error].index = -1;
+            main_table[last_error].relative_index = main_table[last_error].real_index = -1;
+
         last_error = fatal + non_fatal;
         return 0;
 
     case EH_PRINT:
         for (i = 0; i < last_error; ++i)
         {
-            if (error_table[i].error_msg == NULL)
-            {
-                puts(INTERNAL_ERROR);
-                return -1;
-            }
-            puts(error_table[i].error_msg);
-            if (error_table[i].index != -1)
-                tms_print_errors(error_table[i].bad_snippet, error_table[i].index);
-            else
-                printf("\n");
+            tms_print_error(main_table[i]);
         }
-        tms_error_handler(EH_CLEAR, EH_MAIN_DB);
+        return tms_error_handler(EH_CLEAR, EH_MAIN_DB);
 
     case EH_CLEAR:
         arg2 = va_arg(arguments, int);
@@ -236,29 +233,29 @@ int tms_error_handler(int _mode, ...)
         {
         case EH_MAIN_DB:
             for (i = 0; i < last_error; ++i)
-                free(error_table[i].error_msg);
+                free(main_table[i].error_msg);
 
-            memset(error_table, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
+            memset(main_table, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
             // i carries the number of errors for the return value because the counter is reset here
             i = last_error;
             last_error = fatal = non_fatal = 0;
             break;
         case EH_BACKUP_DB:
             for (i = 0; i < backup_error_count; ++i)
-                free(error_table[i].error_msg);
+                free(main_table[i].error_msg);
 
-            memset(backup, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
+            memset(backup_table, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
             i = backup_error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
             break;
         case EH_ALL_DB:
             for (i = 0; i < last_error; ++i)
-                free(error_table[i].error_msg);
+                free(main_table[i].error_msg);
             for (i = 0; i < backup_error_count; ++i)
-                free(error_table[i].error_msg);
+                free(main_table[i].error_msg);
 
-            memset(error_table, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
-            memset(backup, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
+            memset(main_table, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
+            memset(backup_table, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
             i = last_error + backup_error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
             last_error = fatal = non_fatal = 0;
@@ -275,20 +272,20 @@ int tms_error_handler(int _mode, ...)
         {
         case EH_MAIN_DB:
             for (i = 0; i < last_error; ++i)
-                if (strcmp(error, error_table[i].error_msg) == 0)
+                if (strcmp(error, main_table[i].error_msg) == 0)
                     return EH_MAIN_DB;
             break;
         case EH_BACKUP_DB:
             for (i = 0; i < last_error; ++i)
-                if (strcmp(error, backup[i].error_msg) == 0)
+                if (strcmp(error, backup_table[i].error_msg) == 0)
                     return EH_BACKUP_DB;
             break;
         case EH_ALL_DB:
             for (i = 0; i < last_error; ++i)
             {
-                if (strcmp(error, error_table[i].error_msg) == 0)
+                if (strcmp(error, main_table[i].error_msg) == 0)
                     return EH_MAIN_DB;
-                else if (strcmp(error, backup[i].error_msg) == 0)
+                else if (strcmp(error, backup_table[i].error_msg) == 0)
                     return EH_BACKUP_DB;
             }
         }
@@ -312,7 +309,7 @@ int tms_error_handler(int _mode, ...)
         tms_error_handler(EH_CLEAR, EH_BACKUP);
         // Copy the current error database to the backup database
         for (i = 0; i < last_error; ++i)
-            backup[i] = error_table[i];
+            backup_table[i] = main_table[i];
         backup_error_count = last_error;
         backup_non_fatal = non_fatal;
         backup_fatal = fatal;
@@ -325,25 +322,40 @@ int tms_error_handler(int _mode, ...)
         // Clear current database
         tms_error_handler(EH_CLEAR, EH_MAIN_DB);
         for (i = 0; i < backup_error_count; ++i)
-            error_table[i] = backup[i];
+            main_table[i] = backup_table[i];
         last_error = backup_error_count;
         fatal = backup_fatal;
         non_fatal = backup_non_fatal;
         // Remove all references of the errors from the backup
         for (i = 0; i < backup_error_count; ++i)
-            backup[i].error_msg = NULL;
+            backup_table[i].error_msg = NULL;
         break;
     }
     return -1;
 }
 
-void tms_print_errors(char *expr, int error_pos)
+void tms_print_error(tms_error_data E)
 {
     int i;
-    fprintf(stderr, "%s\n", expr);
-    for (i = 0; i < error_pos; ++i)
-        fprintf(stderr, "~");
-    fprintf(stderr, "^\n\n");
+    puts(E.error_msg);
+    if (E.real_index != -1)
+    {
+        if (E.real_index > 49)
+        {
+            E.relative_index += 3;
+            fprintf(stderr, "...");
+        }
+        fprintf(stderr, "%s", E.bad_snippet);
+        if (E.expr_len > E.real_index + 25)
+            fprintf(stderr, "...");
+        fprintf(stderr, "\n");
+
+        for (i = 0; i < E.relative_index; ++i)
+            fprintf(stderr, "~");
+        fprintf(stderr, "^\n\n");
+    }
+    else
+        fprintf(stderr, "\n");
 }
 
 int compare_ints(const void *a, const void *b)
