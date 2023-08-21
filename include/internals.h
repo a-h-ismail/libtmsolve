@@ -98,7 +98,9 @@ typedef struct tms_error_data
 {
     char *error_msg, bad_snippet[50];
     bool fatal;
-    int index;
+    int relative_index;
+    int real_index;
+    int expr_len;
 } tms_error_data;
 
 /// @brief Initializes the variables required for the proper operation of the calculator.
@@ -133,10 +135,9 @@ int tms_error_handler(int _mode, ...);
 
 /**
  * @brief Prints the expression and points at the location of the error found.
- * @param expr The portion of the expression.
- * @param error_pos The index of the error in expr.
+ * @param E The error metadata
  */
-void tms_print_errors(char *expr, int error_pos);
+void tms_print_error(tms_error_data E);
 
 /**
  * @brief Simple function to find the minimum of 2 integers.
