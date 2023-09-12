@@ -9,6 +9,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "function.h"
 #include "m_errors.h"
 #include "internals.h"
+#include "tms_complex.h"
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -23,6 +24,26 @@ bool _validate_args_count(int expected, int actual)
     else if (expected < actual)
         tms_error_handler(EH_SAVE, TOO_MANY_ARGS, EH_FATAL_ERROR, -1);
     return false;
+}
+
+double complex tms_logn(tms_arg_list *args)
+{
+    if (_validate_args_count(2, args->count) == false)
+        return NAN;
+    double complex value = tms_solve(args->arguments[0]);
+    if (isnan(creal(value)))
+        return NAN;
+
+    double complex base = tms_solve(args->arguments[1]);
+    if (isnan(creal(base)))
+        return NAN;
+    if (cimag(base) != 0)
+    {
+        tms_error_handler(EH_SAVE, NO_COMPLEX_LOG_BASE, EH_FATAL_ERROR, -1);
+        return NAN;
+    }
+    else
+        return tms_cln(value) / log(base);
 }
 
 double complex tms_int(tms_arg_list *args)
@@ -64,11 +85,11 @@ double complex tms_rand(tms_arg_list *args)
     if (_validate_args_count(0, args->count) == false)
         return NAN;
 
-    double tmp = rand();
+    double decimal = rand();
     // Generate a decimal part
-    tmp /= pow(10, ceil(log10(tmp)));
+    decimal /= pow(10, ceil(log10(decimal)));
 
-    return ((double)rand() + tmp) * pow(-1, rand() & 1);
+    return ((double)rand() + decimal) * pow(-1, rand() & 1);
 }
 
 double complex tms_base_n(tms_arg_list *args, int8_t base)

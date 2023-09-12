@@ -16,6 +16,12 @@ SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
+ * @brief Expects two arguments, the value and the base.
+ * @return The base logarithm for the specified value
+ */
+double complex tms_logn(tms_arg_list *args);
+
+/**
  * @brief Returns the integer part of the specified value (supports complex), will calculate the expression if provided.
  */
 double complex tms_int(tms_arg_list *L);
