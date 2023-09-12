@@ -116,8 +116,8 @@ double complex tms_evaluate(tms_math_expr *M)
                     break;
 
                 case '^':
-                    // Use non complex power function if complex is disabled or no imaginary part is found
-                    if (!M->enable_complex)
+                    // Use non complex power function if the operands are real
+                    if (tms_is_real(i_node->left_operand) && tms_is_real(i_node->right_operand))
                     {
                         *(i_node->result) = pow(i_node->left_operand, i_node->right_operand);
                         if (isnan(creal(*(i_node->result))))
@@ -232,6 +232,8 @@ bool _print_operand_source(tms_math_subexpr *S, double complex *operand_ptr, int
     {
         for (n = 0; n < S[s_index].op_count; ++n)
         {
+            if (S[s_index].nodes == NULL)
+                continue;
             if (operand_ptr == S[s_index].nodes[n].result)
             {
                 printf("[S%d;N%d]", s_index, n);
@@ -269,14 +271,14 @@ void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
         else
             tmp = NULL;
 
-        printf("subexpr %d:\n ftype = %u, fname = %s, depth = %d\n",
+        printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n",
                s_index, S[s_index].func_type, tmp, S[s_index].depth);
         // Lookup result pointer location
         for (int i = 0; i < s_count; ++i)
         {
             for (int j = 0; j < S[i].op_count; ++j)
             {
-                if (S[i].nodes[j].result == *(S[s_index].result))
+                if (S[i].nodes != NULL && S[i].nodes[j].result == *(S[s_index].result))
                 {
                     printf("result at subexpr %d, node %d\n\n", i, j);
                     break;
@@ -286,60 +288,67 @@ void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
             if (S[i].op_count == 0 && S[i].nodes != NULL && S[i].nodes[0].result == *(S[s_index].result))
                 printf("result at subexpr %d, node 0\n\n", i);
         }
-        tmp_node = S[s_index].nodes + S[s_index].start_node;
 
-        // Dump nodes data
-        while (tmp_node != NULL)
+        if (S[s_index].nodes == NULL)
+            puts("Expression has no nodes");
+        else
         {
-            printf("[%d]: ", tmp_node->node_index);
-            printf("( ");
 
-            if (_print_operand_source(S, &(tmp_node->left_operand), s_index, was_evaluated) == false)
-                tms_print_value(tmp_node->left_operand);
+            tmp_node = S[s_index].nodes + S[s_index].start_node;
 
-            printf(" )");
-            // No one wants to see uninitialized values (skip for nodes used to hold one number)
-            if (S[s_index].op_count != 0)
+            // Dump nodes data
+            while (tmp_node != NULL)
             {
-                printf(" %c ", tmp_node->operator);
+                printf("[%d]: ", tmp_node->node_index);
                 printf("( ");
 
-                if (_print_operand_source(S, &(tmp_node->right_operand), s_index, was_evaluated) == false)
-                    tms_print_value(tmp_node->right_operand);
+                if (_print_operand_source(S, &(tmp_node->left_operand), s_index, was_evaluated) == false)
+                    tms_print_value(tmp_node->left_operand);
 
                 printf(" )");
-            }
-
-            if (tmp_node->next != NULL)
-            {
-                int i;
-                char left_or_right = '\0';
-                for (i = 0; i < S[s_index].op_count; ++i)
+                // No one wants to see uninitialized values (skip for nodes used to hold one number)
+                if (S[s_index].op_count != 0)
                 {
-                    if (&(S[s_index].nodes[i].right_operand) == tmp_node->result)
-                    {
-                        left_or_right = 'R';
-                        break;
-                    }
-                    else if (&(S[s_index].nodes[i].left_operand) == tmp_node->result)
-                    {
-                        left_or_right = 'L';
-                        break;
-                    }
+                    printf(" %c ", tmp_node->operator);
+                    printf("( ");
 
-                    if (S[s_index].op_count == 0 && &(S[s_index].nodes->right_operand) == tmp_node->result)
-                    {
-                        i = 0;
-                        left_or_right = 'R';
-                    }
+                    if (_print_operand_source(S, &(tmp_node->right_operand), s_index, was_evaluated) == false)
+                        tms_print_value(tmp_node->right_operand);
+
+                    printf(" )");
                 }
 
-                printf(" a: %d%c --> ", i, left_or_right);
+                if (tmp_node->next != NULL)
+                {
+                    int i;
+                    char left_or_right = '\0';
+                    for (i = 0; i < S[s_index].op_count; ++i)
+                    {
+                        if (&(S[s_index].nodes[i].right_operand) == tmp_node->result)
+                        {
+                            left_or_right = 'R';
+                            break;
+                        }
+                        else if (&(S[s_index].nodes[i].left_operand) == tmp_node->result)
+                        {
+                            left_or_right = 'L';
+                            break;
+                        }
+
+                        if (S[s_index].op_count == 0 && &(S[s_index].nodes->right_operand) == tmp_node->result)
+                        {
+                            i = 0;
+                            left_or_right = 'R';
+                        }
+                    }
+
+                    printf(" a: %d%c --> ", i, left_or_right);
+                }
+                else
+                    printf(" --> ");
+                printf("\n");
+                tmp_node = tmp_node->next;
             }
-            else
-                printf(" --> ");
-            printf("\n");
-            tmp_node = tmp_node->next;
         }
         ++s_index;
         puts("end\n");
