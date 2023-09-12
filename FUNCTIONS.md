@@ -35,6 +35,27 @@ This library has three function types: real, complex and extended.
 - `randint()`: Returns a random integer in range [INT_MIN;INT_MAX].
 - `int(value)`: Returns the integer part of the value, supports complex.
 
+## Guidelines for Adding new Extended Functions
+
+- Function declaration should be: `double complex tms_<name>(tms_arg_list *args)`
+- The extended function shouldn't free the argument list, it will be freed by the evaluator.
+- Validate the argument count you get:
+
+```C
+double complex tms_foo(tms_arg_list *args)
+{
+    if (_validate_args_count(EXPECTED_ARGS, args->count) == false)
+        return NAN;
+    
+    // <...>
+}
+```
+
+- If you are expecting a value, read it using `tms_solve()` and handle errors properly (mainly check if the solver returns `NAN`).
+- Add the function declaration to `function.h`, and the function name and pointer to `parser.c`.
+
+Check the functions in `function.c` to see some implemented extended functions.
+
 ## Note
 
 The names used by the parser are different from the actual names of the functions in the code. Refer to `parser.c` and `function.h` to see the actual C functions.
