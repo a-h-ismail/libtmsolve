@@ -830,9 +830,9 @@ void tms_convert_real_to_complex(tms_math_expr *M)
 int tms_set_unknowns_data(char *expr, tms_op_node *x_node, char operand)
 {
     bool is_negative = false, is_x = false;
-    if (*expr == 'x')
+    if (tms_match_word(expr, 0, "x", true))
         is_x = true;
-    else if (expr[1] == 'x')
+    else if (tms_match_word(expr, 1, "x", true))
     {
         if (*expr == '+')
             is_x = true;
