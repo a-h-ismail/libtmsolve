@@ -122,7 +122,7 @@ double complex tms_solve(char *expr)
     // Look for user defined complex variables
     for (i = 0; i < tms_g_var_count; ++i)
     {
-        if (cimag(tms_g_vars[i].value) != 0)
+        if (!tms_is_real(tms_g_vars[i].value))
         {
             j = tms_f_search(local_expr, tms_g_vars[i].name, 0, true);
             if (j != -1)
@@ -134,7 +134,7 @@ double complex tms_solve(char *expr)
     }
 
     // Special case of ans
-    if (cimag(tms_g_ans) != 0)
+    if (!tms_is_real(tms_g_ans))
     {
         j = tms_f_search(local_expr, "ans", 0, true);
         if (j != -1)

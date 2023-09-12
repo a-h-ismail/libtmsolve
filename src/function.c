@@ -37,7 +37,7 @@ double complex tms_logn(tms_arg_list *args)
     double complex base = tms_solve(args->arguments[1]);
     if (isnan(creal(base)))
         return NAN;
-    if (cimag(base) != 0)
+    if (!tms_is_real(base))
     {
         tms_error_handler(EH_SAVE, NO_COMPLEX_LOG_BASE, EH_FATAL_ERROR, -1);
         return NAN;
