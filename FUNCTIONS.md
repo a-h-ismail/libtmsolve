@@ -24,10 +24,15 @@ This library has three function types: real, complex and extended.
 - `ln()`: Base e logarithm.
 - `log()`: Base 10 logarithm.
 
+### Warning
+
+Trigonometric functions lose precision with larger values. I recommend staying in range `-1099511627776;1099511627776` to keep reasonably high precision.
+
 ## Extended Functions
 
 - `integrate(start, end, function)`: Calculates integral using Simpson 3/8 rule.
 - `der(function, x)`: Calculates derivative of the function at the specified point.
+- `logn(value, n)`: Calculates the base-n logarithm for the specified value.
 - `hex(hex_rep)`: Reads a hexadecimal representation and returns the corresponding value.
 - `oct(oct_rep)`: Reads an octal representation and returns the corresponding value.
 - `bin(bin_rep)`: Reads a binary representation and returns the corresponding value.
