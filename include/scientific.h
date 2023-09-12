@@ -32,6 +32,16 @@ typedef struct tms_fraction
 void tms_set_ans(double complex result);
 
 /**
+ * @brief Checks if the value is an integer.
+ */
+bool tms_is_integer(double value);
+
+/**
+ * @brief Checks if a complex variable is real only.
+ */
+bool tms_is_real(double complex z);
+
+/**
  * @brief Calculates a mathematical expression and returns the answer.
  * @param expr The string containing the math expression.
  * @param enable_complex Enables complex number calculation, set to false if you don't need complex values.

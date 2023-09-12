@@ -64,6 +64,14 @@ bool tms_is_integer(double value)
         return false;
 }
 
+bool tms_is_real(double complex z)
+{
+    if (cimag(z) == 0)
+        return true;
+    else
+        return false;
+}
+
 double tms_sign(double value)
 {
     if (value == 0)
