@@ -35,4 +35,5 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define INTEGRAl_UNDEFINED "Error while calculating integral, make sure the function is defined within the integration interval."
 #define COMPLEX_DISABLED "Complex value detected but complex is disabled."
 #define MODULO_COMPLEX_NOT_SUPPORTED "Modulo operation for complex numbers is not supported."
+#define NO_COMPLEX_LOG_BASE "Base-N logarithm doesn't support complex base."
 #endif
