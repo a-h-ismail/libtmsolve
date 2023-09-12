@@ -231,27 +231,28 @@ void tms_set_unknown(tms_math_expr *M, double complex value)
     }
 }
 
-bool _print_operand_source(tms_math_subexpr *S, double complex *operand_ptr, int s_index, bool was_evaluated)
+bool _print_operand_source(tms_math_subexpr *S, double complex *operand, int s_index, bool was_evaluated)
 {
     int n;
     while (s_index != -1)
     {
+        // Scan all nodes in the current and previous subexpressions for one that points at this operand
         for (n = 0; n < S[s_index].op_count; ++n)
         {
             if (S[s_index].nodes == NULL)
                 continue;
-            if (operand_ptr == S[s_index].nodes[n].result)
+            if (operand == S[s_index].nodes[n].result)
             {
                 printf("[S%d;N%d]", s_index, n);
                 if (was_evaluated)
                 {
                     printf(" = ");
-                    tms_print_value(*operand_ptr);
+                    tms_print_value(*operand);
                 }
                 return true;
             }
         }
-        if (operand_ptr == *(S[s_index].result))
+        if (operand == *(S[s_index].result))
         {
             printf("[S:%d]", s_index);
             return true;
@@ -299,7 +300,6 @@ void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
             puts("Expression has no nodes");
         else
         {
-
             tmp_node = S[s_index].nodes + S[s_index].start_node;
 
             // Dump nodes data
