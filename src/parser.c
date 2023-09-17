@@ -295,7 +295,7 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
     return true;
 }
 
-int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operator_index, bool enable_unknonws)
+int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operator_index, bool enable_unknowns)
 {
     tms_math_subexpr *S = M->subexpr_ptr;
     int s_count = M->subexpr_count, op_count = S[s_index].op_count;
@@ -347,7 +347,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
             {
                 if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
                     return -1;
-                if (enable_unknonws)
+                if (enable_unknowns)
                     status = tms_set_unknowns_data(local_expr + solve_start, NB, 'l');
                 else
                     status = -1;
@@ -400,7 +400,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
     return 0;
 }
 
-int _tms_set_all_operands(char *local_expr, tms_math_expr *M, int s_index, bool enable_unknonws)
+int _tms_set_all_operands(char *local_expr, tms_math_expr *M, int s_index, bool enable_unknowns)
 {
     tms_math_subexpr *S = M->subexpr_ptr;
     int op_count = S[s_index].op_count;
@@ -422,7 +422,7 @@ int _tms_set_all_operands(char *local_expr, tms_math_expr *M, int s_index, bool 
     }
     else
     {
-        status = _tms_set_operand(local_expr, M, NB, solve_start, s_index, 'l', enable_unknonws);
+        status = _tms_set_operand(local_expr, M, NB, solve_start, s_index, 'l', enable_unknowns);
         if (status == -1)
             return -1;
     }
@@ -433,7 +433,7 @@ int _tms_set_all_operands(char *local_expr, tms_math_expr *M, int s_index, bool 
         // same in case of x-y+z
         if (NB[i].priority >= NB[i + 1].priority)
         {
-            status = _tms_set_operand(local_expr, M, NB + i, NB[i].operator_index + 1, s_index, 'r', enable_unknonws);
+            status = _tms_set_operand(local_expr, M, NB + i, NB[i].operator_index + 1, s_index, 'r', enable_unknowns);
             if (status == -1)
                 return -1;
         }
@@ -441,19 +441,19 @@ int _tms_set_all_operands(char *local_expr, tms_math_expr *M, int s_index, bool 
         // x+y^z : y is set in the node containing z (node i+1) as the left operand
         else
         {
-            status = _tms_set_operand(local_expr, M, NB + i + 1, NB[i].operator_index + 1, s_index, 'l', enable_unknonws);
+            status = _tms_set_operand(local_expr, M, NB + i + 1, NB[i].operator_index + 1, s_index, 'l', enable_unknowns);
             if (status == -1)
                 return -1;
         }
     }
     // Set the last operand as the right operand of the last node
-    status = _tms_set_operand(local_expr, M, NB + op_count - 1, NB[op_count - 1].operator_index + 1, s_index, 'r', enable_unknonws);
+    status = _tms_set_operand(local_expr, M, NB + op_count - 1, NB[op_count - 1].operator_index + 1, s_index, 'r', enable_unknowns);
     if (status == -1)
         return -1;
     return 0;
 }
 
-int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start, int s_index, char operand, bool enable_unknonws)
+int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start, int s_index, char operand, bool enable_unknowns)
 {
     tms_math_subexpr *S = M->subexpr_ptr;
     double complex *operand_ptr;
@@ -479,7 +479,7 @@ int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start,
         if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
             return -1;
         // Checking for the unknown 'x'
-        if (enable_unknonws == true)
+        if (enable_unknowns == true)
             status = tms_set_unknowns_data(expr + op_start, N, operand);
         else
             status = -1;
@@ -625,7 +625,7 @@ void _tms_set_result_pointers(tms_math_expr *M, int s_index)
         tmp_node->result = &M->answer;
 }
 
-tms_math_expr *tms_parse_expr(char *expr, bool enable_unknonws, bool enable_complex)
+tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_complex)
 {
     int i;
     // Number of subexpressions
@@ -694,7 +694,7 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_unknonws, bool enable_comp
             return NULL;
         }
 
-        status = _tms_init_nodes(local_expr, M, s_index, operator_index, enable_unknonws);
+        status = _tms_init_nodes(local_expr, M, s_index, operator_index, enable_unknowns);
         free(operator_index);
 
         // Exiting due to error
@@ -708,7 +708,7 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_unknonws, bool enable_comp
         else if (status == TMS_BREAK)
             break;
 
-        status = _tms_set_all_operands(local_expr, M, s_index, enable_unknonws);
+        status = _tms_set_all_operands(local_expr, M, s_index, enable_unknowns);
         if (status == -1)
         {
             tms_delete_math_expr(M);
@@ -725,7 +725,7 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_unknonws, bool enable_comp
     }
 
     // Set unknowns metadata
-    if (enable_unknonws)
+    if (enable_unknowns)
         _tms_set_unknowns_data(M);
 
     // Detect assignment operator (local_expr offset from expr)
@@ -846,21 +846,19 @@ int tms_set_unknowns_data(char *expr, tms_op_node *x_node, char operand)
         return -1;
     if (is_x)
     {
-        // x as left op
+        // x as left operand, set bits using bitwise OR
         if (operand == 'l')
         {
+            x_node->unknowns_data |= UNK_LEFT;
             if (is_negative)
-                x_node->unknowns_data = x_node->unknowns_data | 0b101;
-            else
-                x_node->unknowns_data = x_node->unknowns_data | 0b1;
+                x_node->unknowns_data |= UNK_LNEG;
         }
         // x as right op
         else if (operand == 'r')
         {
+            x_node->unknowns_data |= UNK_RIGHT;
             if (is_negative)
-                x_node->unknowns_data = x_node->unknowns_data | 0b1010;
-            else
-                x_node->unknowns_data = x_node->unknowns_data | 0b10;
+                x_node->unknowns_data |= UNK_RNEG;
         }
         else
         {

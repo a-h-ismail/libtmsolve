@@ -52,8 +52,9 @@ typedef struct tms_op_node
     /// Index of the op_node in the op_node array.
     int node_index;
     /**
-     *  Used to store data about unknown operands as follows:
-     *  b0:left_operand, b1:right_operand, b2:left_operand_negative, b3:right_operand_negative.
+     * Used to store data about unknown operands as follows:
+     * b0:left_operand, b1:right_operand, b2:left_operand_negative, b3:right_operand_negative.
+     * Use masks UNK_* with bitwise OR to set the bits correctly
      */
     uint8_t unknowns_data;
     /// Node operator priority.
@@ -63,6 +64,11 @@ typedef struct tms_op_node
     /// Points to the next op_node in evaluation order.
     struct tms_op_node *next;
 } tms_op_node;
+
+#define UNK_LEFT 0b1
+#define UNK_RIGHT 0b10
+#define UNK_LNEG 0b100
+#define UNK_RNEG 0b1000
 
 /// @brief Holds the data required to locate and set a value to an unknown in the expression.
 typedef struct tms_unknown_operand
