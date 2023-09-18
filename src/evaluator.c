@@ -170,7 +170,7 @@ double complex tms_evaluate(tms_math_expr *M)
 void _tms_set_unknowns_data(tms_math_expr *M)
 {
     int i = 0, s_index, buffer_size = 16;
-    tms_unknown_operand *vars = malloc(buffer_size * sizeof(tms_unknown_operand));
+    tms_unknown_operand *x_data = malloc(buffer_size * sizeof(tms_unknown_operand));
     tms_math_subexpr *subexpr_ptr = M->subexpr_ptr;
     tms_op_node *i_node;
 
@@ -182,27 +182,21 @@ void _tms_set_unknowns_data(tms_math_expr *M)
             if (i == buffer_size)
             {
                 buffer_size *= 2;
-                vars = realloc(vars, buffer_size * sizeof(tms_unknown_operand));
+                x_data = realloc(x_data, buffer_size * sizeof(tms_unknown_operand));
             }
             // Case of unknown left operand
-            if (i_node->unknowns_data & 0b1)
+            if (i_node->unknowns_data & UNK_LEFT)
             {
-                if (i_node->unknowns_data & 0b100)
-                    vars[i].is_negative = true;
-                else
-                    vars[i].is_negative = false;
-                vars[i].unknown_ptr = &(i_node->left_operand);
+                x_data[i].is_negative = i_node->unknowns_data & UNK_LNEG;
+                x_data[i].unknown_ptr = &(i_node->left_operand);
                 i_node->left_operand = 0;
                 ++i;
             }
             // Case of a unknown right operand
-            if (i_node->unknowns_data & 0b10)
+            if (i_node->unknowns_data & UNK_RIGHT)
             {
-                if (i_node->unknowns_data & 0b1000)
-                    vars[i].is_negative = true;
-                else
-                    vars[i].is_negative = false;
-                vars[i].unknown_ptr = &(i_node->right_operand);
+                x_data[i].is_negative = i_node->unknowns_data & UNK_RNEG;
+                x_data[i].unknown_ptr = &(i_node->right_operand);
                 i_node->right_operand = 0;
                 ++i;
             }
@@ -211,12 +205,12 @@ void _tms_set_unknowns_data(tms_math_expr *M)
     }
     if (i != 0)
     {
-        vars = realloc(vars, i * sizeof(tms_unknown_operand));
+        x_data = realloc(x_data, i * sizeof(tms_unknown_operand));
         M->unknown_count = i;
-        M->x_data = vars;
+        M->x_data = x_data;
     }
     else
-        free(vars);
+        free(x_data);
 }
 
 void tms_set_unknown(tms_math_expr *M, double complex value)
