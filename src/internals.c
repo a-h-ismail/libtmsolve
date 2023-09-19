@@ -3,14 +3,16 @@ Copyright (C) 2022-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "internals.h"
+#include "evaluator.h"
+#include "m_errors.h"
 #include "scientific.h"
-#include "parser.h"
 #include "string_tools.h"
-#include <time.h>
+#include "tms_math_strs.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 char *_tms_g_expr = NULL;
 double complex tms_g_ans = 0;
@@ -145,6 +147,85 @@ int tms_new_var(char *name, bool is_constant)
         return i;
     }
     return -1;
+}
+
+tms_math_expr *tms_dup_mexpr(tms_math_expr *M)
+{
+    if (M == NULL)
+        return NULL;
+
+    tms_math_expr *NM = malloc(sizeof(tms_math_expr));
+    // Copy the math expression
+    *NM = *M;
+    NM->subexpr_ptr = malloc(NM->subexpr_count * sizeof(tms_math_subexpr));
+    // Copy subexpressions
+    memcpy(NM->subexpr_ptr, M->subexpr_ptr, M->subexpr_count * sizeof(tms_math_subexpr));
+
+    int op_count, node_count;
+    tms_math_subexpr *S, *NS;
+
+    // Allocate nodes and set the result pointers
+    for (int s = 0; s < NM->subexpr_count; ++s)
+    {
+        // New variables to keep lines from becoming too long
+        NS = NM->subexpr_ptr + s;
+        S = M->subexpr_ptr + s;
+        if (M->subexpr_ptr[s].nodes != NULL)
+        {
+            op_count = M->subexpr_ptr[s].op_count;
+            node_count = (op_count > 0 ? op_count : 1);
+            NS->nodes = malloc(node_count * sizeof(tms_op_node));
+            // Copy nodes
+            memcpy(NS->nodes, S->nodes, node_count * sizeof(tms_op_node));
+
+            // Copying nodes will also copy result and next pointers which point to the original node members
+            // Regenerate the pointers using parser functions
+            _tms_set_evaluation_order(NS);
+            _tms_set_result_pointers(NM, s);
+        }
+        else
+        {
+            // Likely this is an extended function subexpr
+            NS->result = malloc(sizeof(double complex *));
+        }
+    }
+
+    // Fix the subexpressions result pointers
+    for (int s_index = 0; s_index < NM->subexpr_count; ++s_index)
+    {
+        NS = NM->subexpr_ptr + s_index;
+        S = M->subexpr_ptr + s_index;
+        void *result = S->result, *start, *end, *tmp;
+
+        // Find which operand in the original expression received the answer of the current subexpression
+        tmp = *(double complex **)result;
+        for (int s = 0; s < M->subexpr_count; ++s)
+        {
+            op_count = M->subexpr_ptr[s].op_count;
+            node_count = (op_count > 0 ? op_count : 1);
+            start = M->subexpr_ptr[s].nodes;
+            end = M->subexpr_ptr[s].nodes + node_count;
+
+            // The nodes are contiguous, so we can pinpoint the correct node by pointer comparisons
+            if (tmp >= start && tmp <= end)
+            {
+                int n = (tmp - start) / sizeof(tms_op_node);
+
+                if (&(M->subexpr_ptr[s].nodes[n].right_operand) == *(double complex **)result)
+                    *(NM->subexpr_ptr[s_index].result) = &(NM->subexpr_ptr[s].nodes[n].right_operand);
+                else if (&(M->subexpr_ptr[s].nodes[n].left_operand) == *(double complex **)result)
+                    *(NM->subexpr_ptr[s_index].result) = &(NM->subexpr_ptr[s].nodes[n].left_operand);
+
+                break;
+            }
+        }
+    }
+
+    // If the nodes have unknowns, regenerate the unknowns pointers array
+    if (NM->unknown_count > 0)
+        _tms_set_unknowns_data(NM);
+
+    return NM;
 }
 
 int tms_error_handler(int _mode, ...)
