@@ -5,6 +5,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "internals.h"
 #include "evaluator.h"
 #include "m_errors.h"
+#include "parser.h"
 #include "scientific.h"
 #include "string_tools.h"
 #include "tms_math_strs.h"

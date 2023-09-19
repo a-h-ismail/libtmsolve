@@ -9,9 +9,9 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @brief Includes functions related to expression evaluation.
  */
 #ifndef LOCAL_BUILD
-#include <tmsolve/parser.h>
+#include <tmsolve/tms_math_strs.h>
 #else
-#include "parser.h"
+#include "tms_math_strs.h"
 #endif
 
 /**

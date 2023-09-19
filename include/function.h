@@ -6,9 +6,9 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define FUNCTION_H
 
 #ifndef LOCAL_BUILD
-#include <tmsolve/string_tools.h>
+#include <tmsolve/tms_math_strs.h>
 #else
-#include "string_tools.h"
+#include "tms_math_strs.h"
 #endif
 /**
  * @file

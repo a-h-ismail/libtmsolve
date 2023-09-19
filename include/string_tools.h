@@ -8,13 +8,10 @@ SPDX-License-Identifier: LGPL-2.1-only
  */
 
 #ifndef LOCAL_BUILD
-#include <tmsolve/parser.h>
+#include <tmsolve/tms_math_strs.h>
 #else
-#include "parser.h"
+#include "tms_math_strs.h"
 #endif
-#include <stdbool.h>
-#include <complex.h>
-#include <inttypes.h>
 
 /**
  * @brief Finds the closing parenthesis that corresponds to an open parenthesis.
