@@ -676,7 +676,8 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_comp
 
     for (s_index = 0; s_index < s_count; ++s_index)
     {
-        // Special case of extended functions
+        // Extended functions use a subexpression without nodes, but the subexpression result pointer should point at something
+        // Allocate a small block and use that for the result pointer
         if (S[s_index].func_type == 3)
         {
             S[s_index].result = malloc(sizeof(double complex *));
