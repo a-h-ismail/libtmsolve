@@ -7,7 +7,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <complex.h>
 
 /**
- * @file
+ * @file Contains wrappers and missing complex functions from standard library
  * @brief
  */
 
