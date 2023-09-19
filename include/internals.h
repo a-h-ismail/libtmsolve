@@ -14,10 +14,9 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <stdarg.h>
 #ifndef LOCAL_BUILD
 #include <tmsolve/m_errors.h>
-#include <tmsolve/parser.h>
 #include <tmsolve/tms_math_strs.h>
 #else
-#include "parser.h"
+
 #include "tms_math_strs.h"
 #include "m_errors.h"
 #endif
