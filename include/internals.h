@@ -14,7 +14,11 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <stdarg.h>
 #ifndef LOCAL_BUILD
 #include <tmsolve/m_errors.h>
+#include <tmsolve/parser.h>
+#include <tmsolve/tms_math_strs.h>
 #else
+#include "parser.h"
+#include "tms_math_strs.h"
 #include "m_errors.h"
 #endif
 
@@ -37,14 +41,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define EH_NONFATAL_ERROR 11
 #define EH_FATAL_ERROR 12
 #define EH_ALL_ERRORS 13
-
-/// @brief Runtime variable metadata of tmsolve.
-typedef struct tms_var
-{
-    char *name;
-    double complex value;
-    bool is_constant;
-} tms_var;
 
 /// @brief Stores the answer of the last calculation to allow reuse.
 extern double complex tms_g_ans;
@@ -82,15 +78,6 @@ extern char *tms_g_illegal_names[];
 /// @brief Number of illegal names (for use in loops);
 extern const int tms_g_illegal_names_count;
 
-/// @brief Stores metadata related to extended functions arguments.
-typedef struct tms_arg_list
-{
-    /// The number of arguments.
-    int count;
-    // Array of C strings, stores the arguments.
-    char **arguments;
-} tms_arg_list;
-
 /**
  * @brief Error metadata structure.
  */
@@ -114,6 +101,11 @@ void tmsolve_init() __attribute__((constructor));
  * @return The index of the variable in the all vars array (whether it already exists or is newly created)
  */
 int tms_new_var(char *name, bool is_constant);
+
+/**
+ * @brief Duplicates an existing math expression.
+ */
+tms_math_expr *tms_dup_mexpr(tms_math_expr *M);
 
 /**
  * @brief Error handling function, collects and manages errors.
