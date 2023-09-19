@@ -10,15 +10,15 @@ SPDX-License-Identifier: LGPL-2.1-only
  */
 
 #include <complex.h>
-#include <stdbool.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #ifndef LOCAL_BUILD
 #include <tmsolve/m_errors.h>
 #include <tmsolve/tms_math_strs.h>
 #else
 
-#include "tms_math_strs.h"
 #include "m_errors.h"
+#include "tms_math_strs.h"
 #endif
 
 #define array_length(z) (sizeof(z) / sizeof(*z))
@@ -40,6 +40,14 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define EH_NONFATAL_ERROR 11
 #define EH_FATAL_ERROR 12
 #define EH_ALL_ERRORS 13
+
+// Simple macro to ease dynamic resizing
+#define DYNAMIC_RESIZE(ptr, current, max, type)                                                                        \
+    if (current == max)                                                                                                \
+    {                                                                                                                  \
+        max *= 2;                                                                                                      \
+        ptr = (type *)realloc(ptr, max * sizeof(type));                                                                \
+    }
 
 /// @brief Stores the answer of the last calculation to allow reuse.
 extern double complex tms_g_ans;
@@ -115,7 +123,8 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M);
  * EH_SAVE, char *error, EH_FATAL_ERROR | EH_NONFATAL_ERROR, error_index \n
  * EH_PRINT (returns number of printed errors). \n
  * EH_CLEAR, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB \n
- * EH_SEARCH, char *error, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB (returns EH_MAIN_DB on match in main, EH_BACKUP_DB on match in backup). \n
+ * EH_SEARCH, char *error, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB (returns EH_MAIN_DB on match in main, EH_BACKUP_DB on
+ match in backup). \n
  * EH_ERROR_COUNT, EH_FATAL_ERROR | EH_NONFATAL_ERROR | EH_ALL_ERRORS (returns number of errors specified). \n
  * EH_BACKUP \n
  * EH_RESTORE \n
