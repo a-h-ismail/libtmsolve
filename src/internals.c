@@ -21,14 +21,19 @@ double complex tms_g_ans = 0;
 bool _tms_do_init = true;
 bool _tms_debug = false;
 
+// Function names used by the parser
 char **tms_g_all_func_names;
-
-tms_var tms_g_builtin_vars[] = {{"i", I, true}, {"pi", M_PI, true}, {"exp", M_E, true}, {"c", 299792458, true}};
-tms_var *tms_g_vars = NULL;
+int tms_g_func_count;
 
 char *tms_g_illegal_names[] = {"x", "e", "E", "i"};
 const int tms_g_illegal_names_count = array_length(tms_g_illegal_names);
-int tms_g_func_count = 0, tms_g_var_count, tms_g_var_max = array_length(tms_g_builtin_vars);
+
+tms_var tms_g_builtin_vars[] = {{"i", I, true}, {"pi", M_PI, true}, {"exp", M_E, true}, {"c", 299792458, true}};
+tms_var *tms_g_vars = NULL;
+int tms_g_var_count, tms_g_var_max = array_length(tms_g_builtin_vars);
+
+tms_ufunc *tms_g_ufunc = NULL;
+int tms_g_ufunc_count, tms_g_ufunc_max = 8;
 
 void tmsolve_init()
 {
@@ -40,6 +45,9 @@ void tmsolve_init()
         // Initialize variable names and values arrays
         tms_g_vars = malloc(tms_g_var_max * sizeof(tms_var));
         tms_g_var_count = array_length(tms_g_builtin_vars);
+
+        // Initialize runtime function array
+        tms_g_ufunc = malloc(tms_g_ufunc_max * sizeof(tms_ufunc));
 
         for (i = 0; i < tms_g_var_count; ++i)
             tms_g_vars[i] = tms_g_builtin_vars[i];
@@ -104,7 +112,7 @@ int tms_new_var(char *name, bool is_constant)
     {
         if (strcmp(name, tms_g_illegal_names[i]) == 0)
         {
-            tms_error_handler(EH_SAVE, ILLEGAL_VARIABLE_NAME, EH_FATAL_ERROR, -1);
+            tms_error_handler(EH_SAVE, ILLEGAL_NAME, EH_FATAL_ERROR, -1);
             return -1;
         }
     }
@@ -112,7 +120,7 @@ int tms_new_var(char *name, bool is_constant)
     // Check if the name has illegal characters
     if (tms_valid_name(name) == false)
     {
-        tms_error_handler(EH_SAVE, INVALID_VARIABLE_NAME, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, INVALID_NAME, EH_FATAL_ERROR, -1);
         return -1;
     }
 
@@ -133,18 +141,85 @@ int tms_new_var(char *name, bool is_constant)
     // Create a new variable
     if (i == tms_g_var_count)
     {
-        // Dynamically expand size if required
-        if (tms_g_var_count == tms_g_var_max)
-        {
-            tms_g_var_max *= 2;
-            tms_g_vars = realloc(tms_g_vars, tms_g_var_max * sizeof(tms_var));
-        }
+        DYNAMIC_RESIZE(tms_g_vars, tms_g_var_count, tms_g_var_max, tms_var);
         tms_g_vars[tms_g_var_count].name = malloc((strlen(name) + 1) * sizeof(char));
         // Initialize the new variable to zero
         tms_g_vars[tms_g_var_count].value = 0;
         tms_g_vars[tms_g_var_count].is_constant = is_constant;
         strcpy(tms_g_vars[tms_g_var_count].name, name);
         ++tms_g_var_count;
+        return i;
+    }
+    return -1;
+}
+
+int tms_set_function(char *name, char *function)
+{
+    int i;
+
+    // Check if the name has illegal characters
+    if (tms_valid_name(name) == false)
+    {
+        tms_error_handler(EH_SAVE, INVALID_NAME, EH_FATAL_ERROR, -1);
+        return -1;
+    }
+
+    // Check if the function name is allowed
+    for (i = 0; i < tms_g_illegal_names_count; ++i)
+    {
+        if (strcmp(name, tms_g_illegal_names[i]) == 0)
+        {
+            tms_error_handler(EH_SAVE, ILLEGAL_NAME, EH_FATAL_ERROR, -1);
+            return -1;
+        }
+    }
+
+    // Check if the name was already used by builtin functions
+    for (i = 0; tms_g_all_func_names[i] != NULL; ++i)
+    {
+        if (strcmp(name, tms_g_illegal_names[i]) == 0)
+        {
+            tms_error_handler(EH_SAVE, NO_FUNCTION_SHADOWING, EH_FATAL_ERROR, -1);
+            return -1;
+        }
+    }
+
+    // Check if the function already exists as runtime function
+    for (i = 0; i < tms_g_ufunc_count; ++i)
+    {
+        if (strcmp(tms_g_ufunc[i].name, name) == 0)
+        {
+            tms_math_expr *F = tms_parse_expr(function, true, true);
+            if (F == NULL)
+            {
+                return -1;
+            }
+            else
+            {
+                tms_delete_math_expr(tms_g_ufunc[i].F);
+                tms_g_ufunc[i].F = F;
+                return 0;
+            }
+        }
+    }
+
+    // Create a new function
+    if (i == tms_g_ufunc_count)
+    {
+        DYNAMIC_RESIZE(tms_g_ufunc, tms_g_ufunc_count, tms_g_ufunc_max, tms_ufunc);
+        tms_math_expr *F = tms_parse_expr(function, true, true);
+        if (F == NULL)
+        {
+            return -1;
+        }
+        else
+        {
+            tms_delete_math_expr(tms_g_ufunc[i].F);
+            tms_g_ufunc[i].F = F;
+            return 0;
+        }
+        tms_g_ufunc[tms_g_ufunc_count].name = strdup(name);
+        ++tms_g_ufunc_count;
         return i;
     }
     return -1;
@@ -192,30 +267,30 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M)
     }
 
     // Fix the subexpressions result pointers
-    for (int s_index = 0; s_index < NM->subexpr_count; ++s_index)
+    for (int s = 0; s < NM->subexpr_count; ++s)
     {
-        NS = NM->subexpr_ptr + s_index;
-        S = M->subexpr_ptr + s_index;
+        NS = NM->subexpr_ptr + s;
+        S = M->subexpr_ptr + s;
         void *result = S->result, *start, *end, *tmp;
 
         // Find which operand in the original expression received the answer of the current subexpression
         tmp = *(double complex **)result;
-        for (int s = 0; s < M->subexpr_count; ++s)
+        for (int i = 0; i < M->subexpr_count; ++i)
         {
-            op_count = M->subexpr_ptr[s].op_count;
+            op_count = M->subexpr_ptr[i].op_count;
             node_count = (op_count > 0 ? op_count : 1);
-            start = M->subexpr_ptr[s].nodes;
-            end = M->subexpr_ptr[s].nodes + node_count;
+            start = M->subexpr_ptr[i].nodes;
+            end = M->subexpr_ptr[i].nodes + node_count;
 
             // The nodes are contiguous, so we can pinpoint the correct node by pointer comparisons
             if (tmp >= start && tmp <= end)
             {
                 int n = (tmp - start) / sizeof(tms_op_node);
 
-                if (&(M->subexpr_ptr[s].nodes[n].right_operand) == *(double complex **)result)
-                    *(NM->subexpr_ptr[s_index].result) = &(NM->subexpr_ptr[s].nodes[n].right_operand);
-                else if (&(M->subexpr_ptr[s].nodes[n].left_operand) == *(double complex **)result)
-                    *(NM->subexpr_ptr[s_index].result) = &(NM->subexpr_ptr[s].nodes[n].left_operand);
+                if (&(M->subexpr_ptr[i].nodes[n].right_operand) == *(double complex **)result)
+                    *(NM->subexpr_ptr[s].result) = &(NM->subexpr_ptr[i].nodes[n].right_operand);
+                else if (&(M->subexpr_ptr[i].nodes[n].left_operand) == *(double complex **)result)
+                    *(NM->subexpr_ptr[s].result) = &(NM->subexpr_ptr[i].nodes[n].left_operand);
 
                 break;
             }
