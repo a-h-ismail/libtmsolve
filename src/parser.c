@@ -2,18 +2,18 @@
 Copyright (C) 2022-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#include "scientific.h"
-#include "internals.h"
-#include "function.h"
-#include "string_tools.h"
 #include "parser.h"
 #include "evaluator.h"
+#include "function.h"
+#include "internals.h"
+#include "scientific.h"
+#include "string_tools.h"
 #include "tms_complex.h"
 
+#include <ctype.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 int tms_compare_subexpr_depth(const void *a, const void *b)
 {
@@ -71,7 +71,7 @@ int _tms_set_runtime_var(char *expr, int i)
 
 tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)
 {
-    int dyn_size = 8, i, j, s_index, length = strlen(local_expr), s_count;
+    int s_max = 8, i, j, s_index, length = strlen(local_expr), s_count;
 
     // Pointer to subexpressions heap array
     tms_math_subexpr *S;
@@ -85,19 +85,14 @@ tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)
     M->subexpr_ptr = NULL;
     M->subexpr_count = 0;
 
-    S = malloc(dyn_size * sizeof(tms_math_subexpr));
+    S = malloc(s_max * sizeof(tms_math_subexpr));
 
     int depth = 0;
     s_index = 0;
     // Determine the depth and start/end of each subexpression parenthesis
     for (i = 0; i < length; ++i)
     {
-        // Resize the subexpr array on the fly
-        if (s_index == dyn_size)
-        {
-            dyn_size *= 2;
-            S = realloc(S, dyn_size * sizeof(tms_math_subexpr));
-        }
+        DYNAMIC_RESIZE(S, s_index, s_max, tms_math_subexpr)
         if (local_expr[i] == '(')
         {
             S[s_index].func.extended = NULL;
