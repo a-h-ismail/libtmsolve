@@ -67,13 +67,26 @@ typedef struct tms_unknown_operand
     bool is_negative;
 } tms_unknown_operand;
 
+typedef struct tms_ufunc
+{
+    char *name;
+    struct tms_math_expr *F;
+} tms_ufunc;
+
 /// @brief Union to store function pointers
 typedef union tms_mfunc_ptrs
 {
     double (*real)(double);
     double complex (*cmplx)(double complex);
     double complex (*extended)(tms_arg_list *);
+    tms_ufunc *runtime_func;
 } fptr;
+
+#define TMS_NOFUNC 0
+#define TMS_F_REAL 1
+#define TMS_F_CMPLX 2
+#define TMS_F_EXTENDED 3
+#define TMS_F_RUNTIME 4
 
 /// @brief Holds the metadata of a subexpression.
 typedef struct tms_math_subexpr
@@ -138,4 +151,5 @@ typedef struct tms_math_expr
     /// Toggles complex support.
     bool enable_complex;
 } tms_math_expr;
+
 #endif
