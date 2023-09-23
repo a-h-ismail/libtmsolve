@@ -17,7 +17,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 int tms_compare_subexpr_depth(const void *a, const void *b)
 {
-    if ((*((tms_math_subexpr *)a)).depth < (*((tms_math_subexpr *)b)).depth)
+    if (((tms_math_subexpr *)a)->depth < ((tms_math_subexpr *)b)->depth)
         return 1;
     else if ((*((tms_math_subexpr *)a)).depth > (*((tms_math_subexpr *)b)).depth)
         return -1;
