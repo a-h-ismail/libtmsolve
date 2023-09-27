@@ -220,7 +220,7 @@ int tms_set_function(char *name, char *function)
         }
         tms_g_ufunc[tms_g_ufunc_count].name = strdup(name);
         ++tms_g_ufunc_count;
-        return i;
+        return 0;
     }
     return -1;
 }
