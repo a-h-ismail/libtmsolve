@@ -143,12 +143,18 @@ double complex tms_evaluate(tms_math_expr *M)
         // Executing function on the subexpression result
         switch (S[s_index].func_type)
         {
-        case 1:
+        case TMS_F_REAL:
             **(S[s_index].result) = (*(S[s_index].func.real))(**(S[s_index].result));
             break;
-        case 2:
+        case TMS_F_CMPLX:
             **(S[s_index].result) = (*(S[s_index].func.cmplx))(**(S[s_index].result));
             break;
+        case TMS_F_RUNTIME:
+            // Copy the function structure, set the unknown and solve
+            tms_math_expr *F = tms_dup_mexpr(S[s_index].func.runtime_func->F);
+            tms_set_unknown(F, **(S[s_index].result));
+            **(S[s_index].result) = tms_evaluate(F);
+            tms_delete_math_expr(F);
         }
 
         if (isnan((double)**(S[s_index].result)))
