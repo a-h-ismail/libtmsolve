@@ -2,10 +2,11 @@
 
 ## Introduction
 
-This library has three function types: real, complex and extended.
+This library has four function types: real, complex, extended and runtime (user defined).
 
 - Real and complex functions take one argument and returns a value.
 - Extended functions can take zero or more arguments.
+- Runtime functions are created by the user during runtime, and are lost on calculator shutdown.
 
 ## Real and Complex Functions
 
@@ -39,6 +40,10 @@ Trigonometric functions lose precision with larger values. I recommend staying i
 - `rand()`: Returns a random decimal value in range [INT_MIN;INT_MAX].
 - `randint()`: Returns a random integer in range [INT_MIN;INT_MAX].
 - `int(value)`: Returns the integer part of the value, supports complex.
+
+## Runtime Functions
+
+Runtime functions are created by the user during runtime. For `libtmsolve`, you have to call `tms_set_ufunction(char *name, char *function)` to add your runtime function.
 
 ## Guidelines for Adding new Extended Functions
 
