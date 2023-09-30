@@ -42,11 +42,11 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define EH_ALL_ERRORS 13
 
 // Simple macro to ease dynamic resizing
-#define DYNAMIC_RESIZE(ptr, current, max, type)                                                                        \
-    if (current == max)                                                                                                \
-    {                                                                                                                  \
-        max *= 2;                                                                                                      \
-        ptr = (type *)realloc(ptr, max * sizeof(type));                                                                \
+#define DYNAMIC_RESIZE(ptr, current, max, type)         \
+    if (current == max)                                 \
+    {                                                   \
+        max *= 2;                                       \
+        ptr = (type *)realloc(ptr, max * sizeof(type)); \
     }
 
 /// @brief Stores the answer of the last calculation to allow reuse.
@@ -67,12 +67,17 @@ extern tms_var tms_g_builtin_vars[];
 /// @brief Contains all variables, including built in ones, dynamically expanded on demand.
 extern tms_var *tms_g_vars;
 
+/// @brief Contains all runtime functions.
 extern tms_ufunc *tms_g_ufunc;
 
 /// @brief Total number of functions, those with complex variant are counted once.
 extern int tms_g_func_count;
 
-extern int tms_g_ufunc_count, tms_g_ufunc_max;
+/// @brief Total number of runtime functions.
+extern int tms_g_ufunc_count;
+
+/// @brief Max number of runtime functions.
+extern int tms_g_ufunc_max;
 
 /// @brief Total number of variables, including built in ones.
 extern int tms_g_var_count;
@@ -80,10 +85,10 @@ extern int tms_g_var_count;
 /// @brief Current maximum variable capacity, use to dynamically resize variable storage.
 extern int tms_g_var_max;
 
-/// @brief All function names, including built in, extended, and user defined functions.
+/// @brief All function names, including built in and extended but not user defined functions.
 extern char **tms_g_all_func_names;
 
-/// @brief Names that should not be usable for variables.
+/// @brief Names that should not be usable.
 extern char *tms_g_illegal_names[];
 
 /// @brief Number of illegal names (for use in loops);
