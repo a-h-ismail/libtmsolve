@@ -153,7 +153,7 @@ int tms_new_var(char *name, bool is_constant)
     return -1;
 }
 
-int tms_set_function(char *name, char *function)
+int tms_set_ufunction(char *name, char *function)
 {
     int i;
 
@@ -177,7 +177,7 @@ int tms_set_function(char *name, char *function)
     // Check if the name was already used by builtin functions
     for (i = 0; tms_g_all_func_names[i] != NULL; ++i)
     {
-        if (strcmp(name, tms_g_illegal_names[i]) == 0)
+        if (strcmp(name, tms_g_all_func_names[i]) == 0)
         {
             tms_error_handler(EH_SAVE, NO_FUNCTION_SHADOWING, EH_FATAL_ERROR, -1);
             return -1;
@@ -189,15 +189,15 @@ int tms_set_function(char *name, char *function)
     {
         if (strcmp(tms_g_ufunc[i].name, name) == 0)
         {
-            tms_math_expr *F = tms_parse_expr(function, true, true);
-            if (F == NULL)
+            tms_math_expr *f_mexpr = tms_parse_expr(function, true, true);
+            if (f_mexpr == NULL)
             {
                 return -1;
             }
             else
             {
                 tms_delete_math_expr(tms_g_ufunc[i].F);
-                tms_g_ufunc[i].F = F;
+                tms_g_ufunc[i].F = f_mexpr;
                 return 0;
             }
         }
@@ -216,7 +216,6 @@ int tms_set_function(char *name, char *function)
         {
             tms_delete_math_expr(tms_g_ufunc[i].F);
             tms_g_ufunc[i].F = F;
-            return 0;
         }
         tms_g_ufunc[tms_g_ufunc_count].name = strdup(name);
         ++tms_g_ufunc_count;
