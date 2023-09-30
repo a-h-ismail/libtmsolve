@@ -273,12 +273,12 @@ int tms_set_ufunction(char *name, char *function)
         }
         else
         {
-            tms_delete_math_expr(tms_g_ufunc[i].F);
+            // Set function
             tms_g_ufunc[i].F = F;
+            tms_g_ufunc[i].name = strdup(name);
+            ++tms_g_ufunc_count;
+            return 0;
         }
-        tms_g_ufunc[tms_g_ufunc_count].name = strdup(name);
-        ++tms_g_ufunc_count;
-        return 0;
     }
     return -1;
 }
