@@ -153,6 +153,54 @@ int tms_new_var(char *name, bool is_constant)
     return -1;
 }
 
+bool tms_has_ufunc_self_ref(tms_math_expr *F)
+{
+    tms_math_subexpr *S = F->subexpr_ptr;
+    for (int s_index = 0; s_index < F->subexpr_count; ++s_index)
+    {
+        // Detect self reference (new function has pointer to its previous version)
+        if (S[s_index].func_type == TMS_F_RUNTIME && S[s_index].func.runtime->F == F)
+        {
+            tms_error_handler(EH_SAVE, NO_FSELF_REFERENCE, EH_FATAL_ERROR, -1);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool is_ufunc_referenced_by(tms_math_expr *referencer, tms_math_expr *F)
+{
+    tms_math_subexpr *S = referencer->subexpr_ptr;
+    for (int s_index = 0; s_index < referencer->subexpr_count; ++s_index)
+    {
+        if (S[s_index].func_type == TMS_F_RUNTIME && S[s_index].func.runtime->F == F)
+            return true;
+    }
+    return false;
+}
+
+bool tms_has_ufunc_circular_refs(tms_math_expr *F)
+{
+    int i;
+    tms_math_subexpr *S = F->subexpr_ptr;
+    for (i = 0; i < F->subexpr_count; ++i)
+    {
+        if (S[i].func_type == TMS_F_RUNTIME)
+        {
+            // A self reference, none of our business here
+            if (S[i].func.runtime->F == F)
+                continue;
+
+            if (is_ufunc_referenced_by(S[i].func.runtime->F, F))
+            {
+                tms_error_handler(EH_SAVE, NO_FCIRCULAR_REFERENCE, EH_FATAL_ERROR, -1);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 int tms_set_ufunction(char *name, char *function)
 {
     int i;
@@ -189,16 +237,27 @@ int tms_set_ufunction(char *name, char *function)
     {
         if (strcmp(tms_g_ufunc[i].name, name) == 0)
         {
-            tms_math_expr *f_mexpr = tms_parse_expr(function, true, true);
-            if (f_mexpr == NULL)
+            tms_math_expr *old = tms_g_ufunc[i].F, *new = tms_parse_expr(function, true, true);
+            if (new == NULL)
             {
                 return -1;
             }
             else
             {
-                tms_delete_math_expr(tms_g_ufunc[i].F);
-                tms_g_ufunc[i].F = f_mexpr;
-                return 0;
+                // Update the pointer before checks otherwise they won't work
+                tms_g_ufunc[i].F = new;
+                // Check for self reference, then fix old references in other functions
+                if (tms_has_ufunc_self_ref(new) || tms_has_ufunc_circular_refs(new))
+                {
+                    tms_delete_math_expr(new);
+                    tms_g_ufunc[i].F = old;
+                    return -1;
+                }
+                else
+                {
+                    tms_delete_math_expr(old);
+                    return 0;
+                }
             }
         }
     }
