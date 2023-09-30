@@ -245,6 +245,20 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
     // Search for any function preceding the expression to set the function pointer
     if (solve_start > 1 && tms_legal_char_in_name(local_expr[solve_start - 2]))
     {
+        // Runtime user functions
+        for (i = 0; i < tms_g_ufunc_count; ++i)
+        {
+            j = tms_r_search(local_expr, tms_g_ufunc[i].name, solve_start - 2, true);
+            if (j != -1)
+            {
+                S->func.runtime_func = tms_g_ufunc + i;
+                S->func_type = TMS_F_RUNTIME;
+                // Setting the start of the subexpression to the start of the function name
+                S->subexpr_start = j;
+                return true;
+            }
+        }
+
         if (!M->enable_complex)
         {
             for (i = 0; i < array_length(tms_r_func_ptr); ++i)
