@@ -67,8 +67,12 @@ extern tms_var tms_g_builtin_vars[];
 /// @brief Contains all variables, including built in ones, dynamically expanded on demand.
 extern tms_var *tms_g_vars;
 
+extern tms_ufunc *tms_g_ufunc;
+
 /// @brief Total number of functions, those with complex variant are counted once.
 extern int tms_g_func_count;
+
+extern int tms_g_ufunc_count, tms_g_ufunc_max;
 
 /// @brief Total number of variables, including built in ones.
 extern int tms_g_var_count;
@@ -108,6 +112,8 @@ void tmsolve_init() __attribute__((constructor));
  * @return The index of the variable in the all vars array (whether it already exists or is newly created)
  */
 int tms_new_var(char *name, bool is_constant);
+
+int tms_set_ufunction(char *name, char *function);
 
 /**
  * @brief Duplicates an existing math expression.
