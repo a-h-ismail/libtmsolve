@@ -223,7 +223,7 @@ int tms_set_ufunction(char *name, char *function)
     }
 
     // Check if the name was already used by builtin functions
-    for (i = 0; tms_g_all_func_names[i] != NULL; ++i)
+    for (i = 0; i < tms_g_func_count; ++i)
     {
         if (strcmp(name, tms_g_all_func_names[i]) == 0)
         {
@@ -327,7 +327,6 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M)
     // Fix the subexpressions result pointers
     for (int s = 0; s < NM->subexpr_count; ++s)
     {
-        NS = NM->subexpr_ptr + s;
         S = M->subexpr_ptr + s;
         void *result = S->result, *start, *end, *tmp;
 
