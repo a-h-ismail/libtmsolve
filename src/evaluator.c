@@ -151,7 +151,7 @@ double complex tms_evaluate(tms_math_expr *M)
             break;
         case TMS_F_RUNTIME:
             // Copy the function structure, set the unknown and solve
-            tms_math_expr *F = tms_dup_mexpr(S[s_index].func.runtime_func->F);
+            tms_math_expr *F = tms_dup_mexpr(S[s_index].func.runtime->F);
             tms_set_unknown(F, **(S[s_index].result));
             **(S[s_index].result) = tms_evaluate(F);
             tms_delete_math_expr(F);

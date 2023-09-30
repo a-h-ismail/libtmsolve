@@ -251,7 +251,7 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
             j = tms_r_search(local_expr, tms_g_ufunc[i].name, solve_start - 2, true);
             if (j != -1)
             {
-                S->func.runtime_func = tms_g_ufunc + i;
+                S->func.runtime = tms_g_ufunc + i;
                 S->func_type = TMS_F_RUNTIME;
                 // Setting the start of the subexpression to the start of the function name
                 S->subexpr_start = j;

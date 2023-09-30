@@ -79,7 +79,7 @@ typedef union tms_mfunc_ptrs
     double (*real)(double);
     double complex (*cmplx)(double complex);
     double complex (*extended)(tms_arg_list *);
-    tms_ufunc *runtime_func;
+    tms_ufunc *runtime;
 } fptr;
 
 #define TMS_NOFUNC 0
