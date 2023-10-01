@@ -84,6 +84,7 @@ tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)
     M->enable_complex = enable_complex;
     M->subexpr_ptr = NULL;
     M->subexpr_count = 0;
+    M->str = strdup(local_expr);
 
     S = malloc(s_max * sizeof(tms_math_subexpr));
 
@@ -115,7 +116,8 @@ tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)
                     S[s_index].solve_end = i - 1;
                     S[s_index].depth = depth + 1;
                     S[s_index].func.extended = tms_ext_func[j];
-                    S[s_index].func_type = 3;
+                    S[s_index].func_type = TMS_F_EXTENDED;
+                    S[s_index].start_node = -1;
                     break;
                 }
             }
@@ -894,6 +896,7 @@ void tms_delete_math_expr(tms_math_expr *M)
     }
     free(S);
     free(M->x_data);
+    free(M->str);
     free(M);
 }
 
