@@ -276,13 +276,25 @@ void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
     while (s_index < s_count)
     {
         // Find the name of the function to execute
-        if (S[s_index].func_type != 0)
+        switch (S[s_index].func_type)
+        {
+        case TMS_F_REAL:
+        case TMS_F_CMPLX:
+        case TMS_F_EXTENDED:
             tmp = _tms_lookup_function_name(S[s_index].func.real, S[s_index].func_type);
-        else
+            break;
+
+        case TMS_F_RUNTIME:
+            tmp = S[s_index].func.runtime->name;
+            break;
+
+        default:
             tmp = NULL;
+        }
 
         printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n",
                s_index, S[s_index].func_type, tmp, S[s_index].depth);
+        
         // Lookup result pointer location
         for (int i = 0; i < s_count; ++i)
         {
