@@ -28,42 +28,41 @@ double complex tms_evaluate(tms_math_expr *M)
         // Extended functions have no nodes
         if (S[s_index].nodes == NULL)
         {
-
             if (S[s_index].exec_extf)
             {
-                char *arg_str;
-                // Backup the current global expression to let the extended function change it freely for its error reporting
-                char *backup = _tms_g_expr;
+                char *arguments;
                 tms_arg_list *L;
 
                 int length = S[s_index].solve_end - S[s_index].solve_start + 1;
-                // Copy args from the expression to a separate array.
-                arg_str = malloc((length + 1) * sizeof(char));
-                strncpy(arg_str, _tms_g_expr + S[s_index].solve_start, length);
-                arg_str[length] = '\0';
 
-                L = tms_get_args(arg_str);
-                // Calling the extended function
+                // Copy arguments
+                arguments = strndup(M->str + S[s_index].solve_start, length * sizeof(char));
+                L = tms_get_args(arguments);
+
+                // Call the extended function using its pointer
                 **(S[s_index].result) = (*(S[s_index].func.extended))(L);
-
-                _tms_g_expr = backup;
 
                 if (isnan(creal(**(S[s_index].result))))
                 {
                     tms_error_handler(EH_SAVE, EXTF_FAILURE, EH_FATAL_ERROR, S[s_index].subexpr_start);
-                    free(arg_str);
+                    free(arguments);
                     tms_free_arg_list(L);
                     return NAN;
                 }
                 if (!tms_is_real(**(S[s_index].result)) && M->enable_complex == false)
                 {
                     tms_error_handler(EH_SAVE, COMPLEX_DISABLED, EH_NONFATAL_ERROR, -1);
+                    free(arguments);
+                    tms_free_arg_list(L);
                     return NAN;
                 }
 
                 S[s_index].exec_extf = false;
-                free(arg_str);
+                free(arguments);
                 tms_free_arg_list(L);
+
+                // Likely the extended function modified the global expr
+                _tms_g_expr = M->str;
             }
             ++s_index;
 
@@ -183,6 +182,9 @@ void _tms_set_unknowns_data(tms_math_expr *M)
 
     for (s_index = 0; s_index < M->subexpr_count; ++s_index)
     {
+        if (subexpr_ptr[s_index].nodes == NULL)
+            continue;
+
         i_node = subexpr_ptr[s_index].nodes + subexpr_ptr[s_index].start_node;
         while (i_node != NULL)
         {
