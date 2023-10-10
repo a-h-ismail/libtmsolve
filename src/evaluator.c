@@ -36,7 +36,7 @@ double complex tms_evaluate(tms_math_expr *M)
                 int length = S[s_index].solve_end - S[s_index].solve_start + 1;
 
                 // Copy arguments
-                arguments = strndup(M->str + S[s_index].solve_start, length * sizeof(char));
+                arguments = tms_strndup(M->str + S[s_index].solve_start, length);
                 L = tms_get_args(arguments);
 
                 // Call the extended function using its pointer

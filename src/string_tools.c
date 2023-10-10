@@ -11,6 +11,14 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <math.h>
 #include <ctype.h>
 
+char *tms_strndup(const char *source, size_t n)
+{
+    char *new = malloc((n + 1) * sizeof(char));
+    strncpy(new, source, n);
+    new[n] = '\0';
+    return new;
+}
+
 int tms_find_closing_parenthesis(char *expr, int i)
 {
     // Initializing pcount to 1 because the function receives the index of an open parenthesis

@@ -13,6 +13,11 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "tms_math_strs.h"
 #endif
 
+#include <stddef.h>
+
+char *tms_strndup(const char *source, size_t n);
+
+
 /**
  * @brief Finds the closing parenthesis that corresponds to an open parenthesis.
  * @param expr The string to search.
