@@ -51,6 +51,14 @@ bool tms_is_valid_number_start(char c);
  */
 bool tms_is_valid_number_end(char c);
 
+int8_t tms_bin_to_int(char c);
+
+int8_t tms_dec_to_int(char c);
+
+int8_t tms_oct_to_int(char c);
+
+int8_t tms_hex_to_int(char c);
+
 /**
  * @brief Finds the next occurence of an operator in the string.
  * @param expr The string to search.
