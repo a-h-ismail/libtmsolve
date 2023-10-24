@@ -67,6 +67,9 @@ extern tms_var tms_g_builtin_vars[];
 /// @brief Contains all variables, including built in ones, dynamically expanded on demand.
 extern tms_var *tms_g_vars;
 
+/// @brief Contains all int64 variables, dynamically expanded on demand.
+extern tms_int_var *tms_g_int_vars;
+
 /// @brief Contains all runtime functions.
 extern tms_ufunc *tms_g_ufunc;
 
@@ -84,6 +87,12 @@ extern int tms_g_var_count;
 
 /// @brief Current maximum variable capacity, use to dynamically resize variable storage.
 extern int tms_g_var_max;
+
+/// @brief Total number of int64 variables.
+extern int tms_g_int_var_count;
+
+/// @brief Current maximum int64 variable capacity, use to dynamically resize variable storage.
+extern int tms_g_int_var_max;
 
 /// @brief All function names, including built in and extended but not user defined functions.
 extern char **tms_g_all_func_names;
@@ -117,6 +126,8 @@ void tmsolve_init() __attribute__((constructor));
  * @return The index of the variable in the all vars array (whether it already exists or is newly created)
  */
 int tms_new_var(char *name, bool is_constant);
+
+int tms_new_int_var(char *name);
 
 int tms_set_ufunction(char *name, char *function);
 
