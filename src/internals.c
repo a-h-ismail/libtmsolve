@@ -32,6 +32,9 @@ tms_var tms_g_builtin_vars[] = {{"i", I, true}, {"pi", M_PI, true}, {"exp", M_E,
 tms_var *tms_g_vars = NULL;
 int tms_g_var_count, tms_g_var_max = array_length(tms_g_builtin_vars);
 
+tms_int_var *tms_g_int_vars = NULL;
+int tms_g_int_var_count = 0, tms_g_int_var_max = 8;
+
 tms_ufunc *tms_g_ufunc = NULL;
 int tms_g_ufunc_count, tms_g_ufunc_max = 8;
 
@@ -45,6 +48,8 @@ void tmsolve_init()
         // Initialize variable names and values arrays
         tms_g_vars = malloc(tms_g_var_max * sizeof(tms_var));
         tms_g_var_count = array_length(tms_g_builtin_vars);
+
+        tms_g_int_vars = malloc(tms_g_int_var_max * sizeof(tms_int_var));
 
         // Initialize runtime function array
         tms_g_ufunc = malloc(tms_g_ufunc_max * sizeof(tms_ufunc));
@@ -142,12 +147,51 @@ int tms_new_var(char *name, bool is_constant)
     if (i == tms_g_var_count)
     {
         DYNAMIC_RESIZE(tms_g_vars, tms_g_var_count, tms_g_var_max, tms_var);
-        tms_g_vars[tms_g_var_count].name = malloc((strlen(name) + 1) * sizeof(char));
+        tms_g_vars[tms_g_var_count].name = strdup(name);
         // Initialize the new variable to zero
         tms_g_vars[tms_g_var_count].value = 0;
         tms_g_vars[tms_g_var_count].is_constant = is_constant;
-        strcpy(tms_g_vars[tms_g_var_count].name, name);
         ++tms_g_var_count;
+        return i;
+    }
+    return -1;
+}
+
+int tms_new_int_var(char *name)
+{
+    int i;
+    // Check if the name is allowed
+    for (i = 0; i < tms_g_illegal_names_count; ++i)
+    {
+        if (strcmp(name, tms_g_illegal_names[i]) == 0)
+        {
+            tms_error_handler(EH_SAVE, ILLEGAL_NAME, EH_FATAL_ERROR, -1);
+            return -1;
+        }
+    }
+
+    // Check if the name has illegal characters
+    if (tms_valid_name(name) == false)
+    {
+        tms_error_handler(EH_SAVE, INVALID_NAME, EH_FATAL_ERROR, -1);
+        return -1;
+    }
+
+    // Check if the variable already exists
+    for (i = 0; i < tms_g_int_var_count; ++i)
+    {
+        if (strcmp(tms_g_int_vars[i].name, name) == 0)
+            return i;
+    }
+
+    // Create a new variable
+    if (i == tms_g_int_var_count)
+    {
+        DYNAMIC_RESIZE(tms_g_int_vars, tms_g_int_var_count, tms_g_int_var_max, tms_int_var);
+        tms_g_int_vars[tms_g_int_var_count].name = strdup(name);
+        // Initialize the new variable to zero
+        tms_g_int_vars[tms_g_int_var_count].value = 0;
+        ++tms_g_int_var_count;
         return i;
     }
     return -1;
