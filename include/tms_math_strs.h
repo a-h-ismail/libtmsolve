@@ -211,7 +211,7 @@ typedef struct tms_int_subexpr
     int start_node;
 
     /// The array of int_op_nodes composing this subexpression.
-    struct tms_op_node *nodes;
+    struct tms_int_op_node *nodes;
 
     /// @brief Set to one of the op_nodes result pointer, indicating that the answer of that node is the answer of this subexpression.
     int64_t **result;
