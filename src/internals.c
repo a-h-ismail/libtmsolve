@@ -38,6 +38,12 @@ int tms_g_int_var_count = 0, tms_g_int_var_max = 8;
 tms_ufunc *tms_g_ufunc = NULL;
 int tms_g_ufunc_count, tms_g_ufunc_max = 8;
 
+int64_t tms_int_mask = 0xFFFFFFFF;
+
+int8_t tms_int_mask_size = 32;
+
+int8_t tms_error_bit = 0;
+
 void tmsolve_init()
 {
     int i;
@@ -107,6 +113,17 @@ void tmsolve_init()
             tms_g_all_func_names[i] = tmp[i];
         _tms_do_init = false;
     }
+}
+
+bool _tms_validate_args_count(int expected, int actual)
+{
+    if (expected == actual)
+        return true;
+    else if (expected > actual)
+        tms_error_handler(EH_SAVE, TOO_FEW_ARGS, EH_FATAL_ERROR, -1);
+    else if (expected < actual)
+        tms_error_handler(EH_SAVE, TOO_MANY_ARGS, EH_FATAL_ERROR, -1);
+    return false;
 }
 
 int tms_new_var(char *name, bool is_constant)

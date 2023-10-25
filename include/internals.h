@@ -103,6 +103,14 @@ extern char *tms_g_illegal_names[];
 /// @brief Number of illegal names (for use in loops);
 extern const int tms_g_illegal_names_count;
 
+/// @brief Mask used after every operation of int parser
+extern int64_t tms_int_mask;
+
+extern int8_t tms_int_mask_size;
+
+/// @brief Used to signal an error in the library
+extern int8_t tms_error_bit;
+
 /**
  * @brief Error metadata structure.
  */
@@ -130,6 +138,8 @@ int tms_new_var(char *name, bool is_constant);
 int tms_new_int_var(char *name);
 
 int tms_set_ufunction(char *name, char *function);
+
+bool _tms_validate_args_count(int expected, int actual);
 
 /**
  * @brief Duplicates an existing math expression.
