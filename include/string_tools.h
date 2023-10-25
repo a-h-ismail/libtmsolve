@@ -59,6 +59,8 @@ int8_t tms_oct_to_int(char c);
 
 int8_t tms_hex_to_int(char c);
 
+int8_t tms_detect_base(char *_s);
+
 /**
  * @brief Finds the next occurence of an operator in the string.
  * @param expr The string to search.
