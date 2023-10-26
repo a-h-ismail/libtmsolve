@@ -173,6 +173,155 @@ double complex tms_evaluate(tms_math_expr *M)
     return M->answer;
 }
 
+int64_t tms_int_evaluate(tms_int_expr *M)
+{
+    // No NULL pointer dereference allowed.
+    if (M == NULL)
+    {
+        tms_error_bit = 1;
+        return -1;
+    }
+
+    tms_int_op_node *i_node;
+    int s_index = 0, s_count = M->subexpr_count;
+    // Subexpression pointer to access the subexpression array.
+    tms_int_subexpr *S = M->subexpr_ptr;
+    while (s_index < s_count)
+    {
+        // Extended functions have no nodes
+        if (S[s_index].nodes == NULL)
+        {
+            if (S[s_index].exec_extf)
+            {
+                char *arguments;
+                tms_arg_list *L;
+
+                int length = S[s_index].solve_end - S[s_index].solve_start + 1;
+
+                // Copy arguments
+                arguments = tms_strndup(M->str + S[s_index].solve_start, length);
+                L = tms_get_args(arguments);
+
+                // Call the extended function using its pointer
+                **(S[s_index].result) = (*(S[s_index].func.extended))(L);
+
+                if (tms_error_bit == 1)
+                {
+                    tms_error_handler(EH_SAVE, EXTF_FAILURE, EH_FATAL_ERROR, S[s_index].subexpr_start);
+                    free(arguments);
+                    tms_free_arg_list(L);
+                    return -1;
+                }
+
+                S[s_index].exec_extf = false;
+                free(arguments);
+                tms_free_arg_list(L);
+
+                // Likely the extended function modified the global expr
+                _tms_g_expr = M->str;
+            }
+            ++s_index;
+
+            continue;
+        }
+        i_node = S[s_index].nodes + S[s_index].start_node;
+
+        // Case of an expression with one operand
+        if (S[s_index].op_count == 0)
+            *(i_node->result) = i_node->left_operand;
+        // Normal case, iterate through the nodes following the evaluation order.
+        else
+            while (i_node != NULL)
+            {
+                // Probably a parsing bug
+                if (i_node->result == NULL)
+                {
+                    tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, -1);
+                    tms_error_bit = 1;
+                    return -1;
+                }
+                switch (i_node->operator)
+                {
+                case '&':
+                    *(i_node->result) = i_node->left_operand & i_node->right_operand;
+                    break;
+
+                case '|':
+                    *(i_node->result) = i_node->left_operand | i_node->right_operand;
+                    break;
+
+                case '^':
+                    *(i_node->result) = i_node->left_operand ^ i_node->right_operand;
+                    break;
+
+                case '<':
+                    *(i_node->result) = i_node->left_operand < i_node->right_operand;
+                    break;
+
+                case '>':
+                    *(i_node->result) = i_node->left_operand > i_node->right_operand;
+                    break;
+
+                case '+':
+                    *(i_node->result) = i_node->left_operand + i_node->right_operand;
+                    break;
+
+                case '-':
+                    *(i_node->result) = i_node->left_operand - i_node->right_operand;
+                    break;
+
+                case '*':
+                    *(i_node->result) = i_node->left_operand * i_node->right_operand;
+                    break;
+
+                case '/':
+                    if (i_node->right_operand == 0)
+                    {
+                        tms_error_handler(EH_SAVE, DIVISION_BY_ZERO, EH_FATAL_ERROR, i_node->operator_index);
+                        tms_error_bit = 1;
+                        return -1;
+                    }
+                    *(i_node->result) = i_node->left_operand / i_node->right_operand;
+                    break;
+
+                case '%':
+                    if (i_node->right_operand == 0)
+                    {
+                        tms_error_handler(EH_SAVE, MODULO_ZERO, EH_FATAL_ERROR, i_node->operator_index);
+                        tms_error_bit = 1;
+                        return -1;
+                    }
+                    else
+                        *(i_node->result) = i_node->left_operand % i_node->right_operand;
+                    break;
+                }
+                *(i_node->result) = *(i_node->result) & tms_int_mask;
+                i_node = i_node->next;
+            }
+
+        // Executing function on the subexpression result
+        switch (S[s_index].func_type)
+        {
+        case TMS_F_REAL:
+            **(S[s_index].result) = (*(S[s_index].func.simple))(**(S[s_index].result));
+            break;
+        }
+
+        if (tms_error_bit == 1)
+        {
+            tms_error_handler(EH_SAVE, MATH_ERROR, EH_NONFATAL_ERROR, S[s_index].solve_start, -1);
+            tms_error_bit = 1;
+            return -1;
+        }
+        ++s_index;
+    }
+
+    if (M->runvar_i != -1 && !tms_g_vars[M->runvar_i].is_constant)
+        tms_g_int_vars[M->runvar_i].value = M->answer;
+
+    return M->answer;
+}
+
 void _tms_set_unknowns_data(tms_math_expr *M)
 {
     int i = 0, s_index, buffer_size = 16;
@@ -294,7 +443,7 @@ void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
 
         printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n",
                s_index, S[s_index].func_type, tmp, S[s_index].depth);
-        
+
         // Lookup result pointer location
         for (int i = 0; i < s_count; ++i)
         {

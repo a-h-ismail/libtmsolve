@@ -21,6 +21,8 @@ SPDX-License-Identifier: LGPL-2.1-only
  */
 double complex tms_evaluate(tms_math_expr *M);
 
+int64_t tms_int_evaluate(tms_int_expr *M);
+
 /**
  * @brief Generates a heap allocated array of structure containing all unknown members metadata and stores it in M.
  * @param M The math_expr used to generate and store the metadata.
