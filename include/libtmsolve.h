@@ -20,6 +20,8 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <tmsolve/string_tools.h>
 #include <tmsolve/tms_complex.h>
 #include <tmsolve/tms_math_strs.h>
+#include <tmsolve/int_parser.h>
+#include <tmsolve/bitwise.h>
 #include <tmsolve/version.h>
 #else
 #include "evaluator.h"
@@ -32,6 +34,8 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "string_tools.h"
 #include "tms_complex.h"
 #include "tms_math_strs.h"
+#include "int_parser.h"
+#include "bitwise.h"
 #include "version.h"
 #endif
 
