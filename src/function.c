@@ -15,20 +15,9 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <math.h>
 #include <time.h>
 
-bool _validate_args_count(int expected, int actual)
-{
-    if (expected == actual)
-        return true;
-    else if (expected > actual)
-        tms_error_handler(EH_SAVE, TOO_FEW_ARGS, EH_FATAL_ERROR, -1);
-    else if (expected < actual)
-        tms_error_handler(EH_SAVE, TOO_MANY_ARGS, EH_FATAL_ERROR, -1);
-    return false;
-}
-
 double complex tms_logn(tms_arg_list *args)
 {
-    if (_validate_args_count(2, args->count) == false)
+    if (_tms_validate_args_count(2, args->count) == false)
         return NAN;
     double complex value = tms_solve(args->arguments[0]);
     if (isnan(creal(value)))
@@ -51,7 +40,7 @@ double complex tms_int(tms_arg_list *args)
     double real, imag;
     double complex result;
 
-    if (_validate_args_count(1, args->count) == false)
+    if (_tms_validate_args_count(1, args->count) == false)
         return NAN;
     result = tms_solve(args->arguments[0]);
     real = creal(result);
@@ -74,7 +63,7 @@ double complex tms_int(tms_arg_list *args)
 
 double complex tms_randint(tms_arg_list *args)
 {
-    if (_validate_args_count(0, args->count) == false)
+    if (_tms_validate_args_count(0, args->count) == false)
         return NAN;
 
     return (double)rand() * pow(-1, rand() & 1);
@@ -82,7 +71,7 @@ double complex tms_randint(tms_arg_list *args)
 
 double complex tms_rand(tms_arg_list *args)
 {
-    if (_validate_args_count(0, args->count) == false)
+    if (_tms_validate_args_count(0, args->count) == false)
         return NAN;
 
     double decimal = rand();
@@ -94,7 +83,7 @@ double complex tms_rand(tms_arg_list *args)
 
 double complex tms_base_n(tms_arg_list *args, int8_t base)
 {
-    if (_validate_args_count(1, args->count) == false)
+    if (_tms_validate_args_count(1, args->count) == false)
         return NAN;
 
     double complex value;
@@ -132,7 +121,7 @@ double complex tms_derivative(tms_arg_list *L)
     tms_math_expr *M;
     double epsilon = 1e-9;
 
-    if (_validate_args_count(2, L->count) == false)
+    if (_tms_validate_args_count(2, L->count) == false)
         return NAN;
 
     double x, f_prime, fx1, fx2;
@@ -167,7 +156,7 @@ double complex tms_integrate(tms_arg_list *L)
 {
     tms_math_expr *M;
 
-    if (_validate_args_count(3, L->count) == false)
+    if (_tms_validate_args_count(3, L->count) == false)
         return NAN;
 
     int n;
