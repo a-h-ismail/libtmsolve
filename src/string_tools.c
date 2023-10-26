@@ -132,6 +132,16 @@ bool tms_is_op(char c)
     return false;
 }
 
+bool tms_is_int_op(char c)
+{
+    char ops[] = {'+', '-', '*', '/', '^', '|', '&', '%', '<', '>', '='};
+    for (int i = 0; i < array_length(ops); ++i)
+        if (c == ops[i])
+            return true;
+
+    return false;
+}
+
 bool tms_is_valid_number_start(char c)
 {
     switch (c)
@@ -141,6 +151,19 @@ bool tms_is_valid_number_start(char c)
         return true;
     default:
         return tms_is_op(c);
+    }
+    return false;
+}
+
+bool tms_is_valid_int_number_start(char c)
+{
+    switch (c)
+    {
+    case '(':
+    case ',':
+        return true;
+    default:
+        return tms_is_int_op(c);
     }
     return false;
 }
@@ -155,6 +178,20 @@ bool tms_is_valid_number_end(char c)
         return true;
     default:
         return tms_is_op(c);
+    }
+    return false;
+}
+
+bool tms_is_valid_int_number_end(char c)
+{
+    switch (c)
+    {
+    case ')':
+    case ',':
+    case '\0':
+        return true;
+    default:
+        return tms_is_int_op(c);
     }
     return false;
 }
@@ -362,6 +399,100 @@ double complex tms_read_value(char *_s, int start)
     }
 }
 
+int64_t _tms_read_int_helper(char *number, int8_t base)
+{
+    int64_t value = 0;
+    int i, power = 1;
+    bool is_negative = false;
+    int8_t (*symbol_resolver)(char);
+
+    // Empty string
+    if (number[0] == '\0')
+    {
+        tms_error_bit = 1;
+        return -1;
+    }
+
+    if (number[0] == '-')
+    {
+        ++number;
+        is_negative = true;
+    }
+    else if (number[0] == '+')
+        ++number;
+
+    switch (base)
+    {
+    case 10:
+        symbol_resolver = tms_dec_to_int;
+        break;
+    case 2:
+        symbol_resolver = tms_bin_to_int;
+        break;
+    case 8:
+        symbol_resolver = tms_oct_to_int;
+        break;
+    case 16:
+        symbol_resolver = tms_hex_to_int;
+        break;
+    default:
+        tms_error_bit = 1;
+        return -1;
+    }
+
+    int8_t tmp;
+    for (i = strlen(number) - 1; i >= 0; --i)
+    {
+        tmp = (*symbol_resolver)(number[i]);
+        if (tmp == -1)
+        {
+            tms_error_bit = 1;
+            return -1;
+        }
+        value += tmp * power;
+        power *= base;
+    }
+    if (is_negative)
+        value = -value;
+    return value;
+}
+
+int64_t tms_read_int_value(char *_s, int start)
+{
+    int64_t value;
+    int end, base;
+
+    _s += start;
+    end = tms_find_int_endofnumber(_s, 0);
+    if (end == -1)
+    {
+        tms_error_bit = 1;
+        return -1;
+    }
+
+    if (!tms_is_valid_int_number_end(_s[end + 1]))
+    {
+        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, start + end);
+        tms_error_bit = 1;
+        return -1;
+    }
+
+    base = tms_detect_base(_s);
+    if (base != 10)
+    {
+        _s += 2;
+        end -= 2;
+    }
+
+    // Copy the value to a separate array
+    char num_str[end + 2];
+    strncpy(num_str, _s, end + 1);
+    num_str[end + 1] = '\0';
+
+    value = _tms_read_int_helper(num_str, base);
+    return value;
+}
+
 // Function that seeks for the next occurence of a + or - sign starting from i
 int tms_find_add_subtract(char *expr, int i)
 {
@@ -535,6 +666,32 @@ int tms_find_endofnumber(char *number, int start)
     }
 
     if (number[end] == '\0' || tms_is_op(number[end]) || number[end] == ')' || number[end] == ',')
+        return end - 1;
+    else
+        return -1;
+}
+
+int tms_find_int_endofnumber(char *number, int start)
+{
+    int end = start, base = 10;
+
+    // Number starts with + or -
+    if (number[start] == '+' || number[start] == '-')
+        ++end;
+
+    base = tms_detect_base(number + end);
+    if (base != 10)
+        end += 2;
+
+    while (number[end] != '\0')
+    {
+        if (tms_valid_digit_for_base(number[end], base))
+            ++end;
+        else
+            break;
+    }
+
+    if (number[end] == '\0' || tms_is_int_op(number[end]) || number[end] == ')' || number[end] == ',')
         return end - 1;
     else
         return -1;

@@ -41,6 +41,8 @@ int tms_find_opening_parenthesis(char *expr, int p);
  */
 bool tms_is_op(char c);
 
+bool tms_is_int_op(char c);
+
 /**
  * @brief Checks if the character is a correct start delimiter for operators.
  */
@@ -92,6 +94,10 @@ void tms_resize_zone(char *str, int old_end, int new_end);
  */
 int tms_find_endofnumber(char *expr, int start);
 
+int tms_find_int_endofnumber(char *number, int start);
+
+bool tms_is_valid_int_number_start(char c);
+
 /**
  * @brief Finds the start of a number knowing its end in the expression.
  * @param expr The expression to search.
@@ -133,6 +139,11 @@ double _tms_read_value_simple(char *number, int8_t base);
  * @return The result or NaN in case of failure.
  */
 double complex tms_read_value(char *_s, int start);
+
+/**
+ * @brief Reads an 64 bit integer value, sets error bit on failure.
+ */
+int64_t tms_read_int_value(char *_s, int start);
 
 /**
  * @brief Reads a value from the expression at start, supports numbers, constants and variables.
