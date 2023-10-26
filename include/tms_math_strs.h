@@ -232,7 +232,7 @@ typedef struct tms_int_expr
     char *str;
 
     /// The subexpression array created by parsing theexpression.
-    tms_int_subexpr *ptr;
+    tms_int_subexpr *subexpr_ptr;
 
     /// Number of subexpression in this expression
     int subexpr_count;
