@@ -56,6 +56,8 @@ double complex tms_solve_e(char *expr, bool enable_complex);
  */
 double complex tms_solve(char *expr);
 
+int64_t tms_int_solve(char *expr);
+
 /**
  * @brief Calculates the factorial.
  * @return value!

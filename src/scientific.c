@@ -7,6 +7,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "function.h"
 #include "internals.h"
 #include "parser.h"
+#include "int_parser.h"
 #include "string_tools.h"
 #include "tms_math_strs.h"
 
@@ -207,6 +208,19 @@ double complex tms_solve(char *expr)
     // Unlikely to fall out of the switch.
     tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, 0);
     return NAN;
+}
+
+int64_t tms_int_solve(char *expr)
+{
+    if (!tms_pre_parse_routine(expr))
+    {
+        tms_error_bit = 1;
+        return -1;
+    }
+    tms_int_expr *M;
+    M = tms_parse_int_expr(expr);
+    int64_t result = tms_int_evaluate(M);
+    return result;
 }
 
 tms_int_factor *tms_find_factors(int32_t value)
