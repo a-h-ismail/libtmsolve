@@ -220,6 +220,7 @@ int64_t tms_int_solve(char *expr)
     tms_int_expr *M;
     M = tms_parse_int_expr(expr);
     int64_t result = tms_int_evaluate(M);
+    tms_delete_int_expr(M);
     return result;
 }
 
