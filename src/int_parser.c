@@ -56,12 +56,12 @@ int64_t _tms_read_int_operand(char *expr, int start)
     if (tms_error_bit == 1)
     {
         int i;
-        tms_error_bit = 0;
         for (i = 0; i < tms_g_int_var_count; ++i)
         {
             if (tms_match_word(expr, start, tms_g_int_vars[i].name, true))
             {
                 value = tms_g_int_vars[i].value;
+                tms_error_bit = 0;
                 break;
             }
         }
@@ -369,10 +369,7 @@ int _tms_init_int_nodes(char *local_expr, tms_int_expr *M, int s_index, int *ope
         {
             NB->left_operand = _tms_read_int_operand(local_expr, solve_start);
             if (tms_error_bit == 1)
-            {
-                if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
-                    return -1;
-            }
+                return -1;
         }
 
         S[s_index].start_node = 0;
@@ -500,7 +497,10 @@ int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op
                 return -1;
             }
             else
+            {
                 *(S[status].result) = operand_ptr;
+                tms_error_bit = 0;
+            }
         }
     }
     return 0;
@@ -513,7 +513,7 @@ bool _tms_set_int_evaluation_order(tms_int_subexpr *S)
     tms_int_op_node *NB = S->nodes;
 
     // Set the starting op_node by searching the first op_node with the highest priority
-    for (i = 3; i > 0; --i)
+    for (i = 5; i > 0; --i)
     {
         for (j = 0; j < op_count; ++j)
         {
@@ -760,8 +760,8 @@ void tms_delete_int_expr(tms_int_expr *M)
 
 void tms_set_priority_int(tms_int_op_node *list, int op_count)
 {
-    char operators[] = {'*', '/', '%', '+', '-', '&', '^', '|'};
-    uint8_t priority[] = {4, 4, 3, 3, 3, 2, 1, 0};
+    char operators[] = {'*', '/', '%', '+', '-', '<', '>', '&', '^', '|'};
+    uint8_t priority[] = {5, 5, 4, 4, 4, 3, 3, 2, 1, 0};
     int i, j;
     for (i = 0; i < op_count; ++i)
     {
