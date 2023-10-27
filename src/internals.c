@@ -38,7 +38,7 @@ int tms_g_int_var_count = 0, tms_g_int_var_max = 8;
 tms_ufunc *tms_g_ufunc = NULL;
 int tms_g_ufunc_count, tms_g_ufunc_max = 8;
 
-int64_t tms_int_mask = 0xFFFFFFFF;
+uint64_t tms_int_mask = 0xFFFFFFFF;
 
 int8_t tms_int_mask_size = 32;
 

@@ -104,7 +104,7 @@ extern char *tms_g_illegal_names[];
 extern const int tms_g_illegal_names_count;
 
 /// @brief Mask used after every operation of int parser
-extern int64_t tms_int_mask;
+extern uint64_t tms_int_mask;
 
 extern int8_t tms_int_mask_size;
 
