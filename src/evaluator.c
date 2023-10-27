@@ -202,8 +202,8 @@ int64_t tms_int_evaluate(tms_int_expr *M)
                 arguments = tms_strndup(M->str + S[s_index].solve_start, length);
                 L = tms_get_args(arguments);
 
-                // Call the extended function using its pointer
-                **(S[s_index].result) = (*(S[s_index].func.extended))(L);
+                // Call the extended function using its pointer, mask the result
+                **(S[s_index].result) = ((*(S[s_index].func.extended))(L)) & tms_int_mask;
 
                 if (tms_error_bit == 1)
                 {
@@ -316,7 +316,7 @@ int64_t tms_int_evaluate(tms_int_expr *M)
         ++s_index;
     }
 
-    if (M->runvar_i != -1 && !tms_g_vars[M->runvar_i].is_constant)
+    if (M->runvar_i != -1)
         tms_g_int_vars[M->runvar_i].value = M->answer;
 
     return M->answer;
