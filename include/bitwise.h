@@ -12,4 +12,14 @@ int64_t tms_not(int64_t value);
 int64_t tms_rrc(tms_arg_list *args);
 
 int64_t tms_rlc(tms_arg_list *args);
+
+int64_t tms_nor(tms_arg_list *args);
+
+int64_t tms_xor(tms_arg_list *args);
+
+int64_t tms_nand(tms_arg_list *args);
+
+int64_t tms_and(tms_arg_list *args);
+
+int64_t tms_or(tms_arg_list *args);
 #endif
