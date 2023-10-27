@@ -65,6 +65,13 @@ int64_t _tms_read_int_operand(char *expr, int start)
                 break;
             }
         }
+
+        // ans is a special case
+        if (tms_match_word(expr, start, "ans", true))
+        {
+            value = tms_g_int_ans & tms_int_mask;
+            tms_error_bit = 0;
+        }
     }
 
     // No variable found
@@ -520,7 +527,7 @@ bool _tms_set_int_evaluation_order(tms_int_subexpr *S)
     tms_int_op_node *NB = S->nodes;
 
     // Set the starting op_node by searching the first op_node with the highest priority
-    for (i = 5; i > 0; --i)
+    for (i = 6; i > 0; --i)
     {
         for (j = 0; j < op_count; ++j)
         {
@@ -768,7 +775,7 @@ void tms_delete_int_expr(tms_int_expr *M)
 void tms_set_priority_int(tms_int_op_node *list, int op_count)
 {
     char operators[] = {'*', '/', '%', '+', '-', '<', '>', '&', '^', '|'};
-    uint8_t priority[] = {5, 5, 4, 4, 4, 3, 3, 2, 1, 0};
+    uint8_t priority[] = {6, 6, 5, 5, 5, 4, 4, 3, 2, 1};
     int i, j;
     for (i = 0; i < op_count; ++i)
     {
