@@ -49,8 +49,11 @@ SPDX-License-Identifier: LGPL-2.1-only
         ptr = (type *)realloc(ptr, max * sizeof(type)); \
     }
 
-/// @brief Stores the answer of the last calculation to allow reuse.
+/// @brief Stores the answer of the last calculation.
 extern double complex tms_g_ans;
+
+/// @brief Int64 variant of ans.
+extern int64_t tms_g_int_ans;
 
 /// @brief Use to store the current expression being processed, used by tms_error_handler() to generate the error prompt.
 extern char *_tms_g_expr;

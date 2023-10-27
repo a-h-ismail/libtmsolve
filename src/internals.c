@@ -17,6 +17,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 char *_tms_g_expr = NULL;
 double complex tms_g_ans = 0;
+int64_t tms_g_int_ans = 0;
 
 bool _tms_do_init = true;
 bool _tms_debug = false;
