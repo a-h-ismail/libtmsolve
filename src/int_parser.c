@@ -50,7 +50,7 @@ int64_t _tms_read_int_operand(char *expr, int start)
     else
         is_negative = false;
 
-    value = tms_read_int_value(expr, start);
+    value = tms_read_int_value(expr, start) & tms_int_mask;
 
     // Failed to read value normally, it is probably a variable
     if (tms_error_bit == 1)
@@ -60,11 +60,18 @@ int64_t _tms_read_int_operand(char *expr, int start)
         {
             if (tms_match_word(expr, start, tms_g_int_vars[i].name, true))
             {
-                value = tms_g_int_vars[i].value;
+                value = tms_g_int_vars[i].value & tms_int_mask;
                 tms_error_bit = 0;
                 break;
             }
         }
+    }
+
+    // No variable found
+    if (tms_error_bit == 1)
+    {
+        tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, start);
+        return -1;
     }
 
     if (is_negative)
