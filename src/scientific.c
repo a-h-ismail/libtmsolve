@@ -52,6 +52,14 @@ double tms_fact(double value)
     return result;
 }
 
+int64_t tms_int_abs(int64_t v)
+{
+    if (v < 0)
+        return -v;
+    else
+        return v;
+}
+
 void tms_set_ans(double complex result)
 {
     if (!isnan(creal(result)) && !isnan(cimag(result)))

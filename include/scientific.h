@@ -41,6 +41,9 @@ bool tms_is_integer(double value);
  */
 bool tms_is_real(double complex z);
 
+/// @brief Simple fabs equivalent for int64_t
+int64_t tms_int_abs(int64_t v);
+
 /**
  * @brief Calculates a mathematical expression and returns the answer.
  * @param expr The string containing the math expression.
