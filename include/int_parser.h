@@ -16,6 +16,10 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define TMS_BREAK 2
 #define TMS_ERROR -1
 
+extern char *tms_int_extf_name[];
+
+extern char *tms_int_nfunc_name[];
+
 int64_t _tms_read_int_helper(char *number, int8_t base);
 
 int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op_start, int s_index, char operand);
