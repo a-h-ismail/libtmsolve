@@ -7,6 +7,11 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define TMS_BITWISE
 #include "tms_math_strs.h"
 
+/**
+ * @file
+ * @brief Contains bitwise extended functions declarations.
+ */
+
 int64_t tms_not(int64_t value);
 
 int64_t tms_rrc(tms_arg_list *args);

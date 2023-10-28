@@ -12,7 +12,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #endif
 /**
  * @file
- * @brief Contains extended functions definitions.
+ * @brief Contains extended functions declarations.
  */
 
 /**

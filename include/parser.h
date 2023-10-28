@@ -176,9 +176,9 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_comp
 
 /**
  * @brief Frees the memory used by a math_expr and its members.
- * @param math_struct The math_expr to delete.
+ * @param M The math_expr to delete.
  */
-void tms_delete_math_expr(tms_math_expr *math_struct);
+void tms_delete_math_expr(tms_math_expr *M);
 
 /**
  * @brief Sets the priority of each op_node's operator in the provided array.

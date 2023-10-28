@@ -24,8 +24,17 @@ int64_t _tms_read_int_helper(char *number, int8_t base);
 
 int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op_start, int s_index, char operand);
 
+/**
+ * @brief The integer version of libtmsolve's parser.
+ * @param expr The expression to parse.
+ * @return A (malloc'd) pointer to the generated int expression structure.
+ */
 tms_int_expr *tms_parse_int_expr(char *expr);
 
+/**
+ * @brief Deletes an int expression.
+ * @param M The expression to delete.
+ */
 void tms_delete_int_expr(tms_int_expr *M);
 
 int tms_find_int_subexpr_starting_at(tms_int_subexpr *S, int start, int s_index, int mode);
