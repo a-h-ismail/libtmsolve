@@ -380,7 +380,10 @@ int _tms_init_int_nodes(char *local_expr, tms_int_expr *M, int s_index, int *ope
         {
             NB->left_operand = _tms_read_int_operand(local_expr, solve_start);
             if (tms_error_bit == 1)
+            {
+                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, solve_start);
                 return -1;
+            }
         }
 
         S[s_index].start_node = 0;
