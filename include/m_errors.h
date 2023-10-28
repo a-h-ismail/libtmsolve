@@ -39,4 +39,5 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define NO_COMPLEX_LOG_BASE "Base-N logarithm doesn't support complex base."
 #define NO_FSELF_REFERENCE "Can't reference a user function within itself."
 #define NO_FCIRCULAR_REFERENCE "Circular function reference detected, function unchanged."
+#define INTEGER_UNDER_OR_OVERFLOW "Integer overflow/underflow detected."
 #endif
