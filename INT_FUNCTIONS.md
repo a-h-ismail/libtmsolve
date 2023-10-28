@@ -12,7 +12,6 @@ Currently only one function: `not(value)`
 
 All of the following functions perform bitwise operations:
 
-- `not(value)`: Expects one argument, returns one's complement of `value`.
 - `and, nand, or, xor, xnor`: Expects 2 arguments, name is self explanatory.
 - `rrc(value, shift)`: Performs right circular rotation of `value` bits by `shift` bits.
 - `rlc(value, shift)`: Performs left circular rotation of `value` bits by `shift` bits.

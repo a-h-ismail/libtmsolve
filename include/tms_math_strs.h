@@ -74,6 +74,7 @@ typedef struct tms_unknown_operand
     bool is_negative;
 } tms_unknown_operand;
 
+/// @brief User runtime function structure.
 typedef struct tms_ufunc
 {
     char *name;
@@ -142,7 +143,7 @@ typedef struct tms_math_subexpr
     bool exec_extf;
 } tms_math_subexpr;
 
-/// The standalone structure to hold all of an expression's metadata.
+/// @brief The standalone structure to hold all of an expression's metadata.
 typedef struct tms_math_expr
 {
     /// The string form of the expression
@@ -188,6 +189,7 @@ typedef struct tms_int_op_node
     struct tms_int_op_node *next;
 } tms_int_op_node;
 
+/// @brief Holds the metadata of an integer subexpression.
 typedef struct tms_int_subexpr
 {
     /// @brief Number of operators in this subexpression.
@@ -226,6 +228,7 @@ typedef struct tms_int_subexpr
     bool exec_extf;
 } tms_int_subexpr;
 
+/// @brief The standalone structure to hold all of an integer expression's metadata.
 typedef struct tms_int_expr
 {
     /// The string form of the expression
