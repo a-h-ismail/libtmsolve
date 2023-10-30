@@ -19,8 +19,8 @@ SPDX-License-Identifier: LGPL-2.1-only
 char *tms_int_nfunc_name[] = {"not", NULL};
 int64_t (*tms_int_nfunc_ptr[])(int64_t) = {tms_not};
 
-char *tms_int_extf_name[] = {"rrc", "rlc", "nand", "and", "xor", "nor", "or", NULL};
-int64_t (*tms_int_extf_ptr[])(tms_arg_list *) = {tms_rrc, tms_rlc, tms_nand, tms_and, tms_xor, tms_nor, tms_or};
+char *tms_int_extf_name[] = {"rrc", "rlc", "rr", "rl", "nand", "and", "xor", "nor", "or", NULL};
+int64_t (*tms_int_extf_ptr[])(tms_arg_list *) = {tms_rrc, tms_rlc, tms_rr, tms_rl, tms_nand, tms_and, tms_xor, tms_nor, tms_or};
 
 int64_t _tms_read_int_operand(char *expr, int start)
 {
@@ -527,7 +527,7 @@ bool _tms_set_int_evaluation_order(tms_int_subexpr *S)
     tms_int_op_node *NB = S->nodes;
 
     // Set the starting op_node by searching the first op_node with the highest priority
-    for (i = 6; i > 0; --i)
+    for (i = 5; i > 0; --i)
     {
         for (j = 0; j < op_count; ++j)
         {
@@ -774,8 +774,8 @@ void tms_delete_int_expr(tms_int_expr *M)
 
 void tms_set_priority_int(tms_int_op_node *list, int op_count)
 {
-    char operators[] = {'*', '/', '%', '+', '-', '<', '>', '&', '^', '|'};
-    uint8_t priority[] = {6, 6, 5, 5, 5, 4, 4, 3, 2, 1};
+    char operators[] = {'*', '/', '%', '+', '-', '&', '^', '|'};
+    uint8_t priority[] = {5, 5, 4, 4, 4, 3, 2, 1};
     int i, j;
     for (i = 0; i < op_count; ++i)
     {

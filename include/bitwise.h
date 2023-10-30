@@ -18,6 +18,10 @@ int64_t tms_rrc(tms_arg_list *args);
 
 int64_t tms_rlc(tms_arg_list *args);
 
+int64_t tms_rr(tms_arg_list *args);
+
+int64_t tms_rl(tms_arg_list *args);
+
 int64_t tms_nor(tms_arg_list *args);
 
 int64_t tms_xor(tms_arg_list *args);

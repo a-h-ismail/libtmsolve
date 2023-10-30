@@ -134,7 +134,7 @@ bool tms_is_op(char c)
 
 bool tms_is_int_op(char c)
 {
-    char ops[] = {'+', '-', '*', '/', '^', '|', '&', '%', '<', '>', '='};
+    char ops[] = {'+', '-', '*', '/', '^', '|', '&', '%', '='};
     for (int i = 0; i < array_length(ops); ++i)
         if (c == ops[i])
             return true;

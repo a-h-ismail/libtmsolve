@@ -254,14 +254,6 @@ int64_t tms_int_evaluate(tms_int_expr *M)
                     *(i_node->result) = i_node->left_operand ^ i_node->right_operand;
                     break;
 
-                case '<':
-                    *(i_node->result) = i_node->left_operand << i_node->right_operand;
-                    break;
-
-                case '>':
-                    *(i_node->result) = i_node->left_operand >> i_node->right_operand;
-                    break;
-
                 case '+':
                     *(i_node->result) = i_node->left_operand + i_node->right_operand;
                     break;
