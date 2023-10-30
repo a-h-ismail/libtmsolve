@@ -52,17 +52,17 @@ int64_t _tms_rotate_circular(tms_arg_list *args, char direction)
     }
 }
 
-int64_t tms_rrc(tms_arg_list *args)
+int64_t tms_rr(tms_arg_list *args)
 {
     return _tms_rotate_circular(args, 'r');
 }
 
-int64_t tms_rlc(tms_arg_list *args)
+int64_t tms_rl(tms_arg_list *args)
 {
     return _tms_rotate_circular(args, 'l');
 }
 
-int64_t tms_rr(tms_arg_list *args)
+int64_t tms_sr(tms_arg_list *args)
 {
     int64_t op1, op2;
     get_two_operands(args, &op1, &op2);
@@ -71,7 +71,7 @@ int64_t tms_rr(tms_arg_list *args)
     return (op1 >> op2) & tms_int_mask;
 }
 
-int64_t tms_rl(tms_arg_list *args)
+int64_t tms_sl(tms_arg_list *args)
 {
     int64_t op1, op2;
     get_two_operands(args, &op1, &op2);

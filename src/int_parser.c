@@ -19,8 +19,8 @@ SPDX-License-Identifier: LGPL-2.1-only
 char *tms_int_nfunc_name[] = {"not", NULL};
 int64_t (*tms_int_nfunc_ptr[])(int64_t) = {tms_not};
 
-char *tms_int_extf_name[] = {"rrc", "rlc", "rr", "rl", "nand", "and", "xor", "nor", "or", NULL};
-int64_t (*tms_int_extf_ptr[])(tms_arg_list *) = {tms_rrc, tms_rlc, tms_rr, tms_rl, tms_nand, tms_and, tms_xor, tms_nor, tms_or};
+char *tms_int_extf_name[] = {"rr", "rl", "sr", "sl", "nand", "and", "xor", "nor", "or", NULL};
+int64_t (*tms_int_extf_ptr[])(tms_arg_list *) = {tms_rr, tms_rl, tms_sr, tms_sl, tms_nand, tms_and, tms_xor, tms_nor, tms_or};
 
 int64_t _tms_read_int_operand(char *expr, int start)
 {
