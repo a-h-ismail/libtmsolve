@@ -1013,7 +1013,7 @@ bool tms_pre_parse_routine(char *expr)
 
 bool tms_legal_char_in_name(char c)
 {
-    if (isalpha(c) || c == '_')
+    if (isalnum(c) || c == '_')
         return true;
     else
         return false;
@@ -1021,10 +1021,25 @@ bool tms_legal_char_in_name(char c)
 
 bool tms_valid_name(char *name)
 {
+    bool only_digits = true;
+
+    // Name shouldn't start with a number
+    if (isalpha(name[0]) || name[0] == '_')
+        only_digits = false;
+    else
+        return false;
+
     for (int i = 0; i < strlen(name); ++i)
     {
-        if (!tms_legal_char_in_name(name[i]))
+        if (isalpha(name[i]) || name[i] == '_')
+            only_digits = false;
+        else if (isdigit(name[i]))
+            continue;
+        else
             return false;
     }
+    if (only_digits)
+        return false;
+
     return true;
 }
