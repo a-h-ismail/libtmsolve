@@ -16,7 +16,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define PARENTHESIS_NOT_OPEN "Extra closing parenthesis."
 #define INVALID_MATRIX "Invalid matrix."
 #define SYNTAX_ERROR "Syntax error."
-#define INVALID_NAME "Invalid name, allowed characters: alphabetic + underscore."
+#define INVALID_NAME "Invalid name, allowed characters: alphanumeric + underscore, starts with '_' or alphabetic."
 #define ILLEGAL_NAME "Illegal name."
 #define NO_FUNCTION_SHADOWING "Can't shadow built-in functions."
 #define NO_INPUT "Empty input."
