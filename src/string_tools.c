@@ -799,6 +799,9 @@ bool tms_match_word(char *str, int i, char *keyword, bool match_from_start)
     if (!match_from_start)
         i -= keylen - 1;
 
+    if (i < 0)
+        return false;
+
     if (strncmp(str + i, keyword, keylen) != 0)
         return false;
 
