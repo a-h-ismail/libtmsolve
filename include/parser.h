@@ -195,7 +195,7 @@ void tms_set_priority(tms_op_node *list, int op_count);
  * @param mode Determines if the value passed by start is the expression_start (mode==1) or solve_start (mode==2).
  * @return Depends on the mode, either
  */
-int tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_index, int mode);
+int tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_index, int8_t mode);
 
 /**
  * @brief Finds the subexpression that ends at a specific index in the string.

@@ -468,7 +468,7 @@ int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start,
 {
     tms_math_subexpr *S = M->subexpr_ptr;
     double complex *operand_ptr;
-    int status;
+    int tmp;
 
     switch (operand)
     {
@@ -483,30 +483,29 @@ int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start,
         return -1;
     }
 
-    *operand_ptr = _tms_set_operand_value(expr, op_start, M->enable_complex);
-    // Case of reading the number to the right operand of a op_node
-    if (isnan((double)*operand_ptr))
+    // Check if the operand is the result of a subexpression
+    tmp = tms_find_subexpr_starting_at(S, op_start, s_index, 1);
+
+    // The operand is a variable or a numeric value
+    if (tmp == -1)
     {
-        if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
-            return -1;
-        // Checking for the unknown 'x'
-        if (enable_unknowns == true)
-            status = tms_set_unknowns_data(expr + op_start, N, operand);
-        else
-            status = -1;
-        if (status == -1)
+        *operand_ptr = _tms_set_operand_value(expr, op_start, M->enable_complex);
+
+        if (isnan((double)*operand_ptr))
         {
-            // Case of a subexpression result as right_operand, set its result pointer to right_operand
-            status = tms_find_subexpr_starting_at(S, op_start, s_index, 1);
-            if (status == -1)
-            {
-                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, op_start);
+            if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
                 return -1;
-            }
+            // Checking for the unknown 'x'
+            if (enable_unknowns == true)
+                tmp = tms_set_unknowns_data(expr + op_start, N, operand);
             else
-                *(S[status].result) = operand_ptr;
+                return -1;
         }
     }
+    else
+        // It's official: we have a subexpression result as operand
+        *(S[tmp].result) = operand_ptr;
+
     return 0;
 }
 
@@ -918,15 +917,22 @@ void tms_set_priority(tms_op_node *list, int op_count)
     }
 }
 
-int tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_index, int mode)
+int tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_index, int8_t mode)
 {
     int i;
+    // If a subexpression is an operand in another subexpression, it will have a depth higher by only 1
+    // Skip deeper subexpression to reduce search time
+    int target_depth = S[s_index].depth + 1;
     i = s_index - 1;
+
     switch (mode)
     {
     case 1:
         while (i >= 0)
         {
+            if (S[i].depth != target_depth)
+                break;
+
             if (S[i].subexpr_start == start)
                 return i;
             else
@@ -936,6 +942,9 @@ int tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_index, in
     case 2:
         while (i >= 0)
         {
+            if (S[i].depth != target_depth)
+                break;
+
             if (S[i].solve_start == start)
                 return i;
             else
