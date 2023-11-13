@@ -497,7 +497,12 @@ int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start,
                 return -1;
             // Checking for the unknown 'x'
             if (enable_unknowns == true)
+            {
                 tmp = tms_set_unknowns_data(expr + op_start, N, operand);
+                if (tmp == -1)
+                    return -1;
+            }
+            // Nothing worked, so report a failure
             else
                 return -1;
         }
@@ -930,7 +935,7 @@ int tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_index, in
     case 1:
         while (i >= 0)
         {
-            if (S[i].depth != target_depth)
+            if (S[i].depth > target_depth)
                 break;
 
             if (S[i].subexpr_start == start)
@@ -942,7 +947,7 @@ int tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_index, in
     case 2:
         while (i >= 0)
         {
-            if (S[i].depth != target_depth)
+            if (S[i].depth > target_depth)
                 break;
 
             if (S[i].solve_start == start)
