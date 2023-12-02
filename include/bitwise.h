@@ -24,6 +24,9 @@ int64_t tms_rl(tms_arg_list *args);
 /// @brief Shift Right
 int64_t tms_sr(tms_arg_list *args);
 
+/// @brief Shift Right Arithmetic (sign extended)
+int64_t tms_sra(tms_arg_list *args);
+
 /// @brief Shift Left
 int64_t tms_sl(tms_arg_list *args);
 
