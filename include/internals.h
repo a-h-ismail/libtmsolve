@@ -23,7 +23,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 #define array_length(z) (sizeof(z) / sizeof(*z))
 /// Maximum number of errors in tms_error_handler
-#define EH_MAX_ERRORS 5
+#define EH_MAX_ERRORS 10
 
 #define EH_SAVE 1
 #define EH_PRINT 2
