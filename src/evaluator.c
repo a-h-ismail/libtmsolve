@@ -181,6 +181,7 @@ int64_t tms_int_evaluate(tms_int_expr *M)
         tms_error_bit = 1;
         return -1;
     }
+    bool overflow;
 
     tms_int_op_node *i_node;
     int s_index = 0, s_count = M->subexpr_count;
@@ -255,15 +256,21 @@ int64_t tms_int_evaluate(tms_int_expr *M)
                     break;
 
                 case '+':
-                    *(i_node->result) = i_node->left_operand + i_node->right_operand;
+                    overflow = __builtin_add_overflow(i_node->left_operand, i_node->right_operand, i_node->result);
+                    if (overflow || (*(i_node->result) & tms_int_mask) != *(i_node->result))
+                        tms_error_handler(EH_SAVE, INTEGER_OVERFLOW, EH_NONFATAL_ERROR, i_node->operator_index);
                     break;
 
                 case '-':
-                    *(i_node->result) = i_node->left_operand - i_node->right_operand;
+                    overflow = __builtin_sub_overflow(i_node->left_operand, i_node->right_operand, i_node->result);
+                    if (overflow || (*(i_node->result) & tms_int_mask) != *(i_node->result))
+                        tms_error_handler(EH_SAVE, INTEGER_OVERFLOW, EH_NONFATAL_ERROR, i_node->operator_index);
                     break;
 
                 case '*':
-                    *(i_node->result) = i_node->left_operand * i_node->right_operand;
+                    overflow = __builtin_mul_overflow(i_node->left_operand, i_node->right_operand, i_node->result);
+                    if (overflow || (*(i_node->result) & tms_int_mask) != *(i_node->result))
+                        tms_error_handler(EH_SAVE, INTEGER_OVERFLOW, EH_NONFATAL_ERROR, i_node->operator_index);
                     break;
 
                 case '/':
