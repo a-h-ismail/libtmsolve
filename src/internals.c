@@ -614,7 +614,7 @@ int tms_error_handler(int _mode, ...)
 void tms_print_error(tms_error_data E)
 {
     int i;
-    puts(E.error_msg);
+    fprintf(stderr, "At col %d: %s\n", E.real_index, E.error_msg);
     if (E.real_index != -1)
     {
         if (E.real_index > 49)
