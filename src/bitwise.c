@@ -68,6 +68,23 @@ int64_t tms_sr(tms_arg_list *args)
     get_two_operands(args, &op1, &op2);
     if (tms_error_bit == 1)
         return -1;
+    // The cast to unsigned is necessary to avoid right shift sign extending
+    return ((uint64_t)op1 >> op2) & tms_int_mask;
+}
+
+int64_t tms_sra(tms_arg_list *args)
+{
+    int64_t op1, op2;
+    uint64_t inverse_mask = ~tms_int_mask;
+    get_two_operands(args, &op1, &op2);
+
+    if (tms_error_bit == 1)
+        return -1;
+    
+    // Sign extend op1 to 64 bit (if the MSB relative to the mask is 1)
+    if (((inverse_mask >> 1) & tms_int_mask) != 0)
+        op1 = op1 | inverse_mask;
+
     return (op1 >> op2) & tms_int_mask;
 }
 
