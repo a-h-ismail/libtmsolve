@@ -27,9 +27,9 @@ int tms_compare_subexpr_depth(const void *a, const void *b)
 
 // Real domain functions
 char *tms_r_func_name[] =
-    {"fact", "abs", "ceil", "floor", "round", "sign", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log", NULL};
+    {"fact", "abs", "ceil", "floor", "round", "sign", "sqrt", "cbrt", "cos", "sin", "tan", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "ln", "log", NULL};
 double (*tms_r_func_ptr[])(double) =
-    {tms_fact, fabs, ceil, floor, round, tms_sign, sqrt, cbrt, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, tms_cos, tm_sin, tms_tan, log, log10};
+    {tms_fact, fabs, ceil, floor, round, tms_sign, sqrt, cbrt, tms_cos, tm_sin, tms_tan, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, log, log10};
 
 // Extended functions, may take more than one argument (stored in a comma separated string)
 char *tms_ext_func_name[] =
@@ -240,7 +240,7 @@ int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_inde
 
 bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
 {
-    int i, j;
+    int i;
     tms_math_subexpr *S = &(M->subexpr_ptr[s_index]);
     int solve_start = S->solve_start;
 
@@ -250,13 +250,12 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
         // Runtime user functions
         for (i = 0; i < tms_g_ufunc_count; ++i)
         {
-            j = tms_r_search(local_expr, tms_g_ufunc[i].name, solve_start - 2, true);
-            if (j != -1)
+            if (tms_match_word(local_expr, solve_start - 2, tms_g_ufunc[i].name, false))
             {
                 S->func.runtime = tms_g_ufunc + i;
                 S->func_type = TMS_F_RUNTIME;
-                // Setting the start of the subexpression to the start of the function name
-                S->subexpr_start = j;
+                // Set the start of the subexpression to the start of the function name
+                S->subexpr_start = solve_start - strlen(tms_g_ufunc[i].name) - 1;
                 return true;
             }
         }
@@ -265,13 +264,11 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
         {
             for (i = 0; i < array_length(tms_r_func_ptr); ++i)
             {
-                j = tms_r_search(local_expr, tms_r_func_name[i], solve_start - 2, true);
-                if (j != -1)
+                if (tms_match_word(local_expr, solve_start - 2, tms_r_func_name[i], false))
                 {
                     S->func.real = tms_r_func_ptr[i];
-                    S->func_type = 1;
-                    // Setting the start of the subexpression to the start of the function name
-                    S->subexpr_start = j;
+                    S->func_type = TMS_F_REAL;
+                    S->subexpr_start = solve_start - strlen(tms_r_func_name[i]) - 1;
                     break;
                 }
             }
@@ -286,12 +283,11 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
         {
             for (i = 0; i < array_length(tms_cmplx_func_ptr); ++i)
             {
-                j = tms_r_search(local_expr, tms_cmplx_func_name[i], solve_start - 2, true);
-                if (j != -1)
+                if (tms_match_word(local_expr, solve_start - 2, tms_cmplx_func_name[i], false))
                 {
                     S->func.cmplx = tms_cmplx_func_ptr[i];
-                    S->func_type = 2;
-                    S->subexpr_start = j;
+                    S->func_type = TMS_F_CMPLX;
+                    S->subexpr_start = solve_start - strlen(tms_cmplx_func_name[i]) - 1;
                     break;
                 }
             }
