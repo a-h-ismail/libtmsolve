@@ -7,6 +7,17 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "string_tools.h"
 #include "scientific.h"
 
+int64_t tms_sign_extend(int64_t value)
+{
+    uint64_t inverse_mask = ~tms_int_mask;
+
+    // Check the MSB relative to the current width (by masking the sign bit only)
+    if (((inverse_mask >> 1) & tms_int_mask) != 0)
+        return value | inverse_mask;
+    else
+        return value;
+}
+
 void get_two_operands(tms_arg_list *args, int64_t *op1, int64_t *op2)
 {
     if (_tms_validate_args_count(2, args->count) == false)
@@ -75,16 +86,12 @@ int64_t tms_sr(tms_arg_list *args)
 int64_t tms_sra(tms_arg_list *args)
 {
     int64_t op1, op2;
-    uint64_t inverse_mask = ~tms_int_mask;
     get_two_operands(args, &op1, &op2);
 
     if (tms_error_bit == 1)
         return -1;
-    
-    // Sign extend op1 to 64 bit (if the MSB relative to the mask is 1)
-    if (((inverse_mask >> 1) & tms_int_mask) != 0)
-        op1 = op1 | inverse_mask;
 
+    op1 = tms_sign_extend(op1);
     return (op1 >> op2) & tms_int_mask;
 }
 

@@ -12,6 +12,9 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @brief Contains bitwise extended functions declarations.
  */
 
+/// @brief Sign extend to 64 bits
+int64_t tms_sign_extend(int64_t value);
+
 /// @brief Bitwise NOT
 int64_t tms_not(int64_t value);
 
