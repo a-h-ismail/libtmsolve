@@ -8,6 +8,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "scientific.h"
 #include "string_tools.h"
 #include "tms_complex.h"
+#include "bitwise.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -316,7 +317,7 @@ int64_t tms_int_evaluate(tms_int_expr *M)
     }
 
     if (M->runvar_i != -1)
-        tms_g_int_vars[M->runvar_i].value = M->answer;
+        tms_g_int_vars[M->runvar_i].value = tms_sign_extend(M->answer);
 
     return M->answer;
 }
