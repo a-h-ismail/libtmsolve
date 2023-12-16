@@ -496,11 +496,17 @@ int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start,
             {
                 tmp = tms_set_unknowns_data(expr + op_start, N, operand);
                 if (tmp == -1)
-                    return -1;
+            {
+                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, op_start);
+                return -1;
+            }
             }
             // Nothing worked, so report a failure
             else
+            {
+                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, op_start);
                 return -1;
+            }
         }
     }
     else
