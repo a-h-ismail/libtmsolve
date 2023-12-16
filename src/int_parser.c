@@ -19,8 +19,8 @@ SPDX-License-Identifier: LGPL-2.1-only
 char *tms_int_nfunc_name[] = {"not", NULL};
 int64_t (*tms_int_nfunc_ptr[])(int64_t) = {tms_not};
 
-char *tms_int_extf_name[] = {"rr", "rl", "sr", "sl", "nand", "and", "xor", "nor", "or", NULL};
-int64_t (*tms_int_extf_ptr[])(tms_arg_list *) = {tms_rr, tms_rl, tms_sr, tms_sl, tms_nand, tms_and, tms_xor, tms_nor, tms_or};
+char *tms_int_extf_name[] = {"rr", "rl", "sr", "sra", "sl", "nand", "and", "xor", "nor", "or", NULL};
+int64_t (*tms_int_extf_ptr[])(tms_arg_list *) = {tms_rr, tms_rl, tms_sr, tms_sra, tms_sl, tms_nand, tms_and, tms_xor, tms_nor, tms_or};
 
 int64_t _tms_read_int_operand(char *expr, int start)
 {
@@ -287,7 +287,7 @@ int *_tms_get_int_op_indexes(char *local_expr, tms_int_subexpr *S, int s_index)
 
 bool _tms_set_int_function_ptr(char *local_expr, tms_int_expr *M, int s_index)
 {
-    int i, j;
+    int i;
     tms_int_subexpr *S = &(M->subexpr_ptr[s_index]);
     int solve_start = S->solve_start;
 
@@ -297,13 +297,12 @@ bool _tms_set_int_function_ptr(char *local_expr, tms_int_expr *M, int s_index)
         // Normal functions
         for (i = 0; i < array_length(tms_int_nfunc_ptr); ++i)
         {
-            j = tms_r_search(local_expr, tms_int_nfunc_name[i], solve_start - 2, true);
-            if (j != -1)
+            if (tms_match_word(local_expr, solve_start - 2, tms_int_nfunc_name[i], false))
             {
                 S->func.simple = tms_int_nfunc_ptr[i];
                 S->func_type = TMS_F_REAL;
                 // Setting the start of the subexpression to the start of the function name
-                S->subexpr_start = j;
+                S->subexpr_start = solve_start - strlen(tms_int_nfunc_name[i]) - 1;
                 return true;
             }
         }
@@ -311,13 +310,12 @@ bool _tms_set_int_function_ptr(char *local_expr, tms_int_expr *M, int s_index)
         // Extended functions
         for (i = 0; i < array_length(tms_int_extf_ptr); ++i)
         {
-            j = tms_r_search(local_expr, tms_int_extf_name[i], solve_start - 2, true);
-            if (j != -1)
+            if (tms_match_word(local_expr, solve_start - 2, tms_int_extf_name[i], false))
             {
                 S->func.extended = tms_int_extf_ptr[i];
                 S->func_type = TMS_F_EXTENDED;
                 // Setting the start of the subexpression to the start of the function name
-                S->subexpr_start = j;
+                S->subexpr_start = solve_start - strlen(tms_int_extf_name[i]) - 1;
                 return true;
             }
         }
