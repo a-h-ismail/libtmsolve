@@ -614,6 +614,8 @@ int tms_error_handler(int _mode, ...)
 void tms_print_error(tms_error_data E)
 {
     int i;
+    // Error index is provided
+    // Print the snippet where the error occured
     if (E.real_index != -1)
     {
         fprintf(stderr, "At col %d: %s\n", E.real_index, E.error_msg);
@@ -632,7 +634,8 @@ void tms_print_error(tms_error_data E)
         fprintf(stderr, "^\n\n");
     }
     else
-        fprintf(stderr, "\n");
+        // No index is provided -> print the error only
+        fprintf(stderr, "%s\n\n", E.error_msg);
 }
 
 int compare_ints(const void *a, const void *b)
