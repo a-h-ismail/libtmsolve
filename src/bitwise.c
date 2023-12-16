@@ -12,7 +12,7 @@ int64_t tms_sign_extend(int64_t value)
     uint64_t inverse_mask = ~tms_int_mask;
 
     // Check the MSB relative to the current width (by masking the sign bit only)
-    if (((inverse_mask >> 1) & tms_int_mask) != 0)
+    if ((((uint64_t)1 << (tms_int_mask_size - 1)) & value) != 0)
         return value | inverse_mask;
     else
         return value;
