@@ -16,4 +16,5 @@ All of the following functions perform bitwise operations:
 - `rr(value, rot)`: Performs right rotation of `value` bits by `rot` bits.
 - `rl(value, rot)`: Performs left rotation of `value` bits by `rot` bits.
 - `sr(value, shift)`: Performs right shift of `value` bits by `shift` bits.
+- `sra(value, shift)`: Performs arithmetic right shift.
 - `sl(value, shift)`: Performs left shift of `value` bits by `shift` bits.
