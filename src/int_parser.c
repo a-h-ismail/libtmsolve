@@ -450,7 +450,7 @@ int _tms_set_all_int_operands(char *local_expr, tms_int_expr *M, int s_index)
     // Intermediate nodes, read number to the appropriate op_node operand
     for (i = 0; i < op_count - 1; ++i)
     {
-        // x^y+z : y is set in the node containing x (node i) as the right operand
+        // x*y+z : y is set in the node containing x (node i) as the right operand
         // same in case of x-y+z
         if (NB[i].priority >= NB[i + 1].priority)
         {
@@ -459,7 +459,7 @@ int _tms_set_all_int_operands(char *local_expr, tms_int_expr *M, int s_index)
                 return -1;
         }
 
-        // x+y^z : y is set in the node containing z (node i+1) as the left operand
+        // x+y*z : y is set in the node containing z (node i+1) as the left operand
         else
         {
             status = _tms_set_int_operand(local_expr, M, NB + i + 1, NB[i].operator_index + 1, s_index, 'l');
@@ -494,14 +494,14 @@ int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op
     }
 
     *operand_ptr = _tms_read_int_operand(expr, op_start);
-    // Case of reading the number to the right operand of a op_node
+
     if (tms_error_bit == 1)
     {
         if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
             return -1;
         else
         {
-            // Case of a subexpression result as right_operand, set its result pointer to right_operand
+            // Case of a subexpression result as operand
             status = tms_find_int_subexpr_starting_at(S, op_start, s_index, 1);
             if (status == -1)
             {
