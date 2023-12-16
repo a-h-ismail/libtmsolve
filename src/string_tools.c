@@ -355,6 +355,12 @@ double complex tms_read_value(char *_s, int start)
         end -= 2;
     }
 
+    if (end < 0)
+    {
+        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, start);
+        return NAN;
+    }
+
     // Copy the value to a separate array
     char num_str[end + 2];
     strncpy(num_str, _s, end + 1);
@@ -482,6 +488,13 @@ int64_t tms_read_int_value(char *_s, int start)
     {
         _s += 2;
         end -= 2;
+    }
+
+    if (end < 0)
+    {
+        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, start);
+        tms_error_bit = 1;
+        return -1;
     }
 
     // Copy the value to a separate array
