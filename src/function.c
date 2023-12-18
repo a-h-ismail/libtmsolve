@@ -15,6 +15,76 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <math.h>
 #include <time.h>
 
+double complex tms_avg(tms_arg_list *args)
+{
+    if (args->count == 0)
+        return NAN;
+
+    double complex tmp, total = 0;
+    for (int i = 0; i < args->count; ++i)
+    {
+        tmp = tms_solve(args->arguments[i]);
+        if (isnan(creal(tmp)))
+            return NAN;
+
+        total += tmp;
+    }
+
+    return total / args->count;
+}
+
+double complex tms_min(tms_arg_list *args)
+{
+    if (args->count == 0)
+        return NAN;
+
+    double complex min = INFINITY, tmp;
+
+    for (int i = 0; i < args->count; ++i)
+    {
+        tmp = tms_solve(args->arguments[i]);
+        if (isnan(creal(tmp)))
+            return NAN;
+
+        if (cimag(tmp) != 0)
+        {
+            tms_error_handler(EH_SAVE, ILLEGAL_COMPLEX_OP, EH_FATAL_ERROR, -1);
+            return NAN;
+        }
+
+        if (creal(min) > creal(tmp))
+            min = tmp;
+    }
+
+    return min;
+}
+
+double complex tms_max(tms_arg_list *args)
+{
+    if (args->count == 0)
+        return NAN;
+
+    double complex max = INFINITY, tmp;
+
+    for (int i = 0; i < args->count; ++i)
+    {
+        tmp = tms_solve(args->arguments[i]);
+        if (isnan(creal(tmp)))
+            return NAN;
+
+        if (cimag(tmp) != 0)
+        {
+            tms_error_handler(EH_SAVE, ILLEGAL_COMPLEX_OP, EH_FATAL_ERROR, -1);
+            return NAN;
+        }
+
+        if (creal(max) < creal(tmp))
+            max = tmp;
+    }
+
+    return max;
+}
+
 double complex tms_logn(tms_arg_list *args)
 {
     if (_tms_validate_args_count(2, args->count) == false)

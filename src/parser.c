@@ -33,9 +33,9 @@ double (*tms_r_func_ptr[])(double) =
 
 // Extended functions, may take more than one argument (stored in a comma separated string)
 char *tms_ext_func_name[] =
-    {"integrate", "der", "logn", "hex", "oct", "bin", "rand", "randint", "int", NULL};
+    {"avg", "min", "max", "integrate", "der", "logn", "hex", "oct", "bin", "rand", "randint", "int", NULL};
 double complex (*tms_ext_func[])(tms_arg_list *) =
-    {tms_integrate, tms_derivative, tms_logn, tms_hex, tms_oct, tms_bin, tms_rand, tms_randint, tms_int};
+    {tms_avg, tms_min, tms_max, tms_integrate, tms_derivative, tms_logn, tms_hex, tms_oct, tms_bin, tms_rand, tms_randint, tms_int};
 
 // Complex functions
 char *tms_cmplx_func_name[] =

@@ -16,6 +16,21 @@ SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
+ * @brief Calculates the average of its arguments.
+ */
+double complex tms_avg(tms_arg_list *args);
+
+/**
+ * @brief Calculates the minimun of its arguments.
+ */
+double complex tms_min(tms_arg_list *args);
+
+/**
+ * @brief Calculates the maximum of its arguments.
+ */
+double complex tms_max(tms_arg_list *args);
+
+/**
  * @brief Expects two arguments, the value and the base.
  * @return The base logarithm for the specified value
  */
