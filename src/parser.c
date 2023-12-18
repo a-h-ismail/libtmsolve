@@ -207,7 +207,7 @@ int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_inde
             if (previous_subexp != -1)
                 i = S[previous_subexp].solve_end + 1;
         }
-        else if (isdigit(local_expr[i]))
+        else if (tms_legal_char_in_name(local_expr[i]) || local_expr[i] == '.')
             continue;
 
         else if (tms_is_op(local_expr[i]))
@@ -219,16 +219,19 @@ int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_inde
                 continue;
             }
             // Varying the array size on demand
-            if (op_count == buffer_size)
-            {
-                buffer_size *= 2;
-                operator_index = realloc(operator_index, buffer_size * sizeof(int));
-            }
+            DYNAMIC_RESIZE(operator_index, op_count, buffer_size, int)
+
             operator_index[op_count] = i;
             // Skip a + or - located just after an operator
             if (local_expr[i + 1] == '-' || local_expr[i + 1] == '+')
                 ++i;
             ++op_count;
+        }
+        else
+        {
+            tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, i);
+            free(operator_index);
+            return NULL;
         }
     }
 
@@ -703,6 +706,12 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_comp
 
         // Get an array of the index of all operators and set their count
         int *operator_index = _tms_get_operator_indexes(local_expr, S, s_index);
+
+        if (operator_index == NULL)
+        {
+            tms_delete_math_expr(M);
+            return NULL;
+        }
 
         status = _tms_set_function_ptr(local_expr, M, s_index);
         if (!status)
