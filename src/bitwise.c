@@ -51,10 +51,10 @@ int64_t _tms_rotate_circular(tms_arg_list *args, char direction)
     switch (direction)
     {
     case 'r':
-        return (value >> shift | value << (tms_int_mask_size - shift)) & tms_int_mask;
+        return ((uint64_t)value >> shift | (uint64_t)value << (tms_int_mask_size - shift)) & tms_int_mask;
 
     case 'l':
-        return (value << shift | value >> (tms_int_mask_size - shift)) & tms_int_mask;
+        return ((uint64_t)value << shift | (uint64_t)value >> (tms_int_mask_size - shift)) & tms_int_mask;
 
     default:
         tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, -1);
