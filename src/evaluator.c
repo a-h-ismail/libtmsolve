@@ -32,6 +32,7 @@ double complex tms_evaluate(tms_math_expr *M)
             if (S[s_index].exec_extf)
             {
                 char *arguments;
+                char *_tms_g_expr_bak = _tms_g_expr;
                 tms_arg_list *L;
 
                 int length = S[s_index].solve_end - S[s_index].solve_start + 1;
@@ -42,6 +43,8 @@ double complex tms_evaluate(tms_math_expr *M)
 
                 // Call the extended function using its pointer
                 **(S[s_index].result) = (*(S[s_index].func.extended))(L);
+
+                _tms_g_expr = _tms_g_expr_bak;
 
                 if (isnan(creal(**(S[s_index].result))))
                 {
@@ -196,6 +199,7 @@ int64_t tms_int_evaluate(tms_int_expr *M)
             {
                 char *arguments;
                 tms_arg_list *L;
+                char *_tms_g_expr_bak = _tms_g_expr;
 
                 int length = S[s_index].solve_end - S[s_index].solve_start + 1;
 
@@ -206,6 +210,7 @@ int64_t tms_int_evaluate(tms_int_expr *M)
                 // Call the extended function using its pointer, mask the result
                 **(S[s_index].result) = ((*(S[s_index].func.extended))(L)) & tms_int_mask;
 
+                _tms_g_expr = _tms_g_expr_bak;
                 if (tms_error_bit == 1)
                 {
                     tms_error_handler(EH_SAVE, EXTF_FAILURE, EH_FATAL_ERROR, S[s_index].subexpr_start);
