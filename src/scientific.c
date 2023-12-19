@@ -95,15 +95,15 @@ double tms_sign(double value)
 double complex tms_solve_e(char *expr, bool enable_complex)
 {
     double complex result;
-    tms_math_expr *math_struct;
+    tms_math_expr *M;
 
     if (tms_pre_parse_routine(expr) == false)
         return NAN;
-    math_struct = tms_parse_expr(expr, false, enable_complex);
-    if (math_struct == NULL)
+    M = tms_parse_expr(expr, false, enable_complex);
+    if (M == NULL)
         return NAN;
-    result = tms_evaluate(math_struct);
-    tms_delete_math_expr(math_struct);
+    result = tms_evaluate(M);
+    tms_delete_math_expr(M);
     return result;
 }
 
@@ -184,7 +184,7 @@ double complex tms_solve(char *expr)
             tms_error_handler(EH_CLEAR, EH_MAIN_DB);
 
             // The errors weren't fatal, possibly a complex answer.
-            // Convert the math_struct to use complex functions.
+            // Convert M to use complex functions.
             if (M != NULL)
             {
                 tms_convert_real_to_complex(M);
