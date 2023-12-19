@@ -1,6 +1,6 @@
 # Introduction
 
-libtmsolve is a math library for expression evaluation, basic manipulation of matrices and some other useful features (function manipulation, factorization...).
+libtmsolve is a math library for expression evaluation (both scientific and numeral systems), basic manipulation of matrices and some other useful features (function manipulation, factorization...).
 
 Full documentation is available [here](https://a-h-ismail.gitlab.io/libtmsolve-docs/).
 
@@ -51,6 +51,8 @@ To build your binary and link to this library:
 ## Tips
 
 Documentation about the parser, evaluator, and some useful features like factorization can be found in `parser.h`, `evaluator.h` and `scientific.h`.
+
+Base-N variant of the parser is in `int_parser.h`, its extended functions are in `bitwise.h`.
 
 For functions that assist in manipulating strings (char *), refer to `string_tools.h`.
 
