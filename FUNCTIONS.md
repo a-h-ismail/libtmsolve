@@ -31,6 +31,8 @@ Trigonometric functions lose precision with larger values. I recommend staying i
 
 ## Extended Functions
 
+- `avg(v1, v2, ...)`: Calculates the average of its arguments.
+- `min() and max()`: Calculates the minimun/maximum. Works only with real values.
 - `integrate(start, end, function)`: Calculates integral using Simpson 3/8 rule.
 - `der(function, x)`: Calculates derivative of the function at the specified point.
 - `logn(value, n)`: Calculates the base-n logarithm for the specified value.
