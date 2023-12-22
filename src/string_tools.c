@@ -1059,3 +1059,121 @@ bool tms_valid_name(char *name)
 
     return true;
 }
+
+void tms_print_bin(int64_t value)
+{
+    // This bool determines if the zeros are trailing or not
+    bool trailing = true;
+    uint8_t digit;
+    // An 64 bit int has the MSB as an octal, then every octal digit is 3 bits
+    // Go left to right, read 3 bits and print the digit to stdout
+
+    printf("0b");
+    if (value == 0)
+    {
+        printf("0");
+        return;
+    }
+
+    for (int i = 0; i < 64; ++i)
+    {
+        // Shift 63 positions for the MSB to become LSB
+        digit = ((uint64_t)value) >> 63;
+
+        if (digit == 0)
+        {
+            if (!trailing)
+                putchar('0');
+        }
+        else
+        {
+            putchar('1');
+            trailing = false;
+        }
+
+        value = value << 1;
+    }
+}
+
+void tms_print_oct(int64_t value)
+{
+    // This bool determines if the zeros are trailing or not
+    bool trailing = true;
+    uint8_t digit;
+    // An 64 bit int has the MSB as an octal, then every octal digit is 3 bits
+    // Go left to right, read 3 bits and print the digit to stdout
+
+    printf("0o");
+    if (value == 0)
+    {
+        printf("0");
+        return;
+    }
+
+    // The first bit
+    if ((value & 0x8000000000000000) != 0)
+    {
+        trailing = false;
+        putchar('1');
+    }
+
+    for (int i = 0; i < 63 / 3; ++i)
+    {
+        // Mask the most significant three bits and shift them to become LSB
+        digit = ((uint64_t)value & 0x7000000000000000) >> 60;
+
+        if (digit == 0)
+        {
+            if (!trailing)
+                putchar('0');
+        }
+        else
+        {
+            putchar('0' + digit);
+            trailing = false;
+        }
+
+        value = value << 3;
+    }
+}
+
+char int_to_hex(int8_t v)
+{
+    if (v < 10)
+        return '0' + v;
+    else
+        return 'A' + v - 10;
+}
+
+void tms_print_hex(int64_t value)
+{
+    // This bool determines if the zeros are trailing or not
+    bool trailing = true;
+    uint8_t digit;
+
+    printf("0x");
+    if (value == 0)
+    {
+        printf("0");
+        return;
+    }
+
+    for (int i = 0; i < 16; ++i)
+    {
+        // Shift 4 MSB to become LSB
+        digit = (uint64_t)value >> 60;
+
+        if (digit == 0)
+        {
+            if (!trailing)
+                putchar('0');
+        }
+        else
+        {
+            putchar(int_to_hex(digit));
+            trailing = false;
+        }
+
+        value = value << 4;
+    }
+}

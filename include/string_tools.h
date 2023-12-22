@@ -229,3 +229,9 @@ bool tms_valid_name(char *name);
  * @brief Frees an argument list created with tms_get_args()
  */
 void tms_free_arg_list(tms_arg_list *list);
+
+void tms_print_bin(int64_t value);
+
+void tms_print_oct(int64_t value);
+
+void tms_print_hex(int64_t value);
