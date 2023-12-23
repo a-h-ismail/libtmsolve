@@ -48,4 +48,7 @@ void tms_set_unknown(tms_math_expr *M, double complex value);
 /// - Nodes ordered by evaluation order. \n
 /// - Result pointer of each subepression.
 void tms_dump_expr(tms_math_expr *M, bool was_evaluated);
+
+void tms_dump_int_expr(tms_int_expr *M, bool was_evaluated);
+
 #endif

@@ -5,6 +5,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "evaluator.h"
 #include "internals.h"
 #include "parser.h"
+#include "int_parser.h"
 #include "scientific.h"
 #include "string_tools.h"
 #include "tms_complex.h"
@@ -33,6 +34,7 @@ double complex tms_evaluate(tms_math_expr *M)
             {
                 char *arguments;
                 char *_tms_g_expr_bak = _tms_g_expr;
+                bool _debug_state = _tms_debug;
                 tms_arg_list *L;
 
                 int length = S[s_index].solve_end - S[s_index].solve_start + 1;
@@ -41,10 +43,14 @@ double complex tms_evaluate(tms_math_expr *M)
                 arguments = tms_strndup(M->str + S[s_index].solve_start, length);
                 L = tms_get_args(arguments);
 
+                // Disable debug output for extended functions
+                _tms_debug = false;
+
                 // Call the extended function using its pointer
                 **(S[s_index].result) = (*(S[s_index].func.extended))(L);
 
                 _tms_g_expr = _tms_g_expr_bak;
+                _tms_debug = _debug_state;
 
                 if (isnan(creal(**(S[s_index].result))))
                 {
@@ -200,6 +206,7 @@ int64_t tms_int_evaluate(tms_int_expr *M)
                 char *arguments;
                 tms_arg_list *L;
                 char *_tms_g_expr_bak = _tms_g_expr;
+                bool _debug_state = _tms_debug;
 
                 int length = S[s_index].solve_end - S[s_index].solve_start + 1;
 
@@ -207,10 +214,14 @@ int64_t tms_int_evaluate(tms_int_expr *M)
                 arguments = tms_strndup(M->str + S[s_index].solve_start, length);
                 L = tms_get_args(arguments);
 
+                // Disable debug output for extended functions
+                _tms_debug = false;
+
                 // Call the extended function using its pointer, mask the result
                 **(S[s_index].result) = ((*(S[s_index].func.extended))(L)) & tms_int_mask;
 
                 _tms_g_expr = _tms_g_expr_bak;
+                _tms_debug = _debug_state;
                 if (tms_error_bit == 1)
                 {
                     tms_error_handler(EH_SAVE, EXTF_FAILURE, EH_FATAL_ERROR, S[s_index].subexpr_start);
@@ -317,6 +328,9 @@ int64_t tms_int_evaluate(tms_int_expr *M)
     if (M->runvar_i != -1)
         tms_g_int_vars[M->runvar_i].value = tms_sign_extend(M->answer);
 
+    if (_tms_debug)
+        tms_dump_int_expr(M, true);
+
     return M->answer;
 }
 
@@ -405,6 +419,11 @@ bool _print_operand_source(tms_math_subexpr *S, double complex *operand, int s_i
         if (operand == *(S[s_index].result))
         {
             printf("[S:%d]", s_index);
+            if (was_evaluated)
+            {
+                printf(" = ");
+                tms_print_value(*operand);
+            }
             return true;
         }
         --s_index;
@@ -474,7 +493,8 @@ void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
                     tms_print_value(tmp_node->left_operand);
 
                 printf(" )");
-                // No one wants to see uninitialized values (skip for nodes used to hold one number)
+
+                // No one wants to see uninitialized values (skip nodes used to hold one number)
                 if (S[s_index].op_count != 0)
                 {
                     printf(" %c ", tmp_node->operator);
@@ -482,6 +502,148 @@ void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
 
                     if (_print_operand_source(S, &(tmp_node->right_operand), s_index, was_evaluated) == false)
                         tms_print_value(tmp_node->right_operand);
+
+                    printf(" )");
+                }
+
+                if (tmp_node->next != NULL)
+                {
+                    int i;
+                    char left_or_right = '\0';
+                    for (i = 0; i < S[s_index].op_count; ++i)
+                    {
+                        if (&(S[s_index].nodes[i].right_operand) == tmp_node->result)
+                        {
+                            left_or_right = 'R';
+                            break;
+                        }
+                        else if (&(S[s_index].nodes[i].left_operand) == tmp_node->result)
+                        {
+                            left_or_right = 'L';
+                            break;
+                        }
+
+                        if (S[s_index].op_count == 0 && &(S[s_index].nodes->right_operand) == tmp_node->result)
+                        {
+                            i = 0;
+                            left_or_right = 'R';
+                        }
+                    }
+
+                    printf(" a: %d%c --> ", i, left_or_right);
+                }
+                else
+                    printf(" --> ");
+                printf("\n");
+                tmp_node = tmp_node->next;
+            }
+        }
+        ++s_index;
+        puts("end\n");
+    }
+}
+
+bool _print_int_operand_source(tms_int_subexpr *S, int64_t *operand, int s_index, bool was_evaluated)
+{
+    int n;
+    while (s_index != -1)
+    {
+        // Scan all nodes in the current and previous subexpressions for one that points at this operand
+        for (n = 0; n < S[s_index].op_count; ++n)
+        {
+            if (S[s_index].nodes == NULL)
+                continue;
+            if (operand == S[s_index].nodes[n].result)
+            {
+                printf("[S%d;N%d]", s_index, n);
+                if (was_evaluated)
+                {
+                    printf(" = ");
+                    tms_print_hex(*operand);
+                }
+                return true;
+            }
+        }
+        if (operand == *(S[s_index].result))
+        {
+            printf("[S:%d]", s_index);
+            if (was_evaluated)
+            {
+                printf(" = ");
+                tms_print_hex(*operand);
+            }
+            return true;
+        }
+        --s_index;
+    }
+    return false;
+}
+
+void tms_dump_int_expr(tms_int_expr *M, bool was_evaluated)
+{
+    int s_index = 0;
+    int s_count = M->subexpr_count;
+    tms_int_subexpr *S = M->subexpr_ptr;
+    char *tmp = NULL;
+    tms_int_op_node *tmp_node;
+    puts("Dumping expression data:\n");
+    while (s_index < s_count)
+    {
+        // Find the name of the function to execute
+        switch (S[s_index].func_type)
+        {
+        case TMS_F_REAL:
+        case TMS_F_EXTENDED:
+            tmp = _tms_lookup_int_function_name(S[s_index].func.simple, S[s_index].func_type);
+            break;
+
+        default:
+            tmp = NULL;
+        }
+
+        printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n",
+               s_index, S[s_index].func_type, tmp, S[s_index].depth);
+
+        // Lookup result pointer location
+        for (int i = 0; i < s_count; ++i)
+        {
+            for (int j = 0; j < S[i].op_count; ++j)
+            {
+                if (S[i].nodes != NULL && S[i].nodes[j].result == *(S[s_index].result))
+                {
+                    printf("result at subexpr %d, node %d\n\n", i, j);
+                    break;
+                }
+            }
+            // Case of a no op expression
+            if (S[i].op_count == 0 && S[i].nodes != NULL && S[i].nodes[0].result == *(S[s_index].result))
+                printf("result at subexpr %d, node 0\n\n", i);
+        }
+
+        if (S[s_index].nodes == NULL)
+            puts("Expression has no nodes");
+        else
+        {
+            tmp_node = S[s_index].nodes + S[s_index].start_node;
+
+            // Dump nodes data
+            while (tmp_node != NULL)
+            {
+                printf("[%d]: ", tmp_node->node_index);
+                printf("( ");
+
+                if (_print_int_operand_source(S, &(tmp_node->left_operand), s_index, was_evaluated) == false)
+                    tms_print_hex(tmp_node->left_operand);
+
+                printf(" )");
+                // No one wants to see uninitialized values (skip nodes used to hold one number)
+                if (S[s_index].op_count != 0)
+                {
+                    printf(" %c ", tmp_node->operator);
+                    printf("( ");
+
+                    if (_print_int_operand_source(S, &(tmp_node->right_operand), s_index, was_evaluated) == false)
+                        tms_print_hex(tmp_node->right_operand);
 
                     printf(" )");
                 }

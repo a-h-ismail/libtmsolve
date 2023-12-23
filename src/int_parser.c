@@ -837,3 +837,34 @@ int tms_find_int_subexpr_ending_at(tms_int_subexpr *S, int end, int s_index, int
     }
     return -1;
 }
+
+char *_tms_lookup_int_function_name(void *function, int func_type)
+{
+    int i;
+    switch (func_type)
+    {
+    case TMS_F_REAL:
+        for (i = 0; i < array_length(tms_int_nfunc_ptr); ++i)
+        {
+            if (function == (void *)(tms_int_nfunc_ptr[i]))
+                break;
+        }
+        if (i < array_length(tms_int_nfunc_ptr))
+            return tms_int_nfunc_name[i];
+        break;
+
+    case TMS_F_EXTENDED:
+        for (i = 0; i < array_length(tms_int_extf_name); ++i)
+        {
+            if (function == (void *)(tms_int_extf_ptr[i]))
+                break;
+        }
+        if (i < array_length(tms_int_extf_name))
+            return tms_int_extf_name[i];
+        break;
+    default:
+        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, -1);
+    }
+
+    return NULL;
+}
