@@ -768,7 +768,7 @@ char *_tms_lookup_function_name(void *function, int func_type)
     int i;
     switch (func_type)
     {
-    case 1:
+    case TMS_F_REAL:
         for (i = 0; i < array_length(tms_r_func_ptr); ++i)
         {
             if (function == (void *)(tms_r_func_ptr[i]))
@@ -778,7 +778,7 @@ char *_tms_lookup_function_name(void *function, int func_type)
             return tms_r_func_name[i];
         break;
 
-    case 2:
+    case TMS_F_CMPLX:
         for (i = 0; i < array_length(tms_cmplx_func_ptr); ++i)
         {
             if (function == (void *)(tms_cmplx_func_ptr[i]))
@@ -788,7 +788,7 @@ char *_tms_lookup_function_name(void *function, int func_type)
             return tms_cmplx_func_name[i];
         break;
 
-    case 3:
+    case TMS_F_EXTENDED:
         for (i = 0; i < array_length(tms_ext_func); ++i)
         {
             if (function == (void *)(tms_ext_func[i]))
