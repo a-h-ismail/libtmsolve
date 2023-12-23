@@ -3,4 +3,4 @@ Copyright (C) 2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 
-char *tms_lib_version = {"1.2.2"};
+char *tms_lib_version = {"1.3.0"};
