@@ -1225,13 +1225,13 @@ int tms_find_str_in_array(char *key, void *array, int arr_len, uint8_t type)
     return -1;
 }
 
-char *tms_get_name(char *expr, int i, bool is_at_start)
+int tms_name_bounds(char *expr, int i, bool is_at_start)
 {
     if (is_at_start)
     {
         // The name can't start with a number
         if (isdigit(expr[i]))
-            return NULL;
+            return -1;
 
         int end = i;
 
@@ -1240,9 +1240,12 @@ char *tms_get_name(char *expr, int i, bool is_at_start)
 
         // The loop immediatly stopped, so we didn't get a name
         if (i == end)
-            return NULL;
-        else
-            return tms_strndup(expr + i, end - i);
+            return -1;
+
+        // "end" overshoots before breaking from the loop, so decrement it
+        --end;
+
+        return end;
     }
     else
     {
@@ -1251,9 +1254,39 @@ char *tms_get_name(char *expr, int i, bool is_at_start)
         while (start >= 0 && tms_legal_char_in_name(expr[start]))
             --start;
 
+        // Again, the loop didn't execute even once
         if (i == start)
+            return -1;
+
+        // "start" undershoots before breaking from the loop, so increment it
+        ++start;
+
+        // Is the name really valid? (the beginning is not a digit)
+        if (isdigit(expr[start]))
+            return -1;
+        else
+            return start;
+    }
+}
+
+char *tms_get_name(char *expr, int i, bool is_at_start)
+{
+    if (is_at_start)
+    {
+        int end = tms_name_bounds(expr, i, true);
+
+        if (end == -1)
             return NULL;
         else
-            return tms_strndup(expr + start + 1, i - start);
+            return tms_strndup(expr + i, end - i + 1);
+    }
+    else
+    {
+        int start = tms_name_bounds(expr, i, false);
+
+        if (start == -1)
+            return NULL;
+        else
+            return tms_strndup(expr + start, i - start + 1);
     }
 }
