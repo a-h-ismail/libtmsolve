@@ -225,8 +225,13 @@ int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_inde
             // Skip a + or - used in scientific notation (like 1e+5)
             if (i > 0 && (local_expr[i - 1] == 'e' || local_expr[i - 1] == 'E') && (local_expr[i] == '+' || local_expr[i] == '-'))
             {
-                ++i;
-                continue;
+                // Not every "e" followed by + is a scientific notation
+                // Maybe a variable name that ends with an "e" is being added to something?
+                int tmp = tms_name_bounds(local_expr, i - 1, false);
+
+                // Not a valid name (either a number or something messed up, which will be caught later)
+                if (tmp == -1)
+                    continue;
             }
             // Varying the array size on demand
             DYNAMIC_RESIZE(operator_index, op_count, buffer_size, int)
@@ -708,7 +713,7 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_comp
     {
         // Extended functions use a subexpression without nodes, but the subexpression result pointer should point at something
         // Allocate a small block and use that for the result pointer
-        if (S[s_index].func_type == 3)
+        if (S[s_index].func_type == TMS_F_EXTENDED)
         {
             S[s_index].result = malloc(sizeof(double complex *));
             continue;
