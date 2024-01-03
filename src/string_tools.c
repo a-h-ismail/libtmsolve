@@ -915,16 +915,17 @@ bool tms_parenthesis_check(char *expr)
 
 bool tms_syntax_check(char *expr)
 {
-    int i, j;
+    int i, j, length;
     _tms_g_expr = expr;
 
     // Check if all function calls have parenthesis
     for (i = 0; i < tms_g_func_count; ++i)
     {
+        length = strlen(tms_g_all_func_names[i]);
         j = tms_f_search(expr, tms_g_all_func_names[i], 0, true);
         while (j != -1)
         {
-            if (expr[j + strlen(tms_g_all_func_names[i])] != '(')
+            if (expr[j + length] != '(')
             {
                 tms_error_handler(EH_SAVE, PARENTHESIS_MISSING, EH_FATAL_ERROR, j + strlen(tms_g_all_func_names[i]));
                 return false;
