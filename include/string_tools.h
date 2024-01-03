@@ -235,3 +235,22 @@ void tms_print_bin(int64_t value);
 void tms_print_oct(int64_t value);
 
 void tms_print_hex(int64_t value);
+
+/**
+ * @brief Finds the name of the function/variable that starts/ends at "i"
+ * @param expr
+ * @param i
+ * @param is_at_start
+ * @return The name if found (allocated with malloc), or NULL if the name isn't valid.
+ */
+char *tms_get_name(char *expr, int i, bool is_at_start);
+
+/**
+ * @brief Finds a string within an array of strings
+ * @param key The string to find
+ * @param array The array of elements (not necessarily a char array)
+ * @param arr_len Number of elements in the array
+ * @param type Type of the elements in the array (TMS_F_REAL...)
+ * @return The index of the first match, or -1 if no match is found.
+ */
+int tms_find_str_in_array(char *key, void *array, int arr_len, uint8_t type);

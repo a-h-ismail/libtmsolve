@@ -1177,3 +1177,64 @@ void tms_print_hex(int64_t value)
         value = value << 4;
     }
 }
+
+int tms_find_str_in_array(char *key, void *array, int arr_len, uint8_t type)
+{
+    switch (type)
+    {
+    case TMS_F_REAL:
+    case TMS_F_CMPLX:
+    case TMS_F_EXTENDED:
+        char **c_array = (char **)array;
+        for (int i = 0; i < arr_len; ++i)
+        {
+            if (c_array[i][0] == key[0] && strcmp(key, c_array[i]) == 0)
+                return i;
+        }
+        break;
+
+    case TMS_F_RUNTIME:
+        tms_ufunc *ufunc_array = array;
+        for (int i = 0; i < arr_len; ++i)
+        {
+            if (ufunc_array[i].name[0] == key[0] && strcmp(key, ufunc_array[i].name) == 0)
+                return i;
+        }
+        break;
+    }
+
+    return -1;
+}
+
+char *tms_get_name(char *expr, int i, bool is_at_start)
+{
+    if (is_at_start)
+    {
+        // The name can't start with a number
+        if (isdigit(expr[i]))
+            return NULL;
+
+        int end = i;
+
+        while (tms_legal_char_in_name(expr[end]))
+            ++end;
+
+        // The loop immediatly stopped, so we didn't get a name
+        if (i == end)
+            return NULL;
+        else
+            return tms_strndup(expr + i, end - i);
+    }
+    else
+    {
+        int start = i;
+
+        while (start >= 0 && tms_legal_char_in_name(expr[start]))
+            --start;
+
+        if (i == start)
+            return NULL;
+        else
+            return tms_strndup(expr + start + 1, i - start);
+    }
+}
