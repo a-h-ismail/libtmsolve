@@ -508,17 +508,14 @@ int64_t tms_read_int_value(char *_s, int start)
 // Function that seeks for the next occurence of a + or - sign starting from i
 int tms_find_add_subtract(char *expr, int i)
 {
-    while (expr[i] != '+' && expr[i] != '-' && expr[i] != '\0')
+    while (expr[i] != '\0')
     {
-        ++i;
-        if ((expr[i - 1] == 'e' || expr[i - 1] == 'E') && expr[i] != '\0')
+        if (expr[i] == '+' || expr[i] == '-')
+            return i;
+        else
             ++i;
     }
-    // Check that the stop was not caused by reaching \0
-    if (expr[i] == '\0')
-        return -1;
-    else
-        return i;
+    return -1;
 }
 // Function that returns the index of the next operator starting from i
 // if no operators are found, returns -1.
