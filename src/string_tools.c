@@ -96,19 +96,18 @@ double complex _tms_set_operand_value(char *expr, int start, bool enable_complex
     // Failed to read value normally, it is probably a variable
     if (isnan(creal(value)))
     {
-        int i;
-        for (i = 0; i < tms_g_var_count; ++i)
-        {
-            if (tms_match_word(expr, start, tms_g_vars[i].name, true))
-            {
-                value = tms_g_vars[i].value;
-                break;
-            }
-        }
+        char *name = tms_get_name(expr, start, true);
+        if (name == NULL)
+            return NAN;
 
+        int i = tms_find_str_in_array(name, tms_g_vars, tms_g_var_count, TMS_V_DOUBLE);
+        if (i != -1)
+            value = tms_g_vars[i].value;
         // ans is a special case
-        if (tms_match_word(expr, start, "ans", true))
+        else if (strcmp(name, "ans") == 0)
             value = tms_g_ans;
+
+        free(name);
     }
 
     if (!enable_complex && cimag(value) != 0)
@@ -1185,6 +1184,8 @@ int tms_find_str_in_array(char *key, void *array, int arr_len, uint8_t type)
     case TMS_F_REAL:
     case TMS_F_CMPLX:
     case TMS_F_EXTENDED:
+    case TMS_F_INT64:
+    case TMS_F_INT_EXTENDED:
         char **c_array = (char **)array;
         for (int i = 0; i < arr_len; ++i)
         {
@@ -1198,6 +1199,24 @@ int tms_find_str_in_array(char *key, void *array, int arr_len, uint8_t type)
         for (int i = 0; i < arr_len; ++i)
         {
             if (ufunc_array[i].name[0] == key[0] && strcmp(key, ufunc_array[i].name) == 0)
+                return i;
+        }
+        break;
+
+    case TMS_V_DOUBLE:
+        tms_var *dvars = array;
+        for (int i = 0; i < arr_len; ++i)
+        {
+            if (dvars[i].name[0] == key[0] && strcmp(key, dvars[i].name) == 0)
+                return i;
+        }
+        break;
+
+    case TMS_V_INT64:
+        tms_int_var *ivars = array;
+        for (int i = 0; i < arr_len; ++i)
+        {
+            if (ivars[i].name[0] == key[0] && strcmp(key, ivars[i].name) == 0)
                 return i;
         }
         break;
