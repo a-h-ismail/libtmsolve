@@ -103,6 +103,11 @@ typedef union tms_int_functions
 #define TMS_F_CMPLX 2
 #define TMS_F_EXTENDED 3
 #define TMS_F_RUNTIME 4
+#define TMS_F_INT64 5
+#define TMS_F_INT_EXTENDED 6
+
+#define TMS_V_DOUBLE 10
+#define TMS_V_INT64 11
 
 /// @brief Holds the metadata of a subexpression.
 typedef struct tms_math_subexpr
