@@ -26,10 +26,10 @@ bool _tms_debug = false;
 char **tms_g_all_func_names;
 int tms_g_func_count;
 
-char *tms_g_illegal_names[] = {"x", "e", "E", "i"};
+char *tms_g_illegal_names[] = {"x", "i"};
 const int tms_g_illegal_names_count = array_length(tms_g_illegal_names);
 
-tms_var tms_g_builtin_vars[] = {{"i", I, true}, {"pi", M_PI, true}, {"exp", M_E, true}, {"c", 299792458, true}};
+tms_var tms_g_builtin_vars[] = {{"i", I, true}, {"pi", M_PI, true}, {"e", M_E, true}, {"c", 299792458, true}};
 tms_var *tms_g_vars = NULL;
 int tms_g_var_count, tms_g_var_max = array_length(tms_g_builtin_vars);
 
