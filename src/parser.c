@@ -27,21 +27,21 @@ int tms_compare_subexpr_depth(const void *a, const void *b)
 
 // Real domain functions
 char *tms_r_func_name[] =
-    {"fact", "abs", "ceil", "floor", "round", "sign", "sqrt", "cbrt", "cos", "sin", "tan", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "ln", "log", NULL};
+    {"fact", "abs", "exp", "ceil", "floor", "round", "sign", "sqrt", "cbrt", "cos", "sin", "tan", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "ln", "log", NULL};
 double (*tms_r_func_ptr[])(double) =
-    {tms_fact, fabs, ceil, floor, round, tms_sign, sqrt, cbrt, tms_cos, tm_sin, tms_tan, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, log, log10};
+    {tms_fact, fabs, exp, ceil, floor, round, tms_sign, sqrt, cbrt, tms_cos, tm_sin, tms_tan, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, log, log10};
+
+// Complex functions
+char *tms_cmplx_func_name[] =
+    {"fact", "abs", "exp", "arg", "ceil", "floor", "round", "sign", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log", NULL};
+double complex (*tms_cmplx_func_ptr[])(double complex) =
+    {tms_cfact, cabs_z, tms_cexp, carg_z, tms_cceil, tms_cfloor, tms_cround, tms_csign, csqrt, tms_ccbrt, cacosh, casinh, catanh, cacos, casin, catan, ccosh, csinh, ctanh, tms_ccos, tms_csin, tms_ctan, tms_cln, tms_clog};
 
 // Extended functions, may take more than one argument (stored in a comma separated string)
 char *tms_ext_func_name[] =
     {"avg", "min", "max", "integrate", "der", "logn", "hex", "oct", "bin", "rand", "randint", "int", NULL};
 double complex (*tms_ext_func[])(tms_arg_list *) =
     {tms_avg, tms_min, tms_max, tms_integrate, tms_derivative, tms_logn, tms_hex, tms_oct, tms_bin, tms_rand, tms_randint, tms_int};
-
-// Complex functions
-char *tms_cmplx_func_name[] =
-    {"fact", "abs", "arg", "ceil", "floor", "round", "sign", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log", NULL};
-double complex (*tms_cmplx_func_ptr[])(double complex) =
-    {tms_cfact, cabs_z, carg_z, tms_cceil, tms_cfloor, tms_cround, tms_csign, csqrt, tms_ccbrt, cacosh, casinh, catanh, cacos, casin, catan, ccosh, csinh, ctanh, tms_ccos, tms_csin, tms_ctan, tms_cln, tms_clog};
 
 int _tms_set_runtime_var(char *expr, int i)
 {
@@ -102,15 +102,25 @@ tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)
             S[s_index].nodes = NULL;
 
             // Treat extended functions as a subexpression
-            for (j = 0; j < sizeof(tms_ext_func) / sizeof(*tms_ext_func); ++j)
+            if (i > 1 && tms_legal_char_in_name(local_expr[i - 1]))
             {
-                int tmp;
-                tmp = tms_r_search(local_expr, tms_ext_func_name[j], i - 1, true);
+                char *name = tms_get_name(local_expr, i - 1, false);
 
-                // Found an extended function
-                if (tmp != -1)
+                // It should never happen normally, but who knows...
+                if (name == NULL)
                 {
-                    S[s_index].subexpr_start = tmp;
+                    tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, i);
+                    free(S);
+                    tms_delete_math_expr(M);
+                    return NULL;
+                }
+
+                j = tms_find_str_in_array(name, tms_ext_func_name, array_length(tms_ext_func), TMS_F_EXTENDED);
+
+                // It is an extended function indeed
+                if (j != -1)
+                {
+                    S[s_index].subexpr_start = i - strlen(name);
                     S[s_index].solve_start = i + 1;
                     i = tms_find_closing_parenthesis(local_expr, i);
                     S[s_index].solve_end = i - 1;
@@ -118,14 +128,14 @@ tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)
                     S[s_index].func.extended = tms_ext_func[j];
                     S[s_index].func_type = TMS_F_EXTENDED;
                     S[s_index].start_node = -1;
-                    break;
+
+                    ++s_index;
+                    free(name);
+                    continue;
                 }
+                free(name);
             }
-            if (S[s_index].func.extended != NULL)
-            {
-                ++s_index;
-                continue;
-            }
+
             // Normal case
             ++depth;
             S[s_index].solve_start = i + 1;
@@ -248,56 +258,56 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
     int solve_start = S->solve_start;
 
     // Search for any function preceding the expression to set the function pointer
-    if (solve_start > 1 && tms_legal_char_in_name(local_expr[solve_start - 2]))
+    if (solve_start > 1)
     {
+        char *name = tms_get_name(local_expr, solve_start - 2, false);
+        if (name == NULL)
+            return true;
+
         // Runtime user functions
-        for (i = 0; i < tms_g_ufunc_count; ++i)
+        if ((i = tms_find_str_in_array(name, tms_g_ufunc, tms_g_ufunc_count, TMS_F_RUNTIME)) != -1)
         {
-            if (tms_match_word(local_expr, solve_start - 2, tms_g_ufunc[i].name, false))
-            {
-                S->func.runtime = tms_g_ufunc + i;
-                S->func_type = TMS_F_RUNTIME;
-                // Set the start of the subexpression to the start of the function name
-                S->subexpr_start = solve_start - strlen(tms_g_ufunc[i].name) - 1;
-                return true;
-            }
+            S->func.runtime = tms_g_ufunc + i;
+            S->func_type = TMS_F_RUNTIME;
+            // Set the start of the subexpression to the start of the function name
+            S->subexpr_start = solve_start - strlen(tms_g_ufunc[i].name) - 1;
+            free(name);
+            return true;
         }
 
         if (!M->enable_complex)
         {
-            for (i = 0; i < array_length(tms_r_func_ptr); ++i)
+
+            if ((i = tms_find_str_in_array(name, tms_r_func_name, array_length(tms_r_func_ptr), TMS_F_REAL)) != -1)
             {
-                if (tms_match_word(local_expr, solve_start - 2, tms_r_func_name[i], false))
-                {
-                    S->func.real = tms_r_func_ptr[i];
-                    S->func_type = TMS_F_REAL;
-                    S->subexpr_start = solve_start - strlen(tms_r_func_name[i]) - 1;
-                    break;
-                }
+                S->func.real = tms_r_func_ptr[i];
+                S->func_type = TMS_F_REAL;
+                S->subexpr_start = solve_start - strlen(tms_r_func_name[i]) - 1;
+                free(name);
+                return true;
             }
-            // The function isn't defined for real operations (loop exited due to condition instead of break)
-            if (i == array_length(tms_r_func_ptr))
+            else
             {
                 tms_error_handler(EH_SAVE, UNDEFINED_FUNCTION, EH_NONFATAL_ERROR, solve_start - 2);
+                free(name);
                 return false;
             }
         }
         else
         {
-            for (i = 0; i < array_length(tms_cmplx_func_ptr); ++i)
+            if ((i = tms_find_str_in_array(name, tms_cmplx_func_name, array_length(tms_cmplx_func_ptr), TMS_F_CMPLX)) != -1)
             {
-                if (tms_match_word(local_expr, solve_start - 2, tms_cmplx_func_name[i], false))
-                {
-                    S->func.cmplx = tms_cmplx_func_ptr[i];
-                    S->func_type = TMS_F_CMPLX;
-                    S->subexpr_start = solve_start - strlen(tms_cmplx_func_name[i]) - 1;
-                    break;
-                }
+                S->func.cmplx = tms_cmplx_func_ptr[i];
+                S->func_type = TMS_F_CMPLX;
+                S->subexpr_start = solve_start - strlen(tms_cmplx_func_name[i]) - 1;
+                free(name);
+                return true;
             }
-            // The complex function is not defined
-            if (i == array_length(tms_cmplx_func_ptr))
+
+            else
             {
                 tms_error_handler(EH_SAVE, UNDEFINED_FUNCTION, EH_NONFATAL_ERROR, solve_start - 2);
+                free(name);
                 return false;
             }
         }
@@ -499,10 +509,10 @@ int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start,
             {
                 tmp = tms_set_unknowns_data(expr + op_start, N, operand);
                 if (tmp == -1)
-            {
-                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, op_start);
-                return -1;
-            }
+                {
+                    tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, op_start);
+                    return -1;
+                }
             }
             // Nothing worked, so report a failure
             else
