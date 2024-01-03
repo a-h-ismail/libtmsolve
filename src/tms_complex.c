@@ -8,15 +8,20 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "scientific.h"
 #include <math.h>
 
-double complex tms_neglect_real_cmplx(double complex x)
+double complex tms_neglect_real_cmplx(double complex z)
 {
-    double magnitude = creal(x) / cimag(x);
+    double magnitude = creal(z) / cimag(z);
     if (fabs(magnitude) > 1e10)
-        return creal(x);
+        return creal(z);
     else if (fabs(magnitude) < 1e-10)
-        return I * cimag(x);
+        return I * cimag(z);
     else
-        return x;
+        return z;
+}
+
+double complex tms_cexp(double complex z)
+{
+    return tms_neglect_real_cmplx(cexp(z));
 }
 
 double complex tms_cpow(double complex x, double complex y)
