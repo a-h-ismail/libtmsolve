@@ -1288,3 +1288,13 @@ char *tms_get_name(char *expr, int i, bool is_at_start)
             return tms_strndup(expr + start, i - start + 1);
     }
 }
+
+char *tms_strcat_dup(char *s1, char *s2)
+{
+    char *concatenated_string = malloc((strlen(s1) + strlen(s2) + 1) * sizeof(char));
+
+    strcpy(concatenated_string, s1);
+    strcpy(concatenated_string + strlen(s1), s2);
+
+    return concatenated_string;
+}

@@ -256,3 +256,11 @@ char *tms_get_name(char *expr, int i, bool is_at_start);
  * @return The index of the first match, or -1 if no match is found.
  */
 int tms_find_str_in_array(char *key, void *array, int arr_len, uint8_t type);
+
+/**
+ * @brief Concatenate two strings into a new string
+ * @param s1 The first string
+ * @param s2 The second string
+ * @return A new string, s1 + s2
+ */
+char *tms_strcat_dup(char *s1, char *s2);
