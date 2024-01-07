@@ -1,0 +1,14 @@
+image: gcc
+
+build:
+  stage: build
+  script:
+    - gcc tests/tms_test.c src/*.c -I /include -fsanitize=address -Wall -lm -D LOCAL_BUILD -O3 -o ./tms_test
+  artifacts:
+    paths:
+      - tms_test
+
+test accuracy:
+  stage: test
+  script:
+    - ./tms_test tests/accuracy_test.txt
