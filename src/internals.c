@@ -15,7 +15,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <string.h>
 #include <time.h>
 
-char *_tms_g_expr = NULL;
 double complex tms_g_ans = 0;
 int64_t tms_g_int_ans = 0;
 
@@ -362,6 +361,7 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M)
     tms_math_subexpr *S, *NS;
 
     // Allocate nodes and set the result pointers
+    // Here NM is the new math expression and NS is the new subexpressions array
     for (int s = 0; s < NM->subexpr_count; ++s)
     {
         // New variables to keep lines from becoming too long
@@ -429,15 +429,14 @@ int tms_error_handler(int _mode, ...)
     static int last_error = 0, fatal = 0, non_fatal = 0, backup_error_count = 0, backup_fatal, backup_non_fatal;
     static tms_error_data main_table[EH_MAX_ERRORS], backup_table[EH_MAX_ERRORS];
 
-    va_list arguments;
-    char *error;
-    va_start(arguments, _mode);
-    int i, arg2;
+    va_list handler_args;
+    va_start(handler_args, _mode);
+    int i;
 
     switch (_mode)
     {
     case EH_SAVE:
-        error = va_arg(arguments, char *);
+        char *error = va_arg(handler_args, char *);
         // Case of error table being full
         if (last_error == EH_MAX_ERRORS - 1)
         {
@@ -456,9 +455,8 @@ int tms_error_handler(int _mode, ...)
             --last_error;
         }
         main_table[last_error].error_msg = strdup(error);
-        main_table[last_error].expr_len = strlen(_tms_g_expr);
-        arg2 = va_arg(arguments, int);
-        switch (arg2)
+        int error_type = va_arg(handler_args, int);
+        switch (error_type)
         {
         case EH_NONFATAL_ERROR:
             main_table[last_error].fatal = false;
@@ -472,23 +470,34 @@ int tms_error_handler(int _mode, ...)
             return -1;
         }
 
-        int err_position = va_arg(arguments, int);
-        if (err_position != -1)
+        int error_position = va_arg(handler_args, int);
+        if (error_position != -1)
         {
-            // Center the error in the string
-            if (err_position > 49)
-            {
-                strncpy(main_table[last_error].bad_snippet, _tms_g_expr + err_position - 24, 49);
-                main_table[last_error].bad_snippet[49] = '\0';
-                main_table[last_error].relative_index = 24;
-                main_table[last_error].real_index = err_position;
-            }
+            // Get the current expression
+            char *expr = va_arg(handler_args, char *);
+
+            // Someone sent an error position in a NULL string
+            // Nice try to segfault
+            if (expr == NULL)
+                main_table[last_error].relative_index = main_table[last_error].real_index = -1;
             else
             {
-                strncpy(main_table[last_error].bad_snippet, _tms_g_expr, 49);
-                main_table[last_error].bad_snippet[49] = '\0';
-                main_table[last_error].relative_index = err_position;
-                main_table[last_error].real_index = err_position;
+                main_table[last_error].expr_len = strlen(expr);
+                // Center the error in the string
+                if (error_position > 49)
+                {
+                    strncpy(main_table[last_error].bad_snippet, expr + error_position - 24, 49);
+                    main_table[last_error].bad_snippet[49] = '\0';
+                    main_table[last_error].relative_index = 24;
+                    main_table[last_error].real_index = error_position;
+                }
+                else
+                {
+                    strncpy(main_table[last_error].bad_snippet, expr, 49);
+                    main_table[last_error].bad_snippet[49] = '\0';
+                    main_table[last_error].relative_index = error_position;
+                    main_table[last_error].real_index = error_position;
+                }
             }
         }
         else
@@ -505,8 +514,8 @@ int tms_error_handler(int _mode, ...)
         return tms_error_handler(EH_CLEAR, EH_MAIN_DB);
 
     case EH_CLEAR:
-        arg2 = va_arg(arguments, int);
-        switch (arg2)
+        int db_select = va_arg(handler_args, int);
+        switch (db_select)
         {
         case EH_MAIN_DB:
             for (i = 0; i < last_error; ++i)
@@ -533,6 +542,8 @@ int tms_error_handler(int _mode, ...)
 
             memset(main_table, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
             memset(backup_table, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
+
+            // "i" is used here to preserve total errors for the return value
             i = last_error + backup_error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
             last_error = fatal = non_fatal = 0;
@@ -543,9 +554,9 @@ int tms_error_handler(int _mode, ...)
         return i;
 
     case EH_SEARCH:
-        error = va_arg(arguments, char *);
-        arg2 = va_arg(arguments, int);
-        switch (arg2)
+        error = va_arg(handler_args, char *);
+        int db_switch = va_arg(handler_args, int);
+        switch (db_switch)
         {
         case EH_MAIN_DB:
             for (i = 0; i < last_error; ++i)
@@ -570,8 +581,8 @@ int tms_error_handler(int _mode, ...)
 
     // Return the number of saved errors
     case EH_ERROR_COUNT:
-        arg2 = va_arg(arguments, int);
-        switch (arg2)
+        int error_type = va_arg(handler_args, int);
+        switch (error_type)
         {
         case EH_NONFATAL_ERROR:
             return non_fatal;
