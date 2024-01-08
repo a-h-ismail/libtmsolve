@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2021-2023 Ahmad Ismail
+Copyright (C) 2021-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "matrix.h"
@@ -176,7 +176,7 @@ tms_matrix *tms_comatrix(tms_matrix *M)
         return NULL;
     if (M->rows < 2 || M->rows != M->columns)
     {
-        tms_error_handler(EH_SAVE, INVALID_MATRIX, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, INVALID_MATRIX, EH_FATAL_ERROR, NULL);
         return NULL;
     }
     comatrix = tms_new_matrix(M->rows, M->columns);

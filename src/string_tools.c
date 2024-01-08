@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2021-2023 Ahmad Ismail
+Copyright (C) 2021-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "string_tools.h"
@@ -79,7 +79,7 @@ double complex _tms_set_operand_value(char *expr, int start, bool enable_complex
     // Catch incorrect start like )5 (no implied multiplication allowed)
     if (start > 0 && !tms_is_valid_number_start(expr[start - 1]))
     {
-        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, start - 1);
+        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, expr, start - 1);
         return NAN;
     }
 
@@ -112,7 +112,7 @@ double complex _tms_set_operand_value(char *expr, int start, bool enable_complex
 
     if (!enable_complex && cimag(value) != 0)
     {
-        tms_error_handler(EH_SAVE, COMPLEX_DISABLED, EH_FATAL_ERROR, start);
+        tms_error_handler(EH_SAVE, COMPLEX_DISABLED, EH_FATAL_ERROR, expr, start);
         return NAN;
     }
 
@@ -343,7 +343,7 @@ double complex tms_read_value(char *_s, int start)
 
     if (!tms_is_valid_number_end(_s[end + 1]))
     {
-        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, start + end);
+        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, _s, start + end);
         return NAN;
     }
 
@@ -356,7 +356,7 @@ double complex tms_read_value(char *_s, int start)
 
     if (end < 0)
     {
-        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, start);
+        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, _s, start);
         return NAN;
     }
 
@@ -477,7 +477,7 @@ int64_t tms_read_int_value(char *_s, int start)
 
     if (!tms_is_valid_int_number_end(_s[end + 1]))
     {
-        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, start + end);
+        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, _s, start + end);
         tms_error_bit = 1;
         return -1;
     }
@@ -491,7 +491,7 @@ int64_t tms_read_int_value(char *_s, int start)
 
     if (end < 0)
     {
-        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, start);
+        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, _s, start);
         tms_error_bit = 1;
         return -1;
     }
@@ -638,7 +638,7 @@ int tms_find_endofnumber(char *number, int start)
         {
             if (remaining_dots == 0)
             {
-                tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, end);
+                tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, number, end);
                 return -1;
             }
             else
@@ -865,7 +865,7 @@ bool tms_parenthesis_check(char *expr)
 
     if (length == 0)
     {
-        tms_error_handler(EH_SAVE, NO_INPUT, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, NO_INPUT, EH_FATAL_ERROR, NULL);
         return false;
     }
 
@@ -879,7 +879,7 @@ bool tms_parenthesis_check(char *expr)
         close = tms_find_closing_parenthesis(expr, open);
         if (close == -1)
         {
-            tms_error_handler(EH_SAVE, PARENTHESIS_NOT_CLOSED, EH_FATAL_ERROR, open);
+            tms_error_handler(EH_SAVE, PARENTHESIS_NOT_CLOSED, EH_FATAL_ERROR, expr, open);
             free(open_position);
             free(close_position);
             return false;
@@ -899,7 +899,7 @@ bool tms_parenthesis_check(char *expr)
 
     if (close != -1)
     {
-        tms_error_handler(EH_SAVE, PARENTHESIS_NOT_OPEN, EH_FATAL_ERROR, close);
+        tms_error_handler(EH_SAVE, PARENTHESIS_NOT_OPEN, EH_FATAL_ERROR, expr, close);
         free(open_position);
         free(close_position);
         return false;
@@ -923,7 +923,7 @@ bool tms_syntax_check(char *expr)
         {
             if (expr[j + length] != '(')
             {
-                tms_error_handler(EH_SAVE, PARENTHESIS_MISSING, EH_FATAL_ERROR, j + strlen(tms_g_all_func_names[i]));
+                tms_error_handler(EH_SAVE, PARENTHESIS_MISSING, EH_FATAL_ERROR, expr, j + strlen(tms_g_all_func_names[i]));
                 return false;
             }
             j = tms_f_search(expr, tms_g_all_func_names[i], j + 1, true);
@@ -1014,7 +1014,7 @@ bool tms_pre_parse_routine(char *expr)
     // Check for empty input
     if (expr[0] == '\0')
     {
-        tms_error_handler(EH_SAVE, NO_INPUT, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, NO_INPUT, EH_FATAL_ERROR, NULL);
         return false;
     }
     tms_remove_whitespace(expr);

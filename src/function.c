@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (C) 2021-2023 Ahmad Ismail
+Copyright (C) 2021-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "scientific.h"
@@ -48,7 +48,7 @@ double complex tms_min(tms_arg_list *args)
 
         if (cimag(tmp) != 0)
         {
-            tms_error_handler(EH_SAVE, ILLEGAL_COMPLEX_OP, EH_FATAL_ERROR, -1);
+            tms_error_handler(EH_SAVE, ILLEGAL_COMPLEX_OP, EH_FATAL_ERROR, NULL);
             return NAN;
         }
 
@@ -74,7 +74,7 @@ double complex tms_max(tms_arg_list *args)
 
         if (cimag(tmp) != 0)
         {
-            tms_error_handler(EH_SAVE, ILLEGAL_COMPLEX_OP, EH_FATAL_ERROR, -1);
+            tms_error_handler(EH_SAVE, ILLEGAL_COMPLEX_OP, EH_FATAL_ERROR, NULL);
             return NAN;
         }
 
@@ -98,7 +98,7 @@ double complex tms_logn(tms_arg_list *args)
         return NAN;
     if (!tms_is_real(base))
     {
-        tms_error_handler(EH_SAVE, NO_COMPLEX_LOG_BASE, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, NO_COMPLEX_LOG_BASE, EH_FATAL_ERROR, NULL);
         return NAN;
     }
     else
@@ -267,7 +267,7 @@ double complex tms_integrate(tms_arg_list *L)
     result += tms_evaluate(M);
     if (isnan(result) == true)
     {
-        tms_error_handler(EH_SAVE, INTEGRAl_UNDEFINED, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, INTEGRAl_UNDEFINED, EH_FATAL_ERROR, NULL);
         tms_delete_math_expr(M);
         return NAN;
     }
@@ -285,7 +285,7 @@ double complex tms_integrate(tms_arg_list *L)
             fn = tms_evaluate(M);
             if (isnan(fn) == true)
             {
-                tms_error_handler(EH_SAVE, INTEGRAl_UNDEFINED, EH_FATAL_ERROR, -1);
+                tms_error_handler(EH_SAVE, INTEGRAl_UNDEFINED, EH_FATAL_ERROR, NULL);
                 tms_delete_math_expr(M);
                 return NAN;
             }
@@ -299,7 +299,7 @@ double complex tms_integrate(tms_arg_list *L)
             fn = tms_evaluate(M);
             if (isnan(fn) == true)
             {
-                tms_error_handler(EH_SAVE, INTEGRAl_UNDEFINED, EH_FATAL_ERROR, -1);
+                tms_error_handler(EH_SAVE, INTEGRAl_UNDEFINED, EH_FATAL_ERROR, NULL);
                 tms_delete_math_expr(M);
                 return NAN;
             }

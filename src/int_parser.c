@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2023 Ahmad Ismail
+Copyright (C) 2023-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "int_parser.h"
@@ -37,7 +37,7 @@ int64_t _tms_read_int_operand(char *expr, int start)
     // Catch incorrect start like )5 (no implied multiplication allowed)
     if (start > 0 && !tms_is_valid_int_number_start(expr[start - 1]))
     {
-        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, start - 1);
+        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, expr, start - 1);
         tms_error_bit = 1;
         return -1;
     }
@@ -97,7 +97,7 @@ int _tms_set_runtime_int_var(char *expr, int i)
 {
     if (i == 0)
     {
-        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, 0);
+        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, expr, 0);
         return -1;
     }
     else
@@ -107,7 +107,7 @@ int _tms_set_runtime_int_var(char *expr, int i)
         j = tms_f_search(expr, "=", i + 1, false);
         if (j != -1)
         {
-            tms_error_handler(EH_SAVE, MULTIPLE_ASSIGNMENT_ERROR, EH_FATAL_ERROR, j);
+            tms_error_handler(EH_SAVE, MULTIPLE_ASSIGNMENT_ERROR, EH_FATAL_ERROR, expr, j);
             return -1;
         }
 
@@ -184,7 +184,7 @@ tms_int_expr *_tms_init_int_expr(char *local_expr)
             // Empty parenthesis pair is only allowed for extended functions
             if (S[s_index].solve_end == i)
             {
-                tms_error_handler(EH_SAVE, PARENTHESIS_EMPTY, EH_FATAL_ERROR, i);
+                tms_error_handler(EH_SAVE, PARENTHESIS_EMPTY, EH_FATAL_ERROR, local_expr, i);
                 free(S);
                 tms_delete_int_expr(M);
                 return NULL;
@@ -192,7 +192,7 @@ tms_int_expr *_tms_init_int_expr(char *local_expr)
 
             if (S[s_index].solve_end == -2)
             {
-                tms_error_handler(EH_SAVE, PARENTHESIS_NOT_CLOSED, EH_FATAL_ERROR, i);
+                tms_error_handler(EH_SAVE, PARENTHESIS_NOT_CLOSED, EH_FATAL_ERROR, local_expr, i);
                 // S isn't part of M yet
                 free(S);
                 tms_delete_int_expr(M);
@@ -237,7 +237,7 @@ int *_tms_get_int_op_indexes(char *local_expr, tms_int_subexpr *S, int s_index)
 
     if (solve_start > solve_end)
     {
-        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, solve_start);
+        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, local_expr, solve_start);
         return NULL;
     }
 
@@ -275,7 +275,7 @@ int *_tms_get_int_op_indexes(char *local_expr, tms_int_subexpr *S, int s_index)
         }
         else
         {
-            tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, i);
+            tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, local_expr, i);
             free(operator_index);
             return NULL;
         }
@@ -325,7 +325,7 @@ bool _tms_set_int_function_ptr(char *local_expr, tms_int_expr *M, int s_index)
         // No function was found
         if (i == array_length(tms_int_extf_ptr))
         {
-            tms_error_handler(EH_SAVE, UNDEFINED_FUNCTION, EH_NONFATAL_ERROR, solve_start - 2);
+            tms_error_handler(EH_SAVE, UNDEFINED_FUNCTION, EH_NONFATAL_ERROR, local_expr, solve_start - 2);
             return false;
         }
     }
@@ -343,7 +343,7 @@ int _tms_init_int_nodes(char *local_expr, tms_int_expr *M, int s_index, int *ope
 
     if (op_count < 0)
     {
-        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, solve_start);
+        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, local_expr, solve_start);
         return -1;
     }
 
@@ -358,7 +358,7 @@ int _tms_init_int_nodes(char *local_expr, tms_int_expr *M, int s_index, int *ope
     // Check if the expression is terminated with an operator
     if (op_count != 0 && operator_index[op_count - 1] == solve_end)
     {
-        tms_error_handler(EH_SAVE, RIGHT_OP_MISSING, EH_FATAL_ERROR, operator_index[op_count - 1]);
+        tms_error_handler(EH_SAVE, RIGHT_OP_MISSING, EH_FATAL_ERROR, local_expr, operator_index[op_count - 1]);
         return -1;
     }
     // Fill operations and index data into each op_node
@@ -381,7 +381,7 @@ int _tms_init_int_nodes(char *local_expr, tms_int_expr *M, int s_index, int *ope
             NB->left_operand = _tms_read_int_operand(local_expr, solve_start);
             if (tms_error_bit == 1)
             {
-                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, solve_start);
+                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, local_expr, solve_start);
                 return -1;
             }
         }
@@ -411,7 +411,7 @@ int _tms_init_int_nodes(char *local_expr, tms_int_expr *M, int s_index, int *ope
     // Check if the expression is terminated with an operator
     if (op_count != 0 && operator_index[op_count - 1] == solve_end)
     {
-        tms_error_handler(EH_SAVE, RIGHT_OP_MISSING, EH_FATAL_ERROR, operator_index[op_count - 1]);
+        tms_error_handler(EH_SAVE, RIGHT_OP_MISSING, EH_FATAL_ERROR, local_expr, operator_index[op_count - 1]);
         return -1;
     }
     // Set operator type and index for each op_node
@@ -439,7 +439,7 @@ int _tms_set_all_int_operands(char *local_expr, tms_int_expr *M, int s_index)
             NB[0].left_operand = 0;
         else
         {
-            tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, NB[0].operator_index);
+            tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, local_expr, NB[0].operator_index);
             return -1;
         }
     }
@@ -491,7 +491,7 @@ int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op
         operand_ptr = &(N->left_operand);
         break;
     default:
-        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, N->operator_index);
+        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, expr, N->operator_index);
         return -1;
     }
 
@@ -507,7 +507,7 @@ int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op
             status = tms_find_int_subexpr_starting_at(S, op_start, s_index, 1);
             if (status == -1)
             {
-                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, op_start);
+                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, expr, op_start);
                 return -1;
             }
             else
@@ -544,7 +544,7 @@ bool _tms_set_int_evaluation_order(tms_int_subexpr *S)
     i = S->start_node;
     if (i < 0)
     {
-        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, 0);
+        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, NULL);
         return false;
     }
     int target_priority = NB[i].priority;
@@ -860,7 +860,7 @@ char *_tms_lookup_int_function_name(void *function, int func_type)
             return tms_int_extf_name[i];
         break;
     default:
-        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, NULL);
     }
 
     return NULL;

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2022-2023 Ahmad Ismail
+Copyright (C) 2022-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #ifndef INTERNALS_H
@@ -152,7 +152,7 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M);
  * @param arg The list of argumets to pass to the error handler, according to the mode.
  * @details
  * Possible arguments: \n
- * EH_SAVE, char *error, EH_FATAL_ERROR | EH_NONFATAL_ERROR, error_index, current_expr \n
+ * EH_SAVE, char *error, EH_FATAL_ERROR | EH_NONFATAL_ERROR, current_expr, error_index (if applicable)  \n
  * EH_PRINT (returns number of printed errors). \n
  * EH_CLEAR, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB \n
  * EH_SEARCH, char *error, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB (returns EH_MAIN_DB on match in main, EH_BACKUP_DB on
