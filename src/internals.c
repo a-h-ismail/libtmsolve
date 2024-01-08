@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2022-2023 Ahmad Ismail
+Copyright (C) 2022-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "internals.h"
@@ -120,9 +120,9 @@ bool _tms_validate_args_count(int expected, int actual)
     if (expected == actual)
         return true;
     else if (expected > actual)
-        tms_error_handler(EH_SAVE, TOO_FEW_ARGS, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, TOO_FEW_ARGS, EH_FATAL_ERROR, NULL);
     else if (expected < actual)
-        tms_error_handler(EH_SAVE, TOO_MANY_ARGS, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, TOO_MANY_ARGS, EH_FATAL_ERROR, NULL);
     return false;
 }
 
@@ -134,7 +134,7 @@ int tms_new_var(char *name, bool is_constant)
     {
         if (strcmp(name, tms_g_illegal_names[i]) == 0)
         {
-            tms_error_handler(EH_SAVE, ILLEGAL_NAME, EH_FATAL_ERROR, -1);
+            tms_error_handler(EH_SAVE, ILLEGAL_NAME, EH_FATAL_ERROR, NULL);
             return -1;
         }
     }
@@ -142,7 +142,7 @@ int tms_new_var(char *name, bool is_constant)
     // Check if the name has illegal characters
     if (tms_valid_name(name) == false)
     {
-        tms_error_handler(EH_SAVE, INVALID_NAME, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, INVALID_NAME, EH_FATAL_ERROR, NULL);
         return -1;
     }
 
@@ -153,7 +153,7 @@ int tms_new_var(char *name, bool is_constant)
         {
             if (tms_g_vars[i].is_constant)
             {
-                tms_error_handler(EH_SAVE, OVERWRITE_CONST_VARIABLE, EH_FATAL_ERROR, -1);
+                tms_error_handler(EH_SAVE, OVERWRITE_CONST_VARIABLE, EH_FATAL_ERROR, NULL);
                 return -1;
             }
             return i;
@@ -182,7 +182,7 @@ int tms_new_int_var(char *name)
     {
         if (strcmp(name, tms_g_illegal_names[i]) == 0)
         {
-            tms_error_handler(EH_SAVE, ILLEGAL_NAME, EH_FATAL_ERROR, -1);
+            tms_error_handler(EH_SAVE, ILLEGAL_NAME, EH_FATAL_ERROR, NULL);
             return -1;
         }
     }
@@ -190,7 +190,7 @@ int tms_new_int_var(char *name)
     // Check if the name has illegal characters
     if (tms_valid_name(name) == false)
     {
-        tms_error_handler(EH_SAVE, INVALID_NAME, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, INVALID_NAME, EH_FATAL_ERROR, NULL);
         return -1;
     }
 
@@ -222,7 +222,7 @@ bool tms_has_ufunc_self_ref(tms_math_expr *F)
         // Detect self reference (new function has pointer to its previous version)
         if (S[s_index].func_type == TMS_F_RUNTIME && S[s_index].func.runtime->F == F)
         {
-            tms_error_handler(EH_SAVE, NO_FSELF_REFERENCE, EH_FATAL_ERROR, -1);
+            tms_error_handler(EH_SAVE, NO_FSELF_REFERENCE, EH_FATAL_ERROR, NULL);
             return true;
         }
     }
@@ -254,7 +254,7 @@ bool tms_has_ufunc_circular_refs(tms_math_expr *F)
 
             if (is_ufunc_referenced_by(S[i].func.runtime->F, F))
             {
-                tms_error_handler(EH_SAVE, NO_FCIRCULAR_REFERENCE, EH_FATAL_ERROR, -1);
+                tms_error_handler(EH_SAVE, NO_FCIRCULAR_REFERENCE, EH_FATAL_ERROR, NULL);
                 return true;
             }
         }
@@ -269,7 +269,7 @@ int tms_set_ufunction(char *name, char *function)
     // Check if the name has illegal characters
     if (tms_valid_name(name) == false)
     {
-        tms_error_handler(EH_SAVE, INVALID_NAME, EH_FATAL_ERROR, -1);
+        tms_error_handler(EH_SAVE, INVALID_NAME, EH_FATAL_ERROR, NULL);
         return -1;
     }
 
@@ -278,7 +278,7 @@ int tms_set_ufunction(char *name, char *function)
     {
         if (strcmp(name, tms_g_illegal_names[i]) == 0)
         {
-            tms_error_handler(EH_SAVE, ILLEGAL_NAME, EH_FATAL_ERROR, -1);
+            tms_error_handler(EH_SAVE, ILLEGAL_NAME, EH_FATAL_ERROR, NULL);
             return -1;
         }
     }
@@ -288,7 +288,7 @@ int tms_set_ufunction(char *name, char *function)
     {
         if (strcmp(name, tms_g_all_func_names[i]) == 0)
         {
-            tms_error_handler(EH_SAVE, NO_FUNCTION_SHADOWING, EH_FATAL_ERROR, -1);
+            tms_error_handler(EH_SAVE, NO_FUNCTION_SHADOWING, EH_FATAL_ERROR, NULL);
             return -1;
         }
     }
@@ -470,34 +470,34 @@ int tms_error_handler(int _mode, ...)
             return -1;
         }
 
-        int error_position = va_arg(handler_args, int);
-        if (error_position != -1)
+        // Get the current expression
+        char *expr = va_arg(handler_args, char *);
+        if (expr != NULL)
         {
-            // Get the current expression
-            char *expr = va_arg(handler_args, char *);
+            int error_position = va_arg(handler_args, int);
 
-            // Someone sent an error position in a NULL string
-            // Nice try to segfault
-            if (expr == NULL)
-                main_table[last_error].relative_index = main_table[last_error].real_index = -1;
+            main_table[last_error].expr_len = strlen(expr);
+
+            if (error_position < 0 || error_position >= main_table[last_error].expr_len)
+            {
+                fputs("libtmsolve warning: Error index out of expression range, ignoring...\n\n", stderr);
+                return 1;
+            }
+
+            // Center the error in the string
+            if (error_position > 49)
+            {
+                strncpy(main_table[last_error].bad_snippet, expr + error_position - 24, 49);
+                main_table[last_error].bad_snippet[49] = '\0';
+                main_table[last_error].relative_index = 24;
+                main_table[last_error].real_index = error_position;
+            }
             else
             {
-                main_table[last_error].expr_len = strlen(expr);
-                // Center the error in the string
-                if (error_position > 49)
-                {
-                    strncpy(main_table[last_error].bad_snippet, expr + error_position - 24, 49);
-                    main_table[last_error].bad_snippet[49] = '\0';
-                    main_table[last_error].relative_index = 24;
-                    main_table[last_error].real_index = error_position;
-                }
-                else
-                {
-                    strncpy(main_table[last_error].bad_snippet, expr, 49);
-                    main_table[last_error].bad_snippet[49] = '\0';
-                    main_table[last_error].relative_index = error_position;
-                    main_table[last_error].real_index = error_position;
-                }
+                strncpy(main_table[last_error].bad_snippet, expr, 49);
+                main_table[last_error].bad_snippet[49] = '\0';
+                main_table[last_error].relative_index = error_position;
+                main_table[last_error].real_index = error_position;
             }
         }
         else
