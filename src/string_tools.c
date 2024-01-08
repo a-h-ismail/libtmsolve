@@ -1176,6 +1176,7 @@ void tms_print_hex(int64_t value)
 
 int tms_find_str_in_array(char *key, void *array, int arr_len, uint8_t type)
 {
+    int i;
     switch (type)
     {
     case TMS_F_REAL:
@@ -1184,10 +1185,22 @@ int tms_find_str_in_array(char *key, void *array, int arr_len, uint8_t type)
     case TMS_F_INT64:
     case TMS_F_INT_EXTENDED:
         char **c_array = (char **)array;
-        for (int i = 0; i < arr_len; ++i)
+        if (arr_len != -1)
         {
-            if (c_array[i][0] == key[0] && strcmp(key, c_array[i]) == 0)
-                return i;
+            for (i = 0; i < arr_len; ++i)
+            {
+                if (c_array[i][0] == key[0] && strcmp(key, c_array[i]) == 0)
+                    return i;
+            }
+        }
+        else
+        {
+            // Case where the array length is not known, keep running until we hit NULL
+            for (i = 0; c_array[i] != NULL; ++i)
+            {
+                if (c_array[i][0] == key[0] && strcmp(key, c_array[i]) == 0)
+                    return i;
+            }
         }
         break;
 
