@@ -431,7 +431,7 @@ int tms_error_handler(int _mode, ...)
 
     va_list handler_args;
     va_start(handler_args, _mode);
-    int i;
+    int i, error_type, db_select;
 
     switch (_mode)
     {
@@ -455,7 +455,7 @@ int tms_error_handler(int _mode, ...)
             --last_error;
         }
         main_table[last_error].error_msg = strdup(error);
-        int error_type = va_arg(handler_args, int);
+        error_type = va_arg(handler_args, int);
         switch (error_type)
         {
         case EH_NONFATAL_ERROR:
@@ -514,7 +514,7 @@ int tms_error_handler(int _mode, ...)
         return tms_error_handler(EH_CLEAR, EH_MAIN_DB);
 
     case EH_CLEAR:
-        int db_select = va_arg(handler_args, int);
+        db_select = va_arg(handler_args, int);
         switch (db_select)
         {
         case EH_MAIN_DB:
@@ -526,6 +526,7 @@ int tms_error_handler(int _mode, ...)
             i = last_error;
             last_error = fatal = non_fatal = 0;
             break;
+
         case EH_BACKUP_DB:
             for (i = 0; i < backup_error_count; ++i)
                 free(main_table[i].error_msg);
@@ -534,6 +535,7 @@ int tms_error_handler(int _mode, ...)
             i = backup_error_count;
             backup_error_count = backup_fatal = backup_non_fatal = 0;
             break;
+
         case EH_ALL_DB:
             for (i = 0; i < last_error; ++i)
                 free(main_table[i].error_msg);
@@ -555,19 +557,21 @@ int tms_error_handler(int _mode, ...)
 
     case EH_SEARCH:
         error = va_arg(handler_args, char *);
-        int db_switch = va_arg(handler_args, int);
-        switch (db_switch)
+        db_select = va_arg(handler_args, int);
+        switch (db_select)
         {
         case EH_MAIN_DB:
             for (i = 0; i < last_error; ++i)
                 if (strcmp(error, main_table[i].error_msg) == 0)
                     return EH_MAIN_DB;
             break;
+
         case EH_BACKUP_DB:
             for (i = 0; i < last_error; ++i)
                 if (strcmp(error, backup_table[i].error_msg) == 0)
                     return EH_BACKUP_DB;
             break;
+
         case EH_ALL_DB:
             for (i = 0; i < last_error; ++i)
             {
@@ -581,7 +585,7 @@ int tms_error_handler(int _mode, ...)
 
     // Return the number of saved errors
     case EH_ERROR_COUNT:
-        int error_type = va_arg(handler_args, int);
+        error_type = va_arg(handler_args, int);
         switch (error_type)
         {
         case EH_NONFATAL_ERROR:
