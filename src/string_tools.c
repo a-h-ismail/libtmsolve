@@ -913,7 +913,6 @@ bool tms_parenthesis_check(char *expr)
 bool tms_syntax_check(char *expr)
 {
     int i, j, length;
-    _tms_g_expr = expr;
 
     // Check if all function calls have parenthesis
     for (i = 0; i < tms_g_func_count; ++i)

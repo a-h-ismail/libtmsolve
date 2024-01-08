@@ -55,9 +55,6 @@ extern double complex tms_g_ans;
 /// @brief Int64 variant of ans.
 extern int64_t tms_g_int_ans;
 
-/// @brief Use to store the current expression being processed, used by tms_error_handler() to generate the error prompt.
-extern char *_tms_g_expr;
-
 /// @brief Indicates if the library initialization function should be run.
 extern bool _tms_do_init;
 
@@ -155,7 +152,7 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M);
  * @param arg The list of argumets to pass to the error handler, according to the mode.
  * @details
  * Possible arguments: \n
- * EH_SAVE, char *error, EH_FATAL_ERROR | EH_NONFATAL_ERROR, error_index \n
+ * EH_SAVE, char *error, EH_FATAL_ERROR | EH_NONFATAL_ERROR, error_index, current_expr \n
  * EH_PRINT (returns number of printed errors). \n
  * EH_CLEAR, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB \n
  * EH_SEARCH, char *error, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB (returns EH_MAIN_DB on match in main, EH_BACKUP_DB on

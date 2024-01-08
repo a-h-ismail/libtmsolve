@@ -105,7 +105,6 @@ int _tms_set_runtime_int_var(char *expr, int i)
         int j;
         // Check if another assignment operator is used
         j = tms_f_search(expr, "=", i + 1, false);
-        _tms_g_expr = expr;
         if (j != -1)
         {
             tms_error_handler(EH_SAVE, MULTIPLE_ASSIGNMENT_ERROR, EH_FATAL_ERROR, j);
@@ -670,8 +669,6 @@ tms_int_expr *tms_parse_int_expr(char *expr)
     }
     else
         local_expr = expr;
-
-    _tms_g_expr = local_expr;
 
     tms_int_expr *M = _tms_init_int_expr(local_expr);
     if (M == NULL)

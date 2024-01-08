@@ -33,7 +33,6 @@ double complex tms_evaluate(tms_math_expr *M)
             if (S[s_index].exec_extf)
             {
                 char *arguments;
-                char *_tms_g_expr_bak = _tms_g_expr;
                 bool _debug_state = _tms_debug;
                 tms_arg_list *L;
 
@@ -49,7 +48,6 @@ double complex tms_evaluate(tms_math_expr *M)
                 // Call the extended function using its pointer
                 **(S[s_index].result) = (*(S[s_index].func.extended))(L);
 
-                _tms_g_expr = _tms_g_expr_bak;
                 _tms_debug = _debug_state;
 
                 if (isnan(creal(**(S[s_index].result))))
@@ -70,9 +68,6 @@ double complex tms_evaluate(tms_math_expr *M)
                 S[s_index].exec_extf = false;
                 free(arguments);
                 tms_free_arg_list(L);
-
-                // Likely the extended function modified the global expr
-                _tms_g_expr = M->str;
             }
             ++s_index;
 
@@ -205,7 +200,6 @@ int64_t tms_int_evaluate(tms_int_expr *M)
             {
                 char *arguments;
                 tms_arg_list *L;
-                char *_tms_g_expr_bak = _tms_g_expr;
                 bool _debug_state = _tms_debug;
 
                 int length = S[s_index].solve_end - S[s_index].solve_start + 1;
@@ -220,7 +214,6 @@ int64_t tms_int_evaluate(tms_int_expr *M)
                 // Call the extended function using its pointer, mask the result
                 **(S[s_index].result) = ((*(S[s_index].func.extended))(L)) & tms_int_mask;
 
-                _tms_g_expr = _tms_g_expr_bak;
                 _tms_debug = _debug_state;
                 if (tms_error_bit == 1)
                 {
@@ -233,9 +226,6 @@ int64_t tms_int_evaluate(tms_int_expr *M)
                 S[s_index].exec_extf = false;
                 free(arguments);
                 tms_free_arg_list(L);
-
-                // Likely the extended function modified the global expr
-                _tms_g_expr = M->str;
             }
             ++s_index;
 
