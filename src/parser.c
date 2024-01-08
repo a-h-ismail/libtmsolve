@@ -96,7 +96,7 @@ tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)
         if (local_expr[i] == '(')
         {
             S[s_index].func.extended = NULL;
-            S[s_index].func_type = 0;
+            S[s_index].func_type = TMS_NOFUNC;
             S[s_index].exec_extf = true;
             S[s_index].nodes = NULL;
 
@@ -182,7 +182,7 @@ tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)
     S[s_index].solve_end = length - 1;
     S[s_index].func.extended = NULL;
     S[s_index].nodes = NULL;
-    S[s_index].func_type = 0;
+    S[s_index].func_type = TMS_NOFUNC;
     S[s_index].exec_extf = true;
 
     // Sort by depth (high to low)
@@ -821,22 +821,15 @@ void *_tms_lookup_function_pointer(char *function_name, bool is_complex)
     int i;
     if (is_complex)
     {
-        for (i = 0; i < array_length(tms_cmplx_func_name); ++i)
-        {
-            if (strcmp(tms_cmplx_func_name[i], function_name) == 0)
-                break;
-        }
-        if (i < array_length(tms_cmplx_func_name))
+        // Use the pointers array to determine length since the name array has a NULL in its end
+        i = tms_find_str_in_array(function_name, tms_cmplx_func_name, array_length(tms_cmplx_func_ptr), TMS_F_CMPLX);
+        if (i != -1)
             return tms_cmplx_func_ptr[i];
     }
     else
     {
-        for (i = 0; i < array_length(tms_r_func_name); ++i)
-        {
-            if (strcmp(tms_r_func_name[i], function_name) == 0)
-                break;
-        }
-        if (i < array_length(tms_r_func_name))
+        i = tms_find_str_in_array(function_name, tms_r_func_name, array_length(tms_r_func_ptr), TMS_F_REAL);
+        if (i != -1)
             return tms_r_func_ptr[i];
     }
 
@@ -853,14 +846,14 @@ void tms_convert_real_to_complex(tms_math_expr *M)
         char *function_name;
         for (s_index = 0; s_index < M->subexpr_count; ++s_index)
         {
-            if (S[s_index].func_type != 1)
+            if (S[s_index].func_type != TMS_F_REAL)
                 continue;
             // Lookup the name of the real function and find the equivalent function pointer
             function_name = _tms_lookup_function_name(S[s_index].func.real, 1);
             if (function_name == NULL)
                 return;
             S[s_index].func.cmplx = _tms_lookup_function_pointer(function_name, true);
-            S[s_index].func_type = 2;
+            S[s_index].func_type = TMS_F_CMPLX;
         }
     }
     M->enable_complex = true;
@@ -917,7 +910,7 @@ void tms_delete_math_expr(tms_math_expr *M)
     tms_math_subexpr *S = M->subexpr_ptr;
     for (i = 0; i < M->subexpr_count; ++i)
     {
-        if (S[i].func_type == 3)
+        if (S[i].func_type == TMS_F_EXTENDED)
             free(S[i].result);
         free(S[i].nodes);
     }
