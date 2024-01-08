@@ -77,36 +77,15 @@ void tmsolve_init()
         for (i = 0; tms_r_func_name[i] != NULL; ++i)
             tmp[i] = tms_r_func_name[i];
         bool found = false;
-        // Copy what wasn't already copied
+        // Copy what wasn't already copied (complex functions with no real equivalent)
         for (int j = 0; tms_cmplx_func_name[j] != NULL; ++j)
-        {
-            found = false;
-            for (int k = 0; tms_r_func_name[k] != NULL; ++k)
-            {
-                if (strcmp(tms_r_func_name[k], tms_cmplx_func_name[j]) == 0)
-                {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found)
+            if (tms_find_str_in_array(tms_cmplx_func_name[j], tms_r_func_name, -1, TMS_F_REAL) != -1)
                 tmp[i++] = tms_cmplx_func_name[j];
-        }
 
+        // Copy extended function names
         for (int j = 0; tms_ext_func_name[j] != NULL; ++j)
-        {
-            found = false;
-            for (int k = 0; tms_r_func_name[k] != NULL; ++k)
-            {
-                if (strcmp(tms_r_func_name[k], tms_ext_func_name[j]) == 0)
-                {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found)
-                tmp[i++] = tms_ext_func_name[j];
-        }
+            tmp[i++] = tms_ext_func_name[j];
+
         tms_g_all_func_names = malloc(i * sizeof(char *));
         tms_g_func_count = i;
         for (i = 0; i < tms_g_func_count; ++i)
