@@ -55,23 +55,25 @@ int64_t _tms_read_int_operand(char *expr, int start)
     // Failed to read value normally, it is probably a variable
     if (tms_error_bit == 1)
     {
-        int i;
-        for (i = 0; i < tms_g_int_var_count; ++i)
+        char *name = tms_get_name(expr, start, true);
+        if (name == NULL)
+            return -1;
+
+        int i = tms_find_str_in_array(name, tms_g_int_vars, tms_g_int_var_count, TMS_V_INT64);
+        if (i != -1)
         {
-            if (tms_match_word(expr, start, tms_g_int_vars[i].name, true))
-            {
-                value = tms_g_int_vars[i].value & tms_int_mask;
-                tms_error_bit = 0;
-                break;
-            }
+            value = tms_g_int_vars[i].value;
+            tms_error_bit = 0;
         }
 
         // ans is a special case
-        if (tms_match_word(expr, start, "ans", true))
+        else if (strcmp(name, "ans") == 0)
         {
-            value = tms_g_int_ans & tms_int_mask;
+            value = tms_g_int_ans;
             tms_error_bit = 0;
         }
+
+        free(name);
     }
 
     // No variable found
@@ -142,20 +144,30 @@ tms_int_expr *_tms_init_int_expr(char *local_expr)
         if (local_expr[i] == '(')
         {
             S[s_index].func.extended = NULL;
-            S[s_index].func_type = 0;
+            S[s_index].func_type = TMS_NOFUNC;
             S[s_index].exec_extf = true;
             S[s_index].nodes = NULL;
 
             // Treat extended functions as a subexpression
-            for (j = 0; j < sizeof(tms_int_extf_ptr) / sizeof(*tms_int_extf_ptr); ++j)
+            if (i > 1 && tms_legal_char_in_name(local_expr[i - 1]))
             {
-                int tmp;
-                tmp = tms_r_search(local_expr, tms_int_extf_name[j], i - 1, true);
+                char *name = tms_get_name(local_expr, i - 1, false);
 
-                // Found an extended function
-                if (tmp != -1)
+                // It should never happen normally, but who knows...
+                if (name == NULL)
                 {
-                    S[s_index].subexpr_start = tmp;
+                    tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, local_expr, i);
+                    free(S);
+                    tms_delete_int_expr(M);
+                    return NULL;
+                }
+
+                j = tms_find_str_in_array(name, tms_int_extf_name, array_length(tms_int_extf_ptr), TMS_F_EXTENDED);
+
+                // It is an extended function indeed
+                if (j != -1)
+                {
+                    S[s_index].subexpr_start = i - strlen(name);
                     S[s_index].solve_start = i + 1;
                     i = tms_find_closing_parenthesis(local_expr, i);
                     S[s_index].solve_end = i - 1;
@@ -163,13 +175,12 @@ tms_int_expr *_tms_init_int_expr(char *local_expr)
                     S[s_index].func.extended = tms_int_extf_ptr[j];
                     S[s_index].func_type = TMS_F_EXTENDED;
                     S[s_index].start_node = -1;
-                    break;
+
+                    ++s_index;
+                    free(name);
+                    continue;
                 }
-            }
-            if (S[s_index].func.extended != NULL)
-            {
-                ++s_index;
-                continue;
+                free(name);
             }
 
             // Normal case
@@ -219,7 +230,7 @@ tms_int_expr *_tms_init_int_expr(char *local_expr)
     S[s_index].solve_end = length - 1;
     S[s_index].func.extended = NULL;
     S[s_index].nodes = NULL;
-    S[s_index].func_type = 0;
+    S[s_index].func_type = TMS_NOFUNC;
     S[s_index].exec_extf = true;
 
     // Sort by depth (high to low)
@@ -258,12 +269,6 @@ int *_tms_get_int_op_indexes(char *local_expr, tms_int_subexpr *S, int s_index)
 
         else if (tms_is_int_op(local_expr[i]))
         {
-            // Skip a + or - used in scientific notation (like 1e+5)
-            if (i > 0 && (local_expr[i - 1] == 'e' || local_expr[i - 1] == 'E') && (local_expr[i] == '+' || local_expr[i] == '-'))
-            {
-                ++i;
-                continue;
-            }
             // Varying the array size on demand
             DYNAMIC_RESIZE(operator_index, op_count, buffer_size, int)
 
@@ -294,38 +299,24 @@ bool _tms_set_int_function_ptr(char *local_expr, tms_int_expr *M, int s_index)
     int solve_start = S->solve_start;
 
     // Search for any function preceding the expression to set the function pointer
-    if (solve_start > 1 && tms_legal_char_in_name(local_expr[solve_start - 2]))
+    if (solve_start > 1)
     {
-        // Normal functions
-        for (i = 0; i < array_length(tms_int_nfunc_ptr); ++i)
-        {
-            if (tms_match_word(local_expr, solve_start - 2, tms_int_nfunc_name[i], false))
-            {
-                S->func.simple = tms_int_nfunc_ptr[i];
-                S->func_type = TMS_F_REAL;
-                // Setting the start of the subexpression to the start of the function name
-                S->subexpr_start = solve_start - strlen(tms_int_nfunc_name[i]) - 1;
-                return true;
-            }
-        }
+        char *name = tms_get_name(local_expr, solve_start - 2, false);
+        if (name == NULL)
+            return true;
 
-        // Extended functions
-        for (i = 0; i < array_length(tms_int_extf_ptr); ++i)
+        if ((i = tms_find_str_in_array(name, tms_int_nfunc_name, array_length(tms_int_nfunc_ptr), TMS_F_REAL)) != -1)
         {
-            if (tms_match_word(local_expr, solve_start - 2, tms_int_extf_name[i], false))
-            {
-                S->func.extended = tms_int_extf_ptr[i];
-                S->func_type = TMS_F_EXTENDED;
-                // Setting the start of the subexpression to the start of the function name
-                S->subexpr_start = solve_start - strlen(tms_int_extf_name[i]) - 1;
-                return true;
-            }
+            S->func.simple = tms_int_nfunc_ptr[i];
+            S->func_type = TMS_F_CMPLX;
+            S->subexpr_start = solve_start - strlen(tms_int_nfunc_name[i]) - 1;
+            free(name);
+            return true;
         }
-
-        // No function was found
-        if (i == array_length(tms_int_extf_ptr))
+        else
         {
             tms_error_handler(EH_SAVE, UNDEFINED_FUNCTION, EH_NONFATAL_ERROR, local_expr, solve_start - 2);
+            free(name);
             return false;
         }
     }
