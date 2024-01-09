@@ -76,7 +76,7 @@ void tmsolve_init()
         // Copy tms_r_func_name
         for (i = 0; tms_r_func_name[i] != NULL; ++i)
             tmp[i] = tms_r_func_name[i];
-        bool found = false;
+
         // Copy what wasn't already copied (complex functions with no real equivalent)
         for (int j = 0; tms_cmplx_func_name[j] != NULL; ++j)
             if (tms_find_str_in_array(tms_cmplx_func_name[j], tms_r_func_name, -1, TMS_F_REAL) != -1)
@@ -126,22 +126,20 @@ int tms_new_var(char *name, bool is_constant)
     }
 
     // Check if the variable already exists
-    for (i = 0; i < tms_g_var_count; ++i)
+    i = tms_find_str_in_array(name, tms_g_vars, tms_g_var_count, TMS_V_DOUBLE);
+    if (i != -1)
     {
-        if (strcmp(tms_g_vars[i].name, name) == 0)
+        if (tms_g_vars[i].is_constant)
         {
-            if (tms_g_vars[i].is_constant)
-            {
-                tms_error_handler(EH_SAVE, OVERWRITE_CONST_VARIABLE, EH_FATAL_ERROR, NULL);
-                return -1;
-            }
-            return i;
+            tms_error_handler(EH_SAVE, OVERWRITE_CONST_VARIABLE, EH_FATAL_ERROR, NULL);
+            return -1;
         }
+        else
+            return i;
     }
-
-    // Create a new variable
-    if (i == tms_g_var_count)
+    else
     {
+        // Create a new variable
         DYNAMIC_RESIZE(tms_g_vars, tms_g_var_count, tms_g_var_max, tms_var);
         tms_g_vars[tms_g_var_count].name = strdup(name);
         // Initialize the new variable to zero
@@ -150,7 +148,6 @@ int tms_new_var(char *name, bool is_constant)
         ++tms_g_var_count;
         return i;
     }
-    return -1;
 }
 
 int tms_new_int_var(char *name)
@@ -174,15 +171,13 @@ int tms_new_int_var(char *name)
     }
 
     // Check if the variable already exists
-    for (i = 0; i < tms_g_int_var_count; ++i)
-    {
-        if (strcmp(tms_g_int_vars[i].name, name) == 0)
-            return i;
-    }
+    i = tms_find_str_in_array(name, tms_g_int_vars, tms_g_int_var_count, TMS_V_INT64);
 
-    // Create a new variable
-    if (i == tms_g_int_var_count)
+    if (i != -1)
+        return i;
+    else
     {
+        // Create a new variable
         DYNAMIC_RESIZE(tms_g_int_vars, tms_g_int_var_count, tms_g_int_var_max, tms_int_var);
         tms_g_int_vars[tms_g_int_var_count].name = strdup(name);
         // Initialize the new variable to zero
@@ -190,7 +185,6 @@ int tms_new_int_var(char *name)
         ++tms_g_int_var_count;
         return i;
     }
-    return -1;
 }
 
 bool tms_has_ufunc_self_ref(tms_math_expr *F)
