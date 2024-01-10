@@ -6,6 +6,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "evaluator.h"
 #include "m_errors.h"
 #include "parser.h"
+#include "int_parser.h"
 #include "scientific.h"
 #include "string_tools.h"
 #include "tms_math_strs.h"
@@ -25,7 +26,7 @@ bool _tms_debug = false;
 char **tms_g_all_func_names;
 int tms_g_func_count;
 
-char *tms_g_illegal_names[] = {"x", "i"};
+char *tms_g_illegal_names[] = {"x", "i", "ans"};
 const int tms_g_illegal_names_count = array_length(tms_g_illegal_names);
 
 tms_var tms_g_builtin_vars[] = {{"i", I, true}, {"pi", M_PI, true}, {"e", M_E, true}, {"c", 299792458, true}};
@@ -139,14 +140,22 @@ int tms_new_var(char *name, bool is_constant)
     }
     else
     {
-        // Create a new variable
-        DYNAMIC_RESIZE(tms_g_vars, tms_g_var_count, tms_g_var_max, tms_var);
-        tms_g_vars[tms_g_var_count].name = strdup(name);
-        // Initialize the new variable to zero
-        tms_g_vars[tms_g_var_count].value = 0;
-        tms_g_vars[tms_g_var_count].is_constant = is_constant;
-        ++tms_g_var_count;
-        return i;
+        if (tms_find_str_in_array(name, tms_g_all_func_names, -1, TMS_NOFUNC) != -1)
+        {
+            tms_error_handler(EH_SAVE, VAR_NAME_MATCHES_FUNCTION, EH_FATAL_ERROR, NULL);
+            return -1;
+        }
+        else
+        {
+            // Create a new variable
+            DYNAMIC_RESIZE(tms_g_vars, tms_g_var_count, tms_g_var_max, tms_var);
+            tms_g_vars[tms_g_var_count].name = strdup(name);
+            // Initialize the new variable to zero
+            tms_g_vars[tms_g_var_count].value = 0;
+            tms_g_vars[tms_g_var_count].is_constant = is_constant;
+            ++tms_g_var_count;
+            return i;
+        }
     }
 }
 
@@ -177,6 +186,12 @@ int tms_new_int_var(char *name)
         return i;
     else
     {
+        if (tms_find_str_in_array(name, tms_int_nfunc_name, -1, TMS_NOFUNC) != -1 ||
+            tms_find_str_in_array(name, tms_int_extf_name, -1, TMS_NOFUNC) != -1)
+        {
+            tms_error_handler(EH_SAVE, VAR_NAME_MATCHES_FUNCTION, EH_FATAL_ERROR, NULL);
+            return -1;
+        }
         // Create a new variable
         DYNAMIC_RESIZE(tms_g_int_vars, tms_g_int_var_count, tms_g_int_var_max, tms_int_var);
         tms_g_int_vars[tms_g_int_var_count].name = strdup(name);
@@ -257,48 +272,51 @@ int tms_set_ufunction(char *name, char *function)
     }
 
     // Check if the name was already used by builtin functions
-    for (i = 0; i < tms_g_func_count; ++i)
+    i = tms_find_str_in_array(name, tms_g_all_func_names, -1, TMS_NOFUNC);
+    if (i != -1)
     {
-        if (strcmp(name, tms_g_all_func_names[i]) == 0)
-        {
-            tms_error_handler(EH_SAVE, NO_FUNCTION_SHADOWING, EH_FATAL_ERROR, NULL);
-            return -1;
-        }
+        tms_error_handler(EH_SAVE, NO_FUNCTION_SHADOWING, EH_FATAL_ERROR, NULL);
+        return -1;
+    }
+
+    // Check if the name is used by a variable
+    i = tms_find_str_in_array(name, tms_g_vars, tms_g_var_count, TMS_V_DOUBLE);
+    if (i != -1)
+    {
+        tms_error_handler(EH_SAVE, FUNCTION_NAME_MATCHES_VAR, EH_FATAL_ERROR, NULL);
+        return -1;
     }
 
     // Check if the function already exists as runtime function
-    for (i = 0; i < tms_g_ufunc_count; ++i)
+    i = tms_find_str_in_array(name, tms_g_ufunc, tms_g_ufunc_count, TMS_F_RUNTIME);
+    if (i != -1)
     {
-        if (strcmp(tms_g_ufunc[i].name, name) == 0)
+        tms_math_expr *old = tms_g_ufunc[i].F, *new = tms_parse_expr(function, true, true);
+        if (new == NULL)
         {
-            tms_math_expr *old = tms_g_ufunc[i].F, *new = tms_parse_expr(function, true, true);
-            if (new == NULL)
+            return -1;
+        }
+        else
+        {
+            // Update the pointer before checks otherwise they won't work
+            tms_g_ufunc[i].F = new;
+            // Check for self reference, then fix old references in other functions
+            if (tms_has_ufunc_self_ref(new) || tms_has_ufunc_circular_refs(new))
             {
+                tms_delete_math_expr(new);
+                tms_g_ufunc[i].F = old;
                 return -1;
             }
             else
             {
-                // Update the pointer before checks otherwise they won't work
-                tms_g_ufunc[i].F = new;
-                // Check for self reference, then fix old references in other functions
-                if (tms_has_ufunc_self_ref(new) || tms_has_ufunc_circular_refs(new))
-                {
-                    tms_delete_math_expr(new);
-                    tms_g_ufunc[i].F = old;
-                    return -1;
-                }
-                else
-                {
-                    tms_delete_math_expr(old);
-                    return 0;
-                }
+                tms_delete_math_expr(old);
+                return 0;
             }
         }
     }
-
-    // Create a new function
-    if (i == tms_g_ufunc_count)
+    else
     {
+        // Create a new function
         DYNAMIC_RESIZE(tms_g_ufunc, tms_g_ufunc_count, tms_g_ufunc_max, tms_ufunc);
         tms_math_expr *F = tms_parse_expr(function, true, true);
         if (F == NULL)
