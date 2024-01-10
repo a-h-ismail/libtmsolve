@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2022-2023 Ahmad Ismail
+Copyright (C) 2022-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 
@@ -40,4 +40,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define NO_FSELF_REFERENCE "Can't reference a user function within itself."
 #define NO_FCIRCULAR_REFERENCE "Circular function reference detected, function unchanged."
 #define INTEGER_OVERFLOW "Warning: Integer overflow detected."
+#define VAR_NAME_MATCHES_FUNCTION "Variable name can't shadow an existing function."
+#define FUNCTION_NAME_MATCHES_VAR "Function name can't shadow an existing variable."
 #endif
