@@ -1179,6 +1179,7 @@ int tms_find_str_in_array(char *key, void *array, int arr_len, uint8_t type)
     int i;
     switch (type)
     {
+    case TMS_NOFUNC:
     case TMS_F_REAL:
     case TMS_F_CMPLX:
     case TMS_F_EXTENDED:
@@ -1206,7 +1207,7 @@ int tms_find_str_in_array(char *key, void *array, int arr_len, uint8_t type)
 
     case TMS_F_RUNTIME:
         tms_ufunc *ufunc_array = array;
-        for (int i = 0; i < arr_len; ++i)
+        for (i = 0; i < arr_len; ++i)
         {
             if (ufunc_array[i].name[0] == key[0] && strcmp(key, ufunc_array[i].name) == 0)
                 return i;
@@ -1224,7 +1225,7 @@ int tms_find_str_in_array(char *key, void *array, int arr_len, uint8_t type)
 
     case TMS_V_INT64:
         tms_int_var *ivars = array;
-        for (int i = 0; i < arr_len; ++i)
+        for (i = 0; i < arr_len; ++i)
         {
             if (ivars[i].name[0] == key[0] && strcmp(key, ivars[i].name) == 0)
                 return i;
