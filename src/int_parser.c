@@ -162,7 +162,7 @@ tms_int_expr *_tms_init_int_expr(char *local_expr)
                     return NULL;
                 }
 
-                j = tms_find_str_in_array(name, tms_int_extf_name, array_length(tms_int_extf_ptr), TMS_F_EXTENDED);
+                j = tms_find_str_in_array(name, tms_int_extf_name, array_length(tms_int_extf_ptr), TMS_F_INT_EXTENDED);
 
                 // It is an extended function indeed
                 if (j != -1)
@@ -305,12 +305,12 @@ bool _tms_set_int_function_ptr(char *local_expr, tms_int_expr *M, int s_index)
         if (name == NULL)
             return true;
 
-        if ((i = tms_find_str_in_array(name, tms_int_nfunc_name, array_length(tms_int_nfunc_ptr), TMS_F_REAL)) != -1)
+        if ((i = tms_find_str_in_array(name, tms_int_nfunc_name, -1, TMS_F_INT64)) != -1)
         {
             S->func.simple = tms_int_nfunc_ptr[i];
-            S->func_type = TMS_F_CMPLX;
+            S->func_type = TMS_F_REAL;
+            // Set the start of the subexpression to the start of the function name
             S->subexpr_start = solve_start - strlen(tms_int_nfunc_name[i]) - 1;
-            free(name);
             return true;
         }
         else
