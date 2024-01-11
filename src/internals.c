@@ -154,7 +154,7 @@ int tms_new_var(char *name, bool is_constant)
             tms_g_vars[tms_g_var_count].value = 0;
             tms_g_vars[tms_g_var_count].is_constant = is_constant;
             ++tms_g_var_count;
-            return i;
+            return tms_g_var_count - 1;
         }
     }
 }
@@ -198,7 +198,7 @@ int tms_new_int_var(char *name)
         // Initialize the new variable to zero
         tms_g_int_vars[tms_g_int_var_count].value = 0;
         ++tms_g_int_var_count;
-        return i;
+        return tms_g_int_var_count - 1;
     }
 }
 
