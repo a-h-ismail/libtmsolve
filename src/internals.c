@@ -140,7 +140,7 @@ int tms_new_var(char *name, bool is_constant)
     }
     else
     {
-        if (tms_find_str_in_array(name, tms_g_all_func_names, -1, TMS_NOFUNC) != -1)
+        if (tms_find_str_in_array(name, tms_g_all_func_names, tms_g_func_count, TMS_NOFUNC) != -1)
         {
             tms_error_handler(EH_SAVE, VAR_NAME_MATCHES_FUNCTION, EH_FATAL_ERROR, NULL);
             return -1;
@@ -217,10 +217,10 @@ bool tms_has_ufunc_self_ref(tms_math_expr *F)
     return false;
 }
 
-bool is_ufunc_referenced_by(tms_math_expr *referencer, tms_math_expr *F)
+bool is_ufunc_referenced_by(tms_math_expr *referrer, tms_math_expr *F)
 {
-    tms_math_subexpr *S = referencer->subexpr_ptr;
-    for (int s_index = 0; s_index < referencer->subexpr_count; ++s_index)
+    tms_math_subexpr *S = referrer->subexpr_ptr;
+    for (int s_index = 0; s_index < referrer->subexpr_count; ++s_index)
     {
         if (S[s_index].func_type == TMS_F_RUNTIME && S[s_index].func.runtime->F == F)
             return true;
@@ -272,7 +272,7 @@ int tms_set_ufunction(char *name, char *function)
     }
 
     // Check if the name was already used by builtin functions
-    i = tms_find_str_in_array(name, tms_g_all_func_names, -1, TMS_NOFUNC);
+    i = tms_find_str_in_array(name, tms_g_all_func_names, tms_g_func_count, TMS_NOFUNC);
     if (i != -1)
     {
         tms_error_handler(EH_SAVE, NO_FUNCTION_SHADOWING, EH_FATAL_ERROR, NULL);
@@ -325,6 +325,7 @@ int tms_set_ufunction(char *name, char *function)
         }
         else
         {
+            i = tms_g_ufunc_count;
             // Set function
             tms_g_ufunc[i].F = F;
             tms_g_ufunc[i].name = strdup(name);
