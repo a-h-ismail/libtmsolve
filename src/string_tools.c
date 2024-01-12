@@ -347,10 +347,7 @@ double complex tms_read_value(char *_s, int start)
         return NAN;
 
     if (!tms_is_valid_number_end(_s[end + 1]))
-    {
-        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, _s, start + end);
         return NAN;
-    }
 
     base = tms_detect_base(_s);
     if (base != 10)
@@ -360,10 +357,7 @@ double complex tms_read_value(char *_s, int start)
     }
 
     if (end < 0)
-    {
-        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, _s, start);
         return NAN;
-    }
 
     // Copy the value to a separate array
     char num_str[end + 2];
@@ -482,7 +476,6 @@ int64_t tms_read_int_value(char *_s, int start)
 
     if (!tms_is_valid_int_number_end(_s[end + 1]))
     {
-        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, _s, start + end);
         tms_error_bit = 1;
         return -1;
     }
@@ -496,7 +489,6 @@ int64_t tms_read_int_value(char *_s, int start)
 
     if (end < 0)
     {
-        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, _s, start);
         tms_error_bit = 1;
         return -1;
     }
