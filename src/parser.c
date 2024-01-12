@@ -105,10 +105,10 @@ tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)
             {
                 char *name = tms_get_name(local_expr, i - 1, false);
 
-                // It should never happen normally, but who knows...
+                // This means the function name used is not valid
                 if (name == NULL)
                 {
-                    tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, local_expr, i);
+                    tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, local_expr, i - 1);
                     free(S);
                     tms_delete_math_expr(M);
                     return NULL;
@@ -371,16 +371,20 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
             NB->left_operand = _tms_set_operand_value(local_expr, solve_start, M->enable_complex);
             if (isnan((double)NB->left_operand))
             {
-                if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
-                    return -1;
                 if (enable_unknowns)
-                    status = tms_set_unknowns_data(local_expr + solve_start, NB, 'l');
-                else
-                    status = -1;
-
-                if (status == -1)
                 {
-                    tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, local_expr, solve_start);
+                    status = tms_set_unknowns_data(local_expr + solve_start, NB, 'l');
+                    if (status == -1)
+                    {
+                        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, local_expr, solve_start);
+                        return -1;
+                    }
+                }
+                else
+                {
+                    // Unknown not found, or set_operand didn't save an error (not a valid var name)
+                    if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) == 0)
+                        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, local_expr, solve_start);
                     return -1;
                 }
             }
@@ -508,22 +512,21 @@ int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start,
 
         if (isnan((double)*operand_ptr))
         {
-            if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
-                return -1;
-            // Checking for the unknown 'x'
+            // Check for the unknown 'x'
             if (enable_unknowns == true)
             {
                 tmp = tms_set_unknowns_data(expr + op_start, N, operand);
                 if (tmp == -1)
                 {
-                    tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, expr, op_start);
+                    tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, expr, op_start);
                     return -1;
                 }
             }
-            // Nothing worked, so report a failure
             else
             {
-                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, expr, op_start);
+                // If the value reader failed, set the error to be a syntax error
+                if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) == 0)
+                    tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, expr, op_start);
                 return -1;
             }
         }

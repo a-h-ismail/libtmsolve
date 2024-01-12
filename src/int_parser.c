@@ -65,18 +65,23 @@ int64_t _tms_read_int_operand(char *expr, int start)
             value = tms_g_int_vars[i].value;
             tms_error_bit = 0;
         }
-
         // ans is a special case
         else if (strcmp(name, "ans") == 0)
         {
             value = tms_g_int_ans;
             tms_error_bit = 0;
         }
-
+        else
+        {
+            // The name is valid, but not defined
+            tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, expr + start);
+            free(name);
+            return -1;
+        }
         free(name);
     }
 
-    // No variable found
+    // Not a valid variable
     if (tms_error_bit == 1)
         return -1;
 
@@ -153,10 +158,10 @@ tms_int_expr *_tms_init_int_expr(char *local_expr)
             {
                 char *name = tms_get_name(local_expr, i - 1, false);
 
-                // It should never happen normally, but who knows...
+                // The function name is not valid
                 if (name == NULL)
                 {
-                    tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, local_expr, i);
+                    tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, local_expr, i - 1);
                     free(S);
                     tms_delete_int_expr(M);
                     return NULL;
@@ -372,7 +377,9 @@ int _tms_init_int_nodes(char *local_expr, tms_int_expr *M, int s_index, int *ope
             NB->left_operand = _tms_read_int_operand(local_expr, solve_start);
             if (tms_error_bit == 1)
             {
-                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, local_expr, solve_start);
+                // Operand reading didn't write an error itself
+                if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) == 0)
+                    tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, local_expr, solve_start);
                 return -1;
             }
         }
@@ -490,22 +497,18 @@ int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op
 
     if (tms_error_bit == 1)
     {
-        if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) != 0)
+        // Case of a subexpression result as operand
+        status = tms_find_int_subexpr_starting_at(S, op_start, s_index, 1);
+        if (status == -1)
+        {
+            if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) == 0)
+                tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, expr, op_start);
             return -1;
+        }
         else
         {
-            // Case of a subexpression result as operand
-            status = tms_find_int_subexpr_starting_at(S, op_start, s_index, 1);
-            if (status == -1)
-            {
-                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, expr, op_start);
-                return -1;
-            }
-            else
-            {
-                *(S[status].result) = operand_ptr;
-                tms_error_bit = 0;
-            }
+            *(S[status].result) = operand_ptr;
+            tms_error_bit = 0;
         }
     }
     return 0;

@@ -106,7 +106,12 @@ double complex _tms_set_operand_value(char *expr, int start, bool enable_complex
         // ans is a special case
         else if (strcmp(name, "ans") == 0)
             value = tms_g_ans;
-
+        else
+        {
+            tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, expr, start);
+            free(name);
+            return NAN;
+        }
         free(name);
     }
 
