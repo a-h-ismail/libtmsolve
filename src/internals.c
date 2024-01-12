@@ -473,6 +473,10 @@ int tms_error_handler(int _mode, ...)
             if (error_position < 0 || error_position >= main_table[last_error].expr_len)
             {
                 fputs("libtmsolve warning: Error index out of expression range, ignoring...\n\n", stderr);
+                main_table[last_error].relative_index = -1;
+                main_table[last_error].real_index = -1;
+                main_table[last_error].bad_snippet[0] = '\0';
+                last_error = fatal + non_fatal;
                 return 1;
             }
 
