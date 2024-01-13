@@ -178,17 +178,15 @@ double complex tms_evaluate(tms_math_expr *M)
     return M->answer;
 }
 
-int64_t tms_int_evaluate(tms_int_expr *M)
+int tms_int_evaluate(tms_int_expr *M, int64_t *result)
 {
     // No NULL pointer dereference allowed.
     if (M == NULL)
-    {
-        tms_error_bit = 1;
         return -1;
-    }
 
     tms_int_op_node *i_node;
     int s_index = 0, s_count = M->subexpr_count;
+    int state;
     // Subexpression pointer to access the subexpression array.
     tms_int_subexpr *S = M->subexpr_ptr;
     while (s_index < s_count)
@@ -211,21 +209,24 @@ int64_t tms_int_evaluate(tms_int_expr *M)
                 // Disable debug output for extended functions
                 _tms_debug = false;
 
-                // Call the extended function using its pointer, mask the result
-                **(S[s_index].result) = ((*(S[s_index].func.extended))(L)) & tms_int_mask;
+                // Call the extended function
+                state = ((*(S[s_index].func.extended))(L, *(S[s_index].result))) & tms_int_mask;
 
                 _tms_debug = _debug_state;
-                if (tms_error_bit == 1)
+                if (state == -1)
                 {
                     tms_error_handler(EH_SAVE, EXTF_FAILURE, EH_FATAL_ERROR, M->str, S[s_index].subexpr_start);
                     free(arguments);
                     tms_free_arg_list(L);
                     return -1;
                 }
-
-                S[s_index].exec_extf = false;
-                free(arguments);
-                tms_free_arg_list(L);
+                else
+                {
+                    S[s_index].exec_extf = false;
+                    **(S[s_index].result) &= tms_int_mask;
+                    free(arguments);
+                    tms_free_arg_list(L);
+                }
             }
             ++s_index;
 
@@ -244,7 +245,6 @@ int64_t tms_int_evaluate(tms_int_expr *M)
                 if (i_node->result == NULL)
                 {
                     tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, NULL);
-                    tms_error_bit = 1;
                     return -1;
                 }
                 switch (i_node->operator)
@@ -277,7 +277,6 @@ int64_t tms_int_evaluate(tms_int_expr *M)
                     if (i_node->right_operand == 0)
                     {
                         tms_error_handler(EH_SAVE, DIVISION_BY_ZERO, EH_FATAL_ERROR, M->str, i_node->operator_index);
-                        tms_error_bit = 1;
                         return -1;
                     }
                     *(i_node->result) = i_node->left_operand / i_node->right_operand;
@@ -287,7 +286,6 @@ int64_t tms_int_evaluate(tms_int_expr *M)
                     if (i_node->right_operand == 0)
                     {
                         tms_error_handler(EH_SAVE, MODULO_ZERO, EH_FATAL_ERROR, M->str, i_node->operator_index);
-                        tms_error_bit = 1;
                         return -1;
                     }
                     else
@@ -302,15 +300,11 @@ int64_t tms_int_evaluate(tms_int_expr *M)
         switch (S[s_index].func_type)
         {
         case TMS_F_REAL:
-            **(S[s_index].result) = (*(S[s_index].func.simple))(**(S[s_index].result));
-            break;
-        }
+            state = (*(S[s_index].func.simple))(**(S[s_index].result), *(S[s_index].result));
+            if (state == -1)
+                return -1;
 
-        if (tms_error_bit == 1)
-        {
-            tms_error_handler(EH_SAVE, MATH_ERROR, EH_NONFATAL_ERROR, M->str, S[s_index].solve_start);
-            tms_error_bit = 1;
-            return -1;
+            break;
         }
         ++s_index;
     }
@@ -321,7 +315,8 @@ int64_t tms_int_evaluate(tms_int_expr *M)
     if (_tms_debug)
         tms_dump_int_expr(M, true);
 
-    return M->answer;
+    *result = M->answer;
+    return 0;
 }
 
 void _tms_set_unknowns_data(tms_math_expr *M)
