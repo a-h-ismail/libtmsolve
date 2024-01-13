@@ -67,18 +67,24 @@ void test_base_n(char *buffer)
     char expr[field_separator + 1];
     int64_t expected_ans;
 
-    expected_ans = tms_sign_extend(tms_int_solve(buffer + field_separator + 1));
-
-    strncpy(expr, buffer, field_separator);
-    expr[field_separator] = '\0';
-    puts(expr);
-
-    tms_g_int_ans = tms_sign_extend(tms_int_solve(expr));
-    if (tms_error_bit == 1)
+    // Read the answer to expect
+    if (tms_int_solve(buffer + field_separator + 1, &expected_ans) == -1)
     {
         tms_error_handler(EH_PRINT);
         exit(1);
     }
+    expected_ans = tms_sign_extend(expected_ans);
+
+    strncpy(expr, buffer, field_separator);
+    expr[field_separator] = '\0';
+    puts(expr);
+    // Solve the expression
+    if (tms_int_solve(expr, tms_g_int_ans) == -1)
+    {
+        tms_error_handler(EH_PRINT);
+        exit(1);
+    }
+    tms_g_int_ans = tms_sign_extend(tms_g_int_ans);
 
     if (tms_g_int_ans == expected_ans)
         puts("Passed\n--------------------\n");
