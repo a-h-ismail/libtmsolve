@@ -43,8 +43,6 @@ uint64_t tms_int_mask = 0xFFFFFFFF;
 
 int8_t tms_int_mask_size = 32;
 
-int8_t tms_error_bit = 0;
-
 void tmsolve_init()
 {
     int i;
