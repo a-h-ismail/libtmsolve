@@ -74,6 +74,7 @@ int _tms_read_int_operand(char *expr, int start, int64_t *result)
             return -1;
         }
         free(name);
+        break;
 
     case -2:
         tms_error_handler(EH_SAVE, INTEGER_OVERFLOW, EH_FATAL_ERROR, expr, start);
