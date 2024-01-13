@@ -5,6 +5,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "string_tools.h"
 #include "scientific.h"
 #include "internals.h"
+#include "bitwise.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -403,19 +404,16 @@ double complex tms_read_value(char *_s, int start)
     }
 }
 
-int64_t _tms_read_int_helper(char *number, int8_t base)
+int _tms_read_int_helper(char *number, int8_t base, int64_t *result)
 {
-    int64_t value = 0;
-    int i, power = 1;
+    int64_t value = 0, power = 1;
+    int i;
     bool is_negative = false;
     int8_t (*symbol_resolver)(char);
 
     // Empty string
     if (number[0] == '\0')
-    {
-        tms_error_bit = 1;
         return -1;
-    }
 
     if (number[0] == '-')
     {
@@ -440,45 +438,61 @@ int64_t _tms_read_int_helper(char *number, int8_t base)
         symbol_resolver = tms_hex_to_int;
         break;
     default:
-        tms_error_bit = 1;
         return -1;
     }
 
-    int8_t tmp;
+    int8_t digit;
+    int64_t tmp1, tmp2;
+    bool overflow;
     for (i = strlen(number) - 1; i >= 0; --i)
     {
-        tmp = (*symbol_resolver)(number[i]);
-        if (tmp == -1)
-        {
-            tms_error_bit = 1;
+        digit = (*symbol_resolver)(number[i]);
+        if (digit == -1)
             return -1;
-        }
-        value += tmp * power;
-        power *= base;
+
+        // Multiply digit with the current power
+        overflow = __builtin_mul_overflow(digit, power, &tmp1);
+        if (overflow)
+            return -2;
+
+        // Add tmp to the final value
+        overflow = __builtin_add_overflow(value, tmp1, &tmp2);
+        if (overflow)
+            return -2;
+        else
+            value = tmp2;
+
+        // Multiply power with the current base
+        overflow = __builtin_mul_overflow(power, base, &tmp1);
+        if (overflow)
+            return -2;
+        else
+            power = tmp1;
     }
     if (is_negative)
         value = -value;
-    return value;
+
+    // The resulting value is larger than what the mask allows
+    if (tms_sign_extend(value & tms_int_mask) != value)
+        return -3;
+    else
+    {
+        *result = value & tms_int_mask;
+        return 0;
+    }
 }
 
-int64_t tms_read_int_value(char *_s, int start)
+int tms_read_int_value(char *_s, int start, int64_t *result)
 {
-    int64_t value;
     int end, base;
 
     _s += start;
     end = tms_find_int_endofnumber(_s, 0);
     if (end == -1)
-    {
-        tms_error_bit = 1;
         return -1;
-    }
 
     if (!tms_is_valid_int_number_end(_s[end + 1]))
-    {
-        tms_error_bit = 1;
         return -1;
-    }
 
     base = tms_detect_base(_s);
     if (base != 10)
@@ -488,18 +502,14 @@ int64_t tms_read_int_value(char *_s, int start)
     }
 
     if (end < 0)
-    {
-        tms_error_bit = 1;
         return -1;
-    }
 
     // Copy the value to a separate array
     char num_str[end + 2];
     strncpy(num_str, _s, end + 1);
     num_str[end + 1] = '\0';
 
-    value = _tms_read_int_helper(num_str, base);
-    return value;
+    return _tms_read_int_helper(num_str, base, result);
 }
 
 // Function that seeks for the next occurence of a + or - sign starting from i
