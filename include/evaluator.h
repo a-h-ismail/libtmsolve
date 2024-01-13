@@ -22,12 +22,12 @@ SPDX-License-Identifier: LGPL-2.1-only
 double complex tms_evaluate(tms_math_expr *M);
 
 /**
- * @brief Evaluates an int_expr structure and calculates the result.
- * Sets the error bit on failure.
- * @param M The int structure to evaluate
- * @return The answer.
+ * @brief Calculates the answer for an int expression
+ * @param M
+ * @param result
+ * @return 0 on success, -1 on failure
  */
-int64_t tms_int_evaluate(tms_int_expr *M);
+int tms_int_evaluate(tms_int_expr *M, int64_t *result);
 
 /**
  * @brief Generates a heap allocated array of structure containing all unknown members metadata and stores it in M.

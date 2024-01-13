@@ -16,35 +16,35 @@ SPDX-License-Identifier: LGPL-2.1-only
 int64_t tms_sign_extend(int64_t value);
 
 /// @brief Bitwise NOT
-int64_t tms_not(int64_t value);
+int tms_not(int64_t value, int64_t *result);
 
 /// @brief Rotate Right
-int64_t tms_rr(tms_arg_list *args);
+int tms_rr(tms_arg_list *args, int64_t *result);
 
 /// @brief Rotate Left
-int64_t tms_rl(tms_arg_list *args);
+int tms_rl(tms_arg_list *args, int64_t *result);
 
 /// @brief Shift Right
-int64_t tms_sr(tms_arg_list *args);
+int tms_sr(tms_arg_list *args, int64_t *result);
 
 /// @brief Shift Right Arithmetic (sign extended)
-int64_t tms_sra(tms_arg_list *args);
+int tms_sra(tms_arg_list *args, int64_t *result);
 
 /// @brief Shift Left
-int64_t tms_sl(tms_arg_list *args);
+int tms_sl(tms_arg_list *args, int64_t *result);
 
 /// @brief Bitwise NOR
-int64_t tms_nor(tms_arg_list *args);
+int tms_nor(tms_arg_list *args, int64_t *result);
 
 /// @brief Bitwise XOR
-int64_t tms_xor(tms_arg_list *args);
+int tms_xor(tms_arg_list *args, int64_t *result);
 
 /// @brief Bitwise NAND
-int64_t tms_nand(tms_arg_list *args);
+int tms_nand(tms_arg_list *args, int64_t *result);
 
 /// @brief Bitwise AND
-int64_t tms_and(tms_arg_list *args);
+int tms_and(tms_arg_list *args, int64_t *result);
 
 /// @brief Bitwise OR
-int64_t tms_or(tms_arg_list *args);
+int tms_or(tms_arg_list *args, int64_t *result);
 #endif

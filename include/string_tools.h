@@ -141,9 +141,13 @@ double _tms_read_value_simple(char *number, int8_t base);
 double complex tms_read_value(char *_s, int start);
 
 /**
- * @brief Reads an 64 bit integer value, sets error bit on failure.
+ * @brief Reads an 64 bit int value
+ * @param _s
+ * @param start
+ * @param result
+ * @return 0 on success, -1 on failure.
  */
-int64_t tms_read_int_value(char *_s, int start);
+int tms_read_int_value(char *_s, int start, int64_t *result);
 
 /**
  * @brief Reads a value from the expression at start, supports numbers, constants and variables.

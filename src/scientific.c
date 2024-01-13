@@ -218,18 +218,16 @@ double complex tms_solve(char *expr)
     return NAN;
 }
 
-int64_t tms_int_solve(char *expr)
+int tms_int_solve(char *expr, int64_t *result)
 {
     if (!tms_pre_parse_routine(expr))
-    {
-        tms_error_bit = 1;
         return -1;
-    }
+
     tms_int_expr *M;
     M = tms_parse_int_expr(expr);
-    int64_t result = tms_int_evaluate(M);
+    int state = tms_int_evaluate(M, result);
     tms_delete_int_expr(M);
-    return result;
+    return state;
 }
 
 tms_int_factor *tms_find_factors(int32_t value)

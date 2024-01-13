@@ -59,7 +59,13 @@ double complex tms_solve_e(char *expr, bool enable_complex);
  */
 double complex tms_solve(char *expr);
 
-int64_t tms_int_solve(char *expr);
+/**
+ * @brief Calculates a Base-N expression
+ * @param expr
+ * @param result
+ * @return 0 on success, -1 on failure.
+ */
+int tms_int_solve(char *expr, int64_t *result);
 
 /**
  * @brief Calculates the factorial.

@@ -18,133 +18,159 @@ int64_t tms_sign_extend(int64_t value)
         return value;
 }
 
-void get_two_operands(tms_arg_list *args, int64_t *op1, int64_t *op2)
+int get_two_operands(tms_arg_list *args, int64_t *op1, int64_t *op2)
 {
     if (_tms_validate_args_count(2, args->count) == false)
-    {
-        tms_error_bit = 1;
-        return;
-    }
-    *op1 = tms_int_solve(args->arguments[0]);
-    *op2 = tms_int_solve(args->arguments[1]);
-}
-
-int64_t tms_not(int64_t value)
-{
-    return (~value) & tms_int_mask;
-}
-
-int64_t _tms_rotate_circular(tms_arg_list *args, char direction)
-{
-    if (_tms_validate_args_count(2, args->count) == false)
-    {
-        tms_error_bit = 1;
         return -1;
-    }
-    int64_t value, shift;
-    get_two_operands(args, &value, &shift);
 
-    if (tms_error_bit == 1)
+    int status;
+    status = tms_int_solve(args->arguments[0], op1);
+    if (status != 0)
+        return -1;
+
+    status = tms_int_solve(args->arguments[1], op2);
+    if (status != 0)
+        return -1;
+    else
+        return 0;
+}
+
+int tms_not(int64_t value, int64_t *result)
+{
+    *result = (~value) & tms_int_mask;
+    return 0;
+}
+
+int _tms_rotate_circular(tms_arg_list *args, char direction, int64_t *result)
+{
+    if (_tms_validate_args_count(2, args->count) == false)
+        return -1;
+
+    int64_t value, shift;
+    if (get_two_operands(args, &value, &shift) == -1)
         return -1;
 
     shift %= tms_int_mask_size;
     switch (direction)
     {
     case 'r':
-        return ((uint64_t)value >> shift | (uint64_t)value << (tms_int_mask_size - shift)) & tms_int_mask;
+        *result = ((uint64_t)value >> shift | (uint64_t)value << (tms_int_mask_size - shift)) & tms_int_mask;
+        return 0;
 
     case 'l':
-        return ((uint64_t)value << shift | (uint64_t)value >> (tms_int_mask_size - shift)) & tms_int_mask;
+        *result = ((uint64_t)value << shift | (uint64_t)value >> (tms_int_mask_size - shift)) & tms_int_mask;
+        return 0;
 
     default:
         tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, NULL);
-        tms_error_bit = 1;
         return -1;
     }
 }
 
-int64_t tms_rr(tms_arg_list *args)
+int64_t tms_rr(tms_arg_list *args, int64_t *result)
 {
-    return _tms_rotate_circular(args, 'r');
+    return _tms_rotate_circular(args, 'r', result);
 }
 
-int64_t tms_rl(tms_arg_list *args)
+int64_t tms_rl(tms_arg_list *args, int64_t *result)
 {
-    return _tms_rotate_circular(args, 'l');
+    return _tms_rotate_circular(args, 'l', result);
 }
 
-int64_t tms_sr(tms_arg_list *args)
+int64_t tms_sr(tms_arg_list *args, int64_t *result)
 {
     int64_t op1, op2;
-    get_two_operands(args, &op1, &op2);
-    if (tms_error_bit == 1)
+    if (get_two_operands(args, &op1, &op2) == -1)
         return -1;
-    // The cast to unsigned is necessary to avoid right shift sign extending
-    return ((uint64_t)op1 >> op2) & tms_int_mask;
+    else
+    {
+        // The cast to unsigned is necessary to avoid right shift sign extending
+        *result = ((uint64_t)op1 >> op2) & tms_int_mask;
+        return 0;
+    }
 }
 
-int64_t tms_sra(tms_arg_list *args)
+int64_t tms_sra(tms_arg_list *args, int64_t *result)
 {
     int64_t op1, op2;
-    get_two_operands(args, &op1, &op2);
-
-    if (tms_error_bit == 1)
+    if (get_two_operands(args, &op1, &op2) == -1)
         return -1;
-
-    op1 = tms_sign_extend(op1);
-    return (op1 >> op2) & tms_int_mask;
+    else
+    {
+        op1 = tms_sign_extend(op1);
+        *result = (op1 >> op2) & tms_int_mask;
+        return 0;
+    }
 }
 
-int64_t tms_sl(tms_arg_list *args)
+int64_t tms_sl(tms_arg_list *args, int64_t *result)
 {
     int64_t op1, op2;
-    get_two_operands(args, &op1, &op2);
-    if (tms_error_bit == 1)
+    if (get_two_operands(args, &op1, &op2) == -1)
         return -1;
-    return (op1 << op2) & tms_int_mask;
+    else
+    {
+        *result = (op1 << op2) & tms_int_mask;
+        return 0;
+    }
 }
 
-int64_t tms_nor(tms_arg_list *args)
+int64_t tms_nor(tms_arg_list *args, int64_t *result)
 {
     int64_t op1, op2;
-    get_two_operands(args, &op1, &op2);
-    if (tms_error_bit == 1)
+    if (get_two_operands(args, &op1, &op2) == -1)
         return -1;
-    return (~(op1 | op2)) & tms_int_mask;
+    else
+    {
+        *result = (~(op1 | op2)) & tms_int_mask;
+        return 0;
+    }
 }
 
-int64_t tms_xor(tms_arg_list *args)
+int64_t tms_xor(tms_arg_list *args, int64_t *result)
 {
     int64_t op1, op2;
-    get_two_operands(args, &op1, &op2);
-    if (tms_error_bit == 1)
+    if (get_two_operands(args, &op1, &op2) == -1)
         return -1;
-    return (op1 ^ op2) & tms_int_mask;
+    else
+    {
+        *result = (op1 ^ op2) & tms_int_mask;
+        return 0;
+    }
 }
 
-int64_t tms_nand(tms_arg_list *args)
+int64_t tms_nand(tms_arg_list *args, int64_t *result)
 {
     int64_t op1, op2;
-    get_two_operands(args, &op1, &op2);
-    if (tms_error_bit == 1)
+    if (get_two_operands(args, &op1, &op2) == -1)
         return -1;
-    return (~(op1 & op2)) & tms_int_mask;
+    else
+    {
+        *result = (~(op1 & op2)) & tms_int_mask;
+        return 0;
+    }
 }
 
-int64_t tms_and(tms_arg_list *args)
+int64_t tms_and(tms_arg_list *args, int64_t *result)
 {
     int64_t op1, op2;
-    get_two_operands(args, &op1, &op2);
-    if (tms_error_bit == 1)
+    if (get_two_operands(args, &op1, &op2) == -1)
         return -1;
-    return (op1 & op2) & tms_int_mask;
+    else
+    {
+        *result = (op1 & op2) & tms_int_mask;
+        return 0;
+    }
 }
 
-int64_t tms_or(tms_arg_list *args)
+int64_t tms_or(tms_arg_list *args, int64_t *result)
 {
     int64_t op1, op2;
-    get_two_operands(args, &op1, &op2);
-    if (tms_error_bit == 1)
+    if (get_two_operands(args, &op1, &op2) == -1)
         return -1;
-    return (op1 | op2) & tms_int_mask;
+    else
+    {
+        *result = (op1 | op2) & tms_int_mask;
+        return 0;
+    }
 }
