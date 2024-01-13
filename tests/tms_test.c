@@ -79,7 +79,7 @@ void test_base_n(char *buffer)
     expr[field_separator] = '\0';
     puts(expr);
     // Solve the expression
-    if (tms_int_solve(expr, tms_g_int_ans) == -1)
+    if (tms_int_solve(expr, &tms_g_int_ans) == -1)
     {
         tms_error_handler(EH_PRINT);
         exit(1);
