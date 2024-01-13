@@ -22,6 +22,7 @@ This library has four function types: real, complex, extended and runtime (user 
 - `acos()`, `asin()`, `atan()`: Inverse trigonometry, returns answer in radians.
 - `cosh()`, `sinh()`, `tanh()`: Hyperbolic sine, cosine and tangent.
 - `acosh()`, `asinh()`, `atanh()`: Inverse of the above.
+- `exp(x)`: Equivalent to `e^x`.
 - `ln()`: Base e logarithm.
 - `log()`: Base 10 logarithm.
 
