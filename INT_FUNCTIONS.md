@@ -4,7 +4,7 @@ Similar to double precision scientific mode, integer mode has functions: real an
 
 ## Real Functions
 
-Definition: `int64_t foo(int64_t value);`
+Definition: `int foo(int64_t value, int64_t *result);`
 
 Currently only one function: `not(value)`
 
