@@ -17,10 +17,10 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <string.h>
 
 char *tms_int_nfunc_name[] = {"not", NULL};
-int64_t (*tms_int_nfunc_ptr[])(int64_t) = {tms_not};
+int (*tms_int_nfunc_ptr[])(int64_t, int64_t *) = {tms_not};
 
 char *tms_int_extf_name[] = {"rr", "rl", "sr", "sra", "sl", "nand", "and", "xor", "nor", "or", NULL};
-int64_t (*tms_int_extf_ptr[])(tms_arg_list *) = {tms_rr, tms_rl, tms_sr, tms_sra, tms_sl, tms_nand, tms_and, tms_xor, tms_nor, tms_or};
+int (*tms_int_extf_ptr[])(tms_arg_list *, int64_t *) = {tms_rr, tms_rl, tms_sr, tms_sra, tms_sl, tms_nand, tms_and, tms_xor, tms_nor, tms_or};
 
 int _tms_read_int_operand(char *expr, int start, int64_t *result)
 {

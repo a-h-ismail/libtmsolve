@@ -93,8 +93,8 @@ typedef union tms_mfunc_ptrs
 /// @brief Union to store int function pointers
 typedef union tms_int_functions
 {
-    int64_t (*simple)(int64_t);
-    int64_t (*extended)(tms_arg_list *);
+    int (*simple)(int64_t, int64_t *);
+    int (*extended)(tms_arg_list *, int64_t *);
 
 } int_fptr;
 
@@ -229,7 +229,7 @@ typedef struct tms_int_subexpr
     /// Stores the type of the function to execute
     uint8_t func_type;
 
-    /// Enables execution of extended function, used to optimize nested extended functions like integration.
+    /// Enables execution of extended function
     bool exec_extf;
 } tms_int_subexpr;
 
