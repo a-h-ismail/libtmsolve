@@ -186,6 +186,7 @@ tms_int_expr *_tms_init_int_expr(char *local_expr)
                     S[s_index].func.extended = tms_int_extf_ptr[j];
                     S[s_index].func_type = TMS_F_EXTENDED;
                     S[s_index].start_node = -1;
+                    S[s_index].op_count = 0;
 
                     ++s_index;
                     free(name);
