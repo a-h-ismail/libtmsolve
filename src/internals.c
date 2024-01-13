@@ -468,7 +468,7 @@ int tms_error_handler(int _mode, ...)
 
             main_table[last_error].expr_len = strlen(expr);
 
-            if (error_position < 0 || error_position >= main_table[last_error].expr_len)
+            if (error_position < 0 || error_position > main_table[last_error].expr_len)
             {
                 fputs("libtmsolve warning: Error index out of expression range, ignoring...\n\n", stderr);
                 main_table[last_error].relative_index = -1;
