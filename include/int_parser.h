@@ -37,6 +37,8 @@ tms_int_expr *tms_parse_int_expr(char *expr);
  */
 void tms_delete_int_expr(tms_int_expr *M);
 
+int _tms_read_int_operand(char *expr, int start, int64_t *result);
+
 int tms_find_int_subexpr_starting_at(tms_int_subexpr *S, int start, int s_index, int mode);
 
 void tms_set_priority_int(tms_int_op_node *list, int op_count);

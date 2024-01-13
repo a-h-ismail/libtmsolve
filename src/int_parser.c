@@ -22,23 +22,20 @@ int64_t (*tms_int_nfunc_ptr[])(int64_t) = {tms_not};
 char *tms_int_extf_name[] = {"rr", "rl", "sr", "sra", "sl", "nand", "and", "xor", "nor", "or", NULL};
 int64_t (*tms_int_extf_ptr[])(tms_arg_list *) = {tms_rr, tms_rl, tms_sr, tms_sra, tms_sl, tms_nand, tms_and, tms_xor, tms_nor, tms_or};
 
-int64_t _tms_read_int_operand(char *expr, int start)
+int _tms_read_int_operand(char *expr, int start, int64_t *result)
 {
     int64_t value;
+    int status;
     bool is_negative = false;
 
     // Avoid negative offsets
     if (start < 0)
-    {
-        tms_error_bit = 1;
         return -1;
-    }
 
     // Catch incorrect start like )5 (no implied multiplication allowed)
     if (start > 0 && !tms_is_valid_int_number_start(expr[start - 1]))
     {
         tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, expr, start - 1);
-        tms_error_bit = 1;
         return -1;
     }
 
@@ -50,44 +47,52 @@ int64_t _tms_read_int_operand(char *expr, int start)
     else
         is_negative = false;
 
-    value = tms_read_int_value(expr, start) & tms_int_mask;
-
-    // Failed to read value normally, it is probably a variable
-    if (tms_error_bit == 1)
+    status = tms_read_int_value(expr, start, &value);
+    switch (status)
     {
+    // Reading value was successful
+    case 0:
+        break;
+
+        // Failed to read value normally, it is probably a variable
+    case -1:
         char *name = tms_get_name(expr, start, true);
         if (name == NULL)
             return -1;
 
         int i = tms_find_str_in_array(name, tms_g_int_vars, tms_g_int_var_count, TMS_V_INT64);
         if (i != -1)
-        {
             value = tms_g_int_vars[i].value;
-            tms_error_bit = 0;
-        }
         // ans is a special case
         else if (strcmp(name, "ans") == 0)
-        {
             value = tms_g_int_ans;
-            tms_error_bit = 0;
-        }
         else
         {
             // The name is valid, but not defined
-            tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, expr + start);
+            tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, expr, start);
             free(name);
             return -1;
         }
         free(name);
-    }
 
-    // Not a valid variable
-    if (tms_error_bit == 1)
+    case -2:
+        tms_error_handler(EH_SAVE, INTEGER_OVERFLOW, EH_FATAL_ERROR, expr, start);
         return -1;
+
+    case -3:
+        tms_error_handler(EH_SAVE, INT_TOO_LARGE, EH_FATAL_ERROR, expr, start);
+        return -1;
+
+    default:
+        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, expr, start);
+        return -1;
+    }
 
     if (is_negative)
         value = -value;
-    return value;
+
+    *result = value;
+    return 0;
 }
 
 int tms_compare_int_subexpr_depth(const void *a, const void *b)
@@ -332,7 +337,7 @@ int _tms_init_int_nodes(char *local_expr, tms_int_expr *M, int s_index, int *ope
 {
     tms_int_subexpr *S = M->subexpr_ptr;
     int s_count = M->subexpr_count, op_count = S[s_index].op_count;
-    int i;
+    int i, status;
     tms_int_op_node *NB;
     int solve_start = S[s_index].solve_start;
     int solve_end = S[s_index].solve_end;
@@ -374,8 +379,8 @@ int _tms_init_int_nodes(char *local_expr, tms_int_expr *M, int s_index, int *ope
             *(S[i].result) = &(NB->left_operand);
         else
         {
-            NB->left_operand = _tms_read_int_operand(local_expr, solve_start);
-            if (tms_error_bit == 1)
+            status = _tms_read_int_operand(local_expr, solve_start, &(NB->left_operand));
+            if (status != 0)
             {
                 // Operand reading didn't write an error itself
                 if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) == 0)
@@ -493,9 +498,9 @@ int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op
         return -1;
     }
 
-    *operand_ptr = _tms_read_int_operand(expr, op_start);
+    status = _tms_read_int_operand(expr, op_start, operand_ptr);
 
-    if (tms_error_bit == 1)
+    if (status != 0)
     {
         // Case of a subexpression result as operand
         status = tms_find_int_subexpr_starting_at(S, op_start, s_index, 1);
@@ -506,10 +511,7 @@ int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op
             return -1;
         }
         else
-        {
             *(S[status].result) = operand_ptr;
-            tms_error_bit = 0;
-        }
     }
     return 0;
 }
@@ -645,9 +647,9 @@ tms_int_expr *tms_parse_int_expr(char *expr)
     int i;
     // Number of subexpressions
     int s_count;
-    // Used for indexing of subexpressions
+    // Current subexpression index
     int s_index;
-    // Used to store the index of the variable to assign the answer to.
+    // Stores the index of runtime var that will receive a copy of the answer
     int variable_index = -1;
     // Local expression may be offset compared to the expression due to the assignment operator (if it exists).
     char *local_expr;
@@ -684,7 +686,7 @@ tms_int_expr *tms_parse_int_expr(char *expr)
     - Fill nodes with values or set as unknown (using x)
     - Set nodes order of calculation (using *next)
     - Set the result pointer of each op_node relying on its position and neighbor priorities
-    - Set the subexpr result double pointer to the result pointer of the last calculated op_node
+    - Set the subexpr result double pointer to the result pointer of the last op_node in the calculation order
     */
 
     for (s_index = 0; s_index < s_count; ++s_index)
