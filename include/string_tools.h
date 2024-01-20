@@ -171,15 +171,11 @@ int tms_find_add_subtract(char *expr, int i);
  * @param expr The expression to check.
  * @return
  */
-bool tms_parenthesis_check(char *expr);
+int tms_parenthesis_check(char *expr);
 
 /// @brief Prints a value to standard output in a clean way.
 /// @param value
 void tms_print_value(double complex value);
-
-/// @brief Checks the syntax of the expression, runs tms_parenthesis_check implicitly.
-/// @return true if the check doesn't find errors, false otherwise.
-bool tms_syntax_check(char *expr);
 
 /**
  * @brief Combines adjacent add/subtract symbols into one (ex: ++++ becomes + and +-+ becomes -).
@@ -201,12 +197,6 @@ int tms_compare_priority(char operator1, char operator2);
  * @return A structure containing the arguments stored in separate strings.
  */
 tms_arg_list *tms_get_args(char *string);
-
-/**
- * @brief Ensures the expression is not empty, checks syntax and merges extra +/- signs.
- * @return true if the checks pass, false otherwise.
- */
-bool tms_pre_parse_routine(char *expr);
 
 /**
  * @brief Determines if the specified character is allowed in variable names.
