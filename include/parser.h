@@ -58,11 +58,11 @@ int _tms_set_runtime_var(char *expr, int eq);
 
 /**
  * @brief Initializes the math expression structure.
- * @param local_expr Expression, offset from the assignment operator (if any).
+ * @param expr Math expression string
  * @param enable_complex Set complex support status.
  * @return Pointer to the initialized structure.
  */
-tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex);
+tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex);
 
 /**
  * @brief Locates operators in the current subexpression.

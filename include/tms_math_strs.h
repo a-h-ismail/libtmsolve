@@ -151,8 +151,11 @@ typedef struct tms_math_subexpr
 /// @brief The standalone structure to hold all of an expression's metadata.
 typedef struct tms_math_expr
 {
-    /// The string form of the expression
-    char *str;
+    /// The full expression string, after removing whitespaces and compacting +/- operators
+    char *expr;
+
+    /// The string form of the expression, after adding offset to skip assignment operator
+    char *local_expr;
 
     /// The subexpression array created by parsing the math expression.
     tms_math_subexpr *subexpr_ptr;

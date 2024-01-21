@@ -39,7 +39,7 @@ double complex tms_evaluate(tms_math_expr *M)
                 int length = S[s_index].solve_end - S[s_index].solve_start + 1;
 
                 // Copy arguments
-                arguments = tms_strndup(M->str + S[s_index].solve_start, length);
+                arguments = tms_strndup(M->local_expr + S[s_index].solve_start, length);
                 L = tms_get_args(arguments);
 
                 // Disable debug output for extended functions
@@ -52,7 +52,7 @@ double complex tms_evaluate(tms_math_expr *M)
 
                 if (isnan(creal(**(S[s_index].result))))
                 {
-                    tms_error_handler(EH_SAVE, EXTF_FAILURE, EH_FATAL_ERROR, M->str, S[s_index].subexpr_start);
+                    tms_error_handler(EH_SAVE, EXTF_FAILURE, EH_FATAL_ERROR, M->local_expr, S[s_index].subexpr_start);
                     free(arguments);
                     tms_free_arg_list(L);
                     return NAN;
@@ -105,7 +105,7 @@ double complex tms_evaluate(tms_math_expr *M)
                 case '/':
                     if (i_node->right_operand == 0)
                     {
-                        tms_error_handler(EH_SAVE, DIVISION_BY_ZERO, EH_FATAL_ERROR, M->str, i_node->operator_index);
+                        tms_error_handler(EH_SAVE, DIVISION_BY_ZERO, EH_FATAL_ERROR, M->local_expr, i_node->operator_index);
                         return NAN;
                     }
                     *(i_node->result) = i_node->left_operand / i_node->right_operand;
@@ -114,12 +114,12 @@ double complex tms_evaluate(tms_math_expr *M)
                 case '%':
                     if (i_node->right_operand == 0)
                     {
-                        tms_error_handler(EH_SAVE, MODULO_ZERO, EH_FATAL_ERROR, M->str, i_node->operator_index);
+                        tms_error_handler(EH_SAVE, MODULO_ZERO, EH_FATAL_ERROR, M->local_expr, i_node->operator_index);
                         return NAN;
                     }
                     if (cimag(i_node->left_operand) != 0 || cimag(i_node->right_operand) != 0)
                     {
-                        tms_error_handler(EH_SAVE, MODULO_COMPLEX_NOT_SUPPORTED, EH_FATAL_ERROR, M->str, i_node->operator_index);
+                        tms_error_handler(EH_SAVE, MODULO_COMPLEX_NOT_SUPPORTED, EH_FATAL_ERROR, M->local_expr, i_node->operator_index);
                         return NAN;
                     }
                     else
@@ -133,7 +133,7 @@ double complex tms_evaluate(tms_math_expr *M)
                         *(i_node->result) = pow(i_node->left_operand, i_node->right_operand);
                         if (isnan(creal(*(i_node->result))))
                         {
-                            tms_error_handler(EH_SAVE, MATH_ERROR, EH_NONFATAL_ERROR, M->str, i_node->operator_index);
+                            tms_error_handler(EH_SAVE, MATH_ERROR, EH_NONFATAL_ERROR, M->local_expr, i_node->operator_index);
                             return NAN;
                         }
                     }
@@ -163,7 +163,7 @@ double complex tms_evaluate(tms_math_expr *M)
 
         if (isnan((double)**(S[s_index].result)))
         {
-            tms_error_handler(EH_SAVE, MATH_ERROR, EH_NONFATAL_ERROR, M->str, S[s_index].solve_start);
+            tms_error_handler(EH_SAVE, MATH_ERROR, EH_NONFATAL_ERROR, M->local_expr, S[s_index].solve_start);
             return NAN;
         }
         ++s_index;
