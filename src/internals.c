@@ -342,7 +342,8 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M)
     tms_math_expr *NM = malloc(sizeof(tms_math_expr));
     // Copy the math expression
     *NM = *M;
-    NM->str = strdup(M->str);
+    NM->expr = strdup(M->expr);
+    NM->local_expr = NM->expr + (M->local_expr - M->expr);
     NM->subexpr_ptr = malloc(NM->subexpr_count * sizeof(tms_math_subexpr));
     // Copy subexpressions
     memcpy(NM->subexpr_ptr, M->subexpr_ptr, M->subexpr_count * sizeof(tms_math_subexpr));
