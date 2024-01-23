@@ -68,8 +68,12 @@ int _tms_read_int_operand(char *expr, int start, int64_t *result)
             value = tms_g_int_ans;
         else
         {
-            // The name is valid, but not defined
-            tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, expr, start);
+            // The name is already used by a function
+            if (tms_find_str_in_array(name, tms_int_nfunc_name, -1, TMS_NOFUNC) != -1 ||
+                tms_find_str_in_array(name, tms_int_extf_name, -1, TMS_NOFUNC) != -1)
+                tms_error_handler(EH_SAVE, PARENTHESIS_MISSING, EH_FATAL_ERROR, expr, start + strlen(name));
+            else
+                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, expr, start);
             free(name);
             return -1;
         }
@@ -131,8 +135,22 @@ int _tms_set_runtime_int_var(char *expr, int i)
     }
 }
 
-tms_int_expr *_tms_init_int_expr(char *local_expr)
+tms_int_expr *_tms_init_int_expr(char *expr)
 {
+    char *local_expr = strchr(expr, '=');
+
+    if (local_expr == NULL)
+        local_expr = expr;
+    else
+        ++local_expr;
+
+    if (local_expr[0] == '\0')
+    {
+        tms_error_handler(EH_SAVE, MISSING_EXPRESSION, EH_FATAL_ERROR, NULL);
+        free(expr);
+        return NULL;
+    }
+
     int s_max = 8, i, j, s_index, length = strlen(local_expr), s_count;
 
     // Pointer to subexpressions heap array
@@ -142,7 +160,8 @@ tms_int_expr *_tms_init_int_expr(char *local_expr)
 
     M->subexpr_ptr = NULL;
     M->subexpr_count = 0;
-    M->str = strdup(local_expr);
+    M->expr = expr;
+    M->local_expr = local_expr;
 
     S = malloc(s_max * sizeof(tms_int_subexpr));
 
@@ -224,7 +243,18 @@ tms_int_expr *_tms_init_int_expr(char *local_expr)
             ++s_index;
         }
         else if (local_expr[i] == ')')
-            --depth;
+        {
+            // An extra ')'
+            if (depth == 0)
+            {
+                tms_error_handler(EH_SAVE, PARENTHESIS_NOT_OPEN, EH_FATAL_ERROR, local_expr, i);
+                free(S);
+                tms_delete_int_expr(M);
+                return NULL;
+            }
+            else
+                --depth;
+        }
     }
     // + 1 for the subexpression with depth 0
     s_count = s_index + 1;
@@ -656,19 +686,35 @@ tms_int_expr *tms_parse_int_expr(char *expr)
     // Local expression may be offset compared to the expression due to the assignment operator (if it exists).
     char *local_expr;
 
+    // Check for empty input
+    if (expr[0] == '\0')
+    {
+        tms_error_handler(EH_SAVE, NO_INPUT, EH_FATAL_ERROR, NULL);
+        return NULL;
+    }
+
+    // Duplicate the expression sent to the parser, it may be constant
+    expr = strdup(expr);
+
+    tms_remove_whitespace(expr);
+    // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
+    tms_combine_add_sub(expr, 0, strlen(expr) - 2);
     // Search for assignment operator, to enable user defined variables
     i = tms_f_search(expr, "=", 0, false);
     if (i != -1)
     {
         variable_index = _tms_set_runtime_int_var(expr, i);
         if (variable_index == -1)
+        {
+            free(expr);
             return NULL;
+        }
         local_expr = expr + i + 1;
     }
     else
         local_expr = expr;
 
-    tms_int_expr *M = _tms_init_int_expr(local_expr);
+    tms_int_expr *M = _tms_init_int_expr(expr);
     if (M == NULL)
         return NULL;
 
@@ -770,7 +816,7 @@ void tms_delete_int_expr(tms_int_expr *M)
         free(S[i].nodes);
     }
     free(S);
-    free(M->str);
+    free(M->expr);
     free(M);
 }
 

@@ -68,8 +68,22 @@ int _tms_set_runtime_var(char *expr, int i)
     }
 }
 
-tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)
+tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
 {
+    char *local_expr = strchr(expr, '=');
+
+    if (local_expr == NULL)
+        local_expr = expr;
+    else
+        ++local_expr;
+
+    if (local_expr[0] == '\0')
+    {
+        tms_error_handler(EH_SAVE, MISSING_EXPRESSION, EH_FATAL_ERROR, NULL);
+        free(expr);
+        return NULL;
+    }
+
     int s_max = 8, i, j, s_index, length = strlen(local_expr), s_count;
 
     // Pointer to subexpressions heap array
@@ -83,7 +97,8 @@ tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)
     M->enable_complex = enable_complex;
     M->subexpr_ptr = NULL;
     M->subexpr_count = 0;
-    M->str = strdup(local_expr);
+    M->local_expr = local_expr;
+    M->expr = expr;
 
     S = malloc(s_max * sizeof(tms_math_subexpr));
 
@@ -164,7 +179,18 @@ tms_math_expr *_tms_init_math_expr(char *local_expr, bool enable_complex)
             ++s_index;
         }
         else if (local_expr[i] == ')')
-            --depth;
+        {
+            // An extra ')'
+            if (depth == 0)
+            {
+                tms_error_handler(EH_SAVE, PARENTHESIS_NOT_OPEN, EH_FATAL_ERROR, local_expr, i);
+                free(S);
+                tms_delete_math_expr(M);
+                return NULL;
+            }
+            else
+                --depth;
+        }
     }
     // + 1 for the subexpression with depth 0
     s_count = s_index + 1;
@@ -676,21 +702,41 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_comp
     // Local expression may be offset compared to the expression due to the assignment operator (if it exists).
     char *local_expr;
 
+    // Duplicate the expression sent to the parser, it may be constant
+    expr = strdup(expr);
+
+    // Check for empty input
+    if (expr[0] == '\0')
+    {
+        tms_error_handler(EH_SAVE, NO_INPUT, EH_FATAL_ERROR, NULL);
+        free(expr);
+        return NULL;
+    }
+    tms_remove_whitespace(expr);
+    // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
+    tms_combine_add_sub(expr, 0, strlen(expr) - 2);
+
     // Search for assignment operator, to enable user defined variables
     i = tms_f_search(expr, "=", 0, false);
     if (i != -1)
     {
         variable_index = _tms_set_runtime_var(expr, i);
         if (variable_index == -1)
+        {
+            free(expr);
             return NULL;
+        }
         local_expr = expr + i + 1;
     }
     else
         local_expr = expr;
 
-    tms_math_expr *M = _tms_init_math_expr(local_expr, enable_complex);
+    tms_math_expr *M = _tms_init_math_expr(expr, enable_complex);
     if (M == NULL)
         return NULL;
+
+    // After calling expression initializer, no need to manually free the "expr" string
+    // It is now a part of the math_expr struct and will be freed with it
 
     tms_math_subexpr *S = M->subexpr_ptr;
     s_count = M->subexpr_count;
@@ -921,7 +967,7 @@ void tms_delete_math_expr(tms_math_expr *M)
     }
     free(S);
     free(M->x_data);
-    free(M->str);
+    free(M->expr);
     free(M);
 }
 
