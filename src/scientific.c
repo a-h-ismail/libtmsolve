@@ -97,8 +97,6 @@ double complex tms_solve_e(char *expr, bool enable_complex)
     double complex result;
     tms_math_expr *M;
 
-    if (tms_pre_parse_routine(expr) == false)
-        return NAN;
     M = tms_parse_expr(expr, false, enable_complex);
     if (M == NULL)
         return NAN;
@@ -116,9 +114,6 @@ double complex tms_solve(char *expr)
     // 1: can be complex, mostly 2n roots of negative numbers.
     // 2: Is complex, imaginary number appears in the expression, or complex exclusive operations like arg().
     uint8_t likely_complex = 1;
-
-    if (!tms_pre_parse_routine(expr))
-        return NAN;
 
     // Skip assignment operator
     while ((i = tms_f_search(local_expr, "=", 0, false)) != -1)
@@ -220,9 +215,6 @@ double complex tms_solve(char *expr)
 
 int tms_int_solve(char *expr, int64_t *result)
 {
-    if (!tms_pre_parse_routine(expr))
-        return -1;
-
     tms_int_expr *M;
     M = tms_parse_int_expr(expr);
     int state = tms_int_evaluate(M, result);
