@@ -109,7 +109,11 @@ double complex _tms_set_operand_value(char *expr, int start, bool enable_complex
             value = tms_g_ans;
         else
         {
-            tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, expr, start);
+            // The name is already used by a function
+            if (tms_find_str_in_array(name, tms_g_all_func_names, -1, TMS_NOFUNC) != -1)
+                tms_error_handler(EH_SAVE, PARENTHESIS_MISSING, EH_FATAL_ERROR, expr, start + strlen(name));
+            else
+                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, expr, start);
             free(name);
             return NAN;
         }
@@ -211,12 +215,19 @@ int8_t tms_bin_to_int(char c)
         return -1;
 }
 
+int8_t tms_isdigit(char c)
+{
+    uint8_t digit = c - '0';
+    if (digit > 9)
+        return -1;
+    else
+        return digit;
+}
+
+// Kept for consistency with other similar functions
 int8_t tms_dec_to_int(char c)
 {
-    if (isdigit(c) != 0)
-        return c - '0';
-    else
-        return -1;
+    return tms_isdigit(c);
 }
 
 int8_t tms_oct_to_int(char c)
@@ -229,8 +240,9 @@ int8_t tms_oct_to_int(char c)
 
 int8_t tms_hex_to_int(char c)
 {
-    if (isdigit(c) != 0)
-        return c - '0';
+    int8_t digit;
+    if ((digit = tms_isdigit(c)) != -1)
+        return digit;
     else
     {
         c = tolower(c);
@@ -563,10 +575,13 @@ void tms_combine_add_sub(char *expr, int a, int b)
                 break;
             ++j;
         }
-        if (subcount % 2 == 1)
-            expr[i] = '-';
-        else
-            expr[i] = '+';
+        if (subcount > 1)
+        {
+            if (subcount % 2 == 1)
+                expr[i] = '-';
+            else
+                expr[i] = '+';
+        }
         if (i < j)
             tms_resize_zone(expr, j, i);
         i = tms_find_add_subtract(expr, i + 1);
@@ -604,7 +619,7 @@ bool tms_valid_digit_for_base(char digit, int8_t base)
     switch (base)
     {
     case 10:
-        if (isdigit(digit) != 0)
+        if (tms_isdigit(digit) != -1)
             return true;
         break;
     case 16:
@@ -733,7 +748,7 @@ int tms_find_startofnumber(char *expr, int end)
     {
         if (start == 0)
             break;
-        if (isdigit(expr[start - 1]))
+        if (tms_isdigit(expr[start - 1]) != -1)
             --start;
         else
         {
@@ -866,79 +881,6 @@ bool int_search(int *array, int value, int count)
     return false;
 }
 
-bool tms_parenthesis_check(char *expr)
-{
-    int open, close = -1, k = 0, *open_position, *close_position, length = strlen(expr);
-
-    if (length == 0)
-    {
-        tms_error_handler(EH_SAVE, NO_INPUT, EH_FATAL_ERROR, NULL);
-        return false;
-    }
-
-    open_position = (int *)malloc(length * sizeof(int));
-    close_position = (int *)malloc(length * sizeof(int));
-    *open_position = *close_position = -2;
-    open = tms_f_search(expr, "(", 0, false);
-    // Check if every open parenthesis has a close parenthesis and log their indexes
-    while (open != -1)
-    {
-        close = tms_find_closing_parenthesis(expr, open);
-        if (close == -1)
-        {
-            tms_error_handler(EH_SAVE, PARENTHESIS_NOT_CLOSED, EH_FATAL_ERROR, expr, open);
-            free(open_position);
-            free(close_position);
-            return false;
-        }
-        open_position[k] = open;
-        close_position[k] = close;
-        open = tms_f_search(expr, "(", open + 1, false);
-        ++k;
-    }
-    qsort(open_position, k, sizeof(int), compare_ints);
-    qsort(close_position, k, sizeof(int), compare_ints_reverse);
-    // Case of no open parenthesis, check if a close parenthesis is present
-    if (k == 0)
-        close = tms_f_search(expr, ")", 0, false);
-    else
-        close = tms_f_search(expr, ")", close_position[0] + 1, false);
-
-    if (close != -1)
-    {
-        tms_error_handler(EH_SAVE, PARENTHESIS_NOT_OPEN, EH_FATAL_ERROR, expr, close);
-        free(open_position);
-        free(close_position);
-        return false;
-    }
-    // Checking that no useless parenthesis pairs are written (planned for later)
-    free(open_position);
-    free(close_position);
-    return true;
-}
-
-bool tms_syntax_check(char *expr)
-{
-    int i, j, length;
-
-    // Check if all function calls have parenthesis
-    for (i = 0; i < tms_g_func_count; ++i)
-    {
-        length = strlen(tms_g_all_func_names[i]);
-        j = tms_f_search(expr, tms_g_all_func_names[i], 0, true);
-        while (j != -1)
-        {
-            if (expr[j + length] != '(')
-            {
-                tms_error_handler(EH_SAVE, PARENTHESIS_MISSING, EH_FATAL_ERROR, expr, j + strlen(tms_g_all_func_names[i]));
-                return false;
-            }
-            j = tms_f_search(expr, tms_g_all_func_names[i], j + 1, true);
-        }
-    }
-    return tms_parenthesis_check(expr);
-}
-
 int tms_compare_priority(char operator1, char operator2)
 {
     char operators[7] = {'!', '^', '*', '/', '%', '+', '-'};
@@ -1016,20 +958,6 @@ void tms_free_arg_list(tms_arg_list *list)
     free(list);
 }
 
-bool tms_pre_parse_routine(char *expr)
-{
-    // Check for empty input
-    if (expr[0] == '\0')
-    {
-        tms_error_handler(EH_SAVE, NO_INPUT, EH_FATAL_ERROR, NULL);
-        return false;
-    }
-    tms_remove_whitespace(expr);
-    // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
-    tms_combine_add_sub(expr, 0, strlen(expr) - 2);
-    return tms_syntax_check(expr);
-}
-
 bool tms_legal_char_in_name(char c)
 {
     if (isalnum(c) || c == '_')
@@ -1052,7 +980,7 @@ bool tms_valid_name(char *name)
     {
         if (isalpha(name[i]) || name[i] == '_')
             only_digits = false;
-        else if (isdigit(name[i]))
+        else if (tms_isdigit(name[i]) != -1)
             continue;
         else
             return false;
@@ -1248,7 +1176,7 @@ int tms_name_bounds(char *expr, int i, bool is_at_start)
     if (is_at_start)
     {
         // The name can't start with a number
-        if (isdigit(expr[i]))
+        if (tms_isdigit(expr[i]) != -1)
             return -1;
 
         int end = i;
@@ -1280,7 +1208,7 @@ int tms_name_bounds(char *expr, int i, bool is_at_start)
         ++start;
 
         // Is the name really valid? (the beginning is not a digit)
-        if (isdigit(expr[start]))
+        if (tms_isdigit(expr[start]) != -1)
             return -1;
         else
             return start;
