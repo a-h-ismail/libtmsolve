@@ -239,8 +239,11 @@ typedef struct tms_int_subexpr
 /// @brief The standalone structure to hold all of an integer expression's metadata.
 typedef struct tms_int_expr
 {
-    /// The string form of the expression
-    char *str;
+    /// The full expression string, after removing whitespaces and compacting +/- operators
+    char *expr;
+
+    /// The string form of the expression, after adding offset to skip assignment operator
+    char *local_expr;
 
     /// The subexpression array created by parsing theexpression.
     tms_int_subexpr *subexpr_ptr;

@@ -203,7 +203,7 @@ int tms_int_evaluate(tms_int_expr *M, int64_t *result)
                 int length = S[s_index].solve_end - S[s_index].solve_start + 1;
 
                 // Copy arguments
-                arguments = tms_strndup(M->str + S[s_index].solve_start, length);
+                arguments = tms_strndup(M->local_expr + S[s_index].solve_start, length);
                 L = tms_get_args(arguments);
 
                 // Disable debug output for extended functions
@@ -215,7 +215,7 @@ int tms_int_evaluate(tms_int_expr *M, int64_t *result)
                 _tms_debug = _debug_state;
                 if (state == -1)
                 {
-                    tms_error_handler(EH_SAVE, EXTF_FAILURE, EH_FATAL_ERROR, M->str, S[s_index].subexpr_start);
+                    tms_error_handler(EH_SAVE, EXTF_FAILURE, EH_FATAL_ERROR, M->local_expr, S[s_index].subexpr_start);
                     free(arguments);
                     tms_free_arg_list(L);
                     return -1;
@@ -276,7 +276,7 @@ int tms_int_evaluate(tms_int_expr *M, int64_t *result)
                 case '/':
                     if (i_node->right_operand == 0)
                     {
-                        tms_error_handler(EH_SAVE, DIVISION_BY_ZERO, EH_FATAL_ERROR, M->str, i_node->operator_index);
+                        tms_error_handler(EH_SAVE, DIVISION_BY_ZERO, EH_FATAL_ERROR, M->local_expr, i_node->operator_index);
                         return -1;
                     }
                     *(i_node->result) = i_node->left_operand / i_node->right_operand;
@@ -285,7 +285,7 @@ int tms_int_evaluate(tms_int_expr *M, int64_t *result)
                 case '%':
                     if (i_node->right_operand == 0)
                     {
-                        tms_error_handler(EH_SAVE, MODULO_ZERO, EH_FATAL_ERROR, M->str, i_node->operator_index);
+                        tms_error_handler(EH_SAVE, MODULO_ZERO, EH_FATAL_ERROR, M->local_expr, i_node->operator_index);
                         return -1;
                     }
                     else
