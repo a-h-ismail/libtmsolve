@@ -424,8 +424,8 @@ tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
     if (success == true)
     {
         int pattern_start;
-        // Just in case the pattern was found to be zeors due to minor rounding (like 5.0000000000000003)
-        if (pattern[0] == '0')
+        // Just in case the pattern was found to be zeros due to minor rounding (like 5.0000000000000003)
+        if (strcmp(pattern, "0") == 0)
             return result;
 
         // Generate the denominator
