@@ -44,4 +44,5 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define FUNCTION_NAME_MATCHES_VAR "Function name can't shadow an existing variable."
 #define INT_TOO_LARGE "Value is too large for the current integer size."
 #define MISSING_EXPRESSION "Assignment operator used, but no expression follows."
+#define EXPRESSION_TOO_LONG "Expression is too large to be indexed using an integer."
 #endif
