@@ -693,6 +693,12 @@ tms_int_expr *tms_parse_int_expr(char *expr)
         return NULL;
     }
 
+    if (strlen(expr) > __INT_MAX__)
+    {
+        tms_error_handler(EH_SAVE, EXPRESSION_TOO_LONG, EH_FATAL_ERROR, NULL);
+        return NULL;
+    }
+
     // Duplicate the expression sent to the parser, it may be constant
     expr = strdup(expr);
 

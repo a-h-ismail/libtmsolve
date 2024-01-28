@@ -702,6 +702,11 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_comp
     // Local expression may be offset compared to the expression due to the assignment operator (if it exists).
     char *local_expr;
 
+    if (strlen(expr) > __INT_MAX__)
+    {
+        tms_error_handler(EH_SAVE, EXPRESSION_TOO_LONG, EH_FATAL_ERROR, NULL);
+        return NULL;
+    }
     // Duplicate the expression sent to the parser, it may be constant
     expr = strdup(expr);
 
