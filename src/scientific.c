@@ -324,9 +324,9 @@ void tms_reduce_fraction(tms_fraction *fraction_str)
 // Converts a floating point value to decimal representation a*b/c
 tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
 {
-    int decimal_point = 1, p_start, p_end, decimal_length;
+    int dec_point = 1, patt_start, patt_end, frac_length;
     bool success = false;
-    char pattern[11], printed_value[23];
+    char pattern[11], printed_value[17];
     tms_fraction result;
 
     // Using the denominator as a mean to report failure, if c==0 then the function failed
@@ -347,49 +347,54 @@ tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
     if (value == 0)
         return result;
 
-    sprintf(printed_value, "%.14lf", value);
+    // Reduce the number of decimal places to print as much as the complete value has non decimal places
+    // This avoids obtaining junk values (remember a double has ~15 digits of precision)
+    if (result.a != 0)
+        sprintf(printed_value, "%.*lf", 14 - (int)log10(fabs(result.a)), value);
+    else
+        sprintf(printed_value, "%.14lf", value);
+
     // Removing trailing zeros
-    for (int i = strlen(printed_value) - 1; i > decimal_point; --i)
+    for (int i = strlen(printed_value) - 1; i > dec_point; --i)
     {
-        // Stop at the first non zero value and null terminate
-        if (*(printed_value + i) != '0')
+        if (printed_value[i] != '0')
         {
-            *(printed_value + i + 1) = '\0';
+            printed_value[i + 1] = '\0';
             break;
         }
     }
 
-    decimal_length = strlen(printed_value) - decimal_point - 1;
-    if (decimal_length >= 10)
+    frac_length = strlen(printed_value) - dec_point - 1;
+    if (frac_length >= 10)
     {
         // Look for a pattern to detect fractions from periodic decimals
-        for (p_start = decimal_point + 1; p_start - decimal_point < decimal_length / 2; ++p_start)
+        for (patt_start = dec_point + 1; patt_start - dec_point < frac_length / 2; ++patt_start)
         {
             // First number in the pattern (to the right of the decimal_point)
-            pattern[0] = printed_value[p_start];
+            pattern[0] = printed_value[patt_start];
             pattern[1] = '\0';
-            p_end = p_start + 1;
+            patt_end = patt_start + 1;
             while (true)
             {
                 // First case: the "pattern" is smaller than the remaining decimal digits.
-                if (strlen(printed_value) - p_end > strlen(pattern))
+                if (strlen(printed_value) - patt_end > strlen(pattern))
                 {
                     // If the pattern is found again in the remaining decimal digits, jump over it.
-                    if (strncmp(pattern, printed_value + p_end, strlen(pattern)) == 0)
+                    if (strncmp(pattern, printed_value + patt_end, strlen(pattern)) == 0)
                     {
-                        p_start += strlen(pattern);
-                        p_end += strlen(pattern);
+                        patt_start += strlen(pattern);
+                        patt_end += strlen(pattern);
                     }
                     // If not, copy the digits between p_start and p_end to the pattern.
                     else
                     {
-                        strncpy(pattern, printed_value + p_start, p_end - p_start + 1);
-                        pattern[p_end - p_start + 1] = '\0';
-                        ++p_end;
+                        strncpy(pattern, printed_value + patt_start, patt_end - patt_start + 1);
+                        pattern[patt_end - patt_start + 1] = '\0';
+                        ++patt_end;
                     }
                     // If the pattern matches the last decimal digits, stop the execution with success.
-                    if (strlen(printed_value) - p_end == strlen(pattern) &&
-                        strncmp(pattern, printed_value + p_end, strlen(pattern)) == 0)
+                    if (strlen(printed_value) - patt_end == strlen(pattern) &&
+                        strncmp(pattern, printed_value + patt_end, strlen(pattern)) == 0)
                     {
                         success = true;
                         break;
@@ -399,7 +404,7 @@ tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
                 else
                 {
                     // Consider a success the case where the remaining digits except the last one match the leftmost digits of the pattern.
-                    if (strncmp(pattern, printed_value + p_end, strlen(printed_value) - p_end - 1) == 0)
+                    if (strncmp(pattern, printed_value + patt_end, strlen(printed_value) - patt_end - 1) == 0)
                     {
                         success = true;
                         break;
@@ -412,14 +417,6 @@ tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
                 break;
         }
     }
-    // Simple cases with finite decimal digits
-    else
-    {
-        result.c = pow(10, decimal_length);
-        result.b = round(value * result.c);
-        tms_reduce_fraction(&result);
-        return result;
-    }
     // getting the fraction from the "pattern"
     if (success == true)
     {
@@ -429,14 +426,14 @@ tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
             return result;
 
         // Generate the denominator
-        for (p_start = 0; p_start < strlen(pattern); ++p_start)
-            result.c += 9 * pow(10, p_start);
+        for (patt_start = 0; patt_start < strlen(pattern); ++patt_start)
+            result.c += 9 * pow(10, patt_start);
         // Find the pattern start in case it doesn't start right after the decimal point (like 0.79999)
-        pattern_start = tms_f_search(printed_value, pattern, decimal_point + 1, false);
-        if (pattern_start > decimal_point + 1)
+        pattern_start = tms_f_search(printed_value, pattern, dec_point + 1, false);
+        if (pattern_start > dec_point + 1)
         {
-            result.b = round(value * (pow(10, pattern_start - decimal_point - 1 + strlen(pattern)) - pow(10, pattern_start - decimal_point - 1)));
-            result.c *= pow(10, pattern_start - decimal_point - 1);
+            result.b = round(value * (pow(10, pattern_start - dec_point - 1 + strlen(pattern)) - pow(10, pattern_start - dec_point - 1)));
+            result.c *= pow(10, pattern_start - dec_point - 1);
         }
         else
             sscanf(pattern, "%d", &result.b);
@@ -463,6 +460,14 @@ tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
                 // inverse of a + b / c is c / ( a *c + b )
                 result.b = inverted.c;
                 result.c = inverted.b + inverted.a * inverted.c;
+            }
+            // Simple cases with finite decimal digits (don't bother with fractional parts greater than 5)
+            else if (frac_length < 6)
+            {
+                result.c = pow(10, frac_length);
+                result.b = round(value * result.c);
+                tms_reduce_fraction(&result);
+                return result;
             }
         }
     }
