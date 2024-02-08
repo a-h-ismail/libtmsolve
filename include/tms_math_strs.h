@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2023 Ahmad Ismail
+Copyright (C) 2023-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #ifndef TMS_MSTR
@@ -21,6 +21,38 @@ typedef struct tms_arg_list
     // Array of C strings, stores the arguments.
     char **arguments;
 } tms_arg_list;
+
+/// @brief Simple structure to wrap around C's complex type (used for bindings)
+typedef struct _tms_complex_double
+{
+    double real;
+    double imaginary;
+} tms_complex_double;
+
+typedef struct tms_rc_func
+{
+    char *name;
+    double (*real)(double);
+    double complex (*cmplx)(double complex);
+} tms_rc_func;
+
+typedef struct tms_extf
+{
+    char *name;
+    double complex (*ptr)(tms_arg_list *);
+} tms_extf;
+
+typedef struct tms_int_func
+{
+    char *name;
+    int (*ptr)(int64_t, int64_t *);
+} tms_int_func;
+
+typedef struct tms_int_extf
+{
+    char *name;
+    int (*ptr)(tms_arg_list *, int64_t *);
+} tms_int_extf;
 
 /// @brief Runtime variable metadata of tmsolve.
 typedef struct tms_var
