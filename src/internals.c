@@ -4,9 +4,9 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "internals.h"
 #include "evaluator.h"
+#include "int_parser.h"
 #include "m_errors.h"
 #include "parser.h"
-#include "int_parser.h"
 #include "scientific.h"
 #include "string_tools.h"
 #include "tms_math_strs.h"
@@ -24,7 +24,10 @@ bool _tms_debug = false;
 
 // Function names used by the parser
 char **tms_g_all_func_names;
-int tms_g_func_count;
+int tms_g_all_func_count, tms_g_all_func_max = 64;
+
+char **tms_g_all_int_func_names;
+int tms_g_all_int_func_count, tms_g_all_int_func_max = 16;
 
 char *tms_g_illegal_names[] = {"x", "i", "ans"};
 const int tms_g_illegal_names_count = array_length(tms_g_illegal_names);
@@ -45,50 +48,53 @@ int8_t tms_int_mask_size = 32;
 
 void tmsolve_init()
 {
-    int i;
+    int i, j;
     if (_tms_do_init == true)
     {
         // Seed the random number generator
         srand(time(NULL));
+
         // Initialize variable names and values arrays
         tms_g_vars = malloc(tms_g_var_max * sizeof(tms_var));
         tms_g_var_count = array_length(tms_g_builtin_vars);
 
+        for (i = 0; i < tms_g_var_count; ++i)
+            tms_g_vars[i] = tms_g_builtin_vars[i];
+
+        // Int64 variables
         tms_g_int_vars = malloc(tms_g_int_var_max * sizeof(tms_int_var));
 
         // Initialize runtime function array
         tms_g_ufunc = malloc(tms_g_ufunc_max * sizeof(tms_ufunc));
 
-        for (i = 0; i < tms_g_var_count; ++i)
-            tms_g_vars[i] = tms_g_builtin_vars[i];
+        // Generate the array of all floating point related functions
+        tms_g_all_func_count = tms_g_rcfunct_count + tms_g_extf_count;
 
-        // Get the number of functions.
-        for (i = 0; tms_r_func_name[i] != NULL; ++i)
-            ++tms_g_func_count;
-        for (i = 0; tms_cmplx_func_name[i] != NULL; ++i)
-            ++tms_g_func_count;
-        for (i = 0; tms_ext_func_name[i] != NULL; ++i)
-            ++tms_g_func_count;
+        while (tms_g_all_func_max < tms_g_all_func_count)
+            tms_g_all_func_max *= 2;
 
-        // Generate the all functions array, avoiding repetition.
-        char *tmp[tms_g_func_count];
-        // Copy tms_r_func_name
-        for (i = 0; tms_r_func_name[i] != NULL; ++i)
-            tmp[i] = tms_r_func_name[i];
+        tms_g_all_func_names = malloc(tms_g_all_func_max * sizeof(char *));
 
-        // Copy what wasn't already copied (complex functions with no real equivalent)
-        for (int j = 0; tms_cmplx_func_name[j] != NULL; ++j)
-            if (tms_find_str_in_array(tms_cmplx_func_name[j], tms_r_func_name, -1, TMS_F_REAL) != -1)
-                tmp[i++] = tms_cmplx_func_name[j];
+        i = 0;
+        for (j = 0; j < tms_g_rcfunct_count; ++j)
+            tms_g_all_func_names[i++] = tms_g_rc_func[j].name;
+        for (j = 0; j < tms_g_extf_count; ++j)
+            tms_g_all_func_names[i++] = tms_g_extf[j].name;
 
-        // Copy extended function names
-        for (int j = 0; tms_ext_func_name[j] != NULL; ++j)
-            tmp[i++] = tms_ext_func_name[j];
+        // Generate the array of all int functions
+        tms_g_all_int_func_count = tms_g_int_func_count + tms_g_int_extf_count;
 
-        tms_g_all_func_names = malloc(i * sizeof(char *));
-        tms_g_func_count = i;
-        for (i = 0; i < tms_g_func_count; ++i)
-            tms_g_all_func_names[i] = tmp[i];
+        while (tms_g_all_int_func_max < tms_g_all_int_func_count)
+            tms_g_all_int_func_max *= 2;
+
+        tms_g_all_int_func_names = malloc(tms_g_all_int_func_max * sizeof(char *));
+
+        i = 0;
+        for (j = 0; j < tms_g_int_func_count; ++j)
+            tms_g_all_int_func_names[i++] = tms_g_int_func[j].name;
+        for (j = 0; j < tms_g_extf_count; ++j)
+            tms_g_all_int_func_names[i++] = tms_g_int_extf[j].name;
+
         _tms_do_init = false;
     }
 }
@@ -138,7 +144,7 @@ int tms_new_var(char *name, bool is_constant)
     }
     else
     {
-        if (tms_find_str_in_array(name, tms_g_all_func_names, tms_g_func_count, TMS_NOFUNC) != -1)
+        if (tms_find_str_in_array(name, tms_g_all_func_names, tms_g_all_func_count, TMS_NOFUNC) != -1)
         {
             tms_error_handler(EH_SAVE, VAR_NAME_MATCHES_FUNCTION, EH_FATAL_ERROR, NULL);
             return -1;
@@ -184,8 +190,7 @@ int tms_new_int_var(char *name)
         return i;
     else
     {
-        if (tms_find_str_in_array(name, tms_int_nfunc_name, -1, TMS_NOFUNC) != -1 ||
-            tms_find_str_in_array(name, tms_int_extf_name, -1, TMS_NOFUNC) != -1)
+        if (tms_find_str_in_array(name, tms_g_all_int_func_names, tms_g_all_int_func_count, TMS_NOFUNC) != -1)
         {
             tms_error_handler(EH_SAVE, VAR_NAME_MATCHES_FUNCTION, EH_FATAL_ERROR, NULL);
             return -1;
@@ -270,7 +275,7 @@ int tms_set_ufunction(char *name, char *function)
     }
 
     // Check if the name was already used by builtin functions
-    i = tms_find_str_in_array(name, tms_g_all_func_names, tms_g_func_count, TMS_NOFUNC);
+    i = tms_find_str_in_array(name, tms_g_all_func_names, tms_g_all_func_count, TMS_NOFUNC);
     if (i != -1)
     {
         tms_error_handler(EH_SAVE, NO_FUNCTION_SHADOWING, EH_FATAL_ERROR, NULL);
