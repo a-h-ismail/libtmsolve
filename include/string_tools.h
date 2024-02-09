@@ -149,6 +149,8 @@ double complex tms_read_value(char *_s, int start);
  */
 int tms_read_int_value(char *_s, int start, int64_t *result);
 
+int _tms_read_int_helper(char *number, int8_t base, int64_t *result);
+
 /**
  * @brief Reads a value from the expression at start, supports numbers, constants and variables.
  * @param expr The string to read the value from.
@@ -249,7 +251,7 @@ char *tms_get_name(char *expr, int i, bool is_at_start);
  * @param type Type of the elements in the array (TMS_F_REAL...)
  * @return The index of the first match, or -1 if no match is found.
  */
-int tms_find_str_in_array(char *key, void *array, int arr_len, uint8_t type);
+int tms_find_str_in_array(char *key, const void *array, int arr_len, uint8_t type);
 
 /**
  * @brief Concatenate two strings into a new string
