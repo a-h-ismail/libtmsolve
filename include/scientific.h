@@ -81,7 +81,7 @@ double tms_sign(double value);
 
 double tms_cos(double x);
 
-double tm_sin(double x);
+double tms_sin(double x);
 
 double tms_tan(double x);
 

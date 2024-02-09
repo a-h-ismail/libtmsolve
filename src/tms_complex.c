@@ -131,7 +131,7 @@ double complex tms_ccos(double complex z)
 double complex tms_csin(double complex z)
 {
     if (cimag(z) == 0)
-        return tm_sin(creal(z));
+        return tms_sin(creal(z));
     else
         return tms_neglect_real_cmplx(csin(z));
 }
