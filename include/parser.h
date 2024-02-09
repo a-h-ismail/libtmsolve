@@ -20,25 +20,15 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <stdbool.h>
 #include <inttypes.h>
 
-// Global variables
+/// @brief Contains real and complex functions metadata.
+extern const tms_rc_func tms_g_rc_func[];
 
-/// @brief Contains the names of scientific functions (for real numbers) like sin, cos...
-extern char *tms_r_func_name[];
+extern const int tms_g_rcfunct_count;
 
-/// @brief Contains the function pointers of scientific functions.
-extern double (*tms_r_func_ptr[])(double);
+/// @brief Contains extended function metadata.
+extern const tms_extf tms_g_extf[];
 
-/// @brief Contains the names of complex numbers functions like sin, cos...
-extern char *tms_cmplx_func_name[];
-
-/// @brief Contains the function pointers of scientific functions.
-extern double complex (*tms_cmplx_func_ptr[])(double complex);
-
-/// @brief Contains the names of extended functions (functions with variable number of arguments, passed as a comma separated string).
-extern char *tms_ext_func_name[];
-
-/// @brief Contains the function pointers of extended functions.
-extern double complex (*tms_ext_func[])(tms_arg_list *);
+extern const int tms_g_extf_count;
 
 /// @brief Comparator function for use with qsort(), compares the depth of 2 subexpressions.
 /// @return 1 if a.depth < b.depth; -1 if a.depth > b.depth; 0 otherwise.
