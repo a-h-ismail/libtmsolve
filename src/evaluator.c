@@ -577,9 +577,11 @@ void tms_dump_int_expr(tms_int_expr *M, bool was_evaluated)
         // Find the name of the function to execute
         switch (S[s_index].func_type)
         {
-        case TMS_F_REAL:
-        case TMS_F_EXTENDED:
-            tmp = _tms_lookup_int_function_name(S[s_index].func.simple, S[s_index].func_type);
+        case TMS_F_INT64:
+            tmp = _tms_lookup_int_function_name(S[s_index].func.simple, TMS_F_INT64);
+            break;
+        case TMS_F_INT_EXTENDED:
+            tmp = _tms_lookup_int_function_name(S[s_index].func.extended, TMS_F_INT_EXTENDED);
             break;
 
         default:
