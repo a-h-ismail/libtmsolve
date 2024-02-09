@@ -4,23 +4,27 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "int_parser.h"
 #include "bitwise.h"
-#include "tms_math_strs.h"
 #include "evaluator.h"
 #include "function.h"
 #include "internals.h"
 #include "scientific.h"
 #include "string_tools.h"
 #include "tms_complex.h"
+#include "tms_math_strs.h"
 
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
-char *tms_int_nfunc_name[] = {"not", NULL};
-int (*tms_int_nfunc_ptr[])(int64_t, int64_t *) = {tms_not};
+const tms_int_func tms_g_int_func[] = {{"not", tms_not}, {"mask", tms_mask}, {"inv_mask", tms_inv_mask}};
 
-char *tms_int_extf_name[] = {"rr", "rl", "sr", "sra", "sl", "nand", "and", "xor", "nor", "or", NULL};
-int (*tms_int_extf_ptr[])(tms_arg_list *, int64_t *) = {tms_rr, tms_rl, tms_sr, tms_sra, tms_sl, tms_nand, tms_and, tms_xor, tms_nor, tms_or};
+const int tms_g_int_func_count = array_length(tms_g_int_func);
+
+const tms_int_extf tms_g_int_extf[] = {{"rr", tms_rr},   {"rl", tms_rl},     {"sr", tms_sr},    {"sra", tms_sra},
+                                       {"sl", tms_sl},   {"nand", tms_nand}, {"and", tms_and},  {"xor", tms_xor},
+                                       {"nor", tms_nor}, {"or", tms_or},     {"ipv4", tms_ipv4}};
+
+const int tms_g_int_extf_count = array_length(tms_g_int_extf);
 
 int _tms_read_int_operand(char *expr, int start, int64_t *result)
 {
@@ -69,8 +73,7 @@ int _tms_read_int_operand(char *expr, int start, int64_t *result)
         else
         {
             // The name is already used by a function
-            if (tms_find_str_in_array(name, tms_int_nfunc_name, -1, TMS_NOFUNC) != -1 ||
-                tms_find_str_in_array(name, tms_int_extf_name, -1, TMS_NOFUNC) != -1)
+            if (tms_find_str_in_array(name, tms_g_all_func_names, -1, TMS_NOFUNC) != -1)
                 tms_error_handler(EH_SAVE, PARENTHESIS_MISSING, EH_FATAL_ERROR, expr, start + strlen(name));
             else
                 tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, expr, start);
@@ -192,7 +195,7 @@ tms_int_expr *_tms_init_int_expr(char *expr)
                     return NULL;
                 }
 
-                j = tms_find_str_in_array(name, tms_int_extf_name, array_length(tms_int_extf_ptr), TMS_F_INT_EXTENDED);
+                j = tms_find_str_in_array(name, tms_g_int_extf, tms_g_int_extf_count, TMS_F_INT_EXTENDED);
 
                 // It is an extended function indeed
                 if (j != -1)
@@ -202,7 +205,7 @@ tms_int_expr *_tms_init_int_expr(char *expr)
                     i = tms_find_closing_parenthesis(local_expr, i);
                     S[s_index].solve_end = i - 1;
                     S[s_index].depth = depth + 1;
-                    S[s_index].func.extended = tms_int_extf_ptr[j];
+                    S[s_index].func.extended = tms_g_int_extf[j].ptr;
                     S[s_index].func_type = TMS_F_EXTENDED;
                     S[s_index].start_node = -1;
                     S[s_index].op_count = 0;
@@ -347,12 +350,12 @@ bool _tms_set_int_function_ptr(char *local_expr, tms_int_expr *M, int s_index)
         if (name == NULL)
             return true;
 
-        if ((i = tms_find_str_in_array(name, tms_int_nfunc_name, -1, TMS_F_INT64)) != -1)
+        if ((i = tms_find_str_in_array(name, tms_g_int_func, tms_g_int_func_count, TMS_F_INT64)) != -1)
         {
-            S->func.simple = tms_int_nfunc_ptr[i];
+            S->func.simple = tms_g_int_func[i].ptr;
             S->func_type = TMS_F_REAL;
             // Set the start of the subexpression to the start of the function name
-            S->subexpr_start = solve_start - strlen(tms_int_nfunc_name[i]) - 1;
+            S->subexpr_start = solve_start - strlen(tms_g_int_func[i].name) - 1;
             return true;
         }
         else
@@ -891,24 +894,26 @@ char *_tms_lookup_int_function_name(void *function, int func_type)
     switch (func_type)
     {
     case TMS_F_REAL:
-        for (i = 0; i < array_length(tms_int_nfunc_ptr); ++i)
+        for (i = 0; i < tms_g_int_func_count; ++i)
         {
-            if (function == (void *)(tms_int_nfunc_ptr[i]))
+            if (function == (void *)(tms_g_int_func[i].ptr))
                 break;
         }
-        if (i < array_length(tms_int_nfunc_ptr))
-            return tms_int_nfunc_name[i];
-        break;
+        if (i < tms_g_int_func_count)
+            return tms_g_int_func[i].name;
+        else
+            break;
 
     case TMS_F_EXTENDED:
-        for (i = 0; i < array_length(tms_int_extf_name); ++i)
+        for (i = 0; i < tms_g_int_extf_count; ++i)
         {
-            if (function == (void *)(tms_int_extf_ptr[i]))
+            if (function == (void *)(tms_g_int_extf[i].ptr))
                 break;
         }
-        if (i < array_length(tms_int_extf_name))
-            return tms_int_extf_name[i];
-        break;
+        if (i < tms_g_int_extf_count)
+            return tms_g_int_extf[i].name;
+        else
+            break;
     default:
         tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, NULL);
     }
