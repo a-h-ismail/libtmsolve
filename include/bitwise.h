@@ -9,7 +9,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 /**
  * @file
- * @brief Contains bitwise extended functions declarations.
+ * @brief Contains bitwise regular and extended function declarations.
  */
 
 /// @brief Sign extend to 64 bits
@@ -17,6 +17,12 @@ int64_t tms_sign_extend(int64_t value);
 
 /// @brief Bitwise NOT
 int tms_not(int64_t value, int64_t *result);
+
+/// @brief Generates a mask of size "bits"
+int tms_mask(int64_t bits, int64_t *result);
+
+/// @brief Generates an inverted mask of size "bits"
+int tms_inv_mask(int64_t bits, int64_t *result);
 
 /// @brief Rotate Right
 int tms_rr(tms_arg_list *args, int64_t *result);
@@ -47,4 +53,7 @@ int tms_and(tms_arg_list *args, int64_t *result);
 
 /// @brief Bitwise OR
 int tms_or(tms_arg_list *args, int64_t *result);
+
+/// @brief Reads an IPv4 in dotted decimal notation
+int tms_ipv4(tms_arg_list *args, int64_t *result);
 #endif
