@@ -2,18 +2,19 @@
 Copyright (C) 2022-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#include "parser.h"
-#include "evaluator.h"
-#include "function.h"
-#include "internals.h"
-#include "scientific.h"
-#include "string_tools.h"
-#include "tms_complex.h"
 
 #include <ctype.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "evaluator.h"
+#include "function.h"
+#include "internals.h"
+#include "parser.h"
+#include "scientific.h"
+#include "string_tools.h"
+#include "tms_complex.h"
 
 int tms_compare_subexpr_depth(const void *a, const void *b)
 {
@@ -25,23 +26,31 @@ int tms_compare_subexpr_depth(const void *a, const void *b)
         return 0;
 }
 
-// Real domain functions
-char *tms_r_func_name[] =
-    {"fact", "abs", "exp", "ceil", "floor", "round", "sign", "sqrt", "cbrt", "cos", "sin", "tan", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "ln", "log", NULL};
-double (*tms_r_func_ptr[])(double) =
-    {tms_fact, fabs, exp, ceil, floor, round, tms_sign, sqrt, cbrt, tms_cos, tm_sin, tms_tan, acosh, asinh, atanh, acos, asin, atan, cosh, sinh, tanh, log, log10};
+const tms_rc_func tms_g_rc_func[] = {
+    {"fact", tms_fact, tms_cfact}, {"abs", fabs, cabs_z},     {"exp", exp, tms_cexp},     {"ceil", ceil, tms_cceil},
+    {"floor", floor, tms_cfloor},  {"round", round},          {"sign", tms_sign},         {"arg", NULL, carg_z},
+    {"sqrt", sqrt, csqrt},         {"cbrt", cbrt, tms_ccbrt}, {"cos", tms_cos, tms_ccos}, {"sin", tms_sin, tms_csin},
+    {"tan", tms_tan, tms_ctan},    {"acosh", acosh, cacosh},  {"asinh", asinh, casinh},   {"atanh", atanh, catanh},
+    {"acos", acos, cacos},         {"asin", asin, casin},     {"atan", atan, catan},      {"cosh", cosh, cacosh},
+    {"sinh", sinh, csinh},         {"tanh", tanh, ctanh},     {"ln", log, tms_cln},       {"log10", log10, tms_clog}};
 
-// Complex functions
-char *tms_cmplx_func_name[] =
-    {"fact", "abs", "exp", "arg", "ceil", "floor", "round", "sign", "sqrt", "cbrt", "acosh", "asinh", "atanh", "acos", "asin", "atan", "cosh", "sinh", "tanh", "cos", "sin", "tan", "ln", "log", NULL};
-double complex (*tms_cmplx_func_ptr[])(double complex) =
-    {tms_cfact, cabs_z, tms_cexp, carg_z, tms_cceil, tms_cfloor, tms_cround, tms_csign, csqrt, tms_ccbrt, cacosh, casinh, catanh, cacos, casin, catan, ccosh, csinh, ctanh, tms_ccos, tms_csin, tms_ctan, tms_cln, tms_clog};
+const int tms_g_rcfunct_count = array_length(tms_g_rc_func);
 
 // Extended functions, may take more than one argument (stored in a comma separated string)
-char *tms_ext_func_name[] =
-    {"avg", "min", "max", "integrate", "der", "logn", "hex", "oct", "bin", "rand", "randint", "int", NULL};
-double complex (*tms_ext_func[])(tms_arg_list *) =
-    {tms_avg, tms_min, tms_max, tms_integrate, tms_derivative, tms_logn, tms_hex, tms_oct, tms_bin, tms_rand, tms_randint, tms_int};
+const tms_extf tms_g_extf[] = {{"avg", tms_avg},
+                               {"min", tms_min},
+                               {"max", tms_max},
+                               {"integrate", tms_integrate},
+                               {"derivative", tms_derivative},
+                               {"logn", tms_logn},
+                               {"hex", tms_hex},
+                               {"oct", tms_oct},
+                               {"bin", tms_bin},
+                               {"rand", tms_rand},
+                               {"randint", tms_randint},
+                               {"int", tms_int}};
+
+const int tms_g_extf_count = array_length(tms_g_extf);
 
 int _tms_set_runtime_var(char *expr, int i)
 {
@@ -129,7 +138,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                     return NULL;
                 }
 
-                j = tms_find_str_in_array(name, tms_ext_func_name, array_length(tms_ext_func), TMS_F_EXTENDED);
+                j = tms_find_str_in_array(name, tms_g_extf, array_length(tms_g_extf), TMS_F_EXTENDED);
 
                 // It is an extended function indeed
                 if (j != -1)
@@ -139,7 +148,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                     i = tms_find_closing_parenthesis(local_expr, i);
                     S[s_index].solve_end = i - 1;
                     S[s_index].depth = depth + 1;
-                    S[s_index].func.extended = tms_ext_func[j];
+                    S[s_index].func.extended = tms_g_extf[j].ptr;
                     S[s_index].func_type = TMS_F_EXTENDED;
                     S[s_index].start_node = -1;
 
@@ -248,7 +257,8 @@ int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_inde
         else if (tms_is_op(local_expr[i]))
         {
             // Skip a + or - used in scientific notation (like 1e+5)
-            if (i > 0 && (local_expr[i - 1] == 'e' || local_expr[i - 1] == 'E') && (local_expr[i] == '+' || local_expr[i] == '-'))
+            if (i > 0 && (local_expr[i - 1] == 'e' || local_expr[i - 1] == 'E') &&
+                (local_expr[i] == '+' || local_expr[i] == '-'))
             {
                 // Not every "e" followed by + is a scientific notation
                 // Maybe a variable name that ends with an "e" is being added to something?
@@ -307,12 +317,11 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
 
         if (!M->enable_complex)
         {
-
-            if ((i = tms_find_str_in_array(name, tms_r_func_name, array_length(tms_r_func_ptr), TMS_F_REAL)) != -1)
+            if ((i = tms_find_str_in_array(name, tms_g_rc_func, array_length(tms_g_rc_func), TMS_F_REAL)) != -1)
             {
-                S->func.real = tms_r_func_ptr[i];
+                S->func.real = tms_g_rc_func[i].real;
                 S->func_type = TMS_F_REAL;
-                S->subexpr_start = solve_start - strlen(tms_r_func_name[i]) - 1;
+                S->subexpr_start = solve_start - strlen(tms_g_rc_func[i].name) - 1;
                 free(name);
                 return true;
             }
@@ -325,11 +334,11 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
         }
         else
         {
-            if ((i = tms_find_str_in_array(name, tms_cmplx_func_name, array_length(tms_cmplx_func_ptr), TMS_F_CMPLX)) != -1)
+            if ((i = tms_find_str_in_array(name, tms_g_rc_func, array_length(tms_g_rc_func), TMS_F_CMPLX)) != -1)
             {
-                S->func.cmplx = tms_cmplx_func_ptr[i];
+                S->func.cmplx = tms_g_rc_func[i].cmplx;
                 S->func_type = TMS_F_CMPLX;
-                S->subexpr_start = solve_start - strlen(tms_cmplx_func_name[i]) - 1;
+                S->subexpr_start = solve_start - strlen(tms_g_rc_func[i].name) - 1;
                 free(name);
                 return true;
             }
@@ -497,19 +506,22 @@ int _tms_set_all_operands(char *local_expr, tms_math_expr *M, int s_index, bool 
         // x+y^z : y is set in the node containing z (node i+1) as the left operand
         else
         {
-            status = _tms_set_operand(local_expr, M, NB + i + 1, NB[i].operator_index + 1, s_index, 'l', enable_unknowns);
+            status =
+                _tms_set_operand(local_expr, M, NB + i + 1, NB[i].operator_index + 1, s_index, 'l', enable_unknowns);
             if (status == -1)
                 return -1;
         }
     }
     // Set the last operand as the right operand of the last node
-    status = _tms_set_operand(local_expr, M, NB + op_count - 1, NB[op_count - 1].operator_index + 1, s_index, 'r', enable_unknowns);
+    status = _tms_set_operand(local_expr, M, NB + op_count - 1, NB[op_count - 1].operator_index + 1, s_index, 'r',
+                              enable_unknowns);
     if (status == -1)
         return -1;
     return 0;
 }
 
-int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start, int s_index, char operand, bool enable_unknowns)
+int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start, int s_index, char operand,
+                     bool enable_unknowns)
 {
     tms_math_subexpr *S = M->subexpr_ptr;
     double complex *operand_ptr;
@@ -837,33 +849,25 @@ char *_tms_lookup_function_name(void *function, int func_type)
     switch (func_type)
     {
     case TMS_F_REAL:
-        for (i = 0; i < array_length(tms_r_func_ptr); ++i)
-        {
-            if (function == (void *)(tms_r_func_ptr[i]))
-                break;
-        }
-        if (i < array_length(tms_r_func_ptr))
-            return tms_r_func_name[i];
-        break;
-
     case TMS_F_CMPLX:
-        for (i = 0; i < array_length(tms_cmplx_func_ptr); ++i)
+        for (i = 0; i < array_length(tms_g_rc_func); ++i)
         {
-            if (function == (void *)(tms_cmplx_func_ptr[i]))
+            if (function == (void *)(tms_g_rc_func[i].real) || function == (void *)(tms_g_rc_func[i].cmplx))
                 break;
         }
-        if (i < array_length(tms_cmplx_func_ptr))
-            return tms_cmplx_func_name[i];
-        break;
+        if (i < array_length(tms_g_rc_func))
+            return tms_g_rc_func[i].name;
+        else
+            break;
 
     case TMS_F_EXTENDED:
-        for (i = 0; i < array_length(tms_ext_func); ++i)
+        for (i = 0; i < array_length(tms_g_extf); ++i)
         {
-            if (function == (void *)(tms_ext_func[i]))
+            if (function == (void *)(tms_g_extf[i].ptr))
                 break;
         }
-        if (i < array_length(tms_ext_func))
-            return tms_ext_func_name[i];
+        if (i < array_length(tms_g_extf))
+            return tms_g_extf[i].name;
         break;
     default:
         tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, NULL);
@@ -877,16 +881,15 @@ void *_tms_lookup_function_pointer(char *function_name, bool is_complex)
     int i;
     if (is_complex)
     {
-        // Use the pointers array to determine length since the name array has a NULL in its end
-        i = tms_find_str_in_array(function_name, tms_cmplx_func_name, array_length(tms_cmplx_func_ptr), TMS_F_CMPLX);
-        if (i != -1)
-            return tms_cmplx_func_ptr[i];
+        i = tms_find_str_in_array(function_name, tms_g_rc_func, array_length(tms_g_rc_func), TMS_F_CMPLX);
+        if (i != -1 && tms_g_rc_func[i].cmplx != NULL)
+            return tms_g_rc_func[i].cmplx;
     }
     else
     {
-        i = tms_find_str_in_array(function_name, tms_r_func_name, array_length(tms_r_func_ptr), TMS_F_REAL);
-        if (i != -1)
-            return tms_r_func_ptr[i];
+        i = tms_find_str_in_array(function_name, tms_g_rc_func, array_length(tms_g_rc_func), TMS_F_REAL);
+        if (i != -1 && tms_g_rc_func[i].real != NULL)
+            return tms_g_rc_func[i].real;
     }
 
     return NULL;
