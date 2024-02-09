@@ -26,7 +26,7 @@ double tms_cos(double __x)
         return __x;
 }
 
-double tm_sin(double __x)
+double tms_sin(double __x)
 {
     __x = sin(__x);
     if (fabs(__x) < 1e-10)
