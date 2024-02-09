@@ -73,9 +73,6 @@ extern tms_int_var *tms_g_int_vars;
 /// @brief Contains all runtime functions.
 extern tms_ufunc *tms_g_ufunc;
 
-/// @brief Total number of functions, those with complex variant are counted once.
-extern int tms_g_func_count;
-
 /// @brief Total number of runtime functions.
 extern int tms_g_ufunc_count;
 
@@ -94,8 +91,13 @@ extern int tms_g_int_var_count;
 /// @brief Current maximum int64 variable capacity, use to dynamically resize variable storage.
 extern int tms_g_int_var_max;
 
-/// @brief All function names, including built in and extended but not user defined functions.
 extern char **tms_g_all_func_names;
+
+extern int tms_g_all_func_count, tms_g_all_func_max;
+
+extern char **tms_g_all_int_func_names;
+
+extern int tms_g_all_int_func_count, tms_g_all_int_func_max;
 
 /// @brief Names that should not be usable.
 extern char *tms_g_illegal_names[];
