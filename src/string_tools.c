@@ -3,14 +3,14 @@ Copyright (C) 2021-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "string_tools.h"
-#include "scientific.h"
-#include "internals.h"
 #include "bitwise.h"
+#include "internals.h"
+#include "scientific.h"
+#include <ctype.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
-#include <ctype.h>
 
 char *tms_strndup(const char *source, size_t n)
 {
@@ -423,6 +423,9 @@ int _tms_read_int_helper(char *number, int8_t base, int64_t *result)
     bool is_negative = false;
     int8_t (*symbol_resolver)(char);
 
+    if (number == NULL)
+        return -1;
+
     // Empty string
     if (number[0] == '\0')
         return -1;
@@ -758,7 +761,8 @@ int tms_find_startofnumber(char *expr, int end)
             }
             if (expr[start - 1] == 'e' || expr[start - 1] == 'E' || expr[start - 1] == '.')
                 --start;
-            else if (start > 1 && (expr[start - 1] == '+' || expr[start - 1] == '-') && (expr[start - 2] == 'e' || expr[start - 2] == 'E'))
+            else if (start > 1 && (expr[start - 1] == '+' || expr[start - 1] == '-') &&
+                     (expr[start - 2] == 'e' || expr[start - 2] == 'E'))
                 start -= 2;
             else if (expr[start - 1] == '-')
             {
@@ -1109,17 +1113,21 @@ void tms_print_hex(int64_t value)
     }
 }
 
-int tms_find_str_in_array(char *key, void *array, int arr_len, uint8_t type)
+// To avoid code duplication in the function below
+#define LOOKUP_STRING_IN_STRUCT(key, type, member_name, array)                                                         \
+    for (int i = 0; i < arr_len; ++i)                                                                                  \
+    {                                                                                                                  \
+        if (((const type *)array)[i].member_name[0] == key[0] &&                                                       \
+            strcmp(key, ((const type *)array)[i].member_name) == 0)                                                    \
+            return i;                                                                                                  \
+    }
+
+int tms_find_str_in_array(char *key, const void *array, int arr_len, uint8_t type)
 {
     int i;
     switch (type)
     {
     case TMS_NOFUNC:
-    case TMS_F_REAL:
-    case TMS_F_CMPLX:
-    case TMS_F_EXTENDED:
-    case TMS_F_INT64:
-    case TMS_F_INT_EXTENDED:
         char **c_array = (char **)array;
         if (arr_len != -1)
         {
@@ -1140,31 +1148,33 @@ int tms_find_str_in_array(char *key, void *array, int arr_len, uint8_t type)
         }
         break;
 
+    case TMS_F_INT64:
+        LOOKUP_STRING_IN_STRUCT(key, tms_int_func, name, array)
+        break;
+
+    case TMS_F_INT_EXTENDED:
+        LOOKUP_STRING_IN_STRUCT(key, tms_int_extf, name, array)
+        break;
+
+    case TMS_F_REAL:
+    case TMS_F_CMPLX:
+        LOOKUP_STRING_IN_STRUCT(key, tms_rc_func, name, array)
+        break;
+
+    case TMS_F_EXTENDED:
+        LOOKUP_STRING_IN_STRUCT(key, tms_extf, name, array)
+        break;
+
     case TMS_F_RUNTIME:
-        tms_ufunc *ufunc_array = array;
-        for (i = 0; i < arr_len; ++i)
-        {
-            if (ufunc_array[i].name[0] == key[0] && strcmp(key, ufunc_array[i].name) == 0)
-                return i;
-        }
+        LOOKUP_STRING_IN_STRUCT(key, tms_ufunc, name, array)
         break;
 
     case TMS_V_DOUBLE:
-        tms_var *dvars = array;
-        for (int i = 0; i < arr_len; ++i)
-        {
-            if (dvars[i].name[0] == key[0] && strcmp(key, dvars[i].name) == 0)
-                return i;
-        }
+        LOOKUP_STRING_IN_STRUCT(key, tms_var, name, array)
         break;
 
     case TMS_V_INT64:
-        tms_int_var *ivars = array;
-        for (i = 0; i < arr_len; ++i)
-        {
-            if (ivars[i].name[0] == key[0] && strcmp(key, ivars[i].name) == 0)
-                return i;
-        }
+        LOOKUP_STRING_IN_STRUCT(key, tms_int_var, name, array)
         break;
     }
 
