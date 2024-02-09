@@ -333,6 +333,8 @@ int tms_set_ufunction(char *name, char *function)
             tms_g_ufunc[i].F = F;
             tms_g_ufunc[i].name = strdup(name);
             ++tms_g_ufunc_count;
+            DYNAMIC_RESIZE(tms_g_all_func_names, tms_g_all_func_count, tms_g_all_func_max, char *);
+            tms_g_all_func_names[tms_g_all_func_count++] = tms_g_ufunc[i].name;
             return 0;
         }
     }
