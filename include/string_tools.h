@@ -152,15 +152,6 @@ int tms_read_int_value(char *_s, int start, int64_t *result);
 int _tms_read_int_helper(char *number, int8_t base, int64_t *result);
 
 /**
- * @brief Reads a value from the expression at start, supports numbers, constants and variables.
- * @param expr The string to read the value from.
- * @param start The index where the start of the value is located.
- * @param enable_complex Toggles complex number support.
- * @return The value read from the string, or NaN in case of failure.
- */
-double complex _tms_set_operand_value(char *expr, int start, bool enable_complex);
-
-/**
  * @brief Finds the next occurence of add or subtract sign.
  * @param expr The string to be searched.
  * @param i The index from which the search starts.

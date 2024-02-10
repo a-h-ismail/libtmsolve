@@ -23,7 +23,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 /// @brief Contains real and complex functions metadata.
 extern const tms_rc_func tms_g_rc_func[];
 
-extern const int tms_g_rcfunct_count;
+extern const int tms_g_rc_func_count;
 
 /// @brief Contains extended function metadata.
 extern const tms_extf tms_g_extf[];
@@ -93,6 +93,15 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
  * @return -1 in case of failure.
  */
 int _tms_set_all_operands(char *local_expr, tms_math_expr *M, int s_index, bool enable_unknowns);
+
+/**
+ * @brief Reads a value from the expression at start, supports numbers, constants and variables.
+ * @param expr The string to read the value from.
+ * @param start The index where the start of the value is located.
+ * @param enable_complex Toggles complex number support.
+ * @return The value read from the string, or NaN in case of failure.
+ */
+double complex _tms_set_operand_value(char *expr, int start, bool enable_complex);
 
 /**
  * @brief Sets metadata/value for the specified operand.

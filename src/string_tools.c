@@ -68,69 +68,6 @@ int find_min(int a, int b)
         return b;
 }
 
-double complex _tms_set_operand_value(char *expr, int start, bool enable_complex)
-{
-    double complex value = NAN;
-    bool is_negative = false;
-
-    // Avoid negative offsets
-    if (start < 0)
-        return NAN;
-
-    // Catch incorrect start like )5 (no implied multiplication allowed)
-    if (start > 0 && !tms_is_valid_number_start(expr[start - 1]))
-    {
-        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, expr, start - 1);
-        return NAN;
-    }
-
-    if (expr[start] == '-')
-    {
-        is_negative = true;
-        ++start;
-    }
-    else
-        is_negative = false;
-
-    value = tms_read_value(expr, start);
-
-    // Failed to read value normally, it is probably a variable
-    if (isnan(creal(value)))
-    {
-        char *name = tms_get_name(expr, start, true);
-        if (name == NULL)
-            return NAN;
-
-        int i = tms_find_str_in_array(name, tms_g_vars, tms_g_var_count, TMS_V_DOUBLE);
-        if (i != -1)
-            value = tms_g_vars[i].value;
-        // ans is a special case
-        else if (strcmp(name, "ans") == 0)
-            value = tms_g_ans;
-        else
-        {
-            // The name is already used by a function
-            if (tms_find_str_in_array(name, tms_g_all_func_names, -1, TMS_NOFUNC) != -1)
-                tms_error_handler(EH_SAVE, PARENTHESIS_MISSING, EH_FATAL_ERROR, expr, start + strlen(name));
-            else
-                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, expr, start);
-            free(name);
-            return NAN;
-        }
-        free(name);
-    }
-
-    if (!enable_complex && cimag(value) != 0)
-    {
-        tms_error_handler(EH_SAVE, COMPLEX_DISABLED, EH_FATAL_ERROR, expr, start);
-        return NAN;
-    }
-
-    if (is_negative)
-        value = -value;
-    return value;
-}
-
 bool tms_is_op(char c)
 {
     char ops[] = {'+', '-', '*', '/', '^', '%', '='};
