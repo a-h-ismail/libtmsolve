@@ -73,7 +73,7 @@ int _tms_read_int_operand(char *expr, int start, int64_t *result)
         else
         {
             // The name is already used by a function
-            if (tms_find_str_in_array(name, tms_g_all_func_names, -1, TMS_NOFUNC) != -1)
+            if (tms_find_str_in_array(name, tms_g_all_int_func_names, tms_g_all_int_func_count, TMS_NOFUNC) != -1)
                 tms_error_handler(EH_SAVE, PARENTHESIS_MISSING, EH_FATAL_ERROR, expr, start + strlen(name));
             else
                 tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, expr, start);
