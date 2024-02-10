@@ -92,7 +92,7 @@ void tmsolve_init()
         i = 0;
         for (j = 0; j < tms_g_int_func_count; ++j)
             tms_g_all_int_func_names[i++] = tms_g_int_func[j].name;
-        for (j = 0; j < tms_g_extf_count; ++j)
+        for (j = 0; j < tms_g_int_extf_count; ++j)
             tms_g_all_int_func_names[i++] = tms_g_int_extf[j].name;
 
         _tms_do_init = false;
