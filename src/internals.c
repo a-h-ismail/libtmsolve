@@ -68,7 +68,7 @@ void tmsolve_init()
         tms_g_ufunc = malloc(tms_g_ufunc_max * sizeof(tms_ufunc));
 
         // Generate the array of all floating point related functions
-        tms_g_all_func_count = tms_g_rcfunct_count + tms_g_extf_count;
+        tms_g_all_func_count = tms_g_rc_func_count + tms_g_extf_count;
 
         while (tms_g_all_func_max < tms_g_all_func_count)
             tms_g_all_func_max *= 2;
@@ -76,7 +76,7 @@ void tmsolve_init()
         tms_g_all_func_names = malloc(tms_g_all_func_max * sizeof(char *));
 
         i = 0;
-        for (j = 0; j < tms_g_rcfunct_count; ++j)
+        for (j = 0; j < tms_g_rc_func_count; ++j)
             tms_g_all_func_names[i++] = tms_g_rc_func[j].name;
         for (j = 0; j < tms_g_extf_count; ++j)
             tms_g_all_func_names[i++] = tms_g_extf[j].name;
