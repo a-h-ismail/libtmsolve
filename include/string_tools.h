@@ -2,6 +2,8 @@
 Copyright (C) 2022-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
+#ifndef STRING_TOOLS_H
+#define STRING_TOOLS_H
 /**
  * @file
  * @brief Declares all string handling related macros, structures, globals and functions.
@@ -251,3 +253,5 @@ int tms_find_str_in_array(char *key, const void *array, int arr_len, uint8_t typ
  * @return A new string, s1 + s2
  */
 char *tms_strcat_dup(char *s1, char *s2);
+
+#endif

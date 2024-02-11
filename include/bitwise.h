@@ -1,10 +1,10 @@
 /*
-Copyright (C) 2023 Ahmad Ismail
+Copyright (C) 2023-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 
-#ifndef TMS_BITWISE
-#define TMS_BITWISE
+#ifndef TMS_BITWISE_H
+#define TMS_BITWISE_H
 #include "tms_math_strs.h"
 
 /**

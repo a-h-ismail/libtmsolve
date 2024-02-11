@@ -2,7 +2,8 @@
 Copyright (C) 2022-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-
+#ifndef MATRIX_H
+#define MATRIX_H
 /**
  * @file
  * @brief Declares all matrix related macros, structures, globals and functions.
@@ -88,3 +89,5 @@ void tms_replace_matrix_col(tms_matrix *matrix, tms_matrix *column_matrix, int c
  * @return An identical malloc'd matrix.
  */
 tms_matrix *tms_matrix_dup(tms_matrix *M);
+
+#endif

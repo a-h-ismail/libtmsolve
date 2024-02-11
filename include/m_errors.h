@@ -2,13 +2,13 @@
 Copyright (C) 2022-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
+#ifndef M_ERRORS_H
+#define M_ERRORS_H
 
 /**
  * @file
  * @brief Contains all error messages.
  */
-#ifndef M_ERRORS_H
-#define M_ERRORS_H
 
 #define PARENTHESIS_MISSING "Expected ( for function call."
 #define PARENTHESIS_EMPTY "Empty parenthesis pair."
