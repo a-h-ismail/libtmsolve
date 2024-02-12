@@ -11,6 +11,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "string_tools.h"
 #include "tms_math_strs.h"
 #include <math.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,6 +22,10 @@ int64_t tms_g_int_ans = 0;
 
 bool _tms_do_init = true;
 bool _tms_debug = false;
+
+atomic_bool _parser_lock = false, _int_parser_lock = false;
+atomic_bool _ufunc_lock = false;
+atomic_bool _variables_lock = false, _int_variables_lock = false;
 
 // Function names used by the parser
 char **tms_g_all_func_names;
@@ -97,6 +102,37 @@ void tmsolve_init()
 
         _tms_do_init = false;
     }
+}
+
+void tms_lock_parser()
+{
+    while (atomic_flag_test_and_set(&_parser_lock))
+        ;
+    while (atomic_flag_test_and_set(&_variables_lock))
+        ;
+    while (atomic_flag_test_and_set(&_ufunc_lock))
+        ;
+}
+
+void tms_unlock_parser()
+{
+    atomic_flag_clear(&_parser_lock);
+    atomic_flag_clear(&_variables_lock);
+    atomic_flag_clear(&_ufunc_lock);
+}
+
+void tms_lock_int_parser()
+{
+    while (atomic_flag_test_and_set(&_int_parser_lock))
+        ;
+    while (atomic_flag_test_and_set(&_int_variables_lock))
+        ;
+}
+
+void tms_unlock_int_parser()
+{
+    atomic_flag_clear(&_parser_lock);
+    atomic_flag_clear(&_variables_lock);
 }
 
 bool _tms_validate_args_count(int expected, int actual)
@@ -424,17 +460,31 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M)
 
 int tms_error_handler(int _mode, ...)
 {
-    static int last_error = 0, fatal = 0, non_fatal = 0, backup_error_count = 0, backup_fatal, backup_non_fatal;
-    static tms_error_data main_table[EH_MAX_ERRORS], backup_table[EH_MAX_ERRORS];
-
     va_list handler_args;
+    static atomic_bool lock;
     va_start(handler_args, _mode);
+
+    // Wait if the error handler is used by someone else
+    while (atomic_flag_test_and_set(&lock))
+        ;
+
+    int status = _tms_error_handler_unsafe(_mode, handler_args);
+    atomic_flag_clear(&lock);
+    return status;
+}
+
+int _tms_error_handler_unsafe(int _mode, va_list handler_args)
+{
+    static int last_error = 0, fatal = 0, non_fatal = 0;
+    static tms_error_data main_table[EH_MAX_ERRORS];
+
     int i, error_type, db_select;
 
     switch (_mode)
     {
-    case EH_SAVE:
+    case EH_SAVE: {
         char *error = va_arg(handler_args, char *);
+        int facility_id = va_arg(handler_args, int);
         // Case of error table being full
         if (last_error == EH_MAX_ERRORS - 1)
         {
@@ -453,6 +503,7 @@ int tms_error_handler(int _mode, ...)
             --last_error;
         }
         main_table[last_error].error_msg = strdup(error);
+        main_table[last_error].facility_id = facility_id;
         error_type = va_arg(handler_args, int);
         switch (error_type)
         {
@@ -507,86 +558,39 @@ int tms_error_handler(int _mode, ...)
 
         last_error = fatal + non_fatal;
         return 0;
-
-    case EH_PRINT:
+    }
+    case EH_PRINT: {
+        int facility_id;
         for (i = 0; i < last_error; ++i)
         {
             tms_print_error(main_table[i]);
         }
         return tms_error_handler(EH_CLEAR, EH_MAIN_DB);
+    }
 
-    case EH_CLEAR:
-        db_select = va_arg(handler_args, int);
-        switch (db_select)
-        {
-        case EH_MAIN_DB:
-            for (i = 0; i < last_error; ++i)
-                free(main_table[i].error_msg);
+    case EH_CLEAR: {
+        for (i = 0; i < last_error; ++i)
+            free(main_table[i].error_msg);
 
-            memset(main_table, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
-            // i carries the number of errors for the return value because the counter is reset here
-            i = last_error;
-            last_error = fatal = non_fatal = 0;
-            break;
+        memset(main_table, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
+        // i carries the number of errors for the return value because the counter is reset here
+        i = last_error;
+        last_error = fatal = non_fatal = 0;
+        break;
 
-        case EH_BACKUP_DB:
-            for (i = 0; i < backup_error_count; ++i)
-                free(main_table[i].error_msg);
-
-            memset(backup_table, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
-            i = backup_error_count;
-            backup_error_count = backup_fatal = backup_non_fatal = 0;
-            break;
-
-        case EH_ALL_DB:
-            for (i = 0; i < last_error; ++i)
-                free(main_table[i].error_msg);
-            for (i = 0; i < backup_error_count; ++i)
-                free(main_table[i].error_msg);
-
-            memset(main_table, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
-            memset(backup_table, 0, EH_MAX_ERRORS * sizeof(struct tms_error_data));
-
-            // "i" is used here to preserve total errors for the return value
-            i = last_error + backup_error_count;
-            backup_error_count = backup_fatal = backup_non_fatal = 0;
-            last_error = fatal = non_fatal = 0;
-            break;
-        default:
-            i = -1;
-        }
         return i;
+    }
 
-    case EH_SEARCH:
-        error = va_arg(handler_args, char *);
-        db_select = va_arg(handler_args, int);
-        switch (db_select)
-        {
-        case EH_MAIN_DB:
-            for (i = 0; i < last_error; ++i)
-                if (strcmp(error, main_table[i].error_msg) == 0)
-                    return EH_MAIN_DB;
-            break;
-
-        case EH_BACKUP_DB:
-            for (i = 0; i < last_error; ++i)
-                if (strcmp(error, backup_table[i].error_msg) == 0)
-                    return EH_BACKUP_DB;
-            break;
-
-        case EH_ALL_DB:
-            for (i = 0; i < last_error; ++i)
-            {
-                if (strcmp(error, main_table[i].error_msg) == 0)
-                    return EH_MAIN_DB;
-                else if (strcmp(error, backup_table[i].error_msg) == 0)
-                    return EH_BACKUP_DB;
-            }
-        }
+    case EH_SEARCH: {
+        char *error = va_arg(handler_args, char *);
+        for (i = 0; i < last_error; ++i)
+            if (strcmp(error, main_table[i].error_msg) == 0)
+                return EH_MAIN_DB;
         return -1;
+    }
 
     // Return the number of saved errors
-    case EH_ERROR_COUNT:
+    case EH_ERROR_COUNT: {
         error_type = va_arg(handler_args, int);
         switch (error_type)
         {
@@ -598,32 +602,7 @@ int tms_error_handler(int _mode, ...)
             return non_fatal + fatal;
         }
         return -1;
-
-    case EH_BACKUP:
-        tms_error_handler(EH_CLEAR, EH_BACKUP);
-        // Copy the current error database to the backup database
-        for (i = 0; i < last_error; ++i)
-            backup_table[i] = main_table[i];
-        backup_error_count = last_error;
-        backup_non_fatal = non_fatal;
-        backup_fatal = fatal;
-        // reset current database error count
-        last_error = fatal = non_fatal = 0;
-        return 0;
-
-    // Overwrite main error database with the backup error database
-    case EH_RESTORE:
-        // Clear current database
-        tms_error_handler(EH_CLEAR, EH_MAIN_DB);
-        for (i = 0; i < backup_error_count; ++i)
-            main_table[i] = backup_table[i];
-        last_error = backup_error_count;
-        fatal = backup_fatal;
-        non_fatal = backup_non_fatal;
-        // Remove all references of the errors from the backup
-        for (i = 0; i < backup_error_count; ++i)
-            backup_table[i].error_msg = NULL;
-        break;
+    }
     }
     return -1;
 }
