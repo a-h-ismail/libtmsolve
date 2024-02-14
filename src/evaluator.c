@@ -3,13 +3,13 @@ Copyright (C) 2023-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "evaluator.h"
+#include "bitwise.h"
+#include "int_parser.h"
 #include "internals.h"
 #include "parser.h"
-#include "int_parser.h"
 #include "scientific.h"
 #include "string_tools.h"
 #include "tms_complex.h"
-#include "bitwise.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,14 +52,15 @@ double complex tms_evaluate(tms_math_expr *M)
 
                 if (isnan(creal(**(S[s_index].result))))
                 {
-                    tms_error_handler(EH_SAVE, EXTF_FAILURE, EH_FATAL_ERROR, M->local_expr, S[s_index].subexpr_start);
+                    tms_error_handler(EH_SAVE, TMS_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->local_expr,
+                                      S[s_index].subexpr_start);
                     free(arguments);
                     tms_free_arg_list(L);
                     return NAN;
                 }
                 if (!tms_is_real(**(S[s_index].result)) && M->enable_complex == false)
                 {
-                    tms_error_handler(EH_SAVE, COMPLEX_DISABLED, EH_NONFATAL_ERROR, NULL);
+                    tms_error_handler(EH_SAVE, TMS_EVALUATOR, COMPLEX_DISABLED, EH_NONFATAL, NULL);
                     free(arguments);
                     tms_free_arg_list(L);
                     return NAN;
@@ -85,7 +86,7 @@ double complex tms_evaluate(tms_math_expr *M)
                 // Probably a parsing bug
                 if (i_node->result == NULL)
                 {
-                    tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, NULL);
+                    tms_error_handler(EH_SAVE, TMS_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL);
                     return NAN;
                 }
                 switch (i_node->operator)
@@ -105,7 +106,8 @@ double complex tms_evaluate(tms_math_expr *M)
                 case '/':
                     if (i_node->right_operand == 0)
                     {
-                        tms_error_handler(EH_SAVE, DIVISION_BY_ZERO, EH_FATAL_ERROR, M->local_expr, i_node->operator_index);
+                        tms_error_handler(EH_SAVE, TMS_EVALUATOR, DIVISION_BY_ZERO, EH_FATAL, M->local_expr,
+                                          i_node->operator_index);
                         return NAN;
                     }
                     *(i_node->result) = i_node->left_operand / i_node->right_operand;
@@ -114,12 +116,14 @@ double complex tms_evaluate(tms_math_expr *M)
                 case '%':
                     if (i_node->right_operand == 0)
                     {
-                        tms_error_handler(EH_SAVE, MODULO_ZERO, EH_FATAL_ERROR, M->local_expr, i_node->operator_index);
+                        tms_error_handler(EH_SAVE, TMS_EVALUATOR, MODULO_ZERO, EH_FATAL, M->local_expr,
+                                          i_node->operator_index);
                         return NAN;
                     }
                     if (cimag(i_node->left_operand) != 0 || cimag(i_node->right_operand) != 0)
                     {
-                        tms_error_handler(EH_SAVE, MODULO_COMPLEX_NOT_SUPPORTED, EH_FATAL_ERROR, M->local_expr, i_node->operator_index);
+                        tms_error_handler(EH_SAVE, TMS_EVALUATOR, MODULO_COMPLEX_NOT_SUPPORTED, EH_FATAL, M->local_expr,
+                                          i_node->operator_index);
                         return NAN;
                     }
                     else
@@ -133,7 +137,8 @@ double complex tms_evaluate(tms_math_expr *M)
                         *(i_node->result) = pow(i_node->left_operand, i_node->right_operand);
                         if (isnan(creal(*(i_node->result))))
                         {
-                            tms_error_handler(EH_SAVE, MATH_ERROR, EH_NONFATAL_ERROR, M->local_expr, i_node->operator_index);
+                            tms_error_handler(EH_SAVE, TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->local_expr,
+                                              i_node->operator_index);
                             return NAN;
                         }
                     }
@@ -163,7 +168,7 @@ double complex tms_evaluate(tms_math_expr *M)
 
         if (isnan((double)**(S[s_index].result)))
         {
-            tms_error_handler(EH_SAVE, MATH_ERROR, EH_NONFATAL_ERROR, M->local_expr, S[s_index].solve_start);
+            tms_error_handler(EH_SAVE, TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->local_expr, S[s_index].solve_start);
             return NAN;
         }
         ++s_index;
@@ -215,7 +220,8 @@ int tms_int_evaluate(tms_int_expr *M, int64_t *result)
                 _tms_debug = _debug_state;
                 if (state == -1)
                 {
-                    tms_error_handler(EH_SAVE, EXTF_FAILURE, EH_FATAL_ERROR, M->local_expr, S[s_index].subexpr_start);
+                    tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->local_expr,
+                                      S[s_index].subexpr_start);
                     free(arguments);
                     tms_free_arg_list(L);
                     return -1;
@@ -244,7 +250,7 @@ int tms_int_evaluate(tms_int_expr *M, int64_t *result)
                 // Probably a parsing bug
                 if (i_node->result == NULL)
                 {
-                    tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, NULL);
+                    tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL);
                     return -1;
                 }
                 switch (i_node->operator)
@@ -276,7 +282,8 @@ int tms_int_evaluate(tms_int_expr *M, int64_t *result)
                 case '/':
                     if (i_node->right_operand == 0)
                     {
-                        tms_error_handler(EH_SAVE, DIVISION_BY_ZERO, EH_FATAL_ERROR, M->local_expr, i_node->operator_index);
+                        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, DIVISION_BY_ZERO, EH_FATAL, M->local_expr,
+                                          i_node->operator_index);
                         return -1;
                     }
                     *(i_node->result) = i_node->left_operand / i_node->right_operand;
@@ -285,7 +292,8 @@ int tms_int_evaluate(tms_int_expr *M, int64_t *result)
                 case '%':
                     if (i_node->right_operand == 0)
                     {
-                        tms_error_handler(EH_SAVE, MODULO_ZERO, EH_FATAL_ERROR, M->local_expr, i_node->operator_index);
+                        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, MODULO_ZERO, EH_FATAL, M->local_expr,
+                                          i_node->operator_index);
                         return -1;
                     }
                     else
@@ -443,8 +451,8 @@ void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
             tmp = NULL;
         }
 
-        printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n",
-               s_index, S[s_index].func_type, tmp, S[s_index].depth);
+        printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n", s_index, S[s_index].func_type, tmp,
+               S[s_index].depth);
 
         // Lookup result pointer location
         for (int i = 0; i < s_count; ++i)
@@ -588,8 +596,8 @@ void tms_dump_int_expr(tms_int_expr *M, bool was_evaluated)
             tmp = NULL;
         }
 
-        printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n",
-               s_index, S[s_index].func_type, tmp, S[s_index].depth);
+        printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n", s_index, S[s_index].func_type, tmp,
+               S[s_index].depth);
 
         // Lookup result pointer location
         for (int i = 0; i < s_count; ++i)

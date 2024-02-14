@@ -23,7 +23,7 @@ int64_t tms_sign_extend(int64_t value)
 
 int get_two_operands(tms_arg_list *args, int64_t *op1, int64_t *op2)
 {
-    if (_tms_validate_args_count(2, args->count) == false)
+    if (_tms_validate_args_count(2, args->count, TMS_INT_EVALUATOR) == false)
         return -1;
 
     int status;
@@ -75,7 +75,7 @@ int tms_inv_mask(int64_t bits, int64_t *result)
 
 int _tms_rotate_circular(tms_arg_list *args, char direction, int64_t *result)
 {
-    if (_tms_validate_args_count(2, args->count) == false)
+    if (_tms_validate_args_count(2, args->count, TMS_INT_EVALUATOR) == false)
         return -1;
 
     int64_t value, shift;
@@ -94,7 +94,7 @@ int _tms_rotate_circular(tms_arg_list *args, char direction, int64_t *result)
         return 0;
 
     default:
-        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, NULL);
+        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL);
         return -1;
     }
 }
@@ -209,7 +209,7 @@ int tms_or(tms_arg_list *args, int64_t *result)
 
 int tms_ipv4(tms_arg_list *args, int64_t *result)
 {
-    if (_tms_validate_args_count(1, args->count) == false)
+    if (_tms_validate_args_count(1, args->count, TMS_INT_EVALUATOR) == false)
         return -1;
 
     int i, status;

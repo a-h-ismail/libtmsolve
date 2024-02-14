@@ -164,11 +164,11 @@ double complex tms_solve(char *expr)
         if (isnan(creal(result)))
         {
             // Edge case of not detecting the 'i' due to adjacency with hex digits
-            if (tms_error_handler(EH_SEARCH, COMPLEX_DISABLED, EH_MAIN_DB) == EH_MAIN_DB)
-                tms_error_handler(EH_CLEAR, EH_MAIN_DB);
+            if (tms_error_handler(EH_SEARCH, TMS_PARSER, COMPLEX_DISABLED) != -1)
+                tms_error_handler(EH_CLEAR, TMS_PARSER);
 
             // Check if the errors are fatal (like malformed syntax, division by zero...)
-            int fatal = tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR);
+            int fatal = tms_error_handler(EH_ERROR_COUNT, TMS_PARSER, EH_FATAL);
             if (fatal > 0)
             {
                 tms_delete_math_expr(M);
@@ -176,7 +176,7 @@ double complex tms_solve(char *expr)
             }
 
             // Clear errors caused by the first evaluation.
-            tms_error_handler(EH_CLEAR, EH_MAIN_DB);
+            tms_error_handler(EH_CLEAR, TMS_PARSER);
 
             // The errors weren't fatal, possibly a complex answer.
             // Convert M to use complex functions.
@@ -209,7 +209,7 @@ double complex tms_solve(char *expr)
         return result;
     }
     // Unlikely to fall out of the switch.
-    tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, NULL);
+    tms_error_handler(EH_SAVE, TMS_PARSER, INTERNAL_ERROR, EH_FATAL, NULL);
     return NAN;
 }
 

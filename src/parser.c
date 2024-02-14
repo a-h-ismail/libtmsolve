@@ -56,7 +56,7 @@ int _tms_set_runtime_var(char *expr, int i)
 {
     if (i == 0)
     {
-        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, expr, 0);
+        tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, 0);
         return -1;
     }
     else
@@ -66,7 +66,7 @@ int _tms_set_runtime_var(char *expr, int i)
         j = tms_f_search(expr, "=", i + 1, false);
         if (j != -1)
         {
-            tms_error_handler(EH_SAVE, MULTIPLE_ASSIGNMENT_ERROR, EH_FATAL_ERROR, expr, j);
+            tms_error_handler(EH_SAVE, TMS_PARSER, MULTIPLE_ASSIGNMENT_ERROR, EH_FATAL, expr, j);
             return -1;
         }
 
@@ -88,7 +88,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
 
     if (local_expr[0] == '\0')
     {
-        tms_error_handler(EH_SAVE, MISSING_EXPRESSION, EH_FATAL_ERROR, NULL);
+        tms_error_handler(EH_SAVE, TMS_PARSER, MISSING_EXPRESSION, EH_FATAL, NULL);
         free(expr);
         return NULL;
     }
@@ -132,7 +132,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                 // This means the function name used is not valid
                 if (name == NULL)
                 {
-                    tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, local_expr, i - 1);
+                    tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, local_expr, i - 1);
                     free(S);
                     tms_delete_math_expr(M);
                     return NULL;
@@ -171,7 +171,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
             // Empty parenthesis pair is only allowed for extended functions
             if (S[s_index].solve_end == i)
             {
-                tms_error_handler(EH_SAVE, PARENTHESIS_EMPTY, EH_FATAL_ERROR, local_expr, i);
+                tms_error_handler(EH_SAVE, TMS_PARSER, PARENTHESIS_EMPTY, EH_FATAL, local_expr, i);
                 free(S);
                 tms_delete_math_expr(M);
                 return NULL;
@@ -179,7 +179,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
 
             if (S[s_index].solve_end == -2)
             {
-                tms_error_handler(EH_SAVE, PARENTHESIS_NOT_CLOSED, EH_FATAL_ERROR, local_expr, i);
+                tms_error_handler(EH_SAVE, TMS_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, local_expr, i);
                 // S isn't part of M yet
                 free(S);
                 tms_delete_math_expr(M);
@@ -192,7 +192,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
             // An extra ')'
             if (depth == 0)
             {
-                tms_error_handler(EH_SAVE, PARENTHESIS_NOT_OPEN, EH_FATAL_ERROR, local_expr, i);
+                tms_error_handler(EH_SAVE, TMS_PARSER, PARENTHESIS_NOT_OPEN, EH_FATAL, local_expr, i);
                 free(S);
                 tms_delete_math_expr(M);
                 return NULL;
@@ -235,7 +235,7 @@ int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_inde
 
     if (solve_start > solve_end)
     {
-        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, local_expr, solve_start);
+        tms_error_handler(EH_SAVE, TMS_PARSER, INTERNAL_ERROR, EH_FATAL, local_expr, solve_start);
         return NULL;
     }
 
@@ -279,7 +279,7 @@ int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_inde
         }
         else
         {
-            tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, local_expr, i);
+            tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, local_expr, i);
             free(operator_index);
             return NULL;
         }
@@ -327,7 +327,7 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
             }
             else
             {
-                tms_error_handler(EH_SAVE, UNDEFINED_FUNCTION, EH_NONFATAL_ERROR, local_expr, solve_start - 2);
+                tms_error_handler(EH_SAVE, TMS_PARSER, UNDEFINED_FUNCTION, EH_NONFATAL, local_expr, solve_start - 2);
                 free(name);
                 return false;
             }
@@ -345,7 +345,7 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
 
             else
             {
-                tms_error_handler(EH_SAVE, UNDEFINED_FUNCTION, EH_NONFATAL_ERROR, local_expr, solve_start - 2);
+                tms_error_handler(EH_SAVE, TMS_PARSER, UNDEFINED_FUNCTION, EH_NONFATAL, local_expr, solve_start - 2);
                 free(name);
                 return false;
             }
@@ -365,7 +365,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
 
     if (op_count < 0)
     {
-        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, local_expr, solve_start);
+        tms_error_handler(EH_SAVE, TMS_PARSER, INTERNAL_ERROR, EH_FATAL, local_expr, solve_start);
         return -1;
     }
 
@@ -380,7 +380,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
     // Check if the expression is terminated with an operator
     if (op_count != 0 && operator_index[op_count - 1] == solve_end)
     {
-        tms_error_handler(EH_SAVE, RIGHT_OP_MISSING, EH_FATAL_ERROR, local_expr, operator_index[op_count - 1]);
+        tms_error_handler(EH_SAVE, TMS_PARSER, RIGHT_OP_MISSING, EH_FATAL, local_expr, operator_index[op_count - 1]);
         return -1;
     }
     // Fill operations and index data into each op_node
@@ -411,15 +411,15 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
                     status = tms_set_unknowns_data(local_expr + solve_start, NB, 'l');
                     if (status == -1)
                     {
-                        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, local_expr, solve_start);
+                        tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, local_expr, solve_start);
                         return -1;
                     }
                 }
                 else
                 {
                     // Unknown not found, or set_operand didn't save an error (not a valid var name)
-                    if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) == 0)
-                        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, local_expr, solve_start);
+                    if (tms_error_handler(EH_ERROR_COUNT, TMS_PARSER, EH_FATAL) == 0)
+                        tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, local_expr, solve_start);
                     return -1;
                 }
             }
@@ -453,7 +453,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
     // Check if the expression is terminated with an operator
     if (op_count != 0 && operator_index[op_count - 1] == solve_end)
     {
-        tms_error_handler(EH_SAVE, RIGHT_OP_MISSING, EH_FATAL_ERROR, local_expr, operator_index[op_count - 1]);
+        tms_error_handler(EH_SAVE, TMS_PARSER, RIGHT_OP_MISSING, EH_FATAL, local_expr, operator_index[op_count - 1]);
         return -1;
     }
     // Set operator type and index for each op_node
@@ -481,7 +481,7 @@ int _tms_set_all_operands(char *local_expr, tms_math_expr *M, int s_index, bool 
             NB[0].left_operand = 0;
         else
         {
-            tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, local_expr, NB[0].operator_index);
+            tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, local_expr, NB[0].operator_index);
             return -1;
         }
     }
@@ -532,7 +532,7 @@ double complex _tms_set_operand_value(char *expr, int start, bool enable_complex
     // Catch incorrect start like )5 (no implied multiplication allowed)
     if (start > 0 && !tms_is_valid_number_start(expr[start - 1]))
     {
-        tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, expr, start - 1);
+        tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, start - 1);
         return NAN;
     }
 
@@ -563,9 +563,9 @@ double complex _tms_set_operand_value(char *expr, int start, bool enable_complex
         {
             // The name is already used by a function
             if (tms_find_str_in_array(name, tms_g_all_func_names, tms_g_all_func_count, TMS_NOFUNC) != -1)
-                tms_error_handler(EH_SAVE, PARENTHESIS_MISSING, EH_FATAL_ERROR, expr, start + strlen(name));
+                tms_error_handler(EH_SAVE, TMS_PARSER, PARENTHESIS_MISSING, EH_FATAL, expr, start + strlen(name));
             else
-                tms_error_handler(EH_SAVE, UNDEFINED_VARIABLE, EH_FATAL_ERROR, expr, start);
+                tms_error_handler(EH_SAVE, TMS_PARSER, UNDEFINED_VARIABLE, EH_FATAL, expr, start);
             free(name);
             return NAN;
         }
@@ -574,7 +574,7 @@ double complex _tms_set_operand_value(char *expr, int start, bool enable_complex
 
     if (!enable_complex && cimag(value) != 0)
     {
-        tms_error_handler(EH_SAVE, COMPLEX_DISABLED, EH_FATAL_ERROR, expr, start);
+        tms_error_handler(EH_SAVE, TMS_PARSER, COMPLEX_DISABLED, EH_FATAL, expr, start);
         return NAN;
     }
 
@@ -599,7 +599,7 @@ int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start,
         operand_ptr = &(N->left_operand);
         break;
     default:
-        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, expr, N->operator_index);
+        tms_error_handler(EH_SAVE, TMS_PARSER, INTERNAL_ERROR, EH_FATAL, expr, N->operator_index);
         return -1;
     }
 
@@ -619,15 +619,15 @@ int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start,
                 tmp = tms_set_unknowns_data(expr + op_start, N, operand);
                 if (tmp == -1)
                 {
-                    tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, expr, op_start);
+                    tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, op_start);
                     return -1;
                 }
             }
             else
             {
                 // If the value reader failed, set the error to be a syntax error
-                if (tms_error_handler(EH_ERROR_COUNT, EH_FATAL_ERROR) == 0)
-                    tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, expr, op_start);
+                if (tms_error_handler(EH_ERROR_COUNT, TMS_PARSER, EH_FATAL) == 0)
+                    tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, op_start);
                 return -1;
             }
         }
@@ -663,7 +663,7 @@ bool _tms_set_evaluation_order(tms_math_subexpr *S)
     i = S->start_node;
     if (i < 0)
     {
-        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, NULL);
+        tms_error_handler(EH_SAVE, TMS_PARSER, INTERNAL_ERROR, EH_FATAL, NULL);
         return false;
     }
     int target_priority = NB[i].priority;
@@ -779,7 +779,7 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_comp
 
     if (strlen(expr) > __INT_MAX__)
     {
-        tms_error_handler(EH_SAVE, EXPRESSION_TOO_LONG, EH_FATAL_ERROR, NULL);
+        tms_error_handler(EH_SAVE, TMS_PARSER, EXPRESSION_TOO_LONG, EH_FATAL, NULL);
         return NULL;
     }
     // Duplicate the expression sent to the parser, it may be constant
@@ -788,7 +788,7 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_comp
     // Check for empty input
     if (expr[0] == '\0')
     {
-        tms_error_handler(EH_SAVE, NO_INPUT, EH_FATAL_ERROR, NULL);
+        tms_error_handler(EH_SAVE, TMS_PARSER, NO_INPUT, EH_FATAL, NULL);
         free(expr);
         return NULL;
     }
@@ -933,7 +933,7 @@ char *_tms_lookup_function_name(void *function, int func_type)
             return tms_g_extf[i].name;
         break;
     default:
-        tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, NULL);
+        tms_error_handler(EH_SAVE, TMS_PARSER, INTERNAL_ERROR, EH_FATAL, NULL);
     }
 
     return NULL;
@@ -1016,7 +1016,7 @@ int tms_set_unknowns_data(char *expr, tms_op_node *x_node, char operand)
         }
         else
         {
-            tms_error_handler(EH_SAVE, INTERNAL_ERROR, EH_FATAL_ERROR, NULL);
+            tms_error_handler(EH_SAVE, TMS_PARSER, INTERNAL_ERROR, EH_FATAL, NULL);
             return -1;
         }
     }

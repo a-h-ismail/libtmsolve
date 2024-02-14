@@ -600,7 +600,7 @@ int tms_find_endofnumber(char *number, int start)
         {
             if (remaining_dots == 0)
             {
-                tms_error_handler(EH_SAVE, SYNTAX_ERROR, EH_FATAL_ERROR, number, end);
+                tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, number, end);
                 return -1;
             }
             else
