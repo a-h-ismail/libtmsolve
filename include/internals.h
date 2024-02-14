@@ -22,24 +22,29 @@ SPDX-License-Identifier: LGPL-2.1-only
 #endif
 
 #define array_length(z) (sizeof(z) / sizeof(*z))
-/// Maximum number of errors in tms_error_handler
+/// @brief Maximum number of errors in tms_error_handler
 #define EH_MAX_ERRORS 10
 
+/// @brief Error handler modes
 #define EH_SAVE 1
 #define EH_PRINT 2
 #define EH_CLEAR 3
 #define EH_SEARCH 4
 #define EH_ERROR_COUNT 5
-#define EH_BACKUP 6
-#define EH_RESTORE 7
+#define EH_EXPORT 6
 
-#define EH_MAIN_DB 8
-#define EH_BACKUP_DB 9
-#define EH_ALL_DB 10
-
-#define EH_NONFATAL_ERROR 11
-#define EH_FATAL_ERROR 12
+#define EH_NONFATAL 11
+#define EH_FATAL 12
 #define EH_ALL_ERRORS 13
+
+/// @brief The library's main facilities (for use with the error handler)
+#define TMS_GENERAL 20
+#define TMS_PARSER 21
+#define TMS_EVALUATOR 22
+#define TMS_INT_PARSER 23
+#define TMS_INT_EVALUATOR 24
+#define TMS_MATRIX 25
+#define TMS_ALL_FACILITIES 26
 
 // Simple macro to ease dynamic resizing
 #define DYNAMIC_RESIZE(ptr, current, max, type)         \
@@ -110,23 +115,27 @@ extern uint64_t tms_int_mask;
 
 extern int8_t tms_int_mask_size;
 
-/// @brief Used to signal an error in the library
-extern int8_t tms_error_bit;
-
 /**
  * @brief Error metadata structure.
  */
 typedef struct tms_error_data
 {
-    char *error_msg, bad_snippet[50];
+    char *message, bad_snippet[50];
     bool fatal;
     int relative_index;
     int real_index;
     int expr_len;
+    int facility_id;
 } tms_error_data;
 
+typedef struct tms_error_database
+{
+    tms_error_data *error_table;
+    int fatal_count;
+    int non_fatal_count;
+} tms_error_database;
+
 /// @brief Initializes the variables required for the proper operation of the calculator.
-/// @details The variables to initialize are: tms_g_all_func_names, tms_g_func_count, tms_g_var_count, tms_vars.
 void tmsolve_init() __attribute__((constructor));
 
 /**
@@ -141,7 +150,7 @@ int tms_new_int_var(char *name);
 
 int tms_set_ufunction(char *name, char *function);
 
-bool _tms_validate_args_count(int expected, int actual);
+bool _tms_validate_args_count(int expected, int actual, int facility_id);
 
 /**
  * @brief Duplicates an existing math expression.
@@ -154,12 +163,12 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M);
  * @param arg The list of argumets to pass to the error handler, according to the mode.
  * @details
  * Possible arguments: \n
- * EH_SAVE, char *error, EH_FATAL_ERROR | EH_NONFATAL_ERROR, current_expr, error_index (if applicable)  \n
+ * EH_SAVE, char *error, EH_FATAL | EH_NONFATAL_ERROR, current_expr, error_index (if applicable)  \n
  * EH_PRINT (returns number of printed errors). \n
  * EH_CLEAR, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB \n
  * EH_SEARCH, char *error, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB (returns EH_MAIN_DB on match in main, EH_BACKUP_DB on
  match in backup). \n
- * EH_ERROR_COUNT, EH_FATAL_ERROR | EH_NONFATAL_ERROR | EH_ALL_ERRORS (returns number of errors specified). \n
+ * EH_ERROR_COUNT, EH_FATAL | EH_NONFATAL_ERROR | EH_ALL_ERRORS (returns number of errors specified). \n
  * EH_BACKUP \n
  * EH_RESTORE \n
 
