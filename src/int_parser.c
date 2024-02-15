@@ -681,6 +681,18 @@ void _tms_set_int_result_pointers(tms_int_expr *M, int s_index)
 
 tms_int_expr *tms_parse_int_expr(char *expr)
 {
+    tms_lock_parser(TMS_INT_PARSER);
+
+    tms_int_expr *M = _tms_parse_int_expr_unsafe(expr);
+    if (M == NULL)
+        tms_error_handler(EH_PRINT, TMS_INT_PARSER);
+
+    tms_unlock_parser(TMS_INT_PARSER);
+    return M;
+}
+
+tms_int_expr *_tms_parse_int_expr_unsafe(char *expr)
+{
     int i;
     // Number of subexpressions
     int s_count;

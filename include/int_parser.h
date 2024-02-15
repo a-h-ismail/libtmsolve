@@ -28,10 +28,15 @@ int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op
 
 /**
  * @brief The integer version of libtmsolve's parser.
+ * @note This function automatically prints errors to stderr if any.
  * @param expr The expression to parse.
  * @return A (malloc'd) pointer to the generated int expression structure.
  */
 tms_int_expr *tms_parse_int_expr(char *expr);
+
+/// @brief The actual int parser logic is here, but it isn't thread safe and doesn't automatically print errors.
+/// @warning Usage is not recommended unless you know what you're doing.
+tms_int_expr *_tms_parse_int_expr_unsafe(char *expr);
 
 /**
  * @brief Deletes an int expression.
