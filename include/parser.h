@@ -164,7 +164,7 @@ int tms_set_unknowns_data(char *expr, tms_op_node *x_node, char operand);
 
 /**
  * @brief Parses a math expression into a structure.
- * @warning You should call tms_syntax_check() before calling this function, because it depends on having an expression with valid syntax.
+ * @note This function automatically prints errors to stderr if any.
  * @param expr The string containing the math expression.
  * @param enable_vars When set to true, the parser will look for unknowns (currently x only) and set its metadata in the corresponding nodes.\n
  * Use tms_set_unknown() to specify the value taken by the unknown.
@@ -172,6 +172,10 @@ int tms_set_unknowns_data(char *expr, tms_op_node *x_node, char operand);
  * @return A (malloc'd) pointer to the generated math structure.
  */
 tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_complex);
+
+/// @brief The actual parser logic is here, but it isn't thread safe and doesn't automatically print errors.
+/// @warning Usage is not recommended unless you know what you're doing.
+tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool enable_complex);
 
 /**
  * @brief Frees the memory used by a math_expr and its members.
