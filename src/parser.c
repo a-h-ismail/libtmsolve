@@ -767,6 +767,18 @@ void _tms_set_result_pointers(tms_math_expr *M, int s_index)
 
 tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_complex)
 {
+    tms_lock_parser(TMS_PARSER);
+    
+    tms_math_expr *M = _tms_parse_expr_unsafe(expr, enable_unknowns, enable_complex);
+    if (M == NULL)
+        tms_error_handler(EH_PRINT, TMS_PARSER);
+
+    tms_unlock_parser(TMS_PARSER);
+    return M;
+}
+
+tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool enable_complex)
+{
     int i;
     // Number of subexpressions
     int s_count;
