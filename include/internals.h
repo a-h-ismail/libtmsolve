@@ -139,6 +139,32 @@ typedef struct tms_error_database
 void tmsolve_init() __attribute__((constructor));
 
 /**
+ * @brief Locks one of the parsers.
+ * @details This function uses spinlocks to wait for a lock to be released.
+ * @param variant Either TMS_PARSER or TMS_INT_PARSER
+ */
+void tms_lock_parser(int variant);
+
+/**
+ * @brief Releases locks required by the parser
+ * @param variant Either TMS_PARSER or TMS_INT_PARSER
+ */
+void tms_unlock_parser(int variant);
+
+/**
+ * @brief Locks one of the evaluator
+ * @details This function uses spinlocks to wait for a lock to be released.
+ * @param variant Either TMS_EVALUATOR or TMS_INT_EVALUATOR
+ */
+void tms_lock_evaluator(int variant);
+
+/**
+ * @brief Unlocks one of the evaluators
+ * @param variant 
+ */
+void tms_unlock_evaluator(int variant);
+
+/**
  * @brief Creates a new variable if it doesn't exist
  * @param name Name of the variable
  * @param is_constant Sets the constant bit to protect the variable from being changed by the evaluator
