@@ -53,6 +53,11 @@ int64_t tms_int_abs(int64_t v);
 double complex tms_solve_e(char *expr, bool enable_complex);
 
 /**
+ * @brief The non thread safe version of tms_solve_e
+ */
+double complex _tms_solve_e_unsafe(char *expr, bool enable_complex);
+
+/**
  * @brief Calculates a mathematical expression and returns the answer, automatically handles complex numbers.
  * @param expr The string containing the math expression.
  * @return The answer of the math expression, or NaN in case of failure.
