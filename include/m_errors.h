@@ -35,6 +35,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define EXTF_FAILURE "Extended function reported a failure."
 #define INTEGRAl_UNDEFINED "Error while calculating integral, make sure the function is defined within the integration interval."
 #define COMPLEX_DISABLED "Complex value detected but complex is disabled."
+#define COMPLEX_ONLY_FUNCTION "Function defined only in the complex domain."
 #define MODULO_COMPLEX_NOT_SUPPORTED "Modulo operation for complex numbers is not supported."
 #define NO_COMPLEX_LOG_BASE "Base-N logarithm doesn't support complex base."
 #define NO_FSELF_REFERENCE "Can't reference a user function within itself."
