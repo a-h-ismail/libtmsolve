@@ -210,12 +210,17 @@ double complex tms_solve(char *expr)
             tms_lock_evaluator(TMS_EVALUATOR);
             result = _tms_evaluate_unsafe(M);
 
-            // Not a fatal error, convert to complex and try again
-            if (isnan(creal(result)) && tms_error_handler(EH_ERROR_COUNT, TMS_EVALUATOR, EH_NONFATAL) != 0)
+            if (isnan(creal(result)))
             {
-                tms_convert_real_to_complex(M);
-                result = _tms_evaluate_unsafe(M);
-                if (isnan(creal(result)))
+                // Not a fatal error, convert to complex and try again
+                if (tms_error_handler(EH_ERROR_COUNT, TMS_EVALUATOR, EH_NONFATAL) != 0)
+                {
+                    tms_convert_real_to_complex(M);
+                    result = _tms_evaluate_unsafe(M);
+                    if (isnan(creal(result)))
+                        tms_error_handler(EH_PRINT, TMS_EVALUATOR);
+                }
+                else
                     tms_error_handler(EH_PRINT, TMS_EVALUATOR);
             }
 
