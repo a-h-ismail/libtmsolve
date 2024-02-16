@@ -5,16 +5,21 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "scientific.h"
 #include "evaluator.h"
 #include "function.h"
+#include "int_parser.h"
 #include "internals.h"
 #include "parser.h"
-#include "int_parser.h"
 #include "string_tools.h"
 #include "tms_math_strs.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
+
+double tms_carg_d(double __x)
+{
+    return carg(__x);
+}
 
 // Wrapper functions for cos, sin and tan to round for very small values
 double tms_cos(double __x)
@@ -159,49 +164,66 @@ double complex tms_solve(char *expr)
         return result;
 
     case 1:
-        M = tms_parse_expr(expr, false, false);
-        result = tms_evaluate(M);
-        if (isnan(creal(result)))
-        {
-            // Edge case of not detecting the 'i' due to adjacency with hex digits
-            if (tms_error_handler(EH_SEARCH, TMS_PARSER, COMPLEX_DISABLED) != -1)
-                tms_error_handler(EH_CLEAR, TMS_PARSER);
+        // We don't want errors to be printed automatically (to keep the error database from being cleared)
+        // And we want to keep the parser locked until we get the correct answer and print errors if any
+        tms_lock_parser(TMS_PARSER);
+        M = _tms_parse_expr_unsafe(expr, false, false);
 
-            // Check if the errors are fatal (like malformed syntax, division by zero...)
-            int fatal = tms_error_handler(EH_ERROR_COUNT, TMS_PARSER, EH_FATAL);
-            if (fatal > 0)
+        if (M == NULL)
+        {
+            // Parsing failed due to a fatal error, don't take further action
+            if (tms_error_handler(EH_ERROR_COUNT, TMS_PARSER, EH_FATAL) != 0)
             {
-                tms_delete_math_expr(M);
+                tms_error_handler(EH_PRINT, TMS_PARSER);
+                tms_unlock_parser(TMS_PARSER);
                 return NAN;
             }
-
-            // Clear errors caused by the first evaluation.
-            tms_error_handler(EH_CLEAR, TMS_PARSER);
-
-            // The errors weren't fatal, possibly a complex answer.
-            // Convert M to use complex functions.
-            if (M != NULL)
+            else
             {
-                tms_convert_real_to_complex(M);
-                // If the conversion failed due to real only functions, return a failure.
-                if (M->enable_complex == false)
+                // Clear previous errors and try again with complex enabled
+                tms_error_handler(EH_CLEAR, TMS_PARSER);
+                M = _tms_parse_expr_unsafe(expr, false, true);
+
+                // Failed again somehow with complex enabled, so abort
+                if (M == NULL)
                 {
-                    tms_delete_math_expr(M);
+                    tms_error_handler(EH_PRINT, TMS_PARSER);
+                    tms_unlock_parser(TMS_PARSER);
                     return NAN;
                 }
+                else
+                    tms_unlock_parser(TMS_PARSER);
             }
-            else
-                M = tms_parse_expr(expr, false, true);
+        }
+        else
+            tms_unlock_parser(TMS_PARSER);
 
+        // At this point we have no problems with the parser
+        if (M->enable_complex)
+        {
             result = tms_evaluate(M);
             tms_delete_math_expr(M);
             return result;
         }
         else
         {
+            tms_lock_evaluator(TMS_EVALUATOR);
+            result = _tms_evaluate_unsafe(M);
+
+            // Not a fatal error, convert to complex and try again
+            if (isnan(creal(result)) && tms_error_handler(EH_ERROR_COUNT, TMS_EVALUATOR, EH_NONFATAL) != 0)
+            {
+                tms_convert_real_to_complex(M);
+                result = _tms_evaluate_unsafe(M);
+                if (isnan(creal(result)))
+                    tms_error_handler(EH_PRINT, TMS_EVALUATOR);
+            }
+
+            tms_unlock_evaluator(TMS_EVALUATOR);
             tms_delete_math_expr(M);
             return result;
         }
+
     case 2:
         M = tms_parse_expr(expr, false, true);
         result = tms_evaluate(M);
@@ -432,7 +454,8 @@ tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
         pattern_start = tms_f_search(printed_value, pattern, dec_point + 1, false);
         if (pattern_start > dec_point + 1)
         {
-            result.b = round(value * (pow(10, pattern_start - dec_point - 1 + strlen(pattern)) - pow(10, pattern_start - dec_point - 1)));
+            result.b = round(value * (pow(10, pattern_start - dec_point - 1 + strlen(pattern)) -
+                                      pow(10, pattern_start - dec_point - 1)));
             result.c *= pow(10, pattern_start - dec_point - 1);
         }
         else
