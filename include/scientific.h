@@ -79,6 +79,8 @@ double tms_fact(double value);
  */
 double tms_sign(double value);
 
+double tms_carg_d(double __x);
+
 double tms_cos(double x);
 
 double tms_sin(double x);
