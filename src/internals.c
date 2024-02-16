@@ -142,8 +142,8 @@ void tms_unlock_parser(int variant)
         return;
 
     case TMS_INT_PARSER:
-        atomic_flag_clear(&_parser_lock);
-        atomic_flag_clear(&_variables_lock);
+        atomic_flag_clear(&_int_parser_lock);
+        atomic_flag_clear(&_int_variables_lock);
         return;
 
     default:
