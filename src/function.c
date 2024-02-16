@@ -2,17 +2,17 @@
 Copyright (C) 2021-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#include "scientific.h"
-#include "parser.h"
-#include "evaluator.h"
-#include "string_tools.h"
 #include "function.h"
-#include "m_errors.h"
+#include "evaluator.h"
 #include "internals.h"
+#include "m_errors.h"
+#include "parser.h"
+#include "scientific.h"
+#include "string_tools.h"
 #include "tms_complex.h"
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include <time.h>
 
 double complex tms_avg(tms_arg_list *args)
@@ -196,17 +196,20 @@ double complex tms_derivative(tms_arg_list *L)
 
     double x, f_prime, fx1, fx2;
 
-    x = tms_solve_e(L->arguments[1], false);
+    x = _tms_solve_e_unsafe(L->arguments[1], false);
     if (isnan(x))
     {
         tms_error_handler(EH_CLEAR, TMS_PARSER);
         tms_error_handler(EH_CLEAR, TMS_EVALUATOR);
         return NAN;
     }
-    M = tms_parse_expr(L->arguments[0], true, false);
+    M = _tms_parse_expr_unsafe(L->arguments[0], true, false);
 
     if (M == NULL)
+    {
+        tms_error_handler(EH_CLEAR, TMS_PARSER);
         return NAN;
+    }
 
     // Scale epsilon with the dimensions of the required value.
     epsilon = x * epsilon;
@@ -217,8 +220,13 @@ double complex tms_derivative(tms_arg_list *L)
     // Solve for x + epsilon
     tms_set_unknown(M, x + epsilon);
     fx2 = _tms_evaluate_unsafe(M);
+    tms_error_handler(EH_CLEAR, TMS_EVALUATOR);
+
     // get the derivative
     f_prime = (fx2 - fx1) / (2 * epsilon);
+    if (isnan(f_prime))
+        tms_error_handler(EH_SAVE, TMS_EVALUATOR, NOT_DERIVABLE, EH_FATAL, NULL);
+
     tms_delete_math_expr(M);
     return f_prime;
 }
@@ -233,8 +241,8 @@ double complex tms_integrate(tms_arg_list *L)
     int n;
     double lower_bound, upper_bound, result, an, fn, rounds, delta;
 
-    lower_bound = tms_solve_e(L->arguments[0], false);
-    upper_bound = tms_solve_e(L->arguments[1], false);
+    lower_bound = _tms_solve_e_unsafe(L->arguments[0], false);
+    upper_bound = _tms_solve_e_unsafe(L->arguments[1], false);
     if (isnan(lower_bound) || isnan(upper_bound))
     {
         tms_error_handler(EH_CLEAR, TMS_PARSER);
@@ -250,7 +258,7 @@ double complex tms_integrate(tms_arg_list *L)
     }
 
     // Compile the expression to the desired structure
-    M = tms_parse_expr(L->arguments[2], true, false);
+    M = _tms_parse_expr_unsafe(L->arguments[2], true, false);
 
     if (M == NULL)
         return NAN;
@@ -267,7 +275,9 @@ double complex tms_integrate(tms_arg_list *L)
     result = _tms_evaluate_unsafe(M);
     tms_set_unknown(M, lower_bound + delta);
     result += _tms_evaluate_unsafe(M);
-    if (isnan(result) == true)
+    // Clear errors collected from the previous evaluator calls
+    tms_error_handler(EH_CLEAR, TMS_EVALUATOR);
+    if (isnan(result))
     {
         tms_error_handler(EH_SAVE, TMS_EVALUATOR, INTEGRAl_UNDEFINED, EH_FATAL, NULL);
         tms_delete_math_expr(M);
