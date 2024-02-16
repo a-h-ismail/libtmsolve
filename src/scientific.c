@@ -110,6 +110,19 @@ double complex tms_solve_e(char *expr, bool enable_complex)
     return result;
 }
 
+double complex _tms_solve_e_unsafe(char *expr, bool enable_complex)
+{
+    double complex result;
+    tms_math_expr *M;
+
+    M = _tms_parse_expr_unsafe(expr, false, enable_complex);
+    if (M == NULL)
+        return NAN;
+    result = _tms_evaluate_unsafe(M);
+    tms_delete_math_expr(M);
+    return result;
+}
+
 double complex tms_solve(char *expr)
 {
     // Offset if the expression has an assignment operator
@@ -213,7 +226,7 @@ double complex tms_solve(char *expr)
             if (isnan(creal(result)))
             {
                 // Not a fatal error, convert to complex and try again
-                if (tms_error_handler(EH_ERROR_COUNT, TMS_EVALUATOR, EH_NONFATAL) != 0)
+                if (tms_error_handler(EH_ERROR_COUNT, TMS_EVALUATOR, EH_FATAL) == 0)
                 {
                     tms_convert_real_to_complex(M);
                     result = _tms_evaluate_unsafe(M);
