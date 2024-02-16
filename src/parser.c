@@ -27,12 +27,14 @@ int tms_compare_subexpr_depth(const void *a, const void *b)
 }
 
 const tms_rc_func tms_g_rc_func[] = {
-    {"fact", tms_fact, tms_cfact}, {"abs", fabs, cabs_z},     {"exp", exp, tms_cexp},     {"ceil", ceil, tms_cceil},
-    {"floor", floor, tms_cfloor},  {"round", round},          {"sign", tms_sign},         {"arg", NULL, carg_z},
-    {"sqrt", sqrt, csqrt},         {"cbrt", cbrt, tms_ccbrt}, {"cos", tms_cos, tms_ccos}, {"sin", tms_sin, tms_csin},
-    {"tan", tms_tan, tms_ctan},    {"acosh", acosh, cacosh},  {"asinh", asinh, casinh},   {"atanh", atanh, catanh},
-    {"acos", acos, cacos},         {"asin", asin, casin},     {"atan", atan, catan},      {"cosh", cosh, cacosh},
-    {"sinh", sinh, csinh},         {"tanh", tanh, ctanh},     {"ln", log, tms_cln},       {"log10", log10, tms_clog}};
+    {"fact", tms_fact, tms_cfact}, {"abs", fabs, cabs_z},        {"exp", exp, tms_cexp},
+    {"ceil", ceil, tms_cceil},     {"floor", floor, tms_cfloor}, {"round", round, tms_cround},
+    {"sign", tms_sign, tms_csign}, {"arg", tms_carg_d, carg_z},  {"sqrt", sqrt, csqrt},
+    {"cbrt", cbrt, tms_ccbrt},     {"cos", tms_cos, tms_ccos},   {"sin", tms_sin, tms_csin},
+    {"tan", tms_tan, tms_ctan},    {"acosh", acosh, cacosh},     {"asinh", asinh, casinh},
+    {"atanh", atanh, catanh},      {"acos", acos, cacos},        {"asin", asin, casin},
+    {"atan", atan, catan},         {"cosh", cosh, cacosh},       {"sinh", sinh, csinh},
+    {"tanh", tanh, ctanh},         {"ln", log, tms_cln},         {"log10", log10, tms_clog}};
 
 const int tms_g_rc_func_count = array_length(tms_g_rc_func);
 
@@ -319,6 +321,11 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_i)
         {
             if ((i = tms_find_str_in_array(name, tms_g_rc_func, tms_g_rc_func_count, TMS_F_REAL)) != -1)
             {
+                if (tms_g_rc_func[i].real == NULL)
+                {
+                    tms_error_handler(EH_SAVE, TMS_PARSER, COMPLEX_ONLY_FUNCTION, EH_NONFATAL, local_expr,
+                                      solve_start - 2);
+                }
                 S->func.real = tms_g_rc_func[i].real;
                 S->func_type = TMS_F_REAL;
                 S->subexpr_start = solve_start - strlen(tms_g_rc_func[i].name) - 1;
@@ -506,8 +513,7 @@ int _tms_set_all_operands(char *local_expr, tms_math_expr *M, int s_i, bool enab
         // x+y^z : y is set in the node containing z (node i+1) as the left operand
         else
         {
-            status =
-                _tms_set_operand(local_expr, M, NB + i + 1, NB[i].operator_index + 1, s_i, 'l', enable_unknowns);
+            status = _tms_set_operand(local_expr, M, NB + i + 1, NB[i].operator_index + 1, s_i, 'l', enable_unknowns);
             if (status == -1)
                 return -1;
         }
@@ -768,7 +774,7 @@ void _tms_set_result_pointers(tms_math_expr *M, int s_i)
 tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_complex)
 {
     tms_lock_parser(TMS_PARSER);
-    
+
     tms_math_expr *M = _tms_parse_expr_unsafe(expr, enable_unknowns, enable_complex);
     if (M == NULL)
         tms_error_handler(EH_PRINT, TMS_PARSER);
