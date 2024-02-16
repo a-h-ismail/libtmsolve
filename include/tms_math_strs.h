@@ -190,13 +190,13 @@ typedef struct tms_math_expr
     char *local_expr;
 
     /// The subexpression array created by parsing the math expression.
-    tms_math_subexpr *subexpr_ptr;
+    tms_math_subexpr *S;
 
     /// Number of subexpression in this math expression.
     int subexpr_count;
 
     /// Number of unknown operands.
-    int unknown_count;
+    int unknowns_count;
 
     /// Indicates the index of tms_g_var_values to copy the answer to.
     int runvar_i;
@@ -278,7 +278,7 @@ typedef struct tms_int_expr
     char *local_expr;
 
     /// The subexpression array created by parsing theexpression.
-    tms_int_subexpr *subexpr_ptr;
+    tms_int_subexpr *S;
 
     /// Number of subexpression in this expression
     int subexpr_count;

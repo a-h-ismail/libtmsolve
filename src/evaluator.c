@@ -33,43 +33,43 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
     if (M == NULL)
         return NAN;
     tms_op_node *i_node;
-    int s_index = 0, s_count = M->subexpr_count;
+    int s_i = 0, s_count = M->subexpr_count;
     // Subexpression pointer to access the subexpression array.
-    tms_math_subexpr *S = M->subexpr_ptr;
-    while (s_index < s_count)
+    tms_math_subexpr *S = M->S;
+    while (s_i < s_count)
     {
         // Extended functions have no nodes
-        if (S[s_index].nodes == NULL)
+        if (S[s_i].nodes == NULL)
         {
-            if (S[s_index].exec_extf)
+            if (S[s_i].exec_extf)
             {
                 char *arguments;
                 bool _debug_state = _tms_debug;
                 tms_arg_list *L;
 
-                int length = S[s_index].solve_end - S[s_index].solve_start + 1;
+                int length = S[s_i].solve_end - S[s_i].solve_start + 1;
 
                 // Copy arguments
-                arguments = tms_strndup(M->local_expr + S[s_index].solve_start, length);
+                arguments = tms_strndup(M->local_expr + S[s_i].solve_start, length);
                 L = tms_get_args(arguments);
 
                 // Disable debug output for extended functions
                 _tms_debug = false;
 
                 // Call the extended function using its pointer
-                **(S[s_index].result) = (*(S[s_index].func.extended))(L);
+                **(S[s_i].result) = (*(S[s_i].func.extended))(L);
 
                 _tms_debug = _debug_state;
 
-                if (isnan(creal(**(S[s_index].result))))
+                if (isnan(creal(**(S[s_i].result))))
                 {
                     tms_error_handler(EH_SAVE, TMS_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->local_expr,
-                                      S[s_index].subexpr_start);
+                                      S[s_i].subexpr_start);
                     free(arguments);
                     tms_free_arg_list(L);
                     return NAN;
                 }
-                if (!tms_is_real(**(S[s_index].result)) && M->enable_complex == false)
+                if (!tms_is_real(**(S[s_i].result)) && M->enable_complex == false)
                 {
                     tms_error_handler(EH_SAVE, TMS_EVALUATOR, COMPLEX_DISABLED, EH_NONFATAL, NULL);
                     free(arguments);
@@ -77,18 +77,18 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                     return NAN;
                 }
 
-                S[s_index].exec_extf = false;
+                S[s_i].exec_extf = false;
                 free(arguments);
                 tms_free_arg_list(L);
             }
-            ++s_index;
+            ++s_i;
 
             continue;
         }
-        i_node = S[s_index].nodes + S[s_index].start_node;
+        i_node = S[s_i].nodes + S[s_i].start_node;
 
         // Case of an expression with one operand
-        if (S[s_index].op_count == 0)
+        if (S[s_i].op_count == 0)
             *(i_node->result) = i_node->left_operand;
         // Normal case, iterate through the nodes following the evaluation order.
         else
@@ -161,28 +161,28 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
             }
 
         // Executing function on the subexpression result
-        switch (S[s_index].func_type)
+        switch (S[s_i].func_type)
         {
         case TMS_F_REAL:
-            **(S[s_index].result) = (*(S[s_index].func.real))(**(S[s_index].result));
+            **(S[s_i].result) = (*(S[s_i].func.real))(**(S[s_i].result));
             break;
         case TMS_F_CMPLX:
-            **(S[s_index].result) = (*(S[s_index].func.cmplx))(**(S[s_index].result));
+            **(S[s_i].result) = (*(S[s_i].func.cmplx))(**(S[s_i].result));
             break;
         case TMS_F_RUNTIME:
             // Copy the function structure, set the unknown and solve
-            tms_math_expr *F = tms_dup_mexpr(S[s_index].func.runtime->F);
-            tms_set_unknown(F, **(S[s_index].result));
-            **(S[s_index].result) = _tms_evaluate_unsafe(F);
+            tms_math_expr *F = tms_dup_mexpr(S[s_i].func.runtime->F);
+            tms_set_unknown(F, **(S[s_i].result));
+            **(S[s_i].result) = _tms_evaluate_unsafe(F);
             tms_delete_math_expr(F);
         }
 
-        if (isnan((double)**(S[s_index].result)))
+        if (isnan((double)**(S[s_i].result)))
         {
-            tms_error_handler(EH_SAVE, TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->local_expr, S[s_index].solve_start);
+            tms_error_handler(EH_SAVE, TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->local_expr, S[s_i].solve_start);
             return NAN;
         }
-        ++s_index;
+        ++s_i;
     }
 
     if (M->runvar_i != -1 && !tms_g_vars[M->runvar_i].is_constant)
@@ -213,58 +213,58 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
         return -1;
 
     tms_int_op_node *i_node;
-    int s_index = 0, s_count = M->subexpr_count;
+    int s_i = 0, s_count = M->subexpr_count;
     int state;
     // Subexpression pointer to access the subexpression array.
-    tms_int_subexpr *S = M->subexpr_ptr;
-    while (s_index < s_count)
+    tms_int_subexpr *S = M->S;
+    while (s_i < s_count)
     {
         // Extended functions have no nodes
-        if (S[s_index].nodes == NULL)
+        if (S[s_i].nodes == NULL)
         {
-            if (S[s_index].exec_extf)
+            if (S[s_i].exec_extf)
             {
                 char *arguments;
                 tms_arg_list *L;
                 bool _debug_state = _tms_debug;
 
-                int length = S[s_index].solve_end - S[s_index].solve_start + 1;
+                int length = S[s_i].solve_end - S[s_i].solve_start + 1;
 
                 // Copy arguments
-                arguments = tms_strndup(M->local_expr + S[s_index].solve_start, length);
+                arguments = tms_strndup(M->local_expr + S[s_i].solve_start, length);
                 L = tms_get_args(arguments);
 
                 // Disable debug output for extended functions
                 _tms_debug = false;
 
                 // Call the extended function
-                state = ((*(S[s_index].func.extended))(L, *(S[s_index].result))) & tms_int_mask;
+                state = ((*(S[s_i].func.extended))(L, *(S[s_i].result))) & tms_int_mask;
 
                 _tms_debug = _debug_state;
                 if (state == -1)
                 {
                     tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->local_expr,
-                                      S[s_index].subexpr_start);
+                                      S[s_i].subexpr_start);
                     free(arguments);
                     tms_free_arg_list(L);
                     return -1;
                 }
                 else
                 {
-                    S[s_index].exec_extf = false;
-                    **(S[s_index].result) &= tms_int_mask;
+                    S[s_i].exec_extf = false;
+                    **(S[s_i].result) &= tms_int_mask;
                     free(arguments);
                     tms_free_arg_list(L);
                 }
             }
-            ++s_index;
+            ++s_i;
 
             continue;
         }
-        i_node = S[s_index].nodes + S[s_index].start_node;
+        i_node = S[s_i].nodes + S[s_i].start_node;
 
         // Case of an expression with one operand
-        if (S[s_index].op_count == 0)
+        if (S[s_i].op_count == 0)
             *(i_node->result) = i_node->left_operand;
         // Normal case, iterate through the nodes following the evaluation order.
         else
@@ -328,16 +328,16 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
             }
 
         // Executing function on the subexpression result
-        switch (S[s_index].func_type)
+        switch (S[s_i].func_type)
         {
         case TMS_F_REAL:
-            state = (*(S[s_index].func.simple))(**(S[s_index].result), *(S[s_index].result));
+            state = (*(S[s_i].func.simple))(**(S[s_i].result), *(S[s_i].result));
             if (state == -1)
                 return -1;
 
             break;
         }
-        ++s_index;
+        ++s_i;
     }
 
     if (M->runvar_i != -1)
@@ -352,17 +352,17 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
 
 void _tms_set_unknowns_data(tms_math_expr *M)
 {
-    int i = 0, s_index, buffer_size = 16;
+    int i = 0, s_i, buffer_size = 16;
     tms_unknown_operand *x_data = malloc(buffer_size * sizeof(tms_unknown_operand));
-    tms_math_subexpr *subexpr_ptr = M->subexpr_ptr;
+    tms_math_subexpr *subexpr_ptr = M->S;
     tms_op_node *i_node;
 
-    for (s_index = 0; s_index < M->subexpr_count; ++s_index)
+    for (s_i = 0; s_i < M->subexpr_count; ++s_i)
     {
-        if (subexpr_ptr[s_index].nodes == NULL)
+        if (subexpr_ptr[s_i].nodes == NULL)
             continue;
 
-        i_node = subexpr_ptr[s_index].nodes + subexpr_ptr[s_index].start_node;
+        i_node = subexpr_ptr[s_i].nodes + subexpr_ptr[s_i].start_node;
         while (i_node != NULL)
         {
             if (i == buffer_size)
@@ -392,7 +392,7 @@ void _tms_set_unknowns_data(tms_math_expr *M)
     if (i != 0)
     {
         x_data = realloc(x_data, i * sizeof(tms_unknown_operand));
-        M->unknown_count = i;
+        M->unknowns_count = i;
         M->x_data = x_data;
     }
     else
@@ -402,7 +402,7 @@ void _tms_set_unknowns_data(tms_math_expr *M)
 void tms_set_unknown(tms_math_expr *M, double complex value)
 {
     int i;
-    for (i = 0; i < M->unknown_count; ++i)
+    for (i = 0; i < M->unknowns_count; ++i)
     {
         if (M->x_data[i].is_negative)
             *(M->x_data[i].unknown_ptr) = -value;
@@ -411,19 +411,19 @@ void tms_set_unknown(tms_math_expr *M, double complex value)
     }
 }
 
-bool _print_operand_source(tms_math_subexpr *S, double complex *operand, int s_index, bool was_evaluated)
+bool _print_operand_source(tms_math_subexpr *S, double complex *operand, int s_i, bool was_evaluated)
 {
     int n;
-    while (s_index != -1)
+    while (s_i != -1)
     {
         // Scan all nodes in the current and previous subexpressions for one that points at this operand
-        for (n = 0; n < S[s_index].op_count; ++n)
+        for (n = 0; n < S[s_i].op_count; ++n)
         {
-            if (S[s_index].nodes == NULL)
+            if (S[s_i].nodes == NULL)
                 continue;
-            if (operand == S[s_index].nodes[n].result)
+            if (operand == S[s_i].nodes[n].result)
             {
-                printf("[S%d;N%d]", s_index, n);
+                printf("[S%d;N%d]", s_i, n);
                 if (was_evaluated)
                 {
                     printf(" = ");
@@ -432,9 +432,9 @@ bool _print_operand_source(tms_math_subexpr *S, double complex *operand, int s_i
                 return true;
             }
         }
-        if (operand == *(S[s_index].result))
+        if (operand == *(S[s_i].result))
         {
-            printf("[S:%d]", s_index);
+            printf("[S:%d]", s_i);
             if (was_evaluated)
             {
                 printf(" = ");
@@ -442,62 +442,62 @@ bool _print_operand_source(tms_math_subexpr *S, double complex *operand, int s_i
             }
             return true;
         }
-        --s_index;
+        --s_i;
     }
     return false;
 }
 
 void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
 {
-    int s_index = 0;
+    int s_i = 0;
     int s_count = M->subexpr_count;
-    tms_math_subexpr *S = M->subexpr_ptr;
+    tms_math_subexpr *S = M->S;
     char *tmp = NULL;
     tms_op_node *tmp_node;
     puts("Dumping expression data:\n");
-    while (s_index < s_count)
+    while (s_i < s_count)
     {
         // Find the name of the function to execute
-        switch (S[s_index].func_type)
+        switch (S[s_i].func_type)
         {
         case TMS_F_REAL:
         case TMS_F_CMPLX:
         case TMS_F_EXTENDED:
-            tmp = _tms_lookup_function_name(S[s_index].func.real, S[s_index].func_type);
+            tmp = _tms_lookup_function_name(S[s_i].func.real, S[s_i].func_type);
             break;
 
         case TMS_F_RUNTIME:
-            tmp = S[s_index].func.runtime->name;
+            tmp = S[s_i].func.runtime->name;
             break;
 
         default:
             tmp = NULL;
         }
 
-        printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n", s_index, S[s_index].func_type, tmp,
-               S[s_index].depth);
+        printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n", s_i, S[s_i].func_type, tmp,
+               S[s_i].depth);
 
         // Lookup result pointer location
         for (int i = 0; i < s_count; ++i)
         {
             for (int j = 0; j < S[i].op_count; ++j)
             {
-                if (S[i].nodes != NULL && S[i].nodes[j].result == *(S[s_index].result))
+                if (S[i].nodes != NULL && S[i].nodes[j].result == *(S[s_i].result))
                 {
                     printf("result at subexpr %d, node %d\n\n", i, j);
                     break;
                 }
             }
             // Case of a no op expression
-            if (S[i].op_count == 0 && S[i].nodes != NULL && S[i].nodes[0].result == *(S[s_index].result))
+            if (S[i].op_count == 0 && S[i].nodes != NULL && S[i].nodes[0].result == *(S[s_i].result))
                 printf("result at subexpr %d, node 0\n\n", i);
         }
 
-        if (S[s_index].nodes == NULL)
+        if (S[s_i].nodes == NULL)
             puts("Expression has no nodes");
         else
         {
-            tmp_node = S[s_index].nodes + S[s_index].start_node;
+            tmp_node = S[s_i].nodes + S[s_i].start_node;
 
             // Dump nodes data
             while (tmp_node != NULL)
@@ -505,18 +505,18 @@ void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
                 printf("[%d]: ", tmp_node->node_index);
                 printf("( ");
 
-                if (_print_operand_source(S, &(tmp_node->left_operand), s_index, was_evaluated) == false)
+                if (_print_operand_source(S, &(tmp_node->left_operand), s_i, was_evaluated) == false)
                     tms_print_value(tmp_node->left_operand);
 
                 printf(" )");
 
                 // No one wants to see uninitialized values (skip nodes used to hold one number)
-                if (S[s_index].op_count != 0)
+                if (S[s_i].op_count != 0)
                 {
                     printf(" %c ", tmp_node->operator);
                     printf("( ");
 
-                    if (_print_operand_source(S, &(tmp_node->right_operand), s_index, was_evaluated) == false)
+                    if (_print_operand_source(S, &(tmp_node->right_operand), s_i, was_evaluated) == false)
                         tms_print_value(tmp_node->right_operand);
 
                     printf(" )");
@@ -526,20 +526,20 @@ void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
                 {
                     int i;
                     char left_or_right = '\0';
-                    for (i = 0; i < S[s_index].op_count; ++i)
+                    for (i = 0; i < S[s_i].op_count; ++i)
                     {
-                        if (&(S[s_index].nodes[i].right_operand) == tmp_node->result)
+                        if (&(S[s_i].nodes[i].right_operand) == tmp_node->result)
                         {
                             left_or_right = 'R';
                             break;
                         }
-                        else if (&(S[s_index].nodes[i].left_operand) == tmp_node->result)
+                        else if (&(S[s_i].nodes[i].left_operand) == tmp_node->result)
                         {
                             left_or_right = 'L';
                             break;
                         }
 
-                        if (S[s_index].op_count == 0 && &(S[s_index].nodes->right_operand) == tmp_node->result)
+                        if (S[s_i].op_count == 0 && &(S[s_i].nodes->right_operand) == tmp_node->result)
                         {
                             i = 0;
                             left_or_right = 'R';
@@ -554,24 +554,24 @@ void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
                 tmp_node = tmp_node->next;
             }
         }
-        ++s_index;
+        ++s_i;
         puts("end\n");
     }
 }
 
-bool _print_int_operand_source(tms_int_subexpr *S, int64_t *operand, int s_index, bool was_evaluated)
+bool _print_int_operand_source(tms_int_subexpr *S, int64_t *operand, int s_i, bool was_evaluated)
 {
     int n;
-    while (s_index != -1)
+    while (s_i != -1)
     {
         // Scan all nodes in the current and previous subexpressions for one that points at this operand
-        for (n = 0; n < S[s_index].op_count; ++n)
+        for (n = 0; n < S[s_i].op_count; ++n)
         {
-            if (S[s_index].nodes == NULL)
+            if (S[s_i].nodes == NULL)
                 continue;
-            if (operand == S[s_index].nodes[n].result)
+            if (operand == S[s_i].nodes[n].result)
             {
-                printf("[S%d;N%d]", s_index, n);
+                printf("[S%d;N%d]", s_i, n);
                 if (was_evaluated)
                 {
                     printf(" = ");
@@ -580,9 +580,9 @@ bool _print_int_operand_source(tms_int_subexpr *S, int64_t *operand, int s_index
                 return true;
             }
         }
-        if (operand == *(S[s_index].result))
+        if (operand == *(S[s_i].result))
         {
-            printf("[S:%d]", s_index);
+            printf("[S:%d]", s_i);
             if (was_evaluated)
             {
                 printf(" = ");
@@ -590,59 +590,59 @@ bool _print_int_operand_source(tms_int_subexpr *S, int64_t *operand, int s_index
             }
             return true;
         }
-        --s_index;
+        --s_i;
     }
     return false;
 }
 
 void tms_dump_int_expr(tms_int_expr *M, bool was_evaluated)
 {
-    int s_index = 0;
+    int s_i = 0;
     int s_count = M->subexpr_count;
-    tms_int_subexpr *S = M->subexpr_ptr;
+    tms_int_subexpr *S = M->S;
     char *tmp = NULL;
     tms_int_op_node *tmp_node;
     puts("Dumping expression data:\n");
-    while (s_index < s_count)
+    while (s_i < s_count)
     {
         // Find the name of the function to execute
-        switch (S[s_index].func_type)
+        switch (S[s_i].func_type)
         {
         case TMS_F_INT64:
-            tmp = _tms_lookup_int_function_name(S[s_index].func.simple, TMS_F_INT64);
+            tmp = _tms_lookup_int_function_name(S[s_i].func.simple, TMS_F_INT64);
             break;
         case TMS_F_INT_EXTENDED:
-            tmp = _tms_lookup_int_function_name(S[s_index].func.extended, TMS_F_INT_EXTENDED);
+            tmp = _tms_lookup_int_function_name(S[s_i].func.extended, TMS_F_INT_EXTENDED);
             break;
 
         default:
             tmp = NULL;
         }
 
-        printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n", s_index, S[s_index].func_type, tmp,
-               S[s_index].depth);
+        printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n", s_i, S[s_i].func_type, tmp,
+               S[s_i].depth);
 
         // Lookup result pointer location
         for (int i = 0; i < s_count; ++i)
         {
             for (int j = 0; j < S[i].op_count; ++j)
             {
-                if (S[i].nodes != NULL && S[i].nodes[j].result == *(S[s_index].result))
+                if (S[i].nodes != NULL && S[i].nodes[j].result == *(S[s_i].result))
                 {
                     printf("result at subexpr %d, node %d\n\n", i, j);
                     break;
                 }
             }
             // Case of a no op expression
-            if (S[i].op_count == 0 && S[i].nodes != NULL && S[i].nodes[0].result == *(S[s_index].result))
+            if (S[i].op_count == 0 && S[i].nodes != NULL && S[i].nodes[0].result == *(S[s_i].result))
                 printf("result at subexpr %d, node 0\n\n", i);
         }
 
-        if (S[s_index].nodes == NULL)
+        if (S[s_i].nodes == NULL)
             puts("Expression has no nodes");
         else
         {
-            tmp_node = S[s_index].nodes + S[s_index].start_node;
+            tmp_node = S[s_i].nodes + S[s_i].start_node;
 
             // Dump nodes data
             while (tmp_node != NULL)
@@ -650,17 +650,17 @@ void tms_dump_int_expr(tms_int_expr *M, bool was_evaluated)
                 printf("[%d]: ", tmp_node->node_index);
                 printf("( ");
 
-                if (_print_int_operand_source(S, &(tmp_node->left_operand), s_index, was_evaluated) == false)
+                if (_print_int_operand_source(S, &(tmp_node->left_operand), s_i, was_evaluated) == false)
                     tms_print_hex(tmp_node->left_operand);
 
                 printf(" )");
                 // No one wants to see uninitialized values (skip nodes used to hold one number)
-                if (S[s_index].op_count != 0)
+                if (S[s_i].op_count != 0)
                 {
                     printf(" %c ", tmp_node->operator);
                     printf("( ");
 
-                    if (_print_int_operand_source(S, &(tmp_node->right_operand), s_index, was_evaluated) == false)
+                    if (_print_int_operand_source(S, &(tmp_node->right_operand), s_i, was_evaluated) == false)
                         tms_print_hex(tmp_node->right_operand);
 
                     printf(" )");
@@ -670,20 +670,20 @@ void tms_dump_int_expr(tms_int_expr *M, bool was_evaluated)
                 {
                     int i;
                     char left_or_right = '\0';
-                    for (i = 0; i < S[s_index].op_count; ++i)
+                    for (i = 0; i < S[s_i].op_count; ++i)
                     {
-                        if (&(S[s_index].nodes[i].right_operand) == tmp_node->result)
+                        if (&(S[s_i].nodes[i].right_operand) == tmp_node->result)
                         {
                             left_or_right = 'R';
                             break;
                         }
-                        else if (&(S[s_index].nodes[i].left_operand) == tmp_node->result)
+                        else if (&(S[s_i].nodes[i].left_operand) == tmp_node->result)
                         {
                             left_or_right = 'L';
                             break;
                         }
 
-                        if (S[s_index].op_count == 0 && &(S[s_index].nodes->right_operand) == tmp_node->result)
+                        if (S[s_i].op_count == 0 && &(S[s_i].nodes->right_operand) == tmp_node->result)
                         {
                             i = 0;
                             left_or_right = 'R';
@@ -698,7 +698,7 @@ void tms_dump_int_expr(tms_int_expr *M, bool was_evaluated)
                 tmp_node = tmp_node->next;
             }
         }
-        ++s_index;
+        ++s_i;
         puts("end\n");
     }
 }

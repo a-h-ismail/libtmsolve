@@ -301,7 +301,7 @@ int tms_new_int_var(char *name)
 
 bool tms_ufunc_has_self_ref(tms_math_expr *F)
 {
-    tms_math_subexpr *S = F->subexpr_ptr;
+    tms_math_subexpr *S = F->S;
     for (int s_index = 0; s_index < F->subexpr_count; ++s_index)
     {
         // Detect self reference (new function has pointer to its previous version)
@@ -316,7 +316,7 @@ bool tms_ufunc_has_self_ref(tms_math_expr *F)
 
 bool is_ufunc_referenced_by(tms_math_expr *referrer, tms_math_expr *F)
 {
-    tms_math_subexpr *S = referrer->subexpr_ptr;
+    tms_math_subexpr *S = referrer->S;
     for (int s_index = 0; s_index < referrer->subexpr_count; ++s_index)
     {
         if (S[s_index].func_type == TMS_F_RUNTIME && S[s_index].func.runtime->F == F)
@@ -328,7 +328,7 @@ bool is_ufunc_referenced_by(tms_math_expr *referrer, tms_math_expr *F)
 bool tms_has_ufunc_circular_refs(tms_math_expr *F)
 {
     int i;
-    tms_math_subexpr *S = F->subexpr_ptr;
+    tms_math_subexpr *S = F->S;
     for (i = 0; i < F->subexpr_count; ++i)
     {
         if (S[i].func_type == TMS_F_RUNTIME)
@@ -445,9 +445,9 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M)
     *NM = *M;
     NM->expr = strdup(M->expr);
     NM->local_expr = NM->expr + (M->local_expr - M->expr);
-    NM->subexpr_ptr = malloc(NM->subexpr_count * sizeof(tms_math_subexpr));
+    NM->S = malloc(NM->subexpr_count * sizeof(tms_math_subexpr));
     // Copy subexpressions
-    memcpy(NM->subexpr_ptr, M->subexpr_ptr, M->subexpr_count * sizeof(tms_math_subexpr));
+    memcpy(NM->S, M->S, M->subexpr_count * sizeof(tms_math_subexpr));
 
     int op_count, node_count;
     tms_math_subexpr *S, *NS;
@@ -457,11 +457,11 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M)
     for (int s = 0; s < NM->subexpr_count; ++s)
     {
         // New variables to keep lines from becoming too long
-        NS = NM->subexpr_ptr + s;
-        S = M->subexpr_ptr + s;
-        if (M->subexpr_ptr[s].nodes != NULL)
+        NS = NM->S + s;
+        S = M->S + s;
+        if (M->S[s].nodes != NULL)
         {
-            op_count = M->subexpr_ptr[s].op_count;
+            op_count = M->S[s].op_count;
             node_count = (op_count > 0 ? op_count : 1);
             NS->nodes = malloc(node_count * sizeof(tms_op_node));
             // Copy nodes
@@ -482,27 +482,27 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M)
     // Fix the subexpressions result pointers
     for (int s = 0; s < NM->subexpr_count; ++s)
     {
-        S = M->subexpr_ptr + s;
+        S = M->S + s;
         void *result = S->result, *start, *end, *tmp;
 
         // Find which operand in the original expression received the answer of the current subexpression
         tmp = *(double complex **)result;
         for (int i = 0; i < M->subexpr_count; ++i)
         {
-            op_count = M->subexpr_ptr[i].op_count;
+            op_count = M->S[i].op_count;
             node_count = (op_count > 0 ? op_count : 1);
-            start = M->subexpr_ptr[i].nodes;
-            end = M->subexpr_ptr[i].nodes + node_count;
+            start = M->S[i].nodes;
+            end = M->S[i].nodes + node_count;
 
             // The nodes are contiguous, so we can pinpoint the correct node by pointer comparisons
             if (tmp >= start && tmp <= end)
             {
                 int n = (tmp - start) / sizeof(tms_op_node);
 
-                if (&(M->subexpr_ptr[i].nodes[n].right_operand) == *(double complex **)result)
-                    *(NM->subexpr_ptr[s].result) = &(NM->subexpr_ptr[i].nodes[n].right_operand);
-                else if (&(M->subexpr_ptr[i].nodes[n].left_operand) == *(double complex **)result)
-                    *(NM->subexpr_ptr[s].result) = &(NM->subexpr_ptr[i].nodes[n].left_operand);
+                if (&(M->S[i].nodes[n].right_operand) == *(double complex **)result)
+                    *(NM->S[s].result) = &(NM->S[i].nodes[n].right_operand);
+                else if (&(M->S[i].nodes[n].left_operand) == *(double complex **)result)
+                    *(NM->S[s].result) = &(NM->S[i].nodes[n].left_operand);
 
                 break;
             }
@@ -510,7 +510,7 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M)
     }
 
     // If the nodes have unknowns, regenerate the unknowns pointers array
-    if (NM->unknown_count > 0)
+    if (NM->unknowns_count > 0)
         _tms_set_unknowns_data(NM);
 
     return NM;

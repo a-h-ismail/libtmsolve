@@ -93,7 +93,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
         return NULL;
     }
 
-    int s_max = 8, i, j, s_index, length = strlen(local_expr), s_count;
+    int s_max = 8, i, j, s_i, length = strlen(local_expr), s_count;
 
     // Pointer to subexpressions heap array
     tms_math_subexpr *S;
@@ -101,10 +101,10 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
     // Pointer to the math_expr generated
     tms_math_expr *M = malloc(sizeof(tms_math_expr));
 
-    M->unknown_count = 0;
+    M->unknowns_count = 0;
     M->x_data = NULL;
     M->enable_complex = enable_complex;
-    M->subexpr_ptr = NULL;
+    M->S = NULL;
     M->subexpr_count = 0;
     M->local_expr = local_expr;
     M->expr = expr;
@@ -112,17 +112,17 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
     S = malloc(s_max * sizeof(tms_math_subexpr));
 
     int depth = 0;
-    s_index = 0;
+    s_i = 0;
     // Determine the depth and start/end of each subexpression parenthesis
     for (i = 0; i < length; ++i)
     {
-        DYNAMIC_RESIZE(S, s_index, s_max, tms_math_subexpr)
+        DYNAMIC_RESIZE(S, s_i, s_max, tms_math_subexpr)
         if (local_expr[i] == '(')
         {
-            S[s_index].func.extended = NULL;
-            S[s_index].func_type = TMS_NOFUNC;
-            S[s_index].exec_extf = true;
-            S[s_index].nodes = NULL;
+            S[s_i].func.extended = NULL;
+            S[s_i].func_type = TMS_NOFUNC;
+            S[s_i].exec_extf = true;
+            S[s_i].nodes = NULL;
 
             // Treat extended functions as a subexpression
             if (i > 1 && tms_legal_char_in_name(local_expr[i - 1]))
@@ -143,16 +143,16 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                 // It is an extended function indeed
                 if (j != -1)
                 {
-                    S[s_index].subexpr_start = i - strlen(name);
-                    S[s_index].solve_start = i + 1;
+                    S[s_i].subexpr_start = i - strlen(name);
+                    S[s_i].solve_start = i + 1;
                     i = tms_find_closing_parenthesis(local_expr, i);
-                    S[s_index].solve_end = i - 1;
-                    S[s_index].depth = depth + 1;
-                    S[s_index].func.extended = tms_g_extf[j].ptr;
-                    S[s_index].func_type = TMS_F_EXTENDED;
-                    S[s_index].start_node = -1;
+                    S[s_i].solve_end = i - 1;
+                    S[s_i].depth = depth + 1;
+                    S[s_i].func.extended = tms_g_extf[j].ptr;
+                    S[s_i].func_type = TMS_F_EXTENDED;
+                    S[s_i].start_node = -1;
 
-                    ++s_index;
+                    ++s_i;
                     free(name);
                     continue;
                 }
@@ -161,15 +161,15 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
 
             // Normal case
             ++depth;
-            S[s_index].solve_start = i + 1;
-            S[s_index].depth = depth;
+            S[s_i].solve_start = i + 1;
+            S[s_i].depth = depth;
 
             // The expression start is the parenthesis, may change if a function is found
-            S[s_index].subexpr_start = i;
-            S[s_index].solve_end = tms_find_closing_parenthesis(local_expr, i) - 1;
+            S[s_i].subexpr_start = i;
+            S[s_i].solve_end = tms_find_closing_parenthesis(local_expr, i) - 1;
 
             // Empty parenthesis pair is only allowed for extended functions
-            if (S[s_index].solve_end == i)
+            if (S[s_i].solve_end == i)
             {
                 tms_error_handler(EH_SAVE, TMS_PARSER, PARENTHESIS_EMPTY, EH_FATAL, local_expr, i);
                 free(S);
@@ -177,7 +177,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                 return NULL;
             }
 
-            if (S[s_index].solve_end == -2)
+            if (S[s_i].solve_end == -2)
             {
                 tms_error_handler(EH_SAVE, TMS_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, local_expr, i);
                 // S isn't part of M yet
@@ -185,7 +185,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                 tms_delete_math_expr(M);
                 return NULL;
             }
-            ++s_index;
+            ++s_i;
         }
         else if (local_expr[i] == ')')
         {
@@ -202,34 +202,34 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
         }
     }
     // + 1 for the subexpression with depth 0
-    s_count = s_index + 1;
+    s_count = s_i + 1;
     // Shrink the block to the required size
     S = realloc(S, s_count * sizeof(tms_math_subexpr));
 
     // Copy the pointer to the structure
-    M->subexpr_ptr = S;
+    M->S = S;
 
     M->subexpr_count = s_count;
 
     // The whole expression's "subexpression"
-    S[s_index].depth = 0;
-    S[s_index].solve_start = S[s_index].subexpr_start = 0;
-    S[s_index].solve_end = length - 1;
-    S[s_index].func.extended = NULL;
-    S[s_index].nodes = NULL;
-    S[s_index].func_type = TMS_NOFUNC;
-    S[s_index].exec_extf = true;
+    S[s_i].depth = 0;
+    S[s_i].solve_start = S[s_i].subexpr_start = 0;
+    S[s_i].solve_end = length - 1;
+    S[s_i].func.extended = NULL;
+    S[s_i].nodes = NULL;
+    S[s_i].func_type = TMS_NOFUNC;
+    S[s_i].exec_extf = true;
 
     // Sort by depth (high to low)
     qsort(S, s_count, sizeof(tms_math_subexpr), tms_compare_subexpr_depth);
     return M;
 }
 
-int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_index)
+int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_i)
 {
     // For simplicity
-    int solve_start = S[s_index].solve_start;
-    int solve_end = S[s_index].solve_end;
+    int solve_start = S[s_i].solve_start;
+    int solve_end = S[s_i].solve_end;
     int buffer_size = 16;
     int op_count = 0;
 
@@ -247,7 +247,7 @@ int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_inde
         if (local_expr[i] == '(')
         {
             int previous_subexp;
-            previous_subexp = tms_find_subexpr_starting_at(S, i + 1, s_index, 2);
+            previous_subexp = tms_find_subexpr_starting_at(S, i + 1, s_i, 2);
             if (previous_subexp != -1)
                 i = S[previous_subexp].solve_end + 1;
         }
@@ -286,15 +286,15 @@ int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_inde
     }
 
     // Send the number of ops to the parser
-    S[s_index].op_count = op_count;
+    S[s_i].op_count = op_count;
 
     return operator_index;
 }
 
-bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
+bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_i)
 {
     int i;
-    tms_math_subexpr *S = &(M->subexpr_ptr[s_index]);
+    tms_math_subexpr *S = &(M->S[s_i]);
     int solve_start = S->solve_start;
 
     // Search for any function preceding the expression to set the function pointer
@@ -354,14 +354,14 @@ bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index)
     return true;
 }
 
-int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operator_index, bool enable_unknowns)
+int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_i, int *operator_index, bool enable_unknowns)
 {
-    tms_math_subexpr *S = M->subexpr_ptr;
-    int s_count = M->subexpr_count, op_count = S[s_index].op_count;
+    tms_math_subexpr *S = M->S;
+    int s_count = M->subexpr_count, op_count = S[s_i].op_count;
     int i, status;
     tms_op_node *NB;
-    int solve_start = S[s_index].solve_start;
-    int solve_end = S[s_index].solve_end;
+    int solve_start = S[s_i].solve_start;
+    int solve_end = S[s_i].solve_end;
 
     if (op_count < 0)
     {
@@ -371,11 +371,11 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
 
     // Allocate nodes
     if (op_count == 0)
-        S[s_index].nodes = malloc(sizeof(tms_op_node));
+        S[s_i].nodes = malloc(sizeof(tms_op_node));
     else
-        S[s_index].nodes = malloc(op_count * sizeof(tms_op_node));
+        S[s_i].nodes = malloc(op_count * sizeof(tms_op_node));
 
-    NB = S[s_index].nodes;
+    NB = S[s_i].nodes;
 
     // Check if the expression is terminated with an operator
     if (op_count != 0 && operator_index[op_count - 1] == solve_end)
@@ -393,11 +393,11 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
     // Case of expression with one term, use one op_node with operand1 to hold the number
     if (op_count == 0)
     {
-        i = tms_find_subexpr_starting_at(S, S[s_index].solve_start, s_index, 1);
-        S[s_index].nodes[0].unknowns_data = 0;
-        S[s_index].nodes[0].node_index = 0;
+        i = tms_find_subexpr_starting_at(S, S[s_i].solve_start, s_i, 1);
+        S[s_i].nodes[0].unknowns_data = 0;
+        S[s_i].nodes[0].node_index = 0;
         // To avoid valgrind complaining about uninitialized values
-        S[s_index].nodes[0].priority = -1;
+        S[s_i].nodes[0].priority = -1;
         //  Case of nested no operators expressions, set the result of the deeper expression as the left op of the dummy
         if (i != -1)
             *(S[i].result) = &(NB->left_operand);
@@ -425,11 +425,11 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
             }
         }
 
-        S[s_index].start_node = 0;
-        S[s_index].result = &(NB->result);
+        S[s_i].start_node = 0;
+        S[s_i].result = &(NB->result);
         NB[0].next = NULL;
         // If the one term expression is the last one, use the math_struct answer
-        if (s_index == s_count - 1)
+        if (s_i == s_count - 1)
         {
             NB[0].result = &M->answer;
             return TMS_BREAK;
@@ -465,17 +465,17 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
     return 0;
 }
 
-int _tms_set_all_operands(char *local_expr, tms_math_expr *M, int s_index, bool enable_unknowns)
+int _tms_set_all_operands(char *local_expr, tms_math_expr *M, int s_i, bool enable_unknowns)
 {
-    tms_math_subexpr *S = M->subexpr_ptr;
-    int op_count = S[s_index].op_count;
+    tms_math_subexpr *S = M->S;
+    int op_count = S[s_i].op_count;
     int i, status;
-    tms_op_node *NB = S[s_index].nodes;
-    int solve_start = S[s_index].solve_start;
+    tms_op_node *NB = S[s_i].nodes;
+    int solve_start = S[s_i].solve_start;
 
     // Read the first number
     // Treat +x and -x as 0-x and 0+x
-    if (NB[0].operator_index == S[s_index].solve_start)
+    if (NB[0].operator_index == S[s_i].solve_start)
     {
         if (NB[0].operator== '+' || NB[0].operator== '-')
             NB[0].left_operand = 0;
@@ -487,7 +487,7 @@ int _tms_set_all_operands(char *local_expr, tms_math_expr *M, int s_index, bool 
     }
     else
     {
-        status = _tms_set_operand(local_expr, M, NB, solve_start, s_index, 'l', enable_unknowns);
+        status = _tms_set_operand(local_expr, M, NB, solve_start, s_i, 'l', enable_unknowns);
         if (status == -1)
             return -1;
     }
@@ -498,7 +498,7 @@ int _tms_set_all_operands(char *local_expr, tms_math_expr *M, int s_index, bool 
         // same in case of x-y+z
         if (NB[i].priority >= NB[i + 1].priority)
         {
-            status = _tms_set_operand(local_expr, M, NB + i, NB[i].operator_index + 1, s_index, 'r', enable_unknowns);
+            status = _tms_set_operand(local_expr, M, NB + i, NB[i].operator_index + 1, s_i, 'r', enable_unknowns);
             if (status == -1)
                 return -1;
         }
@@ -507,13 +507,13 @@ int _tms_set_all_operands(char *local_expr, tms_math_expr *M, int s_index, bool 
         else
         {
             status =
-                _tms_set_operand(local_expr, M, NB + i + 1, NB[i].operator_index + 1, s_index, 'l', enable_unknowns);
+                _tms_set_operand(local_expr, M, NB + i + 1, NB[i].operator_index + 1, s_i, 'l', enable_unknowns);
             if (status == -1)
                 return -1;
         }
     }
     // Set the last operand as the right operand of the last node
-    status = _tms_set_operand(local_expr, M, NB + op_count - 1, NB[op_count - 1].operator_index + 1, s_index, 'r',
+    status = _tms_set_operand(local_expr, M, NB + op_count - 1, NB[op_count - 1].operator_index + 1, s_i, 'r',
                               enable_unknowns);
     if (status == -1)
         return -1;
@@ -583,10 +583,10 @@ double complex _tms_set_operand_value(char *expr, int start, bool enable_complex
     return value;
 }
 
-int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start, int s_index, char operand,
+int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start, int s_i, char operand,
                      bool enable_unknowns)
 {
-    tms_math_subexpr *S = M->subexpr_ptr;
+    tms_math_subexpr *S = M->S;
     double complex *operand_ptr;
     int tmp;
 
@@ -604,7 +604,7 @@ int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start,
     }
 
     // Check if the operand is the result of a subexpression
-    tmp = tms_find_subexpr_starting_at(S, op_start, s_index, 1);
+    tmp = tms_find_subexpr_starting_at(S, op_start, s_i, 1);
 
     // The operand is a variable or a numeric value
     if (tmp == -1)
@@ -689,14 +689,14 @@ bool _tms_set_evaluation_order(tms_math_subexpr *S)
     return true;
 }
 
-void _tms_set_result_pointers(tms_math_expr *M, int s_index)
+void _tms_set_result_pointers(tms_math_expr *M, int s_i)
 {
-    tms_math_subexpr *S = M->subexpr_ptr;
-    tms_op_node *tmp_node, *NB = S[s_index].nodes;
+    tms_math_subexpr *S = M->S;
+    tms_op_node *tmp_node, *NB = S[s_i].nodes;
 
-    int i, op_count = S[s_index].op_count;
+    int i, op_count = S[s_i].op_count;
     // Set result pointers for each op_node based on position and priority
-    tmp_node = NB + S[s_index].start_node;
+    tmp_node = NB + S[s_i].start_node;
 
     int left_node, right_node, prev_index = -2, prev_left = -2, prev_right = -2;
     while (tmp_node->next != NULL)
@@ -759,9 +759,9 @@ void _tms_set_result_pointers(tms_math_expr *M, int s_index)
         prev_right = right_node;
     }
     // Case of the last op_node in the traversal order, set result to be result of the subexpression
-    S[s_index].result = &(tmp_node->result);
+    S[s_i].result = &(tmp_node->result);
     // The last op_node in the last subexpression should point to math_struct answer
-    if (s_index == M->subexpr_count - 1)
+    if (s_i == M->subexpr_count - 1)
         tmp_node->result = &M->answer;
 }
 
@@ -783,7 +783,7 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool ena
     // Number of subexpressions
     int s_count;
     // Used for indexing of subexpressions
-    int s_index;
+    int s_i;
     // Used to store the index of the variable to assign the answer to.
     int variable_index = -1;
     // Local expression may be offset compared to the expression due to the assignment operator (if it exists).
@@ -830,7 +830,7 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool ena
     // After calling expression initializer, no need to manually free the "expr" string
     // It is now a part of the math_expr struct and will be freed with it
 
-    tms_math_subexpr *S = M->subexpr_ptr;
+    tms_math_subexpr *S = M->S;
     s_count = M->subexpr_count;
 
     int status;
@@ -849,18 +849,18 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool ena
     - Set the subexpr result double pointer to the result pointer of the last calculated op_node
     */
 
-    for (s_index = 0; s_index < s_count; ++s_index)
+    for (s_i = 0; s_i < s_count; ++s_i)
     {
         // Extended functions use a subexpression without nodes, but the subexpression result pointer should point at something
         // Allocate a small block and use that for the result pointer
-        if (S[s_index].func_type == TMS_F_EXTENDED)
+        if (S[s_i].func_type == TMS_F_EXTENDED)
         {
-            S[s_index].result = malloc(sizeof(double complex *));
+            S[s_i].result = malloc(sizeof(double complex *));
             continue;
         }
 
         // Get an array of the index of all operators and set their count
-        int *operator_index = _tms_get_operator_indexes(local_expr, S, s_index);
+        int *operator_index = _tms_get_operator_indexes(local_expr, S, s_i);
 
         if (operator_index == NULL)
         {
@@ -868,7 +868,7 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool ena
             return NULL;
         }
 
-        status = _tms_set_function_ptr(local_expr, M, s_index);
+        status = _tms_set_function_ptr(local_expr, M, s_i);
         if (!status)
         {
             tms_delete_math_expr(M);
@@ -876,7 +876,7 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool ena
             return NULL;
         }
 
-        status = _tms_init_nodes(local_expr, M, s_index, operator_index, enable_unknowns);
+        status = _tms_init_nodes(local_expr, M, s_i, operator_index, enable_unknowns);
         free(operator_index);
 
         // Exiting due to error
@@ -890,20 +890,20 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool ena
         else if (status == TMS_BREAK)
             break;
 
-        status = _tms_set_all_operands(local_expr, M, s_index, enable_unknowns);
+        status = _tms_set_all_operands(local_expr, M, s_i, enable_unknowns);
         if (status == -1)
         {
             tms_delete_math_expr(M);
             return NULL;
         }
 
-        status = _tms_set_evaluation_order(S + s_index);
+        status = _tms_set_evaluation_order(S + s_i);
         if (status == false)
         {
             tms_delete_math_expr(M);
             return NULL;
         }
-        _tms_set_result_pointers(M, s_index);
+        _tms_set_result_pointers(M, s_i);
     }
 
     // Set unknowns metadata
@@ -973,21 +973,21 @@ void *_tms_lookup_function_pointer(char *function_name, bool is_complex)
 void tms_convert_real_to_complex(tms_math_expr *M)
 {
     // You need to swap real functions for their complex counterparts.
-    tms_math_subexpr *S = M->subexpr_ptr;
+    tms_math_subexpr *S = M->S;
     if (S != NULL)
     {
-        int s_index;
+        int s_i;
         char *function_name;
-        for (s_index = 0; s_index < M->subexpr_count; ++s_index)
+        for (s_i = 0; s_i < M->subexpr_count; ++s_i)
         {
-            if (S[s_index].func_type != TMS_F_REAL)
+            if (S[s_i].func_type != TMS_F_REAL)
                 continue;
             // Lookup the name of the real function and find the equivalent function pointer
-            function_name = _tms_lookup_function_name(S[s_index].func.real, 1);
+            function_name = _tms_lookup_function_name(S[s_i].func.real, 1);
             if (function_name == NULL)
                 return;
-            S[s_index].func.cmplx = _tms_lookup_function_pointer(function_name, true);
-            S[s_index].func_type = TMS_F_CMPLX;
+            S[s_i].func.cmplx = _tms_lookup_function_pointer(function_name, true);
+            S[s_i].func_type = TMS_F_CMPLX;
         }
     }
     M->enable_complex = true;
@@ -1041,7 +1041,7 @@ void tms_delete_math_expr(tms_math_expr *M)
         return;
 
     int i = 0;
-    tms_math_subexpr *S = M->subexpr_ptr;
+    tms_math_subexpr *S = M->S;
     for (i = 0; i < M->subexpr_count; ++i)
     {
         if (S[i].func_type == TMS_F_EXTENDED)
@@ -1072,13 +1072,13 @@ void tms_set_priority(tms_op_node *list, int op_count)
     }
 }
 
-int tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_index, int8_t mode)
+int tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_i, int8_t mode)
 {
     int i;
     // If a subexpression is an operand in another subexpression, it will have a depth higher by only 1
     // Skip deeper subexpression to reduce search time
-    int target_depth = S[s_index].depth + 1;
-    i = s_index - 1;
+    int target_depth = S[s_i].depth + 1;
+    i = s_i - 1;
 
     switch (mode)
     {
@@ -1109,10 +1109,10 @@ int tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_index, in
     return -1;
 }
 // Function that finds the subexpression that ends at 'end'
-int tms_find_subexpr_ending_at(tms_math_subexpr *S, int end, int s_index, int s_count)
+int tms_find_subexpr_ending_at(tms_math_subexpr *S, int end, int s_i, int s_count)
 {
     int i;
-    i = s_index - 1;
+    i = s_i - 1;
     while (i < s_count)
     {
         if (S[i].solve_end == end)
