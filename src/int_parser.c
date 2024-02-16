@@ -203,6 +203,14 @@ tms_int_expr *_tms_init_int_expr(char *expr)
                     S[s_i].subexpr_start = i - strlen(name);
                     S[s_i].solve_start = i + 1;
                     i = tms_find_closing_parenthesis(local_expr, i);
+                    if (i == -1)
+                    {
+                        tms_error_handler(EH_SAVE, TMS_INT_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, local_expr,
+                                          S[s_i].solve_start - 1);
+                        M->S = S;
+                        tms_delete_int_expr(M);
+                        return NULL;
+                    }
                     S[s_i].solve_end = i - 1;
                     S[s_i].depth = depth + 1;
                     S[s_i].func.extended = tms_g_int_extf[j].ptr;
