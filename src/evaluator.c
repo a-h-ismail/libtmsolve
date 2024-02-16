@@ -174,6 +174,7 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
             tms_math_expr *F = tms_dup_mexpr(S[s_i].func.runtime->F);
             tms_set_unknown(F, **(S[s_i].result));
             **(S[s_i].result) = _tms_evaluate_unsafe(F);
+            tms_error_handler(EH_CLEAR, TMS_EVALUATOR);
             tms_delete_math_expr(F);
         }
 
