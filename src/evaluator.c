@@ -17,10 +17,21 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 double complex tms_evaluate(tms_math_expr *M)
 {
+    tms_lock_evaluator(TMS_EVALUATOR);
+    double complex result = _tms_evaluate_unsafe(M);
+
+    if (isnan(creal(result)))
+        tms_error_handler(EH_PRINT, TMS_EVALUATOR);
+
+    tms_unlock_evaluator(TMS_EVALUATOR);
+    return result;
+}
+
+double complex _tms_evaluate_unsafe(tms_math_expr *M)
+{
     // No NULL pointer dereference allowed.
     if (M == NULL)
         return NAN;
-
     tms_op_node *i_node;
     int s_index = 0, s_count = M->subexpr_count;
     // Subexpression pointer to access the subexpression array.
@@ -162,7 +173,7 @@ double complex tms_evaluate(tms_math_expr *M)
             // Copy the function structure, set the unknown and solve
             tms_math_expr *F = tms_dup_mexpr(S[s_index].func.runtime->F);
             tms_set_unknown(F, **(S[s_index].result));
-            **(S[s_index].result) = tms_evaluate(F);
+            **(S[s_index].result) = _tms_evaluate_unsafe(F);
             tms_delete_math_expr(F);
         }
 
@@ -184,6 +195,18 @@ double complex tms_evaluate(tms_math_expr *M)
 }
 
 int tms_int_evaluate(tms_int_expr *M, int64_t *result)
+{
+    tms_lock_evaluator(TMS_INT_EVALUATOR);
+    int exit_status = _tms_int_evaluate_unsafe(M, result);
+
+    if (exit_status != 0)
+        tms_error_handler(EH_PRINT, TMS_INT_EVALUATOR);
+
+    tms_unlock_evaluator(TMS_INT_EVALUATOR);
+    return exit_status;
+}
+
+int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
 {
     // No NULL pointer dereference allowed.
     if (M == NULL)

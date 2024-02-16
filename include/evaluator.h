@@ -16,18 +16,37 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 /**
  * @brief Evaluates a math_expr structure and calculates the result.
+ * @note Uses spinlocks to assure thread safety.
  * @param M The math structure to evaluate.
  * @return The answer of the math expression, or NaN in case of failure.
  */
 double complex tms_evaluate(tms_math_expr *M);
 
 /**
- * @brief Calculates the answer for an int expression
- * @param M
- * @param result
- * @return 0 on success, -1 on failure
+ * @brief The non thread safe version of the evaluator
+ * @note This function is useful to allow calls to the evaluator from within the thread safe evaluator.
+ * @param M The math structure to evaluate.
+ * @return 
+ */
+double complex _tms_evaluate_unsafe(tms_math_expr *M);
+
+/**
+ * @brief Calculates the answer for an int expression.
+ * @note Uses spinlocks to assure thread safety.
+ * @param M The int_expr structure to evaluate.
+ * @param result Pointer to a variable where the result will be stored.
+ * @return 0 on success, -1 on failure.
  */
 int tms_int_evaluate(tms_int_expr *M, int64_t *result);
+
+/**
+ * @brief The non thread safe version of the int evaluator.
+ * @note This function is useful to allow calls to the evaluator from within the thread safe evaluator.
+ * @param M 
+ * @param result 
+ * @return 0 on success, -1 on failure.
+ */
+int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result);
 
 /**
  * @brief Generates a heap allocated array of structure containing all unknown members metadata and stores it in M.
