@@ -189,15 +189,13 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M);
  * @param arg The list of argumets to pass to the error handler, according to the mode.
  * @details
  * Possible arguments: \n
- * EH_SAVE, char *error, EH_FATAL | EH_NONFATAL_ERROR, current_expr, error_index (if applicable)  \n
- * EH_PRINT (returns number of printed errors). \n
- * EH_CLEAR, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB \n
- * EH_SEARCH, char *error, EH_MAIN_DB | EH_BACKUP_DB | EH_ALL_DB (returns EH_MAIN_DB on match in main, EH_BACKUP_DB on
- match in backup). \n
- * EH_ERROR_COUNT, EH_FATAL | EH_NONFATAL_ERROR | EH_ALL_ERRORS (returns number of errors specified). \n
- * EH_BACKUP \n
- * EH_RESTORE \n
+ * EH_SAVE, int facility_id, char *error, EH_FATAL | EH_NONFATAL, expr, error_index (if expr!=NULL)  \n
+ * EH_PRINT, int facility_id (prints errors to stdout and clears them. Returns number of printed errors). \n
+ * EH_CLEAR, int facility_id \n
+ * EH_SEARCH, char *error, int facility_id (returns -1 if no match is found). \n
+ * EH_ERROR_COUNT, int facility_id, EH_FATAL | EH_NONFATAL | EH_ALL_ERRORS (returns number of errors specified). \n
 
+ * @note To perform an action on all facilities, use TMS_ALL_FACILITIES
  * @return Depends on the argument list.
  */
 int tms_error_handler(int _mode, ...);
