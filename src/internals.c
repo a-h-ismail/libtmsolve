@@ -741,11 +741,37 @@ int tms_error_handler(int _mode, ...)
 void tms_print_error(tms_error_data E)
 {
     int i;
+    char *facility_name;
+
+    switch (E.facility_id)
+    {
+    case TMS_PARSER:
+        facility_name = "parser";
+        break;
+    case TMS_INT_PARSER:
+        facility_name = "int_parser";
+        break;
+    case TMS_EVALUATOR:
+        facility_name = "evaluator";
+        break;
+    case TMS_INT_EVALUATOR:
+        facility_name = "int_evaluator";
+        break;
+    case TMS_MATRIX:
+        facility_name = "matrix";
+        break;
+    default:
+        facility_name = NULL;
+        break;
+    }
+    if (facility_name != NULL)
+        fprintf(stderr, "%s: ", facility_name);
+
     // Error index is provided
     // Print the snippet where the error occured
     if (E.real_index != -1)
     {
-        fprintf(stderr, "At col %d: %s\n", E.real_index, E.message);
+        fprintf(stderr, "%s\nAt col %d: \n", E.message, E.real_index);
         if (E.real_index > 49)
         {
             E.relative_index += 3;
