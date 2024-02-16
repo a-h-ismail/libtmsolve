@@ -213,10 +213,10 @@ double complex tms_derivative(tms_arg_list *L)
 
     // Solve for x
     tms_set_unknown(M, x - epsilon);
-    fx1 = tms_evaluate(M);
+    fx1 = _tms_evaluate_unsafe(M);
     // Solve for x + epsilon
     tms_set_unknown(M, x + epsilon);
-    fx2 = tms_evaluate(M);
+    fx2 = _tms_evaluate_unsafe(M);
     // get the derivative
     f_prime = (fx2 - fx1) / (2 * epsilon);
     tms_delete_math_expr(M);
@@ -264,9 +264,9 @@ double complex tms_integrate(tms_arg_list *L)
     // 3h/8[(y0 + yn) + 3(y1 + y2 + y4 + y5 + … + yn-1) + 2(y3 + y6 + y9 + … + yn-3)]
     // First step: y0 + yn
     tms_set_unknown(M, lower_bound);
-    result = tms_evaluate(M);
+    result = _tms_evaluate_unsafe(M);
     tms_set_unknown(M, lower_bound + delta);
-    result += tms_evaluate(M);
+    result += _tms_evaluate_unsafe(M);
     if (isnan(result) == true)
     {
         tms_error_handler(EH_SAVE, TMS_EVALUATOR, INTEGRAl_UNDEFINED, EH_FATAL, NULL);
@@ -284,7 +284,7 @@ double complex tms_integrate(tms_arg_list *L)
         {
             an = lower_bound + delta * n / rounds;
             tms_set_unknown(M, an);
-            fn = tms_evaluate(M);
+            fn = _tms_evaluate_unsafe(M);
             if (isnan(fn) == true)
             {
                 tms_error_handler(EH_SAVE, TMS_EVALUATOR, INTEGRAl_UNDEFINED, EH_FATAL, NULL);
@@ -298,7 +298,7 @@ double complex tms_integrate(tms_arg_list *L)
         {
             an = lower_bound + delta * n / rounds;
             tms_set_unknown(M, an);
-            fn = tms_evaluate(M);
+            fn = _tms_evaluate_unsafe(M);
             if (isnan(fn) == true)
             {
                 tms_error_handler(EH_SAVE, TMS_EVALUATOR, INTEGRAl_UNDEFINED, EH_FATAL, NULL);
