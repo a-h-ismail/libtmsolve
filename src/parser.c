@@ -588,7 +588,7 @@ double complex _tms_set_operand_value(char *expr, int start, bool enable_complex
 
     if (!enable_complex && cimag(value) != 0)
     {
-        tms_error_handler(EH_SAVE, TMS_PARSER, COMPLEX_DISABLED, EH_FATAL, expr, start);
+        tms_error_handler(EH_SAVE, TMS_PARSER, COMPLEX_DISABLED, EH_NONFATAL, expr, start);
         return NAN;
     }
 
