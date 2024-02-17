@@ -12,6 +12,7 @@ This library has four function types: real, complex, extended and runtime (user 
 
 - `fact()`: Calculate the factorial of a real value.
 - `abs()`: Returns the absolute value for real numbers, or the modulus for complex numbers.
+- `arg()`: Returns the argument in radians.
 - `ceil()`: Returns the nearest integer greater or equal to the specified value. For complex values it performs the operation on the real and imaginary parts.
 - `floor()`: Returns the nearest integer lesser or equal to the specified value. For complex values it performs the operation on the real and imaginary parts.
 - `round()`: Rounds to the nearest integer, for complex values it performs the operation on the real and imaginary parts.
@@ -24,7 +25,7 @@ This library has four function types: real, complex, extended and runtime (user 
 - `acosh()`, `asinh()`, `atanh()`: Inverse of the above.
 - `exp(x)`: Equivalent to `e^x`.
 - `ln()`: Base e logarithm.
-- `log()`: Base 10 logarithm.
+- `log10()`: Base 10 logarithm.
 
 ### Warning
 
@@ -64,7 +65,7 @@ double complex tms_foo(tms_arg_list *args)
 }
 ```
 
-- If you are expecting a value, read it using `tms_solve()` and handle errors properly (mainly check if the solver returns `NAN`).
+- If you are expecting a value, read it using `_tms_solve_e_unsafe()` (not the locking `tms_solve()` or it will result in a deadlock) and handle errors properly (mainly check if the solver returns `NAN`, clear the error handler if necessary).
 - Add the function declaration to `function.h`, and the function name and pointer to `parser.c`.
 
 Check the functions in `function.c` to see some implemented extended functions.
