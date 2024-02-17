@@ -339,7 +339,7 @@ bool tms_has_ufunc_circular_refs(tms_math_expr *F)
 
             if (is_ufunc_referenced_by(S[i].func.runtime->F, F))
             {
-                tms_error_handler(EH_SAVE, NO_FCIRCULAR_REFERENCE, EH_FATAL, NULL);
+                tms_error_handler(EH_SAVE, TMS_PARSER, NO_FCIRCULAR_REFERENCE, EH_FATAL, NULL);
                 return true;
             }
         }
@@ -350,11 +350,13 @@ bool tms_has_ufunc_circular_refs(tms_math_expr *F)
 int tms_set_ufunction(char *name, char *function)
 {
     int i;
+    int ufunc_index = tms_find_str_in_array(name, tms_g_ufunc, tms_g_ufunc_count, TMS_F_RUNTIME);
+    ;
 
     // Check if the name has illegal characters
     if (tms_valid_name(name) == false)
     {
-        tms_error_handler(EH_SAVE, INVALID_NAME, EH_FATAL, NULL);
+        tms_error_handler(EH_SAVE, TMS_PARSER, INVALID_NAME, EH_FATAL, NULL);
         return -1;
     }
 
@@ -363,16 +365,16 @@ int tms_set_ufunction(char *name, char *function)
     {
         if (strcmp(name, tms_g_illegal_names[i]) == 0)
         {
-            tms_error_handler(EH_SAVE, ILLEGAL_NAME, EH_FATAL, NULL);
+            tms_error_handler(EH_SAVE, TMS_PARSER, ILLEGAL_NAME, EH_FATAL, NULL);
             return -1;
         }
     }
 
     // Check if the name was already used by builtin functions
     i = tms_find_str_in_array(name, tms_g_all_func_names, tms_g_all_func_count, TMS_NOFUNC);
-    if (i != -1)
+    if (i != -1 && ufunc_index == -1)
     {
-        tms_error_handler(EH_SAVE, NO_FUNCTION_SHADOWING, EH_FATAL, NULL);
+        tms_error_handler(EH_SAVE, TMS_PARSER, NO_FUNCTION_SHADOWING, EH_FATAL, NULL);
         return -1;
     }
 
@@ -380,14 +382,14 @@ int tms_set_ufunction(char *name, char *function)
     i = tms_find_str_in_array(name, tms_g_vars, tms_g_var_count, TMS_V_DOUBLE);
     if (i != -1)
     {
-        tms_error_handler(EH_SAVE, FUNCTION_NAME_MATCHES_VAR, EH_FATAL, NULL);
+        tms_error_handler(EH_SAVE, TMS_PARSER, FUNCTION_NAME_MATCHES_VAR, EH_FATAL, NULL);
         return -1;
     }
 
-    // Check if the function already exists as runtime function
-    i = tms_find_str_in_array(name, tms_g_ufunc, tms_g_ufunc_count, TMS_F_RUNTIME);
-    if (i != -1)
+    // Function already exists
+    if (ufunc_index != -1)
     {
+        i = ufunc_index;
         tms_math_expr *old = tms_g_ufunc[i].F, *new = tms_parse_expr(function, true, true);
         if (new == NULL)
         {
@@ -700,12 +702,13 @@ int _tms_error_handler_unsafe(int _mode, va_list handler_args)
             // These shadow the static variables
             int fatal = 0, non_fatal = 0;
             for (int i = 0; i < last_error; ++i)
-            {
-                if (error_table[i].fatal)
-                    ++fatal;
-                else
-                    ++non_fatal;
-            }
+                if (facility_id == error_table[i].facility_id)
+                {
+                    if (error_table[i].fatal)
+                        ++fatal;
+                    else
+                        ++non_fatal;
+                }
 
             switch (error_type)
             {
