@@ -262,6 +262,15 @@ int tms_int_solve(char *expr, int64_t *result)
     return state;
 }
 
+int _tms_int_solve_unsafe(char *expr, int64_t *result)
+{
+    tms_int_expr *M;
+    M = _tms_parse_int_expr_unsafe(expr);
+    int state = _tms_int_evaluate_unsafe(M, result);
+    tms_delete_int_expr(M);
+    return state;
+}
+
 tms_int_factor *tms_find_factors(int32_t value)
 {
     int32_t dividend = 2;
