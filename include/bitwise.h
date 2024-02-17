@@ -54,6 +54,9 @@ int tms_and(tms_arg_list *args, int64_t *result);
 /// @brief Bitwise OR
 int tms_or(tms_arg_list *args, int64_t *result);
 
-/// @brief Reads an IPv4 in dotted decimal notation
+/// @brief Reads an IPv4 in dot decimal notation
 int tms_ipv4(tms_arg_list *args, int64_t *result);
+
+/// @brief Reads a dot decimal notation
+int tms_dotted(tms_arg_list *args, int64_t *result);
 #endif
