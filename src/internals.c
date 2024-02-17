@@ -722,6 +722,47 @@ int _tms_error_handler_unsafe(int _mode, va_list handler_args)
         }
         return -1;
     }
+
+    case EH_MODIFY: {
+        // Find the last error
+        for (i = last_error - 1; i >= 0; --i)
+        {
+            if (error_table[i].facility_id == facility_id)
+                break;
+        }
+        if (i == -1)
+            return -1;
+
+        char *expr = va_arg(handler_args, char *);
+        error_table[i].expr_len = strlen(expr);
+        int error_position = va_arg(handler_args, int);
+
+        if (error_position < 0 || error_position > error_table[i].expr_len)
+        {
+            fputs("libtmsolve warning: Error index out of expression range, ignoring...\n\n", stderr);
+            error_table[i].relative_index = -1;
+            error_table[i].real_index = -1;
+            error_table[i].bad_snippet[0] = '\0';
+            return 1;
+        }
+
+        // Center the error in the string
+        if (error_position > 49)
+        {
+            strncpy(error_table[i].bad_snippet, expr + error_position - 24, 49);
+            error_table[i].bad_snippet[49] = '\0';
+            error_table[i].relative_index = 24;
+            error_table[i].real_index = error_position;
+        }
+        else
+        {
+            strncpy(error_table[i].bad_snippet, expr, 49);
+            error_table[i].bad_snippet[49] = '\0';
+            error_table[i].relative_index = error_position;
+            error_table[i].real_index = error_position;
+        }
+        return 0;
+    }
     }
     return -1;
 }

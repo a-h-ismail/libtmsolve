@@ -31,7 +31,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define EH_CLEAR 3
 #define EH_SEARCH 4
 #define EH_ERROR_COUNT 5
-#define EH_EXPORT 6
+#define EH_MODIFY 6
 
 #define EH_NONFATAL 11
 #define EH_FATAL 12
