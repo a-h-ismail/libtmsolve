@@ -23,7 +23,7 @@ double complex tms_avg(tms_arg_list *args)
     double complex tmp, total = 0;
     for (int i = 0; i < args->count; ++i)
     {
-        tmp = tms_solve(args->arguments[i]);
+        tmp = _tms_solve_e_unsafe(args->arguments[i], true);
         if (isnan(creal(tmp)))
             return NAN;
 
@@ -42,7 +42,7 @@ double complex tms_min(tms_arg_list *args)
 
     for (int i = 0; i < args->count; ++i)
     {
-        tmp = tms_solve(args->arguments[i]);
+        tmp = _tms_solve_e_unsafe(args->arguments[i], true);
         if (isnan(creal(tmp)))
             return NAN;
 
@@ -68,7 +68,7 @@ double complex tms_max(tms_arg_list *args)
 
     for (int i = 0; i < args->count; ++i)
     {
-        tmp = tms_solve(args->arguments[i]);
+        tmp = _tms_solve_e_unsafe(args->arguments[i], true);
         if (isnan(creal(tmp)))
             return NAN;
 
@@ -89,11 +89,11 @@ double complex tms_logn(tms_arg_list *args)
 {
     if (_tms_validate_args_count(2, args->count, TMS_EVALUATOR) == false)
         return NAN;
-    double complex value = tms_solve(args->arguments[0]);
+    double complex value = _tms_solve_e_unsafe(args->arguments[0], true);
     if (isnan(creal(value)))
         return NAN;
 
-    double complex base = tms_solve(args->arguments[1]);
+    double complex base = _tms_solve_e_unsafe(args->arguments[1], true);
     if (isnan(creal(base)))
         return NAN;
     if (!tms_is_real(base))
@@ -112,7 +112,7 @@ double complex tms_int(tms_arg_list *args)
 
     if (_tms_validate_args_count(1, args->count, TMS_EVALUATOR) == false)
         return NAN;
-    result = tms_solve(args->arguments[0]);
+    result = _tms_solve_e_unsafe(args->arguments[0], true);
     real = creal(result);
     imag = cimag(result);
     if (isnan(real))

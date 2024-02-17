@@ -27,11 +27,11 @@ int get_two_operands(tms_arg_list *args, int64_t *op1, int64_t *op2)
         return -1;
 
     int status;
-    status = tms_int_solve(args->arguments[0], op1);
+    status = _tms_int_solve_unsafe(args->arguments[0], op1);
     if (status != 0)
         return -1;
 
-    status = tms_int_solve(args->arguments[1], op2);
+    status = _tms_int_solve_unsafe(args->arguments[1], op2);
     if (status != 0)
         return -1;
     else
