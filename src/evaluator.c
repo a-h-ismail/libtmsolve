@@ -63,8 +63,13 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
 
                 if (isnan(creal(**(S[s_i].result))))
                 {
-                    tms_error_handler(EH_SAVE, TMS_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->local_expr,
-                                      S[s_i].subexpr_start);
+                    // If the function didn't generate an error itself, provide a generic one
+                    if (tms_error_handler(EH_ERROR_COUNT, TMS_EVALUATOR, EH_ALL_ERRORS) == 0)
+                        tms_error_handler(EH_SAVE, TMS_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->local_expr,
+                                          S[s_i].subexpr_start);
+                    else
+                        tms_error_handler(EH_MODIFY, TMS_EVALUATOR, M->local_expr, S[s_i].subexpr_start);
+
                     free(arguments);
                     tms_free_arg_list(L);
                     return NAN;
@@ -244,8 +249,13 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                 _tms_debug = _debug_state;
                 if (state == -1)
                 {
-                    tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->local_expr,
-                                      S[s_i].subexpr_start);
+                    // If the function didn't generate an error itself, provide a generic one
+                    if (tms_error_handler(EH_ERROR_COUNT, TMS_INT_EVALUATOR, EH_ALL_ERRORS) == 0)
+                        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->local_expr,
+                                          S[s_i].subexpr_start);
+                    else
+                        tms_error_handler(EH_MODIFY, TMS_INT_EVALUATOR, M->local_expr, S[s_i].subexpr_start);
+
                     free(arguments);
                     tms_free_arg_list(L);
                     return -1;
@@ -475,8 +485,7 @@ void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
             tmp = NULL;
         }
 
-        printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n", s_i, S[s_i].func_type, tmp,
-               S[s_i].depth);
+        printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n", s_i, S[s_i].func_type, tmp, S[s_i].depth);
 
         // Lookup result pointer location
         for (int i = 0; i < s_count; ++i)
@@ -620,8 +629,7 @@ void tms_dump_int_expr(tms_int_expr *M, bool was_evaluated)
             tmp = NULL;
         }
 
-        printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n", s_i, S[s_i].func_type, tmp,
-               S[s_i].depth);
+        printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n", s_i, S[s_i].func_type, tmp, S[s_i].depth);
 
         // Lookup result pointer location
         for (int i = 0; i < s_count; ++i)
