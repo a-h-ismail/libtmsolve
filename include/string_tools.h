@@ -225,6 +225,8 @@ void tms_print_oct(int64_t value);
 
 void tms_print_hex(int64_t value);
 
+void tms_print_dot_decimal(int64_t value);
+
 int tms_name_bounds(char *expr, int i, bool is_at_start);
 
 /**

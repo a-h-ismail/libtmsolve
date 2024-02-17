@@ -1050,6 +1050,26 @@ void tms_print_hex(int64_t value)
     }
 }
 
+void tms_print_dot_decimal(int64_t value)
+{
+    uint8_t octet, octet_count = tms_int_mask_size / 8;
+
+    if (value == 0)
+    {
+        printf("0");
+        return;
+    }
+
+    for (int i = 0; i < octet_count; ++i)
+    {
+        octet = ((uint64_t)value >> (8 * (octet_count - 1 - i))) & 0xFF;
+        printf("%d", octet);
+
+        if (i != octet_count - 1)
+            putchar('.');
+    }
+}
+
 // To avoid code duplication in the function below
 #define LOOKUP_STRING_IN_STRUCT(key, type, member_name, array)                                                         \
     for (int i = 0; i < arr_len; ++i)                                                                                  \
