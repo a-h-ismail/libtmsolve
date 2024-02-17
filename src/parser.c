@@ -426,14 +426,18 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_i, int *operator_i
                     status = tms_set_unknowns_data(local_expr + solve_start, NB, 'l');
                     if (status == -1)
                     {
-                        tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, local_expr, solve_start);
+                        // If the value reader failed with no error reported, set the error to be a syntax error
+                        if (tms_error_handler(EH_ERROR_COUNT, TMS_PARSER, EH_ALL_ERRORS) == 0)
+                            tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, local_expr, solve_start);
                         return -1;
                     }
+                    else
+                        tms_error_handler(EH_CLEAR, TMS_PARSER);
                 }
                 else
                 {
                     // Unknown not found, or set_operand didn't save an error (not a valid var name)
-                    if (tms_error_handler(EH_ERROR_COUNT, TMS_PARSER, EH_FATAL) == 0)
+                    if (tms_error_handler(EH_ERROR_COUNT, TMS_PARSER, EH_ALL_ERRORS) == 0)
                         tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, local_expr, solve_start);
                     return -1;
                 }
@@ -633,14 +637,18 @@ int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start,
                 tmp = tms_set_unknowns_data(expr + op_start, N, operand);
                 if (tmp == -1)
                 {
-                    tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, op_start);
+                    // If the value reader failed with no error reported, set the error to be a syntax error
+                    if (tms_error_handler(EH_ERROR_COUNT, TMS_PARSER, EH_ALL_ERRORS) == 0)
+                        tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, op_start);
                     return -1;
                 }
+                else
+                    tms_error_handler(EH_CLEAR, TMS_PARSER);
             }
             else
             {
-                // If the value reader failed, set the error to be a syntax error
-                if (tms_error_handler(EH_ERROR_COUNT, TMS_PARSER, EH_FATAL) == 0)
+                // If the value reader failed with no error reported, set the error to be a syntax error
+                if (tms_error_handler(EH_ERROR_COUNT, TMS_PARSER, EH_ALL_ERRORS) == 0)
                     tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, op_start);
                 return -1;
             }
