@@ -3,6 +3,7 @@ Copyright (C) 2023-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 
+#include "bitwise.h"
 #include "internals.h"
 #include "scientific.h"
 #include "string_tools.h"
@@ -47,7 +48,8 @@ int tms_not(int64_t value, int64_t *result)
 int tms_mask(int64_t bits, int64_t *result)
 {
     if (bits < 0)
-        return -1;
+        return tms_inv_mask(-bits, result);
+
     if (bits > 63)
     {
         *result = ~(int64_t)0;
@@ -207,13 +209,62 @@ int tms_or(tms_arg_list *args, int64_t *result)
     }
 }
 
+// Receives an arg list of octets, calculates the value corresponding to the dot decimal
+int _tms_calculate_dot_decimal(tms_arg_list *L, int64_t *result)
+{
+    int i, status;
+    int64_t tmp;
+    *result = 0;
+    if (L->count == 0)
+        return -1;
+
+    for (i = L->count - 1; i >= 0; --i)
+    {
+        status = _tms_read_int_helper(L->arguments[i], 10, &tmp);
+        if (status == -1)
+        {
+            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SYNTAX_ERROR, EH_FATAL, NULL);
+            return -1;
+        }
+        else if (tmp > 255 || tmp < 0)
+        {
+            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, NOT_A_DOT_DECIMAL, EH_FATAL, NULL);
+            return -1;
+        }
+        else
+            // Dotted decimal here is read left to right, thus the right shift
+            *result = *result | (tmp << (8 * (L->count - 1 - i)));
+    }
+    return 0;
+}
+
+int tms_dotted(tms_arg_list *args, int64_t *result)
+{
+    if (_tms_validate_args_count(1, args->count, TMS_INT_EVALUATOR) == false)
+        return -1;
+
+    int status;
+    char *input = args->arguments[0];
+
+    // Replace the dots with commas to use get_args function
+    while ((input = strchr(input, '.')) != NULL)
+        *input = ',';
+
+    // Get the beginning of the pointer back
+    input = args->arguments[0];
+    tms_arg_list *L = tms_get_args(input);
+
+    status = _tms_calculate_dot_decimal(L, result);
+    tms_free_arg_list(L);
+    return status;
+}
+
 int tms_ipv4(tms_arg_list *args, int64_t *result)
 {
     if (_tms_validate_args_count(1, args->count, TMS_INT_EVALUATOR) == false)
         return -1;
 
-    int i, status;
-    int64_t tmp;
+    int status;
     char *input = args->arguments[0];
 
     // Replace the dots with commas to use get_args function
@@ -225,19 +276,12 @@ int tms_ipv4(tms_arg_list *args, int64_t *result)
     tms_arg_list *L = tms_get_args(input);
 
     if (L->count != 4)
-        return -1;
-
-    *result = 0;
-    for (i = 0; i < 4; ++i)
     {
-        status = _tms_read_int_helper(L->arguments[i], 10, &tmp);
-        if (status == -1)
-            return -1;
-        else if (tmp > 255 || tmp < 0)
-            return -1;
-        else
-            // Dotted decimal here is read left to right, thus the right shift
-            *result = *result | (tmp << (8 * (3 - i)));
+        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, NOT_A_VALID_IPV4, EH_FATAL, NULL);
+        return -1;
     }
-        return 0;
+
+    status = _tms_calculate_dot_decimal(L, result);
+    tms_free_arg_list(L);
+    return status;
 }
