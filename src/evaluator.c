@@ -342,9 +342,17 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
         switch (S[s_i].func_type)
         {
         case TMS_F_REAL:
-            state = (*(S[s_i].func.simple))(**(S[s_i].result), *(S[s_i].result));
+            state = (*(S[s_i].func.simple))(tms_sign_extend(**(S[s_i].result)), *(S[s_i].result));
             if (state == -1)
+            {
+                // If the function didn't generate an error itself, provide a generic one
+                if (tms_error_handler(EH_ERROR_COUNT, TMS_INT_EVALUATOR, EH_ALL_ERRORS) == 0)
+                    tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, UNKNOWN_FUNC_ERROR, EH_FATAL, M->local_expr,
+                                      S[s_i].subexpr_start);
+                else
+                    tms_error_handler(EH_MODIFY, TMS_INT_EVALUATOR, M->local_expr, S[s_i].subexpr_start);
                 return -1;
+            }
 
             break;
         }
