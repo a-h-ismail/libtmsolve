@@ -47,4 +47,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define INT_TOO_LARGE "Value is too large for the current integer size."
 #define MISSING_EXPRESSION "Assignment operator used, but no expression follows."
 #define EXPRESSION_TOO_LONG "Expression is too large to be indexed using an integer."
+#define NOT_A_VALID_IPV4 "An IPv4 should have 4 8-bit fields."
+#define NOT_A_DOT_DECIMAL "Each octet in a dot-decimal notation should be in range [0,255]."
+#define UNKNOWN_FUNC_ERROR "Function reported an error."
 #endif
