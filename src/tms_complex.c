@@ -8,7 +8,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "scientific.h"
 #include <math.h>
 
-double complex tms_neglect_real_cmplx(double complex z)
+double complex tms_neglect_real_or_cmplx(double complex z)
 {
     double magnitude = creal(z) / cimag(z);
     if (fabs(magnitude) > 1e10)
@@ -21,46 +21,12 @@ double complex tms_neglect_real_cmplx(double complex z)
 
 double complex tms_cexp(double complex z)
 {
-    return tms_neglect_real_cmplx(cexp(z));
+    return tms_neglect_real_or_cmplx(cexp(z));
 }
 
 double complex tms_cpow(double complex x, double complex y)
 {
-    double x_real = creal(x), x_imag = cimag(x), y_real = creal(y), y_imag = cimag(y);
-    if (y == 0)
-        return 1;
-
-    if (y_imag == 0)
-    {
-        if (x_imag == 0)
-        {
-            // n+0.5 powers for negative values returns a small real part error
-            // Fixable by using sqrt()
-            if (x_real < 0)
-            {
-                double y_real_int, y_real_decimal;
-                if (y_real > 0)
-                {
-                    y_real_int = floor(y_real);
-                    y_real_decimal = y_real - y_real_int;
-                }
-                else
-                {
-                    y_real_int = ceil(y_real);
-                    y_real_decimal = y_real - y_real_int;
-                }
-                if (y_real_decimal == 0.5)
-                    return pow(x_real, y_real_int) * I * sqrt(-x_real);
-                else if (y_real_decimal == -0.5)
-                    return 1 / (pow(x_real, y_real_int) * I * sqrt(-x_real));
-            }
-            else
-                return pow(x_real, y_real);
-        }
-    }
-
-    // Normal case
-    return tms_neglect_real_cmplx(cpow(x, y));
+    return tms_neglect_real_or_cmplx(cpow(x, y));
 }
 
 // Some simple wrapper functions.
@@ -125,7 +91,7 @@ double complex tms_ccos(double complex z)
     if (cimag(z) == 0)
         return tms_cos(creal(z));
     else
-        return tms_neglect_real_cmplx(ccos(z));
+        return tms_neglect_real_or_cmplx(ccos(z));
 }
 
 double complex tms_csin(double complex z)
@@ -133,7 +99,7 @@ double complex tms_csin(double complex z)
     if (cimag(z) == 0)
         return tms_sin(creal(z));
     else
-        return tms_neglect_real_cmplx(csin(z));
+        return tms_neglect_real_or_cmplx(csin(z));
 }
 
 double complex tms_ctan(double complex z)
@@ -141,5 +107,5 @@ double complex tms_ctan(double complex z)
     if (cimag(z) == 0)
         return tms_tan(creal(z));
     else
-        return tms_neglect_real_cmplx(ctan(z));
+        return tms_neglect_real_or_cmplx(ctan(z));
 }
