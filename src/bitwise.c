@@ -214,12 +214,23 @@ int tms_ipv4(tms_arg_list *args, int64_t *result)
 
     int i, status;
     int64_t tmp;
-    char *token = strtok(args->arguments[0], ".");
-    *result = 0;
+    char *input = args->arguments[0];
 
+    // Replace the dots with commas to use get_args function
+    while ((input = strchr(input, '.')) != NULL)
+        *input = ',';
+
+    // Get the beginning of the pointer back
+    input = args->arguments[0];
+    tms_arg_list *L = tms_get_args(input);
+
+    if (L->count != 4)
+        return -1;
+
+    *result = 0;
     for (i = 0; i < 4; ++i)
     {
-        status = _tms_read_int_helper(token, 10, &tmp);
+        status = _tms_read_int_helper(L->arguments[i], 10, &tmp);
         if (status == -1)
             return -1;
         else if (tmp > 255 || tmp < 0)
@@ -227,13 +238,6 @@ int tms_ipv4(tms_arg_list *args, int64_t *result)
         else
             // Dotted decimal here is read left to right, thus the right shift
             *result = *result | (tmp << (8 * (3 - i)));
-
-        token = strtok(NULL, ".");
     }
-
-    // An IPv4 can't have more than 4 tokens
-    if (token != NULL)
-        return -1;
-    else
         return 0;
 }
