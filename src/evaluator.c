@@ -244,7 +244,8 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                 _tms_debug = false;
 
                 // Call the extended function
-                state = ((*(S[s_i].func.extended))(L, *(S[s_i].result))) & tms_int_mask;
+                state = ((*(S[s_i].func.extended))(L, *(S[s_i].result)));
+                **(S[s_i].result) &= tms_int_mask;
 
                 _tms_debug = _debug_state;
                 if (state == -1)
@@ -343,6 +344,7 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
         {
         case TMS_F_REAL:
             state = (*(S[s_i].func.simple))(tms_sign_extend(**(S[s_i].result)), *(S[s_i].result));
+            **(S[s_i].result) &= tms_int_mask;
             if (state == -1)
             {
                 // If the function didn't generate an error itself, provide a generic one
