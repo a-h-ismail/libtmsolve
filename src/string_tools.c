@@ -429,7 +429,7 @@ int _tms_read_int_helper(char *number, int8_t base, int64_t *result)
         return -3;
     else
     {
-        *result = value & tms_int_mask;
+        *result = value;
         return 0;
     }
 }

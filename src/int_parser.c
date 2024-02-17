@@ -99,7 +99,7 @@ int _tms_read_int_operand(char *expr, int start, int64_t *result)
     if (is_negative)
         value = -value;
 
-    *result = value;
+    *result = value & tms_int_mask;
     return 0;
 }
 
