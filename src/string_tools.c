@@ -958,10 +958,16 @@ void tms_print_bin(int64_t value)
         if (digit == 0)
         {
             if (!trailing)
+            {
+                if (i > 0 && i % 8 == 0)
+                    putchar(' ');
                 putchar('0');
+            }
         }
         else
         {
+            if (!trailing && i > 0 && i % 8 == 0)
+                putchar(' ');
             putchar('1');
             trailing = false;
         }
@@ -1041,10 +1047,17 @@ void tms_print_hex(int64_t value)
         if (digit == 0)
         {
             if (!trailing)
+            {
+                if (i > 0 && i % 4 == 0)
+                    putchar(' ');
                 putchar('0');
+            }
         }
         else
         {
+            if (!trailing && i > 0 && i % 4 == 0)
+                putchar(' ');
+
             putchar(int_to_hex(digit));
             trailing = false;
         }
