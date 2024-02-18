@@ -583,7 +583,7 @@ int _tms_error_handler_unsafe(int _mode, va_list handler_args)
             }
 
             // Center the error in the string
-            if (error_position > 49)
+            if (error_position > 24)
             {
                 strncpy(error_table[last_error].bad_snippet, expr + error_position - 24, 49);
                 error_table[last_error].bad_snippet[49] = '\0';
@@ -747,7 +747,7 @@ int _tms_error_handler_unsafe(int _mode, va_list handler_args)
         }
 
         // Center the error in the string
-        if (error_position > 49)
+        if (error_position > 24)
         {
             strncpy(error_table[i].bad_snippet, expr + error_position - 24, 49);
             error_table[i].bad_snippet[49] = '\0';
