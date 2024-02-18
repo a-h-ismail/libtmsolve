@@ -788,26 +788,29 @@ bool tms_match_word(char *str, int i, char *keyword, bool match_from_start)
 
 void tms_print_value(double complex value)
 {
-    if (creal(value) != 0)
+    double real = creal(value), imag = cimag(value);
+    if (isnan(real) || isnan(imag))
+        return;
+
+    if (imag != 0)
     {
-        printf("%g", creal(value));
-        if (cimag(value) != 0)
+        if (real != 0)
         {
-            if (cimag(value) > 0)
-                printf(" + %g * i", cimag(value));
-            else
-                printf(" - %g * i", fabs(cimag(value)));
+            printf("%.12g", real);
+            if (imag > 0)
+                printf("+");
         }
-    }
-    else if (cimag(value) != 0)
-    {
-        if (cimag(value) > 0)
-            printf("%g * i", cimag(value));
+
+        if (imag == 1)
+            printf("i");
+
+        else if (imag == -1)
+            printf("-i");
         else
-            printf("- %g * i", fabs(cimag(value)));
+            printf("%.12g i", imag);
     }
     else
-        printf("0");
+        printf("%.12g", real);
 }
 
 // Function that checks the existence of value in an int array of "count" ints
