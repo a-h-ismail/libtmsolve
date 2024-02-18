@@ -81,7 +81,7 @@ double complex tms_cln(double complex z)
     return clog(z);
 }
 
-double complex tms_clog(double complex z)
+double complex tms_clog10(double complex z)
 {
     return clog(z) / log(10);
 }

@@ -39,7 +39,7 @@ double complex tms_csign(double complex z);
 
 double complex tms_cln(double complex z);
 
-double complex tms_clog(double complex z);
+double complex tms_clog10(double complex z);
 
 double complex tms_ccos(double complex z);
 
