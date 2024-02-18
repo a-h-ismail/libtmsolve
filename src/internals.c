@@ -513,7 +513,7 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M)
 
     // If the nodes have unknowns, regenerate the unknowns pointers array
     if (NM->unknowns_count > 0)
-        _tms_set_unknowns_data(NM);
+        _tms_generate_unknowns_refs(NM);
 
     return NM;
 }

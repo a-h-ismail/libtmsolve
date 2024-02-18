@@ -53,7 +53,7 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result);
  * @param M The math_expr used to generate and store the metadata.
  * @remark You won't need to call this manually, the parser will call it if unknowns are enabled.
  */
-void _tms_set_unknowns_data(tms_math_expr *M);
+void _tms_generate_unknowns_refs(tms_math_expr *M);
 
 /**
  * @brief Sets a value to all the unknown members of M.

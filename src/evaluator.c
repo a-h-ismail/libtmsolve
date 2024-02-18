@@ -371,7 +371,7 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
     return 0;
 }
 
-void _tms_set_unknowns_data(tms_math_expr *M)
+void _tms_generate_unknowns_refs(tms_math_expr *M)
 {
     int i = 0, s_i, buffer_size = 16;
     tms_unknown_operand *x_data = malloc(buffer_size * sizeof(tms_unknown_operand));

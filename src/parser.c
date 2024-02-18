@@ -257,7 +257,7 @@ int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_i)
         if (local_expr[i] == '(')
         {
             int previous_subexp;
-            previous_subexp = tms_find_subexpr_starting_at(S, i + 1, s_i, 2);
+            previous_subexp = _tms_find_subexpr_starting_at(S, i + 1, s_i, 2);
             if (previous_subexp != -1)
                 i = S[previous_subexp].solve_end + 1;
         }
@@ -408,7 +408,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_i, int *operator_i
     // Case of expression with one term, use one op_node with operand1 to hold the number
     if (op_count == 0)
     {
-        i = tms_find_subexpr_starting_at(S, S[s_i].solve_start, s_i, 1);
+        i = _tms_find_subexpr_starting_at(S, S[s_i].solve_start, s_i, 1);
         S[s_i].nodes[0].unknowns_data = 0;
         S[s_i].nodes[0].node_index = 0;
         // To avoid valgrind complaining about uninitialized values
@@ -423,7 +423,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_i, int *operator_i
             {
                 if (enable_unknowns)
                 {
-                    status = tms_set_unknowns_data(local_expr + solve_start, NB, 'l');
+                    status = _tms_set_unknowns_data(local_expr + solve_start, NB, 'l');
                     if (status == -1)
                     {
                         // If the value reader failed with no error reported, set the error to be a syntax error
@@ -461,7 +461,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_i, int *operator_i
     else
     {
         // Set each op_node's priority data
-        tms_set_priority(NB, op_count);
+        _tms_set_priority(NB, op_count);
 
         for (i = 0; i < op_count; ++i)
         {
@@ -622,7 +622,7 @@ int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start,
     }
 
     // Check if the operand is the result of a subexpression
-    tmp = tms_find_subexpr_starting_at(S, op_start, s_i, 1);
+    tmp = _tms_find_subexpr_starting_at(S, op_start, s_i, 1);
 
     // The operand is a variable or a numeric value
     if (tmp == -1)
@@ -634,7 +634,7 @@ int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start,
             // Check for the unknown 'x'
             if (enable_unknowns == true)
             {
-                tmp = tms_set_unknowns_data(expr + op_start, N, operand);
+                tmp = _tms_set_unknowns_data(expr + op_start, N, operand);
                 if (tmp == -1)
                 {
                     // If the value reader failed with no error reported, set the error to be a syntax error
@@ -930,7 +930,7 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool ena
 
     // Set unknowns metadata
     if (enable_unknowns)
-        _tms_set_unknowns_data(M);
+        _tms_generate_unknowns_refs(M);
 
     // Detect assignment operator (local_expr offset from expr)
     if (local_expr != expr)
@@ -1015,7 +1015,7 @@ void tms_convert_real_to_complex(tms_math_expr *M)
     M->enable_complex = true;
 }
 
-int tms_set_unknowns_data(char *expr, tms_op_node *x_node, char operand)
+int _tms_set_unknowns_data(char *expr, tms_op_node *x_node, char operand)
 {
     bool is_negative = false, is_x = false;
     if (tms_match_word(expr, 0, "x", true))
@@ -1076,7 +1076,7 @@ void tms_delete_math_expr(tms_math_expr *M)
     free(M);
 }
 
-void tms_set_priority(tms_op_node *list, int op_count)
+void _tms_set_priority(tms_op_node *list, int op_count)
 {
     char operators[6] = {'^', '*', '/', '%', '+', '-'};
     uint8_t priority[6] = {3, 2, 2, 2, 1, 1};
@@ -1094,7 +1094,7 @@ void tms_set_priority(tms_op_node *list, int op_count)
     }
 }
 
-int tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_i, int8_t mode)
+int _tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_i, int8_t mode)
 {
     int i;
     // If a subexpression is an operand in another subexpression, it will have a depth higher by only 1
@@ -1131,7 +1131,7 @@ int tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_i, int8_t
     return -1;
 }
 // Function that finds the subexpression that ends at 'end'
-int tms_find_subexpr_ending_at(tms_math_subexpr *S, int end, int s_i, int s_count)
+int _tms_find_subexpr_ending_at(tms_math_subexpr *S, int end, int s_i, int s_count)
 {
     int i;
     i = s_i - 1;

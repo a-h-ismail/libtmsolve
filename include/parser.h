@@ -160,7 +160,7 @@ void tms_convert_real_to_complex(tms_math_expr *M);
  * @param operand Informs the function which operand to set as unknown.
  * @return 0 if the unknown x was found at either operands of x_node, -1 otherwise.
  */
-int tms_set_unknowns_data(char *expr, tms_op_node *x_node, char operand);
+int _tms_set_unknowns_data(char *expr, tms_op_node *x_node, char operand);
 
 /**
  * @brief Parses a math expression into a structure.
@@ -188,7 +188,7 @@ void tms_delete_math_expr(tms_math_expr *M);
  * @param list The op_node array.
  * @param op_count Number of operators in the array. Equal to the number of nodes.
  */
-void tms_set_priority(tms_op_node *list, int op_count);
+void _tms_set_priority(tms_op_node *list, int op_count);
 
 /**
  * @brief Finds the subexpression that starts at a specific index in the string.
@@ -198,7 +198,7 @@ void tms_set_priority(tms_op_node *list, int op_count);
  * @param mode Determines if the value passed by start is the expression_start (mode==1) or solve_start (mode==2).
  * @return Depends on the mode, either
  */
-int tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_index, int8_t mode);
+int _tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_index, int8_t mode);
 
 /**
  * @brief Finds the subexpression that ends at a specific index in the string.
@@ -208,6 +208,6 @@ int tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_index, in
  * @param s_count The number of subexpressions in the expression.
  * @return
  */
-int tms_find_subexpr_ending_at(tms_math_subexpr *S, int end, int s_index, int s_count);
+int _tms_find_subexpr_ending_at(tms_math_subexpr *S, int end, int s_index, int s_count);
 
 #endif

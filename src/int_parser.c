@@ -103,7 +103,7 @@ int _tms_read_int_operand(char *expr, int start, int64_t *result)
     return 0;
 }
 
-int tms_compare_int_subexpr_depth(const void *a, const void *b)
+int _tms_compare_int_subexpr_depth(const void *a, const void *b)
 {
     if (((tms_int_subexpr *)a)->depth < ((tms_int_subexpr *)b)->depth)
         return 1;
@@ -287,7 +287,7 @@ tms_int_expr *_tms_init_int_expr(char *expr)
     S[s_i].exec_extf = true;
 
     // Sort by depth (high to low)
-    qsort(S, s_count, sizeof(tms_int_subexpr), tms_compare_int_subexpr_depth);
+    qsort(S, s_count, sizeof(tms_int_subexpr), _tms_compare_int_subexpr_depth);
     return M;
 }
 
@@ -313,7 +313,7 @@ int *_tms_get_int_op_indexes(char *local_expr, tms_int_subexpr *S, int s_i)
         if (local_expr[i] == '(')
         {
             int previous_subexp;
-            previous_subexp = tms_find_int_subexpr_starting_at(S, i + 1, s_i, 2);
+            previous_subexp = _tms_find_int_subexpr_starting_at(S, i + 1, s_i, 2);
             if (previous_subexp != -1)
                 i = S[previous_subexp].solve_end + 1;
         }
@@ -416,7 +416,7 @@ int _tms_init_int_nodes(char *local_expr, tms_int_expr *M, int s_i, int *operato
     // Case of expression with one term, use one op_node with operand1 to hold the number
     if (op_count == 0)
     {
-        i = tms_find_int_subexpr_starting_at(S, S[s_i].solve_start, s_i, 1);
+        i = _tms_find_int_subexpr_starting_at(S, S[s_i].solve_start, s_i, 1);
         S[s_i].nodes[0].node_index = 0;
         //  Case of nested no operators expressions, set the result of the deeper expression as the left op of the dummy
         if (i != -1)
@@ -450,7 +450,7 @@ int _tms_init_int_nodes(char *local_expr, tms_int_expr *M, int s_i, int *operato
     else
     {
         // Set each op_node's priority data
-        tms_set_priority_int(NB, op_count);
+        _tms_set_priority_int(NB, op_count);
 
         for (i = 0; i < op_count; ++i)
             NB[i].node_index = i;
@@ -548,7 +548,7 @@ int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op
     if (status != 0)
     {
         // Case of a subexpression result as operand
-        status = tms_find_int_subexpr_starting_at(S, op_start, s_i, 1);
+        status = _tms_find_int_subexpr_starting_at(S, op_start, s_i, 1);
         if (status == -1)
         {
             if (tms_error_handler(EH_ERROR_COUNT, TMS_INT_PARSER, EH_FATAL) == 0)
@@ -851,7 +851,7 @@ void tms_delete_int_expr(tms_int_expr *M)
     free(M);
 }
 
-void tms_set_priority_int(tms_int_op_node *list, int op_count)
+void _tms_set_priority_int(tms_int_op_node *list, int op_count)
 {
     char operators[] = {'*', '/', '%', '+', '-', '&', '^', '|'};
     uint8_t priority[] = {5, 5, 4, 4, 4, 3, 2, 1};
@@ -869,15 +869,22 @@ void tms_set_priority_int(tms_int_op_node *list, int op_count)
     }
 }
 
-int tms_find_int_subexpr_starting_at(tms_int_subexpr *S, int start, int s_i, int mode)
+int _tms_find_int_subexpr_starting_at(tms_int_subexpr *S, int start, int s_i, int mode)
 {
     int i;
+    // If a subexpression is an operand in another subexpression, it will have a depth higher by only 1
+    // Skip deeper subexpression to reduce search time
+    int target_depth = S[s_i].depth + 1;
     i = s_i - 1;
+
     switch (mode)
     {
     case 1:
         while (i >= 0)
         {
+            if (S[i].depth > target_depth)
+                break;
+
             if (S[i].subexpr_start == start)
                 return i;
             else
@@ -887,6 +894,9 @@ int tms_find_int_subexpr_starting_at(tms_int_subexpr *S, int start, int s_i, int
     case 2:
         while (i >= 0)
         {
+            if (S[i].depth > target_depth)
+                break;
+
             if (S[i].solve_start == start)
                 return i;
             else
@@ -896,7 +906,7 @@ int tms_find_int_subexpr_starting_at(tms_int_subexpr *S, int start, int s_i, int
     return -1;
 }
 // Function that finds the subexpression that ends at 'end'
-int tms_find_int_subexpr_ending_at(tms_int_subexpr *S, int end, int s_i, int s_count)
+int _tms_find_int_subexpr_ending_at(tms_int_subexpr *S, int end, int s_i, int s_count)
 {
     int i;
     i = s_i - 1;
