@@ -31,10 +31,10 @@ const tms_rc_func tms_g_rc_func[] = {
     {"ceil", ceil, tms_cceil},     {"floor", floor, tms_cfloor}, {"round", round, tms_cround},
     {"sign", tms_sign, tms_csign}, {"arg", tms_carg_d, carg_z},  {"sqrt", sqrt, csqrt},
     {"cbrt", cbrt, tms_ccbrt},     {"cos", tms_cos, tms_ccos},   {"sin", tms_sin, tms_csin},
-    {"tan", tms_tan, tms_ctan},    {"acosh", acosh, cacosh},     {"asinh", asinh, casinh},
-    {"atanh", atanh, catanh},      {"acos", acos, cacos},        {"asin", asin, casin},
+    {"tan", tms_tan, tms_ctan},    {"acos", acos, cacos},        {"asin", asin, casin},
     {"atan", atan, catan},         {"cosh", cosh, cacosh},       {"sinh", sinh, csinh},
-    {"tanh", tanh, ctanh},         {"ln", log, tms_cln},         {"log10", log10, tms_clog}};
+    {"tanh", tanh, ctanh},         {"acosh", acosh, cacosh},     {"asinh", asinh, casinh},
+    {"atanh", atanh, catanh},      {"ln", log, tms_cln},         {"log10", log10, tms_clog10}};
 
 const int tms_g_rc_func_count = array_length(tms_g_rc_func);
 
