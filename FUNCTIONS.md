@@ -47,7 +47,7 @@ Trigonometric functions lose precision with larger values. I recommend staying i
 
 ## Runtime Functions
 
-Runtime functions are created by the user during runtime. For `libtmsolve`, you have to call `tms_set_ufunction(char *name, char *function)` to add your runtime function.
+Runtime functions are created by the user during runtime. For `libtmsolve`, you have to call `tms_set_ufunction(char *name, char *function)` to add your runtime function. Please note that these are meant for interactive use only.
 
 ## Guidelines for Adding new Extended Functions
 
