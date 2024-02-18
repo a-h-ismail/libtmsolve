@@ -12,8 +12,6 @@ Declaration: `int foo(int64_t value, int64_t *result);`
 
 ## Extended Functions
 
-All of the following functions perform bitwise operations:
-
 - `and, nand, or, xor, xnor`: Expects 2 arguments, name is self explanatory.
 - `rr(value, rot)`: Performs right rotation of `value` bits by `rot` bits.
 - `rl(value, rot)`: Performs left rotation of `value` bits by `rot` bits.
