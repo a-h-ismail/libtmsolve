@@ -416,33 +416,9 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_i, int *operator_i
         //  Case of nested no operators expressions, set the result of the deeper expression as the left op of the dummy
         if (i != -1)
             *(S[i].result) = &(NB->left_operand);
-        else
-        {
-            NB->left_operand = _tms_set_operand_value(local_expr, solve_start, M->enable_complex);
-            if (isnan((double)NB->left_operand))
-            {
-                if (enable_unknowns)
-                {
-                    status = _tms_set_unknowns_data(local_expr + solve_start, NB, 'l');
-                    if (status == -1)
-                    {
-                        // If the value reader failed with no error reported, set the error to be a syntax error
-                        if (tms_error_handler(EH_ERROR_COUNT, TMS_PARSER, EH_ALL_ERRORS) == 0)
-                            tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, local_expr, solve_start);
-                        return -1;
-                    }
-                    else
-                        tms_error_handler(EH_CLEAR, TMS_PARSER);
-                }
-                else
-                {
-                    // Unknown not found, or set_operand didn't save an error (not a valid var name)
-                    if (tms_error_handler(EH_ERROR_COUNT, TMS_PARSER, EH_ALL_ERRORS) == 0)
-                        tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, local_expr, solve_start);
-                    return -1;
-                }
-            }
-        }
+        // Read to the left operand
+        else if (_tms_set_operand(local_expr, M, NB, solve_start, s_i, 'l', enable_unknowns))
+            return -1;
 
         S[s_i].start_node = 0;
         S[s_i].result = &(NB->result);
