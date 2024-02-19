@@ -414,12 +414,15 @@ int _tms_read_int_helper(char *number, int8_t base, int64_t *result)
         else
             value = tmp2;
 
-        // Multiply power with the current base
-        overflow = __builtin_mul_overflow(power, base, &tmp1);
-        if (overflow)
-            return -2;
-        else
-            power = tmp1;
+        if (i > 0)
+        {
+            // Multiply power with the current base
+            overflow = __builtin_mul_overflow(power, base, &tmp1);
+            if (overflow)
+                return -2;
+            else
+                power = tmp1;
+        }
     }
     if (is_negative)
         value = -value;
