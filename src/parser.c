@@ -32,7 +32,7 @@ const tms_rc_func tms_g_rc_func[] = {
     {"sign", tms_sign, tms_csign}, {"arg", tms_carg_d, carg_z},  {"sqrt", sqrt, csqrt},
     {"cbrt", cbrt, tms_ccbrt},     {"cos", tms_cos, tms_ccos},   {"sin", tms_sin, tms_csin},
     {"tan", tms_tan, tms_ctan},    {"acos", acos, cacos},        {"asin", asin, casin},
-    {"atan", atan, catan},         {"cosh", cosh, cacosh},       {"sinh", sinh, csinh},
+    {"atan", atan, catan},         {"cosh", cosh, ccosh},        {"sinh", sinh, csinh},
     {"tanh", tanh, ctanh},         {"acosh", acosh, cacosh},     {"asinh", asinh, casinh},
     {"atanh", atanh, catanh},      {"ln", log, tms_cln},         {"log10", log10, tms_clog10}};
 
