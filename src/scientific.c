@@ -399,7 +399,7 @@ tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
     // Reduce the number of decimal places to print as much as the complete value has non decimal places
     // This avoids obtaining junk values (remember a double has ~15 digits of precision)
     if (result.a != 0)
-        sprintf(printed_value, "%.*lf", 14 - (int)log10(fabs(result.a)), value);
+        sprintf(printed_value, "%.*lf", 14 - (int)log10(abs(result.a)), value);
     else
         sprintf(printed_value, "%.14lf", value);
 
