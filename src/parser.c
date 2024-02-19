@@ -373,7 +373,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_i, int *operator_i
 {
     tms_math_subexpr *S = M->S;
     int s_count = M->subexpr_count, op_count = S[s_i].op_count;
-    int i, status;
+    int i;
     tms_op_node *NB;
     int solve_start = S[s_i].solve_start;
     int solve_end = S[s_i].solve_end;
