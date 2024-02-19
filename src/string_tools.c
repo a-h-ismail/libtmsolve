@@ -937,11 +937,7 @@ bool tms_valid_name(char *name)
 
 void tms_print_bin(int64_t value)
 {
-    // This bool determines if the zeros are trailing or not
-    bool trailing = true;
     uint8_t digit;
-    // An 64 bit int has the MSB as an octal, then every octal digit is 3 bits
-    // Go left to right, read 3 bits and print the digit to stdout
 
     printf("0b");
     if (value == 0)
@@ -950,27 +946,20 @@ void tms_print_bin(int64_t value)
         return;
     }
 
-    for (int i = 0; i < 64; ++i)
+    // Print depending on the current mask size
+    value = value << tms_int_mask_size;
+    for (int i = 64 - tms_int_mask_size; i < 64; ++i)
     {
         // Shift 63 positions for the MSB to become LSB
         digit = ((uint64_t)value) >> 63;
 
+        if (i > 0 && i % 8 == 0)
+            putchar(' ');
+
         if (digit == 0)
-        {
-            if (!trailing)
-            {
-                if (i > 0 && i % 8 == 0)
-                    putchar(' ');
-                putchar('0');
-            }
-        }
+            putchar('0');
         else
-        {
-            if (!trailing && i > 0 && i % 8 == 0)
-                putchar(' ');
             putchar('1');
-            trailing = false;
-        }
 
         value = value << 1;
     }
@@ -978,11 +967,8 @@ void tms_print_bin(int64_t value)
 
 void tms_print_oct(int64_t value)
 {
-    // This bool determines if the zeros are trailing or not
-    bool trailing = true;
+    bool leading_zero = true;
     uint8_t digit;
-    // An 64 bit int has the MSB as an octal, then every octal digit is 3 bits
-    // Go left to right, read 3 bits and print the digit to stdout
 
     printf("0o");
     if (value == 0)
@@ -994,7 +980,7 @@ void tms_print_oct(int64_t value)
     // The first bit
     if ((value & 0x8000000000000000) != 0)
     {
-        trailing = false;
+        leading_zero = false;
         putchar('1');
     }
 
@@ -1005,13 +991,13 @@ void tms_print_oct(int64_t value)
 
         if (digit == 0)
         {
-            if (!trailing)
+            if (!leading_zero)
                 putchar('0');
         }
         else
         {
             putchar('0' + digit);
-            trailing = false;
+            leading_zero = false;
         }
 
         value = value << 3;
@@ -1028,8 +1014,7 @@ char int_to_hex(int8_t v)
 
 void tms_print_hex(int64_t value)
 {
-    // This bool determines if the zeros are trailing or not
-    bool trailing = true;
+    bool leading_zero = true;
     uint8_t digit;
 
     printf("0x");
@@ -1046,7 +1031,7 @@ void tms_print_hex(int64_t value)
 
         if (digit == 0)
         {
-            if (!trailing)
+            if (!leading_zero)
             {
                 if (i > 0 && i % 4 == 0)
                     putchar(' ');
@@ -1055,11 +1040,11 @@ void tms_print_hex(int64_t value)
         }
         else
         {
-            if (!trailing && i > 0 && i % 4 == 0)
+            if (!leading_zero && i > 0 && i % 4 == 0)
                 putchar(' ');
 
             putchar(int_to_hex(digit));
-            trailing = false;
+            leading_zero = false;
         }
 
         value = value << 4;
