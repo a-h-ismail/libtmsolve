@@ -239,6 +239,7 @@ double complex tms_integrate(tms_arg_list *L)
         return NAN;
 
     int n;
+    bool flip_result = false;
     double lower_bound, upper_bound, result, an, fn, rounds, delta;
 
     lower_bound = _tms_solve_e_unsafe(L->arguments[0], false);
@@ -251,9 +252,13 @@ double complex tms_integrate(tms_arg_list *L)
     }
 
     delta = upper_bound - lower_bound;
+    // If delta is negative, flip lower and upper bounds then multiply the final answer by -1
     if (delta < 0)
     {
-        lower_bound = delta + lower_bound;
+        flip_result = true;
+        double tmp = lower_bound;
+        lower_bound = upper_bound;
+        upper_bound = tmp;
         delta = -delta;
     }
 
@@ -323,5 +328,8 @@ double complex tms_integrate(tms_arg_list *L)
 
     result *= 0.375 * (delta / rounds);
     tms_delete_math_expr(M);
+    if (flip_result)
+        result = -result;
+
     return result;
 }
