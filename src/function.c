@@ -38,6 +38,7 @@ double complex tms_min(tms_arg_list *args)
     if (args->count == 0)
         return NAN;
 
+    // Set min to the smallest possible value so it would always be overwritten in the first iteration
     double complex min = INFINITY, tmp;
 
     for (int i = 0; i < args->count; ++i)
@@ -64,7 +65,8 @@ double complex tms_max(tms_arg_list *args)
     if (args->count == 0)
         return NAN;
 
-    double complex max = INFINITY, tmp;
+    // Set max to the smallest possible value so it would always be overwritten in the first iteration
+    double complex max = -INFINITY, tmp;
 
     for (int i = 0; i < args->count; ++i)
     {
