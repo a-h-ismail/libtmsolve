@@ -15,11 +15,11 @@ void test_scientific(char *buffer)
     int field_separator = tms_f_search(buffer, ";", 0, false);
     if (field_separator == -1)
     {
-        fputs("Incorrect format for test file, missing ;", stderr);
-        return;
+        fputs("Incorrect format for test file, missing ;\n", stderr);
+        exit(1);
     }
     char expr[field_separator + 1];
-    double complex expected_ans;
+    double complex expected_ans, real_only, with_complex;
     // Not the most efficient way, but the calculator should be reliable for simple ops.
     expected_ans = tms_solve(buffer + field_separator + 1);
 
@@ -27,42 +27,60 @@ void test_scientific(char *buffer)
     expr[field_separator] = '\0';
     puts(expr);
 
-    tms_g_ans = tms_solve(expr);
-    if (isnan(creal(tms_g_ans)))
+    real_only = tms_solve_e(expr, false);
+    if (isnan(creal(real_only)))
+        puts("Calculation failure in real domain.");
+    with_complex = tms_solve_e(expr, true);
+    if (isnan(creal(with_complex)))
     {
-        tms_error_handler(EH_PRINT);
+        puts("Fatal: Calculation failure in complex domain.");
         exit(1);
     }
 
-    // Relative error in case the expected answer is 0
-    if (expected_ans == 0)
+    for (int i = 0; i < 2; ++i)
     {
-        if (fabs(creal(expected_ans)) < 1e-15 && fabs(cimag(expected_ans)) < 1e-15)
-            puts("Passed\n--------------------\n");
-        else
-            fputs("Expected answer is zero but actual answer is non negligible.", stderr);
-    }
-    else
-    {
-        double relative_error = cabs((expected_ans - tms_g_ans) / expected_ans);
-        printf("relative error=%g\n", relative_error);
-        if (relative_error > 1e-3)
+        if (i == 0)
         {
-            fputs("Relative error is too high.", stderr);
-            exit(1);
+            if (isnan(creal(real_only)))
+                continue;
+            puts("Real only test:");
+            tms_g_ans = real_only;
+        }
+        else if (i == 1)
+        {
+            puts("With complex enabled test:");
+            tms_g_ans = with_complex;
+        }
+        // Relative error in case the expected answer is 0
+        if (expected_ans == 0)
+        {
+            if (fabs(creal(expected_ans)) < 1e-15 && fabs(cimag(expected_ans)) < 1e-15)
+                puts("Passed\n--------------------\n");
+            else
+                fputs("Expected answer is zero but actual answer is non negligible.", stderr);
         }
         else
-            puts("Passed\n--------------------\n");
+        {
+            double relative_error = cabs((expected_ans - tms_g_ans) / expected_ans);
+            printf("relative error=%g\n", relative_error);
+            if (relative_error > 1e-3)
+            {
+                fputs("Relative error is too high.", stderr);
+                exit(1);
+            }
+            else
+                puts("Passed\n--------------------\n");
+        }
     }
 }
 
-void test_base_n(char *buffer)
+void test_integer(char *buffer)
 {
     int field_separator = tms_f_search(buffer, ";", 0, false);
     if (field_separator == -1)
     {
-        fputs("Incorrect format for test file, missing ;", stderr);
-        return;
+        fputs("Incorrect format for test file, missing ;\n", stderr);
+        exit(1);
     }
     char expr[field_separator + 1];
     int64_t expected_ans;
@@ -97,7 +115,6 @@ void test_base_n(char *buffer)
 
 int main(int argc, char **argv)
 {
-    _tms_debug = 1;
     if (argc < 2)
     {
         puts("Missing argument\nUsage: tms_test test_file");
@@ -119,10 +136,8 @@ int main(int argc, char **argv)
     // I won't make lines longer than that to test
     char buffer[1000];
 
-    while (feof(test_file) == 0)
+    while (fgets(buffer, 1000, test_file) != NULL)
     {
-        fgets(buffer, 1000, test_file);
-
         tms_remove_whitespace(buffer);
         mode = buffer[0];
         switch (mode)
@@ -131,8 +146,8 @@ int main(int argc, char **argv)
             test_scientific(buffer + 2);
             break;
 
-        case 'B':
-            test_base_n(buffer + 2);
+        case 'I':
+            test_integer(buffer + 2);
             break;
 
         default:
