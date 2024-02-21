@@ -12,7 +12,7 @@ Full documentation is available [here](https://a-h-ismail.gitlab.io/libtmsolve-d
 - Integer parser supports varying the word size (up to 64 bit) using a global integer mask.
 - Supports variables and functions defined at runtime.
 - Basic matrix manipulation.
-- Integer factorization and function reduction.
+- Integer factorization and fraction reduction.
 - Convert a value to its fractional form (if possible).
 
 ## Usage Examples
