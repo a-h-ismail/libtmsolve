@@ -950,7 +950,7 @@ void tms_print_bin(int64_t value)
     }
 
     // Print depending on the current mask size
-    value = value << tms_int_mask_size;
+    value = value << (64 - tms_int_mask_size);
     for (int i = 64 - tms_int_mask_size; i < 64; ++i)
     {
         // Shift 63 positions for the MSB to become LSB
