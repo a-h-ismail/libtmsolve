@@ -178,7 +178,7 @@ void tms_print_value(double complex value);
  * @param a Start of the block to process.
  * @param b End of block to process.
  */
-void tms_combine_add_sub(char *expr, int a, int b);
+void _tms_combine_add_sub(char *expr);
 
 /**
  * @brief Compares the priority of 2 operators.

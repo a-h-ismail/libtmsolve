@@ -729,7 +729,7 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr)
 
     tms_remove_whitespace(expr);
     // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
-    tms_combine_add_sub(expr, 0, strlen(expr) - 2);
+    _tms_combine_add_sub(expr);
     // Search for assignment operator, to enable user defined variables
     i = tms_f_search(expr, "=", 0, false);
     if (i != -1)
