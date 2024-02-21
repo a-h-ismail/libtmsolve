@@ -193,6 +193,16 @@ void tms_unlock_evaluator(int variant)
     }
 }
 
+void tms_set_int_mask(int size)
+{
+    tms_lock_parser(TMS_INT_PARSER);
+    tms_lock_evaluator(TMS_INT_EVALUATOR);
+    tms_int_mask = ((int64_t)1 << size) - 1;
+    tms_int_mask_size = size;
+    tms_unlock_parser(TMS_INT_PARSER);
+    tms_unlock_evaluator(TMS_INT_EVALUATOR);
+}
+
 bool _tms_validate_args_count(int expected, int actual, int facility_id)
 {
     if (expected == actual)

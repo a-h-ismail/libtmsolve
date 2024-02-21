@@ -165,6 +165,13 @@ void tms_lock_evaluator(int variant);
 void tms_unlock_evaluator(int variant);
 
 /**
+ * @brief Sets the global mask used by integer parser and evaluator. Locks both of them while the mask is being modified.
+ * @note This mask is what allows the library to emulate integers of width [1-64].
+ * @param size Effective integer size when using this mask.
+ */
+void tms_set_int_mask(int size);
+
+/**
  * @brief Creates a new variable if it doesn't exist
  * @param name Name of the variable
  * @param is_constant Sets the constant bit to protect the variable from being changed by the evaluator
