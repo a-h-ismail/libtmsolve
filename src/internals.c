@@ -826,7 +826,7 @@ void tms_print_error(tms_error_data E)
     if (E.real_index != -1)
     {
         fprintf(stderr, "%s\nAt col %d: \n", E.message, E.real_index);
-        if (E.real_index > 49)
+        if (E.real_index > 24)
         {
             E.relative_index += 3;
             fprintf(stderr, "...");
