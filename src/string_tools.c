@@ -498,13 +498,12 @@ int tms_next_op(char *expr, int i)
 /*Function that combines the add/subtract operators (ex: -- => +) in the area of expr limited by a,b.
 Returns true on success and false in case of invalid indexes a and b.
 */
-void tms_combine_add_sub(char *expr, int a, int b)
+void _tms_combine_add_sub(char *expr)
 {
-    int subcount, i, j;
-    if (b > strlen(expr) || a > b || a < 0)
-        return;
-    i = tms_find_add_subtract(expr, a);
-    while (i != -1 && i < b)
+    int subcount, i, j, length = strlen(expr);
+
+    i = tms_find_add_subtract(expr, 0);
+    while (i != -1 && i < length)
     {
         j = i;
         subcount = 0;
@@ -518,7 +517,7 @@ void tms_combine_add_sub(char *expr, int a, int b)
                 break;
             ++j;
         }
-        if (subcount > 1)
+        if (subcount >= 1)
         {
             if (subcount % 2 == 1)
                 expr[i] = '-';
