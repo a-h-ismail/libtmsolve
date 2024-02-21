@@ -41,6 +41,7 @@ S:tan(atan(23));23
 S:cosh(acosh(-0.7));-0.7
 S:sinh(asinh(0.21342345));0.21342345
 S:tanh(atanh(23));23
+S:2+-2;0
 I:sl(5,2)+sra(-16,2);16
 I:sr(not(0),1);2147483647
 I:not(0);-1
