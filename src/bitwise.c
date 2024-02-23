@@ -285,3 +285,46 @@ int tms_ipv4(tms_arg_list *args, int64_t *result)
     tms_free_arg_list(L);
     return status;
 }
+
+int tms_ipv4_prefix(int64_t length, int64_t *result)
+{
+    if (tms_int_mask_size != 32)
+    {
+        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, NOT_AN_IPV4_SIZE, EH_FATAL, NULL);
+        return -1;
+    }
+
+    if (length < 0 || length > 32)
+    {
+        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, NOT_A_VALID_IPV4_PREFIX, EH_FATAL, NULL);
+        return -1;
+    }
+
+    return tms_inv_mask(32 - length, result);
+}
+
+int tms_zeros(int64_t value, int64_t *result)
+{
+    int zeros_count = 0;
+    for (int i = 0; i < tms_int_mask_size; ++i)
+    {
+        if ((value & 1) == 0)
+            ++zeros_count;
+        value = (uint64_t)value >> 1;
+    }
+    *result = zeros_count;
+    return 0;
+}
+
+int tms_ones(int64_t value, int64_t *result)
+{
+    int ones_count = 0;
+    for (int i = 0; i < tms_int_mask_size; ++i)
+    {
+        if ((value & 1) == 1)
+            ++ones_count;
+        value = (uint64_t)value >> 1;
+    }
+    *result = ones_count;
+    return 0;
+}

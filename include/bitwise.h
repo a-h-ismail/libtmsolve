@@ -57,6 +57,15 @@ int tms_or(tms_arg_list *args, int64_t *result);
 /// @brief Reads an IPv4 in dot decimal notation
 int tms_ipv4(tms_arg_list *args, int64_t *result);
 
+/// @brief Generates the subnet mask corresponding to the specified prefix length
+int tms_ipv4_prefix(int64_t length, int64_t *result);
+
 /// @brief Reads a dot decimal notation
 int tms_dotted(tms_arg_list *args, int64_t *result);
+
+/// @brief Returns the number of binary zeros in its argument
+int tms_zeros(int64_t value, int64_t *result);
+
+/// @brief Returns the number of binary ones in its argument
+int tms_ones(int64_t value, int64_t *result);
 #endif
