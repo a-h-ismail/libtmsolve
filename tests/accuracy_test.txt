@@ -58,4 +58,6 @@ I:not(or(32,1243))-nor(32,1243);0
 I:rr(123,3);1610612751
 I:rl(1610612751,3);123
 I:zeros(545)+ones(545);32
-I:ipv4_prefix(24)&inv_mask(8);0xFF
+I:ipv4_prefix(24)-inv_mask(8);0
+I:mask(-8)-inv_mask(8);0
+I:mask(12)-inv_mask(-12);0
