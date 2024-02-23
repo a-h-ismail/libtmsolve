@@ -49,5 +49,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define EXPRESSION_TOO_LONG "Expression is too large to be indexed using an integer."
 #define NOT_A_VALID_IPV4 "An IPv4 should have four 8-bit fields."
 #define NOT_A_DOT_DECIMAL "Each octet in a dot-decimal notation should be in range [0,255]."
+#define NOT_AN_IPV4_SIZE "An IPv4 needs a variable size of 32 bits."
+#define NOT_A_VALID_IPV4_PREFIX "An IPv4 prefix should be in range [0,32]."
 #define UNKNOWN_FUNC_ERROR "Function reported an error."
 #endif
