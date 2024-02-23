@@ -16,7 +16,9 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <stdlib.h>
 #include <string.h>
 
-const tms_int_func tms_g_int_func[] = {{"not", tms_not}, {"mask", tms_mask}, {"inv_mask", tms_inv_mask}};
+const tms_int_func tms_g_int_func[] = {{"not", tms_not},           {"mask", tms_mask},
+                                       {"inv_mask", tms_inv_mask}, {"ipv4_prefix", tms_ipv4_prefix},
+                                       {"zeros", tms_zeros},       {"ones", tms_ones}};
 
 const int tms_g_int_func_count = array_length(tms_g_int_func);
 
