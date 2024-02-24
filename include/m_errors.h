@@ -52,5 +52,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define NOT_AN_IPV4_SIZE "An IPv4 needs a variable size of 32 bits."
 #define NOT_A_VALID_IPV4_PREFIX "An IPv4 prefix should be in range [0,32]."
 #define SHIFT_TOO_LARGE "Shift count is too large for the current variable size."
+#define SHIFT_AMOUNT_NEGATIVE "Shift amount can't be negative."
+#define ROTATION_AMOUNT_NEGATIVE "Rotation amount can't be negative."
 #define UNKNOWN_FUNC_ERROR "Function reported an error."
 #endif
