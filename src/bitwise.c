@@ -113,38 +113,53 @@ int tms_rl(tms_arg_list *args, int64_t *result)
 
 int tms_sr(tms_arg_list *args, int64_t *result)
 {
-    int64_t op1, op2;
-    if (get_two_operands(args, &op1, &op2) == -1)
+    int64_t value, shift;
+    if (get_two_operands(args, &value, &shift) == -1)
         return -1;
     else
     {
+        if (shift >= tms_int_mask_size)
+        {
+            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL);
+            return -1;
+        }
         // The cast to unsigned is necessary to avoid right shift sign extending
-        *result = ((uint64_t)op1 >> op2) & tms_int_mask;
+        *result = ((uint64_t)value >> shift) & tms_int_mask;
         return 0;
     }
 }
 
 int tms_sra(tms_arg_list *args, int64_t *result)
 {
-    int64_t op1, op2;
-    if (get_two_operands(args, &op1, &op2) == -1)
+    int64_t value, shift;
+    if (get_two_operands(args, &value, &shift) == -1)
         return -1;
     else
     {
-        op1 = tms_sign_extend(op1);
-        *result = (op1 >> op2) & tms_int_mask;
+        if (shift >= tms_int_mask_size)
+        {
+            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL);
+            return -1;
+        }
+        value = tms_sign_extend(value);
+        *result = (value >> shift) & tms_int_mask;
         return 0;
     }
 }
 
 int tms_sl(tms_arg_list *args, int64_t *result)
 {
-    int64_t op1, op2;
-    if (get_two_operands(args, &op1, &op2) == -1)
+    int64_t value, shift;
+    if (get_two_operands(args, &value, &shift) == -1)
         return -1;
     else
     {
-        *result = (op1 << op2) & tms_int_mask;
+        if (shift >= tms_int_mask_size)
+        {
+            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL);
+            return -1;
+        }
+        *result = ((uint64_t)value << shift) & tms_int_mask;
         return 0;
     }
 }
