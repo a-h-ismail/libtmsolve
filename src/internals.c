@@ -197,8 +197,29 @@ void tms_set_int_mask(int size)
 {
     tms_lock_parser(TMS_INT_PARSER);
     tms_lock_evaluator(TMS_INT_EVALUATOR);
-    tms_int_mask = ((int64_t)1 << size) - 1;
-    tms_int_mask_size = size;
+    double power = log2(size);
+
+    // The int mask size should be a power of 2
+    if (!tms_is_integer(power))
+    {
+        power = ceil(power);
+        size = pow(2, power);
+    }
+
+    if (size < 0)
+        fputs("libtmsolve warning: int mask size can't be negative, current size unchanged.", stderr);
+    else if (size > 64)
+        fputs("libtmsolve warning: The maximum int mask size is 64 bits, current size unchanged.", stderr);
+    else if (size == 64)
+    {
+        tms_int_mask = ~(int64_t)0;
+        tms_int_mask_size = 64;
+    }
+    else
+    {
+        tms_int_mask = ((int64_t)1 << size) - 1;
+        tms_int_mask_size = size;
+    }
     tms_unlock_parser(TMS_INT_PARSER);
     tms_unlock_evaluator(TMS_INT_EVALUATOR);
 }
