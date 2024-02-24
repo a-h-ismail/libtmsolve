@@ -858,7 +858,7 @@ void tms_delete_int_expr(tms_int_expr *M)
 void _tms_set_priority_int(tms_int_op_node *list, int op_count)
 {
     char operators[] = {'*', '/', '%', '+', '-', '&', '^', '|'};
-    uint8_t priority[] = {5, 5, 4, 4, 4, 3, 2, 1};
+    uint8_t priority[] = {5, 5, 5, 4, 4, 3, 2, 1};
     int i, j;
     for (i = 0; i < op_count; ++i)
     {
