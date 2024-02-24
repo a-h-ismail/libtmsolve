@@ -84,6 +84,13 @@ int _tms_rotate_circular(tms_arg_list *args, char direction, int64_t *result)
     if (get_two_operands(args, &value, &shift) == -1)
         return -1;
 
+    shift = tms_sign_extend(shift);
+    if (shift < 0)
+    {
+        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, ROTATION_AMOUNT_NEGATIVE, EH_FATAL, NULL);
+        return -1;
+    }
+
     shift %= tms_int_mask_size;
     switch (direction)
     {
@@ -118,7 +125,13 @@ int tms_sr(tms_arg_list *args, int64_t *result)
         return -1;
     else
     {
-        if (shift >= tms_int_mask_size)
+        shift = tms_sign_extend(shift);
+        if (shift < 0)
+        {
+            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SHIFT_AMOUNT_NEGATIVE, EH_FATAL, NULL);
+            return -1;
+        }
+        else if (shift >= tms_int_mask_size)
         {
             tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL);
             return -1;
@@ -136,7 +149,13 @@ int tms_sra(tms_arg_list *args, int64_t *result)
         return -1;
     else
     {
-        if (shift >= tms_int_mask_size)
+        shift = tms_sign_extend(shift);
+        if (shift < 0)
+        {
+            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SHIFT_AMOUNT_NEGATIVE, EH_FATAL, NULL);
+            return -1;
+        }
+        else if (shift >= tms_int_mask_size)
         {
             tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL);
             return -1;
@@ -154,6 +173,12 @@ int tms_sl(tms_arg_list *args, int64_t *result)
         return -1;
     else
     {
+        shift = tms_sign_extend(shift);
+        if (shift < 0)
+        {
+            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SHIFT_AMOUNT_NEGATIVE, EH_FATAL, NULL);
+            return -1;
+        }
         if (shift >= tms_int_mask_size)
         {
             tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL);
