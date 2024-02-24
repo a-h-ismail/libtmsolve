@@ -153,6 +153,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                         tms_error_handler(EH_SAVE, TMS_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, local_expr,
                                           S[s_i].solve_start - 1);
                         M->S = S;
+                        free(name);
                         tms_delete_math_expr(M);
                         return NULL;
                     }

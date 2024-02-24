@@ -210,6 +210,7 @@ tms_int_expr *_tms_init_int_expr(char *expr)
                         tms_error_handler(EH_SAVE, TMS_INT_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, local_expr,
                                           S[s_i].solve_start - 1);
                         M->S = S;
+                        free(name);
                         tms_delete_int_expr(M);
                         return NULL;
                     }
@@ -366,6 +367,7 @@ bool _tms_set_int_function_ptr(char *local_expr, tms_int_expr *M, int s_i)
             S->func_type = TMS_F_REAL;
             // Set the start of the subexpression to the start of the function name
             S->subexpr_start = solve_start - strlen(tms_g_int_func[i].name) - 1;
+            free(name);
             return true;
         }
         else
