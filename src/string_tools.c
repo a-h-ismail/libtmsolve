@@ -355,7 +355,9 @@ double complex tms_read_value(char *_s, int start)
 
 int _tms_read_int_helper(char *number, int8_t base, int64_t *result)
 {
-    int64_t value = 0, power = 1;
+    // using unsigned ints is intentional (to avoid tripping signed overflow detection in some cases)
+    uint64_t value = 0, power = 1;
+
     int i;
     bool is_negative = false;
     int8_t (*symbol_resolver)(char);
@@ -394,7 +396,7 @@ int _tms_read_int_helper(char *number, int8_t base, int64_t *result)
     }
 
     int8_t digit;
-    int64_t tmp1, tmp2;
+    uint64_t tmp1, tmp2;
     bool overflow;
     for (i = strlen(number) - 1; i >= 0; --i)
     {
@@ -425,8 +427,10 @@ int _tms_read_int_helper(char *number, int8_t base, int64_t *result)
         }
     }
 
-    if (is_negative)
-        value = -value;
+    // If the input is a base 10 and reading it as unsigned then casting to signed is giving a negative value,
+    // then we have an integer overflow (that wasn't caught above...)
+    if (base == 10 && (int64_t)value < 0)
+        return -2;
 
     // The resulting value is larger than what the mask allows
     if (base == 10 && tms_sign_extend(value & tms_int_mask) != value)
@@ -435,7 +439,10 @@ int _tms_read_int_helper(char *number, int8_t base, int64_t *result)
     else if ((value & tms_int_mask) != value)
         return -3;
 
-    *result = value;
+    if (is_negative)
+        *result = -value;
+    else
+        *result = value;
     return 0;
 }
 
