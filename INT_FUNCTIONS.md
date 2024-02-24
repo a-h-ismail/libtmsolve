@@ -1,14 +1,15 @@
 # Integer Functions
 
-Similar to double precision scientific mode, integer mode has functions: real and extended.
+Similar to double precision scientific mode, integer mode has functions: simple and extended.
 
-## Real Functions
-
-Declaration: `int foo(int64_t value, int64_t *result);`
+## Simple Functions
 
 - `not(value)`: Flips all bits of `value`.
 - `mask(n)`: Creates an n bit wide mask.
 - `inv_mask(n)`: Creates an n bit wide inverse mask.
+- `ipv4_prefix(length)`: Generates the mask corresponding to the specified prefix length.
+- `zeros(value)`: Returns the number of binary zeros in `value`.
+- `ones(value)`: Returns the number of binary ones in `value`.
 
 ## Extended Functions
 
