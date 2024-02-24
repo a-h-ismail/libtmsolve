@@ -424,17 +424,19 @@ int _tms_read_int_helper(char *number, int8_t base, int64_t *result)
                 power = tmp1;
         }
     }
+
     if (is_negative)
         value = -value;
 
     // The resulting value is larger than what the mask allows
-    if (tms_sign_extend(value & tms_int_mask) != value)
+    if (base == 10 && tms_sign_extend(value & tms_int_mask) != value)
         return -3;
-    else
-    {
-        *result = value;
-        return 0;
-    }
+    // For hex, oct, bin: the input is considered to be unsigned to manipulate bits directly
+    else if ((value & tms_int_mask) != value)
+        return -3;
+
+    *result = value;
+    return 0;
 }
 
 int tms_read_int_value(char *_s, int start, int64_t *result)
