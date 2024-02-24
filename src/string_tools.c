@@ -955,7 +955,7 @@ void tms_print_bin(int64_t value)
         // Shift 63 positions for the MSB to become LSB
         digit = ((uint64_t)value) >> 63;
 
-        if (i > 0 && i % 8 == 0)
+        if (i % 8 == 0)
             putchar(' ');
 
         if (digit == 0)
