@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.1.0 - 2024-02-24
+
+### Changes
+
+- Add int functions `ipv4_prefix()`, `ones()`, `zeros()`.
+- Modulo operator now has the same precedence as multiplication and division in int variants.
+- `tms_set_int_mask()` now enforces masks of width a power of 2.
+- Catch improper shift amount in int mode shift functions.
+- Catch negative rotation amount in int mode `rr()` and `rl()`.
+
+### Fixes
+
+- Fix mask generation issue in `tms_set_int_mask()` for 64 bit width.
+- Fix missing space while printing with width of 64 bits.
+
 ## 2.0.1 - 2024-02-21
 
 ### Fixes
