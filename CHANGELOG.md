@@ -14,6 +14,7 @@
 
 - Fix mask generation issue in `tms_set_int_mask()` for 64 bit width.
 - Fix missing space while printing with width of 64 bits.
+- Fix some incorrect error reports while reading int values.
 
 ## 2.0.1 - 2024-02-21
 
