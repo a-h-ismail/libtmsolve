@@ -13,7 +13,7 @@ Similar to double precision scientific mode, integer mode has functions: simple 
 
 ## Extended Functions
 
-- `and, nand, or, xor, xnor`: Expects 2 arguments, name is self explanatory.
+- `and, nand, or, nor, xor, xnor`: Expects 2 arguments, name is self explanatory.
 - `rr(value, rot)`: Performs right rotation of `value` bits by `rot` bits.
 - `rl(value, rot)`: Performs left rotation of `value` bits by `rot` bits.
 - `sr(value, shift)`: Performs right shift of `value` bits by `shift` bits.
