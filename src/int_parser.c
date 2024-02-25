@@ -217,7 +217,7 @@ tms_int_expr *_tms_init_int_expr(char *expr)
                     S[s_i].solve_end = i - 1;
                     S[s_i].depth = depth + 1;
                     S[s_i].func.extended = tms_g_int_extf[j].ptr;
-                    S[s_i].func_type = TMS_F_EXTENDED;
+                    S[s_i].func_type = TMS_F_INT_EXTENDED;
                     S[s_i].start_node = -1;
                     S[s_i].op_count = 0;
 
@@ -364,7 +364,7 @@ bool _tms_set_int_function_ptr(char *local_expr, tms_int_expr *M, int s_i)
         if ((i = tms_find_str_in_array(name, tms_g_int_func, tms_g_int_func_count, TMS_F_INT64)) != -1)
         {
             S->func.simple = tms_g_int_func[i].ptr;
-            S->func_type = TMS_F_REAL;
+            S->func_type = TMS_F_INT64;
             // Set the start of the subexpression to the start of the function name
             S->subexpr_start = solve_start - strlen(tms_g_int_func[i].name) - 1;
             free(name);
@@ -547,21 +547,21 @@ int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op
         return -1;
     }
 
-    status = _tms_read_int_operand(expr, op_start, operand_ptr);
+    // Check if the operand is the result of a subexpression
+    status = _tms_find_int_subexpr_starting_at(S, op_start, s_i, 1);
 
-    if (status != 0)
+    if (status == -1)
     {
-        // Case of a subexpression result as operand
-        status = _tms_find_int_subexpr_starting_at(S, op_start, s_i, 1);
-        if (status == -1)
+        status = _tms_read_int_operand(expr, op_start, operand_ptr);
+        if (status != 0)
         {
             if (tms_error_handler(EH_ERROR_COUNT, TMS_INT_PARSER, EH_FATAL) == 0)
                 tms_error_handler(EH_SAVE, TMS_INT_PARSER, SYNTAX_ERROR, EH_FATAL, expr, op_start);
             return -1;
         }
-        else
-            *(S[status].result) = operand_ptr;
     }
+    else
+        *(S[status].result) = operand_ptr;
     return 0;
 }
 
@@ -776,7 +776,7 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr)
     {
         // Extended functions use a subexpression without nodes, but the subexpression result pointer should point at something
         // Allocate a small block and use that for the result pointer
-        if (S[s_i].func_type == TMS_F_EXTENDED)
+        if (S[s_i].func_type == TMS_F_INT_EXTENDED)
         {
             S[s_i].result = malloc(sizeof(double complex *));
             continue;
@@ -929,7 +929,7 @@ char *_tms_lookup_int_function_name(void *function, int func_type)
     int i;
     switch (func_type)
     {
-    case TMS_F_REAL:
+    case TMS_F_INT64:
         for (i = 0; i < tms_g_int_func_count; ++i)
         {
             if (function == (void *)(tms_g_int_func[i].ptr))
@@ -940,7 +940,7 @@ char *_tms_lookup_int_function_name(void *function, int func_type)
         else
             break;
 
-    case TMS_F_EXTENDED:
+    case TMS_F_INT_EXTENDED:
         for (i = 0; i < tms_g_int_extf_count; ++i)
         {
             if (function == (void *)(tms_g_int_extf[i].ptr))
