@@ -55,4 +55,5 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define SHIFT_AMOUNT_NEGATIVE "Shift amount can't be negative."
 #define ROTATION_AMOUNT_NEGATIVE "Rotation amount can't be negative."
 #define UNKNOWN_FUNC_ERROR "Function reported an error."
+#define ERROR_DB_NOT_EMPTY "Warning: expected an empty error database for this facility. Clearing it now..."
 #endif
