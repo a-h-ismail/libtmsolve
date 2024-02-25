@@ -304,6 +304,12 @@ int tms_ipv4(tms_arg_list *args, int64_t *result)
     if (_tms_validate_args_count(1, args->count, TMS_INT_EVALUATOR) == false)
         return -1;
 
+    if (tms_int_mask_size != 32)
+    {
+        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, NOT_AN_IPV4_SIZE, EH_FATAL, NULL);
+        return -1;
+    }
+
     int status;
     char *input = args->arguments[0];
 
