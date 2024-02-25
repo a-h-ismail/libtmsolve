@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.1.0 - 2024-02-24
+## 2.1.0 - 2024-02-25
 
 ### Changes
 
@@ -15,6 +15,9 @@
 - Fix mask generation issue in `tms_set_int_mask()` for 64 bit width.
 - Fix missing space while printing with width of 64 bits.
 - Fix some incorrect error reports while reading int values.
+- Fix silent error accumulation in int mode when using extended functions.
+- Use correct function ID macros in int mode.
+- Warn if the error database is not empty and clear it on entry of parsers/evaluators.
 
 ## 2.0.1 - 2024-02-21
 
