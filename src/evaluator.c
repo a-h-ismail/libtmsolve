@@ -342,7 +342,7 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
         // Executing function on the subexpression result
         switch (S[s_i].func_type)
         {
-        case TMS_F_REAL:
+        case TMS_F_INT64:
             state = (*(S[s_i].func.simple))(tms_sign_extend(**(S[s_i].result)), *(S[s_i].result));
             **(S[s_i].result) &= tms_int_mask;
             if (state == -1)
