@@ -846,7 +846,7 @@ void tms_delete_int_expr(tms_int_expr *M)
     tms_int_subexpr *S = M->S;
     for (i = 0; i < M->subexpr_count; ++i)
     {
-        if (S[i].func_type == 3)
+        if (S[i].func_type == TMS_F_INT_EXTENDED)
             free(S[i].result);
         free(S[i].nodes);
     }
