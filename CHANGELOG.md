@@ -9,6 +9,7 @@
 - `tms_set_int_mask()` now enforces masks of width a power of 2.
 - Catch improper shift amount in int mode shift functions.
 - Catch negative rotation amount in int mode `rr()` and `rl()`.
+- `ipv4()` now requires a variable width of 32 bits.
 
 ### Fixes
 
