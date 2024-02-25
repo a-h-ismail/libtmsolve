@@ -18,6 +18,13 @@ SPDX-License-Identifier: LGPL-2.1-only
 double complex tms_evaluate(tms_math_expr *M)
 {
     tms_lock_evaluator(TMS_EVALUATOR);
+
+    if (tms_error_handler(EH_ERROR_COUNT, TMS_EVALUATOR, EH_ALL_ERRORS) != 0)
+    {
+        fputs(ERROR_DB_NOT_EMPTY, stderr);
+        tms_error_handler(EH_CLEAR, TMS_EVALUATOR);
+    }
+
     double complex result = _tms_evaluate_unsafe(M);
 
     if (isnan(creal(result)))
@@ -203,8 +210,14 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
 int tms_int_evaluate(tms_int_expr *M, int64_t *result)
 {
     tms_lock_evaluator(TMS_INT_EVALUATOR);
-    int exit_status = _tms_int_evaluate_unsafe(M, result);
 
+    if (tms_error_handler(EH_ERROR_COUNT, TMS_INT_EVALUATOR, EH_ALL_ERRORS) != 0)
+    {
+        fputs(ERROR_DB_NOT_EMPTY, stderr);
+        tms_error_handler(EH_CLEAR, TMS_INT_EVALUATOR);
+    }
+
+    int exit_status = _tms_int_evaluate_unsafe(M, result);
     if (exit_status != 0)
         tms_error_handler(EH_PRINT, TMS_INT_EVALUATOR);
 

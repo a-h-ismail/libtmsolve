@@ -13,6 +13,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "tms_math_strs.h"
 
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -694,6 +695,12 @@ void _tms_set_int_result_pointers(tms_int_expr *M, int s_i)
 tms_int_expr *tms_parse_int_expr(char *expr)
 {
     tms_lock_parser(TMS_INT_PARSER);
+
+    if (tms_error_handler(EH_ERROR_COUNT, TMS_INT_PARSER, EH_ALL_ERRORS) != 0)
+    {
+        fputs(ERROR_DB_NOT_EMPTY, stderr);
+        tms_error_handler(EH_CLEAR, TMS_INT_PARSER);
+    }
 
     tms_int_expr *M = _tms_parse_int_expr_unsafe(expr);
     if (M == NULL)

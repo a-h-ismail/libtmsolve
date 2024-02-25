@@ -5,6 +5,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 #include <ctype.h>
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -767,6 +768,12 @@ void _tms_set_result_pointers(tms_math_expr *M, int s_i)
 tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_complex)
 {
     tms_lock_parser(TMS_PARSER);
+
+    if (tms_error_handler(EH_ERROR_COUNT, TMS_PARSER, EH_ALL_ERRORS) != 0)
+    {
+        fputs(ERROR_DB_NOT_EMPTY, stderr);
+        tms_error_handler(EH_CLEAR, TMS_PARSER);
+    }
 
     tms_math_expr *M = _tms_parse_expr_unsafe(expr, enable_unknowns, enable_complex);
     if (M == NULL)
