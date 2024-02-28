@@ -299,6 +299,49 @@ int tms_dotted(tms_arg_list *args, int64_t *result)
     return status;
 }
 
+int tms_mask_range(tms_arg_list *args, int64_t *result)
+{
+    if (_tms_validate_args_count(2, args->count, TMS_INT_EVALUATOR) == false)
+        return -1;
+
+    int64_t start, end;
+    int status;
+    status = _tms_int_solve_unsafe(args->arguments[0], &start);
+    if (status == -1)
+    {
+        tms_error_handler(EH_CLEAR, TMS_INT_EVALUATOR);
+        tms_error_handler(EH_CLEAR, TMS_INT_PARSER);
+        return -1;
+    }
+    status = _tms_int_solve_unsafe(args->arguments[1], &end);
+    if (status == -1)
+    {
+        tms_error_handler(EH_CLEAR, TMS_INT_EVALUATOR);
+        tms_error_handler(EH_CLEAR, TMS_INT_PARSER);
+        return -1;
+    }
+
+    if (start < 0 || start >= tms_int_mask_size || end < 0 || end >= tms_int_mask_size)
+    {
+        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, BIT_OUT_OF_RANGE, EH_FATAL, NULL);
+        return -1;
+    }
+
+    if (start == end)
+        *result = (uint64_t)1 << start;
+    else if (start < end)
+    {
+        tms_mask(end - start + 1, result);
+        *result = *result << start;
+    }
+    else
+    {
+        tms_mask(start - end + 1, result);
+        *result = ~(*result << end);
+    }
+    return 0;
+}
+
 int tms_ipv4(tms_arg_list *args, int64_t *result)
 {
     if (_tms_validate_args_count(1, args->count, TMS_INT_EVALUATOR) == false)

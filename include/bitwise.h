@@ -63,6 +63,10 @@ int tms_ipv4_prefix(int64_t length, int64_t *result);
 /// @brief Reads a dot decimal notation
 int tms_dotted(tms_arg_list *args, int64_t *result);
 
+/// @brief Generates a mask for a range of bits
+/// @details If the range start is larger than its end, the mask will wrap around.
+int tms_mask_range(tms_arg_list *args, int64_t *result);
+
 /// @brief Returns the number of binary zeros in its argument
 int tms_zeros(int64_t value, int64_t *result);
 

@@ -23,9 +23,19 @@ const tms_int_func tms_g_int_func[] = {{"not", tms_not},           {"mask", tms_
 
 const int tms_g_int_func_count = array_length(tms_g_int_func);
 
-const tms_int_extf tms_g_int_extf[] = {
-    {"rr", tms_rr},   {"rl", tms_rl},   {"sr", tms_sr},   {"sra", tms_sra}, {"sl", tms_sl},     {"nand", tms_nand},
-    {"and", tms_and}, {"xor", tms_xor}, {"nor", tms_nor}, {"or", tms_or},   {"ipv4", tms_ipv4}, {"dotted", tms_dotted}};
+const tms_int_extf tms_g_int_extf[] = {{"rr", tms_rr},
+                                       {"rl", tms_rl},
+                                       {"sr", tms_sr},
+                                       {"sra", tms_sra},
+                                       {"sl", tms_sl},
+                                       {"nand", tms_nand},
+                                       {"and", tms_and},
+                                       {"xor", tms_xor},
+                                       {"nor", tms_nor},
+                                       {"or", tms_or},
+                                       {"ipv4", tms_ipv4},
+                                       {"dotted", tms_dotted},
+                                       {"mask_range", tms_mask_range}};
 
 const int tms_g_int_extf_count = array_length(tms_g_int_extf);
 
