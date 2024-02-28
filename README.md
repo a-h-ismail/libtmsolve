@@ -82,6 +82,8 @@ To build your binary and link to this library:
 
 Documentation about the parser, evaluator, and some useful features like factorization can be found in `parser.h`, `evaluator.h` and `scientific.h`.
 
+Extended functions (like integration) are defined in `function.h`.
+
 Integer variant of the parser is in `int_parser.h`, its extended functions are in `bitwise.h`.
 
 For functions that assist in manipulating strings (char *), refer to `string_tools.h`.
@@ -92,11 +94,10 @@ For functions used internally to manage the calculator (like error handling), re
 
 All error messages are defined in `m_errors.h`.
 
-Extended functions (like integration) are defined in `function.h`.
-
 ## Note
 
-The library uses double precision floating point variables with complex extension for its operations.
+The library uses double precision floating point variables with complex extension for its "scientific" operations,
+and uses `int64_t` for the integer only version of the parser and evaluator.
 
 ## License
 
