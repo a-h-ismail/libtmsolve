@@ -406,12 +406,7 @@ int _tms_init_int_nodes(char *local_expr, tms_int_expr *M, int s_i, int *operato
         return -1;
     }
 
-    // Allocate nodes
-    if (op_count == 0)
-        S[s_i].nodes = malloc(sizeof(tms_int_op_node));
-    else
-        S[s_i].nodes = malloc(op_count * sizeof(tms_int_op_node));
-
+    S[s_i].nodes = malloc((op_count == 0 ? 1 : op_count) * sizeof(tms_int_op_node));
     NB = S[s_i].nodes;
 
     // Check if the expression is terminated with an operator

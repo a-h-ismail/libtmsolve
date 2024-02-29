@@ -387,10 +387,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_i, int *operator_i
     }
 
     // Allocate nodes
-    if (op_count == 0)
-        S[s_i].nodes = malloc(sizeof(tms_op_node));
-    else
-        S[s_i].nodes = malloc(op_count * sizeof(tms_op_node));
+    S[s_i].nodes = malloc((op_count == 0 ? 1 : op_count) * sizeof(tms_op_node));
 
     NB = S[s_i].nodes;
 
@@ -400,7 +397,7 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_i, int *operator_i
         tms_error_handler(EH_SAVE, TMS_PARSER, RIGHT_OP_MISSING, EH_FATAL, local_expr, operator_index[op_count - 1]);
         return -1;
     }
-    // Fill operations and index data into each op_node
+
     for (i = 0; i < op_count; ++i)
     {
         NB[i].operator_index = operator_index[i];
@@ -843,7 +840,7 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool ena
 
     /*
     How to parse a subexpression:
-    - Handle the special case of extended functions (currently: int, der)
+    - Handle the special case of extended functions
     - Create an array that determines the location of operators in the string
     - Check if the subexpression has a function to execute on the result, set pointer
     - Allocate the array of nodes
