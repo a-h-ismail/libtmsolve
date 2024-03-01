@@ -382,7 +382,6 @@ int tms_set_ufunction(char *name, char *function)
 {
     int i;
     int ufunc_index = tms_find_str_in_array(name, tms_g_ufunc, tms_g_ufunc_count, TMS_F_RUNTIME);
-    ;
 
     // Check if the name has illegal characters
     if (tms_valid_name(name) == false)
@@ -428,18 +427,17 @@ int tms_set_ufunction(char *name, char *function)
         }
         else
         {
-            // Update the pointer before checks otherwise they won't work
-            tms_g_ufunc[i].F = new;
-            // Check for self reference, then fix old references in other functions
+            // Check for self and circular function references
             if (tms_ufunc_has_self_ref(new) || tms_has_ufunc_circular_refs(new))
             {
                 tms_delete_math_expr(new);
-                tms_g_ufunc[i].F = old;
                 return -1;
             }
             else
             {
-                tms_delete_math_expr(old);
+                tms_delete_math_expr_members(old);
+                *old = *new;
+                free(new);
                 return 0;
             }
         }
