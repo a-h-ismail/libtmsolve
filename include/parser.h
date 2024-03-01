@@ -178,6 +178,12 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_comp
 tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool enable_complex);
 
 /**
+ * @brief Frees the memory used by the members of a math_expr.
+ * @param M The math_expr which members will be freed.
+ */
+void tms_delete_math_expr_members(tms_math_expr *M);
+
+/**
  * @brief Frees the memory used by a math_expr and its members.
  * @param M The math_expr to delete.
  */

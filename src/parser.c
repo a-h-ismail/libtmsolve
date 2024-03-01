@@ -1038,7 +1038,7 @@ int _tms_set_unknowns_data(char *expr, tms_op_node *x_node, char operand)
     return 0;
 }
 
-void tms_delete_math_expr(tms_math_expr *M)
+void tms_delete_math_expr_members(tms_math_expr *M)
 {
     if (M == NULL)
         return;
@@ -1054,6 +1054,11 @@ void tms_delete_math_expr(tms_math_expr *M)
     free(S);
     free(M->x_data);
     free(M->expr);
+}
+
+void tms_delete_math_expr(tms_math_expr *M)
+{
+    tms_delete_math_expr_members(M);
     free(M);
 }
 
