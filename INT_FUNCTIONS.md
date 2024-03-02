@@ -21,4 +21,4 @@ Similar to double precision scientific mode, integer mode has functions: simple 
 - `sl(value, shift)`: Performs left shift of `value` bits by `shift` bits.
 - `ipv4(a.b.c.d)`: Reads an IPv4 in dot decimal notation.
 - `dotted(a.b...)`: Reads a dot decimal notation of any width.
-
+- `mask_range(start,end)`: Generates a mask for bits in range [start, end] (LSB is considered to be the zero index).
