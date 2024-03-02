@@ -314,7 +314,7 @@ int _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_i)
     {
         char *name = tms_get_name(local_expr, solve_start - 2, false);
         if (name == NULL)
-            return true;
+            return 0;
 
         // Runtime user functions
         if ((i = tms_find_str_in_array(name, tms_g_ufunc, tms_g_ufunc_count, TMS_F_RUNTIME)) != -1)
@@ -324,7 +324,7 @@ int _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_i)
             // Set the start of the subexpression to the start of the function name
             S->subexpr_start = solve_start - strlen(tms_g_ufunc[i].name) - 1;
             free(name);
-            return true;
+            return 0;
         }
 
         if (!M->enable_complex)
@@ -340,13 +340,13 @@ int _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_i)
                 S->func_type = TMS_F_REAL;
                 S->subexpr_start = solve_start - strlen(tms_g_rc_func[i].name) - 1;
                 free(name);
-                return true;
+                return 0;
             }
             else
             {
                 tms_error_handler(EH_SAVE, TMS_PARSER, UNDEFINED_FUNCTION, EH_NONFATAL, local_expr, solve_start - 2);
                 free(name);
-                return false;
+                return -1;
             }
         }
         else
@@ -357,18 +357,18 @@ int _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_i)
                 S->func_type = TMS_F_CMPLX;
                 S->subexpr_start = solve_start - strlen(tms_g_rc_func[i].name) - 1;
                 free(name);
-                return true;
+                return 0;
             }
 
             else
             {
                 tms_error_handler(EH_SAVE, TMS_PARSER, UNDEFINED_FUNCTION, EH_NONFATAL, local_expr, solve_start - 2);
                 free(name);
-                return false;
+                return -1;
             }
         }
     }
-    return true;
+    return 0;
 }
 
 int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_i, int *operator_index, bool enable_unknowns)
