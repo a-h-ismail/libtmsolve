@@ -883,10 +883,6 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool ena
             tms_delete_math_expr(M);
             return NULL;
         }
-        else if (status == TMS_CONTINUE)
-            continue;
-        else if (status == TMS_BREAK)
-            break;
 
         status = _tms_set_all_operands(local_expr, M, s_i, enable_unknowns);
         if (status == -1)

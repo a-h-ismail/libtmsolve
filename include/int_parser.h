@@ -11,11 +11,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "tms_math_strs.h"
 #endif
 
-#define TMS_CONTINUE 1
-#define TMS_SUCCESS 0
-#define TMS_BREAK 2
-#define TMS_ERROR -1
-
 extern const tms_int_func tms_g_int_func[];
 
 extern const int tms_g_int_func_count;

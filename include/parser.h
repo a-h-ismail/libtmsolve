@@ -34,11 +34,6 @@ extern const int tms_g_extf_count;
 /// @return 1 if a.depth < b.depth; -1 if a.depth > b.depth; 0 otherwise.
 int tms_compare_subexpr_depth(const void *a, const void *b);
 
-#define TMS_CONTINUE 1
-#define TMS_SUCCESS 0
-#define TMS_BREAK 2
-#define TMS_ERROR -1
-
 /**
  * @brief First parsing step, detects assignment to runtime variables.
  * @param eq Index of the assignment operator.
