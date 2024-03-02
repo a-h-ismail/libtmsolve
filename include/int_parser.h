@@ -2,8 +2,8 @@
 Copyright (C) 2023-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#ifndef TMS_INT_PARSER_H
-#define TMS_INT_PARSER_H
+#ifndef _TMS_INT_PARSER_H
+#define _TMS_INT_PARSER_H
 
 #ifndef LOCAL_BUILD
 #include <tmsolve/tms_math_strs.h>

@@ -2,8 +2,8 @@
 Copyright (C) 2022-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#ifndef INTERNALS_H
-#define INTERNALS_H
+#ifndef _TMS_INTERNALS_H
+#define _TMS_INTERNALS_H
 /**
  * @file
  * @brief Declares general purpose functionality like error handling, init and runtime variables.

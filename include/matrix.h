@@ -2,8 +2,8 @@
 Copyright (C) 2022-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#ifndef MATRIX_H
-#define MATRIX_H
+#ifndef _TMS_MATRIX_H
+#define _TMS_MATRIX_H
 /**
  * @file
  * @brief Declares all matrix related macros, structures, globals and functions.

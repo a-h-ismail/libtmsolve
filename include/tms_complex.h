@@ -2,8 +2,8 @@
 Copyright (C) 2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#ifndef COMPLEX_H
-#define COMPLEX_H
+#ifndef _TMS_COMPLEX_H
+#define _TMS_COMPLEX_H
 #include <complex.h>
 
 /**

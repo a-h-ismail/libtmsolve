@@ -2,8 +2,8 @@
 Copyright (C) 2023-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#ifndef TMS_STRUCTS_H
-#define TMS_STRUCTS_H
+#ifndef _TMS_STRUCTS_H
+#define _TMS_STRUCTS_H
 #include <inttypes.h>
 #include <stdbool.h>
 #include <complex.h>

@@ -1,9 +1,9 @@
 /*
-Copyright (C) 2023 Ahmad Ismail
+Copyright (C) 2023-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#ifndef EVALUATOR_H
-#define EVALUATOR_H
+#ifndef _TMS_EVALUATOR_H
+#define _TMS_EVALUATOR_H
 /**
  * @file
  * @brief Includes functions related to expression evaluation.

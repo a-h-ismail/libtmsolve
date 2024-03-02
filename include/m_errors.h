@@ -2,8 +2,8 @@
 Copyright (C) 2022-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#ifndef M_ERRORS_H
-#define M_ERRORS_H
+#ifndef _TMS_M_ERRORS_H
+#define _TMS_M_ERRORS_H
 
 /**
  * @file

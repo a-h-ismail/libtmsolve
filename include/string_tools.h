@@ -2,8 +2,8 @@
 Copyright (C) 2022-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#ifndef STRING_TOOLS_H
-#define STRING_TOOLS_H
+#ifndef _TMS_STRING_TOOLS_H
+#define _TMS_STRING_TOOLS_H
 /**
  * @file
  * @brief Declares all string handling related macros, structures, globals and functions.
@@ -243,7 +243,7 @@ char *tms_get_name(char *expr, int i, bool is_at_start);
  * @param key The string to find
  * @param array The array of elements (not necessarily a char array)
  * @param arr_len Number of elements in the array
- * @param type Type of the elements in the array (TMS_F_REAL...)
+ * @param type Type of the elements in the array (_TMS_F_REAL...)
  * @return The index of the first match, or -1 if no match is found.
  */
 int tms_find_str_in_array(char *key, const void *array, int arr_len, uint8_t type);

@@ -2,8 +2,8 @@
 Copyright (C) 2022-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#ifndef SCIENTIFIC_H
-#define SCIENTIFIC_H
+#ifndef _TMS_SCIENTIFIC_H
+#define _TMS_SCIENTIFIC_H
 /**
  * @file
  * @brief Declares all scientific related macros, structures, globals and functions.

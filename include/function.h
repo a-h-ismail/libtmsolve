@@ -2,8 +2,8 @@
 Copyright (C) 2022-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#ifndef FUNCTION_H
-#define FUNCTION_H
+#ifndef _TMS_FUNCTION_H
+#define _TMS_FUNCTION_H
 
 #ifndef LOCAL_BUILD
 #include <tmsolve/tms_math_strs.h>
