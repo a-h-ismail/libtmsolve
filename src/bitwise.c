@@ -63,6 +63,18 @@ int tms_mask(int64_t bits, int64_t *result)
     }
 }
 
+int tms_mask_bit(int64_t bit, int64_t *result)
+{
+    if (bit < 0 || bit >= tms_int_mask_size)
+    {
+        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, BIT_OUT_OF_RANGE, EH_FATAL, NULL);
+        return -1;
+    }
+
+    *result = (int64_t)1 << bit;
+    return 0;
+}
+
 // Just invert what you get by the regular mask
 int tms_inv_mask(int64_t bits, int64_t *result)
 {

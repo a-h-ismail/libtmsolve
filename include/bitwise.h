@@ -21,6 +21,9 @@ int tms_not(int64_t value, int64_t *result);
 /// @brief Generates a mask of size "bits"
 int tms_mask(int64_t bits, int64_t *result);
 
+/// @brief Generates a mask for a specific bit.
+int tms_mask_bit(int64_t bit, int64_t *result);
+
 /// @brief Generates an inverted mask of size "bits"
 int tms_inv_mask(int64_t bits, int64_t *result);
 
