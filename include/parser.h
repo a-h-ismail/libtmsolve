@@ -2,8 +2,8 @@
 Copyright (C) 2022-2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef TMS_PARSER_H
+#define TMS_PARSER_H
 
 /**
  * @file
@@ -69,9 +69,9 @@ int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_inde
  * @param local_expr Expression, offset from the assignment operator (if any).
  * @param M tms_math_expr being processed.
  * @param s_index Index of the current subexpression.
- * @return true on success, false on failure.
+ * @return 0 on success, -1 on failure.
  */
-bool _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index);
+int _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index);
 
 /**
  * @brief Allocates nodes and sets basic metadata.
@@ -120,7 +120,7 @@ int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start,
  * @brief Sets the *next pointer of all nodes.
  * @param S current subexpression being processed.
  */
-bool _tms_set_evaluation_order(tms_math_subexpr *S);
+int _tms_set_evaluation_order(tms_math_subexpr *S);
 
 /**
  * @brief Set the operation result pointer for each node.
