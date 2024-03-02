@@ -6,6 +6,7 @@ Similar to double precision scientific mode, integer mode has functions: simple 
 
 - `not(value)`: Flips all bits of `value`.
 - `mask(n)`: Creates an n bit wide mask.
+- `mask_bit(n)`: Creates a mask for the nth bit (LSB is considered `b0`).
 - `inv_mask(n)`: Creates an n bit wide inverse mask.
 - `ipv4_prefix(length)`: Generates the mask corresponding to the specified prefix length.
 - `zeros(value)`: Returns the number of binary zeros in `value`.
@@ -21,4 +22,4 @@ Similar to double precision scientific mode, integer mode has functions: simple 
 - `sl(value, shift)`: Performs left shift of `value` bits by `shift` bits.
 - `ipv4(a.b.c.d)`: Reads an IPv4 in dot decimal notation.
 - `dotted(a.b...)`: Reads a dot decimal notation of any width.
-- `mask_range(start,end)`: Generates a mask for bits in range [start, end] (LSB is considered to be the zero index).
+- `mask_range(start,end)`: Generates a mask for bits in range [start, end] (LSB is considered `b0`).
