@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.2.0 - 2024-03-02
+
+## Added
+
+- Int functions `mask_bit()` and `mask_range()`.
+- `tms_delete_math_expr_members()` to free memory of a math expression members without freeing the math_expr itself.
+
+## Fixed
+
+- When runtime defined functions are updated, the pointer to the math_struct is now conserved. This should avoid dangling pointers in other math expressions referring to the old version.
+
 ## 2.1.0 - 2024-02-25
 
 ### Changes
