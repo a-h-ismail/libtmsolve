@@ -61,3 +61,5 @@ I:zeros(545)+ones(545);32
 I:ipv4_prefix(24)-inv_mask(8);0
 I:mask(-8)-inv_mask(8);0
 I:mask(12)-inv_mask(-12);0
+I:mask_range(8,15)-sl(mask(8),8); 0
+I:5+8+900|(5+562/95+7*7+not(((-134235))))+5*4;135097
