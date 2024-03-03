@@ -58,7 +58,7 @@ Runtime functions are created by the user during runtime. For `libtmsolve`, you 
 ```C
 double complex tms_foo(tms_arg_list *args)
 {
-    if (_validate_args_count(EXPECTED_ARGS, args->count) == false)
+    if (_validate_args_count(EXPECTED_ARGS, args->count, TMS_EVALUATOR) == false)
         return NAN;
     
     // <...>
