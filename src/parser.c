@@ -35,7 +35,8 @@ const tms_rc_func tms_g_rc_func[] = {
     {"tan", tms_tan, tms_ctan},    {"acos", acos, cacos},        {"asin", asin, casin},
     {"atan", atan, catan},         {"cosh", cosh, ccosh},        {"sinh", sinh, csinh},
     {"tanh", tanh, ctanh},         {"acosh", acosh, cacosh},     {"asinh", asinh, casinh},
-    {"atanh", atanh, catanh},      {"ln", log, tms_cln},         {"log10", log10, tms_clog10}};
+    {"atanh", atanh, catanh},      {"ln", log, tms_cln},         {"log2", log2, tms_clog2},
+    {"log10", log10, tms_clog10}};
 
 const int tms_g_rc_func_count = array_length(tms_g_rc_func);
 
