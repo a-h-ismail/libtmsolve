@@ -229,6 +229,14 @@ double complex tms_solve(char *expr)
                 if (tms_error_handler(EH_ERROR_COUNT, TMS_EVALUATOR, EH_FATAL) == 0)
                 {
                     tms_convert_real_to_complex(M);
+                    // Conversion to complex failed
+                    if (!M->enable_complex)
+                    {
+                        tms_delete_math_expr(M);
+                        return NAN;
+                    }
+                    // Conversion succeeded, clear previous errors
+                    tms_error_handler(EH_CLEAR, TMS_EVALUATOR);
                     result = _tms_evaluate_unsafe(M);
                     if (isnan(creal(result)))
                         tms_error_handler(EH_PRINT, TMS_EVALUATOR);
