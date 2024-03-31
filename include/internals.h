@@ -185,6 +185,8 @@ int tms_set_ufunction(char *name, char *function);
 
 bool _tms_validate_args_count(int expected, int actual, int facility_id);
 
+bool _tms_validate_args_count_range(int actual, int min, int max, int facility_id);
+
 /**
  * @brief Duplicates an existing math expression.
  */

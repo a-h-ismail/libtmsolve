@@ -235,6 +235,18 @@ bool _tms_validate_args_count(int expected, int actual, int facility_id)
     return false;
 }
 
+bool _tms_validate_args_count_range(int actual, int min, int max, int facility_id)
+{
+    if (actual > max)
+        tms_error_handler(EH_SAVE, facility_id, TOO_FEW_ARGS, EH_FATAL, NULL);
+    else if (actual < min)
+        tms_error_handler(EH_SAVE, facility_id, TOO_MANY_ARGS, EH_FATAL, NULL);
+    else
+        return true;
+
+    return false;
+}
+
 int tms_new_var(char *name, bool is_constant)
 {
     int i;
