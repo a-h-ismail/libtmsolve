@@ -253,6 +253,9 @@ double complex tms_integrate(tms_arg_list *L)
         return NAN;
     }
 
+    if (lower_bound == upper_bound)
+        return 0;
+
     delta = upper_bound - lower_bound;
     // If delta is negative, flip lower and upper bounds then multiply the final answer by -1
     if (delta < 0)
