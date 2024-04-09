@@ -150,7 +150,15 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                         return NAN;
                     }
                     else
+                    {
                         *(i_node->result) = fmod(i_node->left_operand, i_node->right_operand);
+                        if (isnan(creal(*(i_node->result))))
+                        {
+                            tms_error_handler(EH_SAVE, TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->local_expr,
+                                              i_node->operator_index);
+                            return NAN;
+                        }
+                    }
                     break;
 
                 case '^':
