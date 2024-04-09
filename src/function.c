@@ -239,6 +239,13 @@ double complex tms_derivative(tms_arg_list *L)
         return NAN;
     }
 
+    if (!tms_is_deterministic(M))
+    {
+        tms_error_handler(EH_SAVE, TMS_EVALUATOR, EXPR_NOT_DETERMINISTIC, EH_FATAL, NULL);
+        tms_delete_math_expr(M);
+        return NAN;
+    }
+
     // Scale epsilon with the dimensions of the required value.
     epsilon = x * epsilon;
 
@@ -298,6 +305,13 @@ double complex tms_integrate(tms_arg_list *L)
 
     if (M == NULL)
         return NAN;
+
+    if (!tms_is_deterministic(M))
+    {
+        tms_error_handler(EH_SAVE, TMS_EVALUATOR, EXPR_NOT_DETERMINISTIC, EH_FATAL, NULL);
+        tms_delete_math_expr(M);
+        return NAN;
+    }
 
     // Calculating the number of rounds
     rounds = ceil(delta) * 65536;
