@@ -211,4 +211,9 @@ int _tms_find_subexpr_starting_at(tms_math_subexpr *S, int start, int s_index, i
  */
 int _tms_find_subexpr_ending_at(tms_math_subexpr *S, int end, int s_index, int s_count);
 
+/**
+ * @brief Checks if the specified math expression is deterministic (as in it has no random functions).
+ */
+bool tms_is_deterministic(tms_math_expr *M);
+
 #endif

@@ -1122,3 +1122,13 @@ int _tms_find_subexpr_ending_at(tms_math_subexpr *S, int end, int s_i, int s_cou
     }
     return -1;
 }
+
+bool tms_is_deterministic(tms_math_expr *M)
+{
+    for (int i = 0; i < M->subexpr_count; ++i)
+    {
+        if (M->S[i].func.extended == tms_rand || M->S[i].func.extended == tms_randint)
+            return false;
+    }
+    return true;
+}
