@@ -10,6 +10,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "scientific.h"
 #include "string_tools.h"
 #include "tms_complex.h"
+#include <float.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -135,10 +136,35 @@ double complex tms_int(tms_arg_list *args)
 
 double complex tms_randint(tms_arg_list *args)
 {
-    if (_tms_validate_args_count(0, args->count, TMS_EVALUATOR) == false)
+    if (_tms_validate_args_count_range(args->count, 0, 2, TMS_EVALUATOR) == false)
         return NAN;
 
-    return (double)rand() * pow(-1, rand() & 1);
+    double random_weight = (double)rand() / RAND_MAX;
+
+    if (args->count == 0)
+        return random_weight * RAND_MAX * pow(-1, rand() & 1);
+    else if (args->count == 1)
+    {
+        double min = _tms_solve_e_unsafe(args->arguments[0], false);
+        if (isnan(min))
+            return NAN;
+        return min + random_weight * RAND_MAX;
+    }
+    else if (args->count == 2)
+    {
+        double min, max;
+        min = _tms_solve_e_unsafe(args->arguments[0], false);
+        if (isnan(min))
+            return NAN;
+        max = _tms_solve_e_unsafe(args->arguments[1], false);
+        if (isnan(max))
+            return NAN;
+        if (max <= min)
+            return NAN;
+
+        return round(random_weight * (max - min) + min);
+    }
+    return NAN;
 }
 
 double complex tms_rand(tms_arg_list *args)
