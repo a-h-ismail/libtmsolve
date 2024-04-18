@@ -11,10 +11,8 @@ SPDX-License-Identifier: LGPL-2.1-only
  */
 
 #ifndef LOCAL_BUILD
-#include <tmsolve/internals.h>
 #include <tmsolve/tms_math_strs.h>
 #else
-#include "internals.h"
 #include "tms_math_strs.h"
 #endif
 #include <stdbool.h>
