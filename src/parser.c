@@ -212,6 +212,15 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
             }
             else
                 --depth;
+
+            // Make sure a ')' is followed by an operator, ')' or \0
+            if (!(tms_is_op(local_expr[i + 1]) || local_expr[i + 1] == ')' || local_expr[i + 1] == '\0'))
+            {
+                tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, local_expr, i + 1);
+                free(S);
+                tms_delete_math_expr(M);
+                return NULL;
+            }
         }
     }
     // + 1 for the subexpression with depth 0

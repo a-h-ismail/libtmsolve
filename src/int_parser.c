@@ -283,6 +283,15 @@ tms_int_expr *_tms_init_int_expr(char *expr)
             }
             else
                 --depth;
+
+            // Make sure a ')' is followed by an operator, ')' or \0
+            if (!(tms_is_int_op(local_expr[i + 1]) || local_expr[i + 1] == ')' || local_expr[i + 1] == '\0'))
+            {
+                tms_error_handler(EH_SAVE, TMS_INT_PARSER, SYNTAX_ERROR, EH_FATAL, local_expr, i + 1);
+                free(S);
+                tms_delete_int_expr(M);
+                return NULL;
+            }
         }
     }
     // + 1 for the subexpression with depth 0
