@@ -18,7 +18,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 double complex tms_avg(tms_arg_list *args)
 {
-    if (args->count == 0)
+    if (_tms_validate_args_count_range(args->count, 1, -1, TMS_EVALUATOR) == false)
         return NAN;
 
     double complex tmp, total = 0;
@@ -36,10 +36,10 @@ double complex tms_avg(tms_arg_list *args)
 
 double complex tms_min(tms_arg_list *args)
 {
-    if (args->count == 0)
+    if (_tms_validate_args_count_range(args->count, 1, -1, TMS_EVALUATOR) == false)
         return NAN;
 
-    // Set min to the smallest possible value so it would always be overwritten in the first iteration
+    // Set min to the largest possible value so it would always be overwritten in the first iteration
     double complex min = INFINITY, tmp;
 
     for (int i = 0; i < args->count; ++i)
@@ -63,7 +63,7 @@ double complex tms_min(tms_arg_list *args)
 
 double complex tms_max(tms_arg_list *args)
 {
-    if (args->count == 0)
+    if (_tms_validate_args_count_range(args->count, 1, -1, TMS_EVALUATOR) == false)
         return NAN;
 
     // Set max to the smallest possible value so it would always be overwritten in the first iteration
