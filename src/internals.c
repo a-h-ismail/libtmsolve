@@ -237,10 +237,11 @@ bool _tms_validate_args_count(int expected, int actual, int facility_id)
 
 bool _tms_validate_args_count_range(int actual, int min, int max, int facility_id)
 {
-    if (actual > max)
-        tms_error_handler(EH_SAVE, facility_id, TOO_FEW_ARGS, EH_FATAL, NULL);
-    else if (actual < min)
+    // If max is set to -1 this means no argument limit (for functions like min and max)
+    if (max != -1 && actual > max)
         tms_error_handler(EH_SAVE, facility_id, TOO_MANY_ARGS, EH_FATAL, NULL);
+    else if (actual < min)
+        tms_error_handler(EH_SAVE, facility_id, TOO_FEW_ARGS, EH_FATAL, NULL);
     else
         return true;
 
