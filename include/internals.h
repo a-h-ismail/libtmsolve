@@ -226,4 +226,7 @@ int compare_ints(const void *a, const void *b);
 
 /// @brief Comparator function for use with qsort(), use to sort in decreasing order.
 int compare_ints_reverse(const void *a, const void *b);
+
+// Returns a random weight in range [0;1]
+double tms_random_weight();
 #endif

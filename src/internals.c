@@ -896,3 +896,9 @@ int compare_ints_reverse(const void *a, const void *b)
     else
         return 0;
 }
+
+double tms_random_weight()
+{
+    // Averaging 2 rands should give higher quality weights, especially for systems where int is 16 bits
+    return (((double)rand() / RAND_MAX) + ((double)rand() / RAND_MAX)) / 2;
+}
