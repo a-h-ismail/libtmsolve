@@ -139,16 +139,16 @@ double complex tms_randint(tms_arg_list *args)
     if (_tms_validate_args_count_range(args->count, 0, 2, TMS_EVALUATOR) == false)
         return NAN;
 
-    double random_weight = (double)rand() / RAND_MAX;
+    double random_weight = tms_random_weight();
 
     if (args->count == 0)
-        return random_weight * RAND_MAX * pow(-1, rand() & 1);
+        return round(random_weight * RAND_MAX * pow(-1, rand() & 1));
     else if (args->count == 1)
     {
         double min = _tms_solve_e_unsafe(args->arguments[0], false);
         if (isnan(min))
             return NAN;
-        return min + random_weight * RAND_MAX;
+        return round(min + random_weight * RAND_MAX);
     }
     else if (args->count == 2)
     {
@@ -172,11 +172,7 @@ double complex tms_rand(tms_arg_list *args)
     if (_tms_validate_args_count(0, args->count, TMS_EVALUATOR) == false)
         return NAN;
 
-    double decimal = rand();
-    // Generate a decimal part
-    decimal /= pow(10, ceil(log10(decimal)));
-
-    return ((double)rand() + decimal) * pow(-1, rand() & 1);
+    return tms_random_weight();
 }
 
 double complex tms_base_n(tms_arg_list *args, int8_t base)
