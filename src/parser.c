@@ -121,12 +121,13 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
     // Determine the depth and start/end of each subexpression parenthesis
     for (i = 0; i < length; ++i)
     {
-        is_extended = false;
-        DYNAMIC_RESIZE(S, s_i, s_max, tms_math_subexpr)
         if (local_expr[i] == '(')
         {
-            ++depth;
+            DYNAMIC_RESIZE(S, s_i, s_max, tms_math_subexpr)
+            is_extended = false;
             S[s_i].nodes = NULL;
+            S[s_i].depth = ++depth;
+
             // Treat extended functions as a subexpression
             if (i > 1 && tms_legal_char_in_name(local_expr[i - 1]))
             {
@@ -160,13 +161,11 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                         return NULL;
                     }
                     S[s_i].solve_end = i - 1;
-                    S[s_i].depth = depth;
                     S[s_i].func.extended = tms_g_extf[j].ptr;
                     S[s_i].func_type = TMS_F_EXTENDED;
                     S[s_i].start_node = -1;
                     S[s_i].exec_extf = true;
 
-                    ++s_i;
                     // Decrement i so that the loop counter would hit the closing parenthesis and perform checks
                     --i;
                 }
@@ -176,7 +175,6 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
             {
                 // Not an extended function, either no function at all or a regular function
                 S[s_i].solve_start = i + 1;
-                S[s_i].depth = depth;
                 S[s_i].func.extended = NULL;
                 S[s_i].func_type = TMS_NOFUNC;
                 S[s_i].exec_extf = false;
@@ -202,8 +200,8 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                     tms_delete_math_expr(M);
                     return NULL;
                 }
-                ++s_i;
             }
+            ++s_i;
         }
         else if (local_expr[i] == ')')
         {
