@@ -117,17 +117,16 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
 
     int depth = 0;
     s_i = 0;
+    bool is_extended;
     // Determine the depth and start/end of each subexpression parenthesis
     for (i = 0; i < length; ++i)
     {
+        is_extended = false;
         DYNAMIC_RESIZE(S, s_i, s_max, tms_math_subexpr)
         if (local_expr[i] == '(')
         {
-            S[s_i].func.extended = NULL;
-            S[s_i].func_type = TMS_NOFUNC;
-            S[s_i].exec_extf = true;
+            ++depth;
             S[s_i].nodes = NULL;
-
             // Treat extended functions as a subexpression
             if (i > 1 && tms_legal_char_in_name(local_expr[i - 1]))
             {
@@ -147,6 +146,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                 // It is an extended function indeed
                 if (j != -1)
                 {
+                    is_extended = true;
                     S[s_i].subexpr_start = i - strlen(name);
                     S[s_i].solve_start = i + 1;
                     i = tms_find_closing_parenthesis(local_expr, i);
@@ -160,45 +160,50 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                         return NULL;
                     }
                     S[s_i].solve_end = i - 1;
-                    S[s_i].depth = depth + 1;
+                    S[s_i].depth = depth;
                     S[s_i].func.extended = tms_g_extf[j].ptr;
                     S[s_i].func_type = TMS_F_EXTENDED;
                     S[s_i].start_node = -1;
+                    S[s_i].exec_extf = true;
 
                     ++s_i;
-                    free(name);
-                    continue;
+                    // Decrement i so that the loop counter would hit the closing parenthesis and perform checks
+                    --i;
                 }
                 free(name);
             }
-
-            // Normal case
-            ++depth;
-            S[s_i].solve_start = i + 1;
-            S[s_i].depth = depth;
-
-            // The expression start is the parenthesis, may change if a function is found
-            S[s_i].subexpr_start = i;
-            S[s_i].solve_end = tms_find_closing_parenthesis(local_expr, i) - 1;
-
-            // Empty parenthesis pair is only allowed for extended functions
-            if (S[s_i].solve_end == i)
+            if (is_extended == false)
             {
-                tms_error_handler(EH_SAVE, TMS_PARSER, PARENTHESIS_EMPTY, EH_FATAL, local_expr, i);
-                free(S);
-                tms_delete_math_expr(M);
-                return NULL;
-            }
+                // Not an extended function, either no function at all or a regular function
+                S[s_i].solve_start = i + 1;
+                S[s_i].depth = depth;
+                S[s_i].func.extended = NULL;
+                S[s_i].func_type = TMS_NOFUNC;
+                S[s_i].exec_extf = false;
 
-            if (S[s_i].solve_end == -2)
-            {
-                tms_error_handler(EH_SAVE, TMS_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, local_expr, i);
-                // S isn't part of M yet
-                free(S);
-                tms_delete_math_expr(M);
-                return NULL;
+                // The expression start is the parenthesis, may change if a function is found
+                S[s_i].subexpr_start = i;
+                S[s_i].solve_end = tms_find_closing_parenthesis(local_expr, i) - 1;
+
+                // Empty parenthesis pair is only allowed for extended functions
+                if (S[s_i].solve_end == i)
+                {
+                    tms_error_handler(EH_SAVE, TMS_PARSER, PARENTHESIS_EMPTY, EH_FATAL, local_expr, i);
+                    free(S);
+                    tms_delete_math_expr(M);
+                    return NULL;
+                }
+
+                if (S[s_i].solve_end == -2)
+                {
+                    tms_error_handler(EH_SAVE, TMS_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, local_expr, i);
+                    // S isn't part of M yet
+                    free(S);
+                    tms_delete_math_expr(M);
+                    return NULL;
+                }
+                ++s_i;
             }
-            ++s_i;
         }
         else if (local_expr[i] == ')')
         {
