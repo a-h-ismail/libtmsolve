@@ -655,7 +655,7 @@ int _tms_error_handler_unsafe(int _mode, va_list handler_args)
         else
         {
             for (i = 0; i < last_error; ++i)
-                if (error_table[i].facility_id == facility_id)
+                if ((error_table[i].facility_id & facility_id) != 0)
                     tms_print_error(error_table[i]);
         }
 
@@ -674,7 +674,7 @@ int _tms_error_handler_unsafe(int _mode, va_list handler_args)
         {
             for (i = 0; i < last_error; ++i)
             {
-                if (error_table[i].facility_id == facility_id)
+                if ((error_table[i].facility_id & facility_id) != 0)
                 {
                     free(error_table[i].message);
                     error_table[i].message = NULL;
@@ -717,7 +717,7 @@ int _tms_error_handler_unsafe(int _mode, va_list handler_args)
         else
         {
             for (i = 0; i < last_error; ++i)
-                if (facility_id == error_table[i].facility_id && strcmp(error_msg, error_table[i].message) == 0)
+                if ((facility_id & error_table[i].facility_id) != 0 && (strcmp(error_msg, error_table[i].message) == 0))
                     return i;
         }
 
@@ -744,7 +744,7 @@ int _tms_error_handler_unsafe(int _mode, va_list handler_args)
             // These shadow the static variables
             int fatal = 0, non_fatal = 0;
             for (int i = 0; i < last_error; ++i)
-                if (facility_id == error_table[i].facility_id)
+                if ((facility_id & error_table[i].facility_id) != 0)
                 {
                     if (error_table[i].fatal)
                         ++fatal;
@@ -769,7 +769,7 @@ int _tms_error_handler_unsafe(int _mode, va_list handler_args)
         // Find the last error
         for (i = last_error - 1; i >= 0; --i)
         {
-            if (error_table[i].facility_id == facility_id)
+            if ((error_table[i].facility_id & facility_id) != 0)
                 break;
         }
         if (i == -1)
