@@ -37,14 +37,16 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define EH_FATAL 12
 #define EH_ALL_ERRORS 13
 
-/// @brief The library's main facilities (for use with the error handler)
-#define TMS_GENERAL 20
-#define TMS_PARSER 21
-#define TMS_EVALUATOR 22
-#define TMS_INT_PARSER 23
-#define TMS_INT_EVALUATOR 24
-#define TMS_MATRIX 25
-#define TMS_ALL_FACILITIES 26
+enum tms_facilities
+{
+    TMS_GENERAL = 1,
+    TMS_PARSER = 2,
+    TMS_EVALUATOR = 4,
+    TMS_INT_PARSER = 8,
+    TMS_INT_EVALUATOR = 16,
+    TMS_MATRIX = 32,
+    TMS_ALL_FACILITIES = 64
+};
 
 // Simple macro to ease dynamic resizing
 #define DYNAMIC_RESIZE(ptr, current, max, type)         \
