@@ -27,6 +27,9 @@ int tms_mask_bit(int64_t bit, int64_t *result);
 /// @brief Generates an inverted mask of size "bits"
 int tms_inv_mask(int64_t bits, int64_t *result);
 
+/// @brief Generates a random integer, supports specifing a range (min,max) or defaults to (0,max)
+int tms_int_rand(tms_arg_list *args, int64_t *result);
+
 /// @brief Rotate Right
 int tms_rr(tms_arg_list *args, int64_t *result);
 
