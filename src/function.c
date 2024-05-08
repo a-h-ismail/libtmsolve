@@ -134,39 +134,6 @@ double complex tms_int(tms_arg_list *args)
     return real + I * imag;
 }
 
-double complex tms_randint(tms_arg_list *args)
-{
-    if (_tms_validate_args_count_range(args->count, 0, 2, TMS_EVALUATOR) == false)
-        return NAN;
-
-    double random_weight = tms_random_weight();
-
-    if (args->count == 0)
-        return round(random_weight * RAND_MAX * pow(-1, rand() & 1));
-    else if (args->count == 1)
-    {
-        double min = _tms_solve_e_unsafe(args->arguments[0], false);
-        if (isnan(min))
-            return NAN;
-        return round(min + random_weight * RAND_MAX);
-    }
-    else if (args->count == 2)
-    {
-        double min, max;
-        min = _tms_solve_e_unsafe(args->arguments[0], false);
-        if (isnan(min))
-            return NAN;
-        max = _tms_solve_e_unsafe(args->arguments[1], false);
-        if (isnan(max))
-            return NAN;
-        if (max <= min)
-            return NAN;
-
-        return round(random_weight * (max - min) + min);
-    }
-    return NAN;
-}
-
 double complex tms_rand(tms_arg_list *args)
 {
     if (_tms_validate_args_count(0, args->count, TMS_EVALUATOR) == false)

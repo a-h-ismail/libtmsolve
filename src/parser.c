@@ -51,7 +51,6 @@ const tms_extf tms_g_extf[] = {{"avg", tms_avg},
                                {"oct", tms_oct},
                                {"bin", tms_bin},
                                {"rand", tms_rand},
-                               {"randint", tms_randint},
                                {"int", tms_int}};
 
 const int tms_g_extf_count = array_length(tms_g_extf);
@@ -1139,7 +1138,7 @@ bool tms_is_deterministic(tms_math_expr *M)
 {
     for (int i = 0; i < M->subexpr_count; ++i)
     {
-        if (M->S[i].func.extended == tms_rand || M->S[i].func.extended == tms_randint)
+        if (M->S[i].func.extended == tms_rand)
             return false;
     }
     return true;

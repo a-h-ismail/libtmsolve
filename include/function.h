@@ -42,12 +42,6 @@ double complex tms_logn(tms_arg_list *args);
 double complex tms_int(tms_arg_list *L);
 
 /**
- * @brief Generates a random integer value in the range of INT_MIN;INT_MAX
- * @param L Expects an empty argument list.
- */
-double complex tms_randint(tms_arg_list *L);
-
-/**
  * @brief Generates a random decimal value in the range of INT_MIN;INT_MAX
  * @param L Expects an empty argument list.
  */
