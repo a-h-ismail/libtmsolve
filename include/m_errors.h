@@ -58,4 +58,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define ERROR_DB_NOT_EMPTY "libtmsolve warning: expected an empty error database for this facility. Clearing it now..."
 #define BIT_OUT_OF_RANGE "The bit to mask is out of range."
 #define EXPR_NOT_DETERMINISTIC "The expression should not contain random functions."
+#define INVALID_RANGE "Minimum should be smaller than maximum."
+#define INCOMPLETE_RANGE "This function expects a range (min,max) or no argument."
 #endif
