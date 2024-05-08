@@ -41,7 +41,7 @@ int get_two_operands(tms_arg_list *args, int64_t *op1, int64_t *op2)
 
 int tms_not(int64_t value, int64_t *result)
 {
-    *result = (~value) & tms_int_mask;
+    *result = ~value;
     return 0;
 }
 
@@ -107,17 +107,56 @@ int _tms_rotate_circular(tms_arg_list *args, char direction, int64_t *result)
     switch (direction)
     {
     case 'r':
-        *result = ((uint64_t)value >> shift | (uint64_t)value << (tms_int_mask_size - shift)) & tms_int_mask;
+        *result = ((uint64_t)value >> shift | (uint64_t)value << (tms_int_mask_size - shift));
         return 0;
 
     case 'l':
-        *result = ((uint64_t)value << shift | (uint64_t)value >> (tms_int_mask_size - shift)) & tms_int_mask;
+        *result = ((uint64_t)value << shift | (uint64_t)value >> (tms_int_mask_size - shift));
         return 0;
 
     default:
         tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL);
         return -1;
     }
+}
+
+int tms_int_rand(tms_arg_list *args, int64_t *result)
+{
+    if (_tms_validate_args_count_range(args->count, 0, 2, TMS_INT_EVALUATOR) == false)
+        return -1;
+
+    int64_t random_64 = 0;
+    // Generate an 64 bit random number
+    for (int i = 0; i < 8 / sizeof(int); ++i)
+        random_64 |= (int64_t)rand() << (i * 8 * sizeof(int));
+
+    if (args->count == 0)
+    {
+        *result = random_64;
+        return 0;
+    }
+    else if (args->count == 1)
+    {
+        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, INCOMPLETE_RANGE, EH_FATAL, NULL);
+        return -1;
+    }
+    else if (args->count == 2)
+    {
+        int64_t min, max;
+        if (_tms_int_solve_unsafe(args->arguments[0], &min) != 0 ||
+            _tms_int_solve_unsafe(args->arguments[1], &max) != 0)
+            return -1;
+
+        if (min >= max)
+        {
+            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, INVALID_RANGE, EH_FATAL, NULL);
+            return -1;
+        }
+        // The int mask is the largest value for the current int width
+        *result = (random_64 % (max - min + 1)) + min;
+        return 0;
+    }
+    return -1;
 }
 
 int tms_rr(tms_arg_list *args, int64_t *result)
@@ -149,7 +188,7 @@ int tms_sr(tms_arg_list *args, int64_t *result)
             return -1;
         }
         // The cast to unsigned is necessary to avoid right shift sign extending
-        *result = ((uint64_t)value >> shift) & tms_int_mask;
+        *result = (uint64_t)value >> shift;
         return 0;
     }
 }
@@ -173,7 +212,7 @@ int tms_sra(tms_arg_list *args, int64_t *result)
             return -1;
         }
         value = tms_sign_extend(value);
-        *result = (value >> shift) & tms_int_mask;
+        *result = value >> shift;
         return 0;
     }
 }
@@ -196,7 +235,7 @@ int tms_sl(tms_arg_list *args, int64_t *result)
             tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL);
             return -1;
         }
-        *result = ((uint64_t)value << shift) & tms_int_mask;
+        *result = (uint64_t)value << shift;
         return 0;
     }
 }
@@ -208,7 +247,7 @@ int tms_nor(tms_arg_list *args, int64_t *result)
         return -1;
     else
     {
-        *result = (~(op1 | op2)) & tms_int_mask;
+        *result = ~(op1 | op2);
         return 0;
     }
 }
@@ -220,7 +259,7 @@ int tms_xor(tms_arg_list *args, int64_t *result)
         return -1;
     else
     {
-        *result = (op1 ^ op2) & tms_int_mask;
+        *result = op1 ^ op2;
         return 0;
     }
 }
@@ -232,7 +271,7 @@ int tms_nand(tms_arg_list *args, int64_t *result)
         return -1;
     else
     {
-        *result = (~(op1 & op2)) & tms_int_mask;
+        *result = ~(op1 & op2);
         return 0;
     }
 }
@@ -244,7 +283,7 @@ int tms_and(tms_arg_list *args, int64_t *result)
         return -1;
     else
     {
-        *result = (op1 & op2) & tms_int_mask;
+        *result = op1 & op2;
         return 0;
     }
 }
@@ -256,7 +295,7 @@ int tms_or(tms_arg_list *args, int64_t *result)
         return -1;
     else
     {
-        *result = (op1 | op2) & tms_int_mask;
+        *result = op1 | op2;
         return 0;
     }
 }
