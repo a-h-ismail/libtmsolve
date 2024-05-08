@@ -25,6 +25,7 @@ This library has four function types: real, complex, extended and runtime (user 
 - `acosh()`, `asinh()`, `atanh()`: Inverse of the above.
 - `exp(x)`: Equivalent to `e^x`.
 - `ln()`: Base e logarithm.
+- `log2()`: Base 2 logarithm.
 - `log10()`: Base 10 logarithm.
 
 ### Warning
@@ -41,8 +42,7 @@ Trigonometric functions lose precision with larger values. I recommend staying i
 - `hex(hex_rep)`: Reads a hexadecimal representation and returns the corresponding value.
 - `oct(oct_rep)`: Reads an octal representation and returns the corresponding value.
 - `bin(bin_rep)`: Reads a binary representation and returns the corresponding value.
-- `rand()`: Returns a random decimal value in range [INT_MIN;INT_MAX].
-- `randint()`: Returns a random integer in range [INT_MIN;INT_MAX].
+- `rand()`: Returns a random weight [0,1].
 - `int(value)`: Returns the integer part of the value, supports complex.
 
 ## Runtime Functions
