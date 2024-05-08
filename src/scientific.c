@@ -226,7 +226,7 @@ double complex tms_solve(char *expr)
             if (isnan(creal(result)))
             {
                 // Not a fatal error, convert to complex and try again
-                if (tms_error_handler(EH_ERROR_COUNT, TMS_EVALUATOR, EH_FATAL) == 0)
+                if (tms_error_handler(EH_ERROR_COUNT, TMS_EVALUATOR | TMS_PARSER, EH_FATAL) == 0)
                 {
                     tms_convert_real_to_complex(M);
                     // Conversion to complex failed
@@ -236,13 +236,13 @@ double complex tms_solve(char *expr)
                         return NAN;
                     }
                     // Conversion succeeded, clear previous errors
-                    tms_error_handler(EH_CLEAR, TMS_EVALUATOR);
+                    tms_error_handler(EH_CLEAR, TMS_EVALUATOR | TMS_PARSER);
                     result = _tms_evaluate_unsafe(M);
                     if (isnan(creal(result)))
-                        tms_error_handler(EH_PRINT, TMS_EVALUATOR);
+                        tms_error_handler(EH_PRINT, TMS_EVALUATOR | TMS_PARSER);
                 }
                 else
-                    tms_error_handler(EH_PRINT, TMS_EVALUATOR);
+                    tms_error_handler(EH_PRINT, TMS_EVALUATOR | TMS_PARSER);
             }
 
             tms_unlock_evaluator(TMS_EVALUATOR);
@@ -257,7 +257,7 @@ double complex tms_solve(char *expr)
         return result;
     }
     // Unlikely to fall out of the switch.
-    tms_error_handler(EH_SAVE, TMS_PARSER, INTERNAL_ERROR, EH_FATAL, NULL);
+    tms_error_handler(EH_SAVE, TMS_GENERAL, INTERNAL_ERROR, EH_FATAL, NULL);
     return NAN;
 }
 

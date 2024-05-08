@@ -19,16 +19,16 @@ double complex tms_evaluate(tms_math_expr *M)
 {
     tms_lock_evaluator(TMS_EVALUATOR);
 
-    if (tms_error_handler(EH_ERROR_COUNT, TMS_EVALUATOR, EH_ALL_ERRORS) != 0)
+    if (tms_error_handler(EH_ERROR_COUNT, TMS_EVALUATOR | TMS_PARSER, EH_ALL_ERRORS) != 0)
     {
         fputs(ERROR_DB_NOT_EMPTY, stderr);
-        tms_error_handler(EH_CLEAR, TMS_EVALUATOR);
+        tms_error_handler(EH_CLEAR, TMS_EVALUATOR | TMS_PARSER);
     }
 
     double complex result = _tms_evaluate_unsafe(M);
 
     if (isnan(creal(result)))
-        tms_error_handler(EH_PRINT, TMS_EVALUATOR);
+        tms_error_handler(EH_PRINT, TMS_EVALUATOR | TMS_PARSER);
 
     tms_unlock_evaluator(TMS_EVALUATOR);
     return result;
@@ -71,11 +71,12 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                 if (isnan(creal(**(S[s_i].result))))
                 {
                     // If the function didn't generate an error itself, provide a generic one
-                    if (tms_error_handler(EH_ERROR_COUNT, TMS_EVALUATOR, EH_ALL_ERRORS) == 0)
+                    if (tms_error_handler(EH_ERROR_COUNT, TMS_EVALUATOR | TMS_PARSER, EH_ALL_ERRORS) == 0)
                         tms_error_handler(EH_SAVE, TMS_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->local_expr,
                                           S[s_i].subexpr_start);
                     else
-                        tms_error_handler(EH_MODIFY, TMS_EVALUATOR, M->local_expr, S[s_i].subexpr_start);
+                        tms_error_handler(EH_MODIFY, TMS_EVALUATOR | TMS_PARSER, M->local_expr, S[s_i].subexpr_start,
+                                          "In function args: ");
 
                     free(arguments);
                     tms_free_arg_list(L);
@@ -219,15 +220,15 @@ int tms_int_evaluate(tms_int_expr *M, int64_t *result)
 {
     tms_lock_evaluator(TMS_INT_EVALUATOR);
 
-    if (tms_error_handler(EH_ERROR_COUNT, TMS_INT_EVALUATOR, EH_ALL_ERRORS) != 0)
+    if (tms_error_handler(EH_ERROR_COUNT, TMS_INT_EVALUATOR | TMS_INT_PARSER, EH_ALL_ERRORS) != 0)
     {
         fputs(ERROR_DB_NOT_EMPTY, stderr);
-        tms_error_handler(EH_CLEAR, TMS_INT_EVALUATOR);
+        tms_error_handler(EH_CLEAR, TMS_INT_EVALUATOR | TMS_INT_PARSER);
     }
 
     int exit_status = _tms_int_evaluate_unsafe(M, result);
     if (exit_status != 0)
-        tms_error_handler(EH_PRINT, TMS_INT_EVALUATOR);
+        tms_error_handler(EH_PRINT, TMS_INT_EVALUATOR | TMS_INT_PARSER);
 
     tms_unlock_evaluator(TMS_INT_EVALUATOR);
     return exit_status;
@@ -272,11 +273,12 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                 if (state == -1)
                 {
                     // If the function didn't generate an error itself, provide a generic one
-                    if (tms_error_handler(EH_ERROR_COUNT, TMS_INT_EVALUATOR, EH_ALL_ERRORS) == 0)
+                    if (tms_error_handler(EH_ERROR_COUNT, TMS_INT_EVALUATOR | TMS_INT_PARSER, EH_ALL_ERRORS) == 0)
                         tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->local_expr,
                                           S[s_i].subexpr_start);
                     else
-                        tms_error_handler(EH_MODIFY, TMS_INT_EVALUATOR, M->local_expr, S[s_i].subexpr_start);
+                        tms_error_handler(EH_MODIFY, TMS_INT_EVALUATOR | TMS_INT_PARSER, M->local_expr,
+                                          S[s_i].subexpr_start, "In function args: ");
 
                     free(arguments);
                     tms_free_arg_list(L);
@@ -373,7 +375,8 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                     tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, UNKNOWN_FUNC_ERROR, EH_FATAL, M->local_expr,
                                       S[s_i].subexpr_start);
                 else
-                    tms_error_handler(EH_MODIFY, TMS_INT_EVALUATOR, M->local_expr, S[s_i].subexpr_start);
+                    // No need to include the flag for INT_PARSER since regular functions will never call the parser
+                    tms_error_handler(EH_MODIFY, TMS_INT_EVALUATOR, M->local_expr, S[s_i].subexpr_start, NULL);
                 return -1;
             }
 
