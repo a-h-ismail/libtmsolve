@@ -778,6 +778,14 @@ int _tms_error_handler_unsafe(int _mode, va_list handler_args)
         char *expr = va_arg(handler_args, char *);
         error_table[i].expr_len = strlen(expr);
         int error_position = va_arg(handler_args, int);
+        char *prefix = va_arg(handler_args, char *);
+
+        if (prefix != NULL)
+        {
+            char *tmp = error_table[i].message;
+            error_table[i].message = tms_strcat_dup(prefix, error_table[i].message);
+            free(tmp);
+        }
 
         if (error_position < 0 || error_position > error_table[i].expr_len)
         {
