@@ -674,7 +674,7 @@ int _tms_error_handler_unsafe(int _mode, va_list handler_args)
         {
             if (error_table[i].message == NULL)
             {
-                for (int j = i + i; j < last_error; ++j)
+                for (int j = i + 1; j < last_error; ++j)
                 {
                     error_table[i] = error_table[j];
                     // Move the hole forward
