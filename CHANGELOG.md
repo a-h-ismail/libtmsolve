@@ -8,7 +8,7 @@
 - Add `log2()` function.
 - Drop `randint()` from scientific mode.
 - `rand()` now returns a weight `[0,1]` instead of a random number in range `[0,INT_MAX]`.
-- Make errors within extended functions clearer.
+- Improve clarity of extended functions errors.
 
 ## Fixed
 
@@ -31,7 +31,7 @@
 
 ## 2.1.0 - 2024-02-25
 
-### Changes
+### Changed
 
 - Add int functions `ipv4_prefix()`, `ones()`, `zeros()`.
 - Modulo operator now has the same precedence as multiplication and division in int variants.
@@ -40,7 +40,7 @@
 - Catch negative rotation amount in int mode `rr()` and `rl()`.
 - `ipv4()` now requires a variable width of 32 bits.
 
-### Fixes
+### Fixed
 
 - Fix mask generation issue in `tms_set_int_mask()` for 64 bit width.
 - Fix missing space while printing with width of 64 bits.
@@ -51,7 +51,7 @@
 
 ## 2.0.1 - 2024-02-21
 
-### Fixes
+### Fixed
 
 - Fix broken behavior of `tms_print_bin()` for int masks of size different than 32.
 - Fix error printer not prepending `...` when the error index is between 24 and 49.
@@ -65,7 +65,7 @@
 
 This is a major, API breaking release.
 
-### Changes
+### Changed
 
 - Perform syntax checks within the parsers, not separately in `tms_syntax_check()`.
 - Many changes to `tms_math_expr` and `tms_int_expr`.
@@ -93,7 +93,7 @@ This is a major, API breaking release.
 - `tms_error_handler()` is now thread safe.
 - Added non thread safe variants of parser and evaluators, for use only in calls from within a locked parser/evaluator.
 
-### Fixes
+### Fixed
 
 - `tms_decimal_to_fraction()` no longer fails if the pattern starts with a "0".
 - `integrate()` should behave properly now if the upper bound is smaller than the lower bound.
@@ -104,7 +104,7 @@ This is a major, API breaking release.
 
 ## 1.4.0 - 2024-01-13
 
-### Changes
+### Changed
 
 - Speed improvements in both parsers.
 - Library initialization is now faster.
@@ -134,7 +134,7 @@ This is a major, API breaking release.
 
 ## 1.2.1 - 2023-12-16
 
-### Changes
+### Changed
 
 - Fix multiple memory access issues.
 - Improve performance of `_tms_set_operand()`.
