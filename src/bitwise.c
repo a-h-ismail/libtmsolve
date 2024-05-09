@@ -147,6 +147,8 @@ int tms_int_rand(tms_arg_list *args, int64_t *result)
             _tms_int_solve_unsafe(args->arguments[1], &max) != 0)
             return -1;
 
+        min = tms_sign_extend(min);
+        max = tms_sign_extend(max);
         if (min >= max)
         {
             tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, INVALID_RANGE, EH_FATAL, NULL);
