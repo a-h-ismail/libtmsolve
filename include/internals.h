@@ -45,7 +45,7 @@ enum tms_facilities
     TMS_INT_PARSER = 8,
     TMS_INT_EVALUATOR = 16,
     TMS_MATRIX = 32,
-    TMS_ALL_FACILITIES = 64
+    TMS_ALL_FACILITIES = -1
 };
 
 // Simple macro to ease dynamic resizing
@@ -205,6 +205,7 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M);
  * EH_CLEAR, int facility_id \n
  * EH_SEARCH, char *error, int facility_id (returns -1 if no match is found). \n
  * EH_ERROR_COUNT, int facility_id, EH_FATAL | EH_NONFATAL | EH_ALL_ERRORS (returns number of errors specified). \n
+ * EH_MODIFY, int facility_id, expr, error_index, error_prefix
 
  * @note To perform an action on all facilities, use TMS_ALL_FACILITIES
  * @return Depends on the argument list.
