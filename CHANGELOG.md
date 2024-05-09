@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.3.0 - 2024-05-09
+
+## Changed
+
+- Add `rand()` to integer mode.
+- Add `log2()` function.
+- Drop `randint()` from scientific mode.
+- `rand()` now returns a weight `[0,1]` instead of a random number in range `[0,INT_MAX]`.
+- Make errors within extended functions clearer.
+
+## Fixed
+
+- Parsers no longer ignore syntax errors delimited by a closing parenthesis and an operand.
+- Parsing error generated in recursive calls from evaluating extended functions are no longer ignored.
+- Fixed improper error cleanup in error handler `EH_CLEAR`.
+- Fixed possible error duplication in `tms_solve()`.
+- Catch and report usage of random functions in integration and derivation.
+
 ## 2.2.0 - 2024-03-02
 
 ## Added
