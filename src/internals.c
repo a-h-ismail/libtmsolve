@@ -647,79 +647,51 @@ int _tms_error_handler_unsafe(int _mode, va_list handler_args)
         return 0;
     }
     case EH_PRINT:
-        if (facility_id == TMS_ALL_FACILITIES)
-        {
-            for (i = 0; i < last_error; ++i)
+        for (i = 0; i < last_error; ++i)
+            if ((error_table[i].facility_id & facility_id) != 0)
                 tms_print_error(error_table[i]);
-        }
-        else
-        {
-            for (i = 0; i < last_error; ++i)
-                if ((error_table[i].facility_id & facility_id) != 0)
-                    tms_print_error(error_table[i]);
-        }
 
         // Intentional fall through since printing errors should clear them too
     case EH_CLEAR: {
         int deleted_count = 0;
-        if (facility_id == TMS_ALL_FACILITIES)
+        for (i = 0; i < last_error; ++i)
         {
-            for (i = 0; i < last_error; ++i)
+            if ((error_table[i].facility_id & facility_id) != 0)
+            {
                 free(error_table[i].message);
+                error_table[i].message = NULL;
+                if (error_table[i].fatal)
+                    --fatal;
+                else
+                    --non_fatal;
 
-            deleted_count = last_error;
-            last_error = fatal = non_fatal = 0;
+                ++deleted_count;
+            }
         }
-        else
+        // Move remaining errors back to make the table contiguous again
+        // No need to do anything if the last element is empty
+        for (i = 0; i < last_error - 1; ++i)
         {
-            for (i = 0; i < last_error; ++i)
+            if (error_table[i].message == NULL)
             {
-                if ((error_table[i].facility_id & facility_id) != 0)
+                for (int j = i + i; j < last_error; ++j)
                 {
-                    free(error_table[i].message);
-                    error_table[i].message = NULL;
-                    if (error_table[i].fatal)
-                        --fatal;
-                    else
-                        --non_fatal;
-
-                    ++deleted_count;
+                    error_table[i] = error_table[j];
+                    // Move the hole forward
+                    error_table[j].message = NULL;
                 }
             }
-            // Move remaining errors back to make the table contiguous again
-            // No need to do anything if the last element is empty
-            for (i = 0; i < last_error - 1; ++i)
-            {
-                if (error_table[i].message == NULL)
-                {
-                    for (int j = i + i; j < last_error; ++j)
-                    {
-                        error_table[i] = error_table[j];
-                        // Move the hole forward
-                        error_table[j].message = NULL;
-                    }
-                }
-            }
-
-            last_error = fatal + non_fatal;
         }
+
+        last_error = fatal + non_fatal;
         return deleted_count;
     }
 
     case EH_SEARCH: {
         char *error_msg = va_arg(handler_args, char *);
-        if (facility_id == TMS_ALL_FACILITIES)
-        {
-            for (i = 0; i < last_error; ++i)
-                if (strcmp(error_msg, error_table[i].message) == 0)
-                    return i;
-        }
-        else
-        {
-            for (i = 0; i < last_error; ++i)
-                if ((facility_id & error_table[i].facility_id) != 0 && (strcmp(error_msg, error_table[i].message) == 0))
-                    return i;
-        }
+        for (i = 0; i < last_error; ++i)
+            if ((facility_id & error_table[i].facility_id) != 0 && (strcmp(error_msg, error_table[i].message) == 0))
+                return i;
 
         return -1;
     }
@@ -727,40 +699,32 @@ int _tms_error_handler_unsafe(int _mode, va_list handler_args)
     // Return the number of saved errors
     case EH_ERROR_COUNT: {
         error_type = va_arg(handler_args, int);
+        int select_fatal, select_non_fatal;
         if (facility_id == TMS_ALL_FACILITIES)
         {
-            switch (error_type)
-            {
-            case EH_NONFATAL:
-                return non_fatal;
-            case EH_FATAL:
-                return fatal;
-            case EH_ALL_ERRORS:
-                return non_fatal + fatal;
-            }
+            select_fatal = fatal;
+            select_non_fatal = non_fatal;
         }
         else
         {
-            // These shadow the static variables
-            int fatal = 0, non_fatal = 0;
+            select_fatal = select_non_fatal = 0;
             for (int i = 0; i < last_error; ++i)
                 if ((facility_id & error_table[i].facility_id) != 0)
                 {
                     if (error_table[i].fatal)
-                        ++fatal;
+                        ++select_fatal;
                     else
-                        ++non_fatal;
+                        ++select_non_fatal;
                 }
-
-            switch (error_type)
-            {
-            case EH_NONFATAL:
-                return non_fatal;
-            case EH_FATAL:
-                return fatal;
-            case EH_ALL_ERRORS:
-                return non_fatal + fatal;
-            }
+        }
+        switch (error_type)
+        {
+        case EH_NONFATAL:
+            return select_non_fatal;
+        case EH_FATAL:
+            return select_fatal;
+        case EH_ALL_ERRORS:
+            return select_non_fatal + select_fatal;
         }
         return -1;
     }
