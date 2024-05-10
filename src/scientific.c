@@ -384,25 +384,24 @@ tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
     int dec_point = 1, patt_start, patt_end, frac_length;
     bool success = false;
     char pattern[11], printed_value[17];
-    tms_fraction result;
-
-    // Using the denominator as a mean to report failure, if c==0 then the function failed
+    // return frac_error to signal that conversion fails
+    tms_fraction result, frac_error = {0, 0, 0};
     result.c = 0;
 
     if (fabs(value) > INT32_MAX || fabs(value) < pow(10, -log10(INT32_MAX) + 1))
-        return result;
+        return frac_error;
 
     // Store the integer part in 'a'
     result.a = floor(value);
-    value -= floor(value);
+    value -= result.a;
 
     // Edge case due to floating point lack of precision
     if (1 - value < 1e-9)
-        return result;
+        return frac_error;
 
     // The case of an integer
     if (value == 0)
-        return result;
+        return frac_error;
 
     // Reduce the number of decimal places to print as much as the complete value has non decimal places
     // This avoids obtaining junk values (remember a double has ~15 digits of precision)
@@ -480,7 +479,7 @@ tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
         int pattern_start;
         // Just in case the pattern was found to be zeros due to minor rounding (like 5.0000000000000003)
         if (strcmp(pattern, "0") == 0)
-            return result;
+            return frac_error;
 
         // Generate the denominator
         for (patt_start = 0; patt_start < strlen(pattern); ++patt_start)
@@ -489,9 +488,17 @@ tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
         pattern_start = tms_f_search(printed_value, pattern, dec_point + 1, false);
         if (pattern_start > dec_point + 1)
         {
-            result.b = round(value * (pow(10, pattern_start - dec_point - 1 + strlen(pattern)) -
-                                      pow(10, pattern_start - dec_point - 1)));
-            result.c *= pow(10, pattern_start - dec_point - 1);
+            // Overflow detection using double
+            double tmp = round(value * (pow(10, pattern_start - dec_point - 1 + strlen(pattern)) -
+                                        pow(10, pattern_start - dec_point - 1)));
+            if (tmp > INT32_MAX)
+                return frac_error;
+            else
+                result.b = tmp;
+            if (pattern_start - dec_point - 1 > 8)
+                return frac_error;
+            else
+                result.c *= pow(10, pattern_start - dec_point - 1);
         }
         else
             sscanf(pattern, "%d", &result.b);
@@ -518,16 +525,18 @@ tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
                 // inverse of a + b / c is c / ( a *c + b )
                 result.b = inverted.c;
                 result.c = inverted.b + inverted.a * inverted.c;
-            }
-            // Simple cases with finite decimal digits (don't bother with fractional parts greater than 5)
-            else if (frac_length < 6)
-            {
-                result.c = pow(10, frac_length);
-                result.b = round(value * result.c);
-                tms_reduce_fraction(&result);
                 return result;
             }
         }
     }
-    return result;
+    // Simple cases with finite decimal digits (don't bother with fractional parts greater than 5)
+    if (frac_length < 6)
+    {
+        result.c = pow(10, frac_length);
+        result.b = round(value * result.c);
+        tms_reduce_fraction(&result);
+        return result;
+    }
+    else
+        return frac_error;
 }
