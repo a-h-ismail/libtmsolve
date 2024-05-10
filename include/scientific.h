@@ -23,7 +23,7 @@ typedef struct tms_int_factor
 /// Simple structure to store a fraction of the form a + b / c
 typedef struct tms_fraction
 {
-    int a, b, c;
+    int32_t a, b, c;
 } tms_fraction;
 
 /**
