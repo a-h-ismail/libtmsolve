@@ -519,12 +519,18 @@ tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
         // Other cases like 3/17 (non periodic but the inverse is periodic)
         else
         {
+            // In this case restore the integer part (a)
+            // Otherwise, the inverse process may get garbage decimal places
+            inverse_value = 1 / (value + result.a);
             tms_fraction inverted = tms_decimal_to_fraction(inverse_value, true);
             if (inverted.c != 0)
             {
-                // inverse of a + b / c is c / ( a *c + b )
+                // inverse of a + b / c is c / ( a * c + b )
                 result.b = inverted.c;
                 result.c = inverted.b + inverted.a * inverted.c;
+                // Because the inverse is of form d / c, with d = (a * c + b)
+                // Subtract from d (stored in b earlier) a * c
+                result.b -= result.c * result.a;
                 return result;
             }
         }
