@@ -18,6 +18,7 @@
 - Possible error duplication in `tms_solve()`.
 - Catch and report usage of random functions in integration and derivation.
 - Possible integer overflow and failure to find the fraction `in tms_decimal_to_fraction()`.
+- Fix a regression introduced in the previous version that broke runtime functions circular and self reference detection.
 
 ## 2.2.0 - 2024-03-02
 
@@ -101,7 +102,6 @@ This is a major, API breaking release.
 - `max()` no longer always return infinity.
 -  Many fixes related to the integer masking and sign extending.
 - Properly center the error indicator.
-
 
 ## 1.4.0 - 2024-01-13
 

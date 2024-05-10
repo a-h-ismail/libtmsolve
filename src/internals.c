@@ -343,7 +343,7 @@ int tms_new_int_var(char *name)
     }
 }
 
-bool tms_ufunc_has_self_ref(tms_math_expr *F)
+bool _tms_ufunc_has_self_ref(tms_math_expr *F)
 {
     tms_math_subexpr *S = F->S;
     for (int s_index = 0; s_index < F->subexpr_count; ++s_index)
@@ -369,7 +369,7 @@ bool is_ufunc_referenced_by(tms_math_expr *referrer, tms_math_expr *F)
     return false;
 }
 
-bool tms_has_ufunc_circular_refs(tms_math_expr *F)
+bool _tms_ufunc_has_circular_refs(tms_math_expr *F)
 {
     int i;
     tms_math_subexpr *S = F->S;
@@ -432,23 +432,28 @@ int tms_set_ufunction(char *name, char *function)
     // Function already exists
     if (ufunc_index != -1)
     {
-        i = ufunc_index;
-        tms_math_expr *old = tms_g_ufunc[i].F, *new = tms_parse_expr(function, true, true);
+        tms_math_expr *new = tms_parse_expr(function, true, true), *old = tms_g_ufunc[ufunc_index].F;
+        tms_math_subexpr *old_subexpr = tms_g_ufunc[ufunc_index].F->S;
         if (new == NULL)
-        {
             return -1;
-        }
         else
         {
+            // Place the newly generated subexpr in the global array for checks to work
+            old->S = new->S;
             // Check for self and circular function references
-            if (tms_ufunc_has_self_ref(new) || tms_has_ufunc_circular_refs(new))
+            if (_tms_ufunc_has_self_ref(old) || _tms_ufunc_has_circular_refs(old))
             {
+                // Restore the original function since the new one is problematic
+                old->S = old_subexpr;
                 tms_delete_math_expr(new);
                 return -1;
             }
             else
             {
+                // Temporarily restore the old subexpr array for deletion
+                old->S = old_subexpr;
                 tms_delete_math_expr_members(old);
+                // Copy the content of the new function math_expr
                 *old = *new;
                 free(new);
                 return 0;
