@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.3.0 - 2024-05-09
+## 2.3.0 - 2024-05-10
 
 ## Changed
 
@@ -14,9 +14,10 @@
 
 - Parsers no longer ignore syntax errors delimited by a closing parenthesis and an operand.
 - Parsing error generated in recursive calls from evaluating extended functions are no longer ignored.
-- Fixed improper error cleanup in error handler `EH_CLEAR`.
-- Fixed possible error duplication in `tms_solve()`.
+- Improper error cleanup in error handler `EH_CLEAR`.
+- Possible error duplication in `tms_solve()`.
 - Catch and report usage of random functions in integration and derivation.
+- Possible integer overflow and failure to find the fraction `in tms_decimal_to_fraction()`.
 
 ## 2.2.0 - 2024-03-02
 
