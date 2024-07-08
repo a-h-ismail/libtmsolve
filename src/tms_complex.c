@@ -8,9 +8,9 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "scientific.h"
 #include <math.h>
 
-double complex tms_neglect_real_or_cmplx(double complex z)
+double complex tms_round_to_axis(double complex z)
 {
-    double magnitude = creal(z) / cimag(z);
+    double magnitude = fabs(creal(z) / cimag(z));
     if (fabs(magnitude) > 1e10)
         return creal(z);
     else if (fabs(magnitude) < 1e-10)
@@ -21,12 +21,12 @@ double complex tms_neglect_real_or_cmplx(double complex z)
 
 double complex tms_cexp(double complex z)
 {
-    return tms_neglect_real_or_cmplx(cexp(z));
+    return tms_round_to_axis(cexp(z));
 }
 
 double complex tms_cpow(double complex x, double complex y)
 {
-    return tms_neglect_real_or_cmplx(cpow(x, y));
+    return tms_round_to_axis(cpow(x, y));
 }
 
 // Some simple wrapper functions.
@@ -96,7 +96,7 @@ double complex tms_ccos(double complex z)
     if (cimag(z) == 0)
         return tms_cos(creal(z));
     else
-        return tms_neglect_real_or_cmplx(ccos(z));
+        return tms_round_to_axis(ccos(z));
 }
 
 double complex tms_csin(double complex z)
@@ -104,7 +104,7 @@ double complex tms_csin(double complex z)
     if (cimag(z) == 0)
         return tms_sin(creal(z));
     else
-        return tms_neglect_real_or_cmplx(csin(z));
+        return tms_round_to_axis(csin(z));
 }
 
 double complex tms_ctan(double complex z)
@@ -112,5 +112,5 @@ double complex tms_ctan(double complex z)
     if (cimag(z) == 0)
         return tms_tan(creal(z));
     else
-        return tms_neglect_real_or_cmplx(ctan(z));
+        return tms_round_to_axis(ctan(z));
 }
