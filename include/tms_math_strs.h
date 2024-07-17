@@ -4,9 +4,9 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #ifndef _TMS_STRUCTS_H
 #define _TMS_STRUCTS_H
+#include <complex.h>
 #include <inttypes.h>
 #include <stdbool.h>
-#include <complex.h>
 
 /**
  * @file
@@ -78,14 +78,18 @@ typedef struct tms_op_node
     int operator_index;
     /// Index of the op_node in the op_node array.
     int node_index;
+    /// Node operator priority.
+    uint8_t priority;
     /**
      * Used to store data about unknown operands as follows:
      * b0:left_operand, b1:right_operand, b2:left_operand_negative, b3:right_operand_negative.
      * Use masks UNK_* with bitwise OR to set the bits correctly
+     * The 6 MSB are the ID of of the right unknown
+     * The remaining are the ID of the left unknown
+     * RRRRRRLLLLLLRLRL
+     * Use macros below to set the ID easily
      */
-    uint8_t unknowns_data;
-    /// Node operator priority.
-    uint8_t priority;
+    uint16_t unknowns_data;
 
     double complex left_operand, right_operand, *result;
     /// Points to the next op_node in evaluation order.
@@ -96,6 +100,10 @@ typedef struct tms_op_node
 #define UNK_RIGHT 0b10
 #define UNK_LNEG 0b100
 #define UNK_RNEG 0b1000
+#define SET_LEFT_ID(target, value) target |= (value & 63) << 4
+#define SET_RIGHT_ID(target, value) target |= (value & 63) << 10
+#define GET_LEFT_ID(source) ((source >> 4) & 63)
+#define GET_RIGHT_ID(source) ((source >> 10) & 63)
 
 /// @brief Holds the data required to locate and set a value to an unknown in the expression.
 typedef struct tms_unknown_operand
@@ -114,8 +122,7 @@ typedef struct tms_ufunc
 } tms_ufunc;
 
 /// @brief Union to store function pointers
-typedef union tms_mfunc_ptrs
-{
+typedef union tms_mfunc_ptrs {
     double (*real)(double);
     double complex (*cmplx)(double complex);
     double complex (*extended)(tms_arg_list *);
@@ -123,8 +130,7 @@ typedef union tms_mfunc_ptrs
 } fptr;
 
 /// @brief Union to store int function pointers
-typedef union tms_int_functions
-{
+typedef union tms_int_functions {
     int (*simple)(int64_t, int64_t *);
     int (*extended)(tms_arg_list *, int64_t *);
 
