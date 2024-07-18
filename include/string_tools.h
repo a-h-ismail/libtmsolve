@@ -256,4 +256,11 @@ int tms_find_str_in_array(char *key, const void *array, int arr_len, uint8_t typ
  */
 char *tms_strcat_dup(char *s1, char *s2);
 
+/**
+ * @brief Verifies if the provided array of strings is made of unique strings.
+ * @note The last element should be NULL to avoid buffer overflows.
+ * @return true if the array is made of unique elements, false otherwise.
+ */
+bool tms_is_unique_string_array(char **array);
+
 #endif

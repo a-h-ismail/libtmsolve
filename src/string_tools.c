@@ -1225,3 +1225,13 @@ char *tms_strcat_dup(char *s1, char *s2)
 
     return concatenated_string;
 }
+
+bool tms_is_unique_string_array(char **array)
+{
+    // This works by iterating over the array and doing a forward search for the specific string
+    for (int i = 0; array[i] != NULL; ++i)
+        if (tms_find_str_in_array(array[i], array + i + 1, -1, TMS_NOFUNC) != -1)
+            return false;
+
+    return true;
+}
