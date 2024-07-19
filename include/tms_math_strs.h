@@ -110,6 +110,8 @@ typedef struct tms_unknown_operand
 {
     /// @brief Pointer to the unknown operand.
     double complex *unknown_ptr;
+    /// @brief ID of the unknown operand
+    int id;
     /// @brief Set to true if the operand is negative.
     bool is_negative;
 } tms_unknown_operand;
@@ -209,6 +211,9 @@ typedef struct tms_math_expr
 
     /// Array of unknown operands metadata.
     tms_unknown_operand *x_data;
+
+    /// List of unknowns names.
+    tms_arg_list *unknowns_names;
 
     /// Answer of the expression.
     double complex answer;
