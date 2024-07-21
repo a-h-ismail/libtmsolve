@@ -194,7 +194,7 @@ double complex tms_derivative(tms_arg_list *L)
         tms_error_handler(EH_CLEAR, TMS_EVALUATOR);
         return NAN;
     }
-    M = _tms_parse_expr_unsafe(L->arguments[0], true, false);
+    M = _tms_parse_expr_unsafe(L->arguments[0], TMS_ENABLE_CMPLX, NULL);
 
     if (M == NULL)
     {

@@ -102,7 +102,7 @@ double complex tms_solve_e(char *expr, bool enable_complex)
     double complex result;
     tms_math_expr *M;
 
-    M = tms_parse_expr(expr, false, enable_complex);
+    M = tms_parse_expr(expr, (enable_complex == true ? TMS_ENABLE_CMPLX : 0), NULL);
     if (M == NULL)
         return NAN;
     result = tms_evaluate(M);
@@ -115,7 +115,7 @@ double complex _tms_solve_e_unsafe(char *expr, bool enable_complex)
     double complex result;
     tms_math_expr *M;
 
-    M = _tms_parse_expr_unsafe(expr, false, enable_complex);
+    M = _tms_parse_expr_unsafe(expr, (enable_complex == true ? TMS_ENABLE_CMPLX : 0), NULL);
     if (M == NULL)
         return NAN;
     result = _tms_evaluate_unsafe(M);
@@ -180,7 +180,7 @@ double complex tms_solve(char *expr)
         // We don't want errors to be printed automatically (to keep the error database from being cleared)
         // And we want to keep the parser locked until we get the correct answer and print errors if any
         tms_lock_parser(TMS_PARSER);
-        M = _tms_parse_expr_unsafe(expr, false, false);
+        M = _tms_parse_expr_unsafe(expr, 0, NULL);
 
         if (M == NULL)
         {
@@ -195,7 +195,7 @@ double complex tms_solve(char *expr)
             {
                 // Clear previous errors and try again with complex enabled
                 tms_error_handler(EH_CLEAR, TMS_PARSER);
-                M = _tms_parse_expr_unsafe(expr, false, true);
+                M = _tms_parse_expr_unsafe(expr, TMS_ENABLE_CMPLX, NULL);
 
                 // Failed again somehow with complex enabled, so abort
                 if (M == NULL)
@@ -251,7 +251,7 @@ double complex tms_solve(char *expr)
         }
 
     case 2:
-        M = tms_parse_expr(expr, false, true);
+        M = tms_parse_expr(expr, TMS_ENABLE_CMPLX, NULL);
         result = tms_evaluate(M);
         tms_delete_math_expr(M);
         return result;
