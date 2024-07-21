@@ -178,6 +178,8 @@ typedef struct tms_math_subexpr
     /// @brief Set to one of the op_nodes result pointer, indicating that the answer of that node is the answer of this subexpression.
     double complex **result;
 
+    tms_arg_list *L;
+
     /// Stores the pointer of the function to execute
     fptr func;
 
@@ -204,7 +206,7 @@ typedef struct tms_math_expr
     int subexpr_count;
 
     /// Number of unknown operands.
-    int unknowns_count;
+    int unknowns_instances;
 
     /// Indicates the index of tms_g_var_values to copy the answer to.
     int runvar_i;
@@ -212,8 +214,8 @@ typedef struct tms_math_expr
     /// Array of unknown operands metadata.
     tms_unknown_operand *x_data;
 
-    /// List of unknowns names.
-    tms_arg_list *unknowns_names;
+    /// List of unknowns
+    tms_arg_list *unknowns;
 
     /// Answer of the expression.
     double complex answer;

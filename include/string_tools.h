@@ -239,7 +239,7 @@ int tms_name_bounds(char *expr, int i, bool is_at_start);
 char *tms_get_name(char *expr, int i, bool is_at_start);
 
 /**
- * @brief Finds a string within an array of strings
+ * @brief Finds the index of a string within an array of strings
  * @param key The string to find
  * @param array The array of elements (not necessarily a char array)
  * @param arr_len Number of elements in the array
