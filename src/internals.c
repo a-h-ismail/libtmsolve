@@ -391,13 +391,13 @@ bool _tms_ufunc_has_circular_refs(tms_math_expr *F)
     return false;
 }
 
-int tms_set_ufunction(char *name, char *function)
+int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
 {
     int i;
-    int ufunc_index = tms_find_str_in_array(name, tms_g_ufunc, tms_g_ufunc_count, TMS_F_RUNTIME);
+    int ufunc_index = tms_find_str_in_array(fname, tms_g_ufunc, tms_g_ufunc_count, TMS_F_RUNTIME);
 
     // Check if the name has illegal characters
-    if (tms_valid_name(name) == false)
+    if (tms_valid_name(fname) == false)
     {
         tms_error_handler(EH_SAVE, TMS_PARSER, INVALID_NAME, EH_FATAL, NULL);
         return -1;
@@ -406,7 +406,7 @@ int tms_set_ufunction(char *name, char *function)
     // Check if the function name is allowed
     for (i = 0; i < tms_g_illegal_names_count; ++i)
     {
-        if (strcmp(name, tms_g_illegal_names[i]) == 0)
+        if (strcmp(fname, tms_g_illegal_names[i]) == 0)
         {
             tms_error_handler(EH_SAVE, TMS_PARSER, ILLEGAL_NAME, EH_FATAL, NULL);
             return -1;
@@ -414,7 +414,7 @@ int tms_set_ufunction(char *name, char *function)
     }
 
     // Check if the name was already used by builtin functions
-    i = tms_find_str_in_array(name, tms_g_all_func_names, tms_g_all_func_count, TMS_NOFUNC);
+    i = tms_find_str_in_array(fname, tms_g_all_func_names, tms_g_all_func_count, TMS_NOFUNC);
     if (i != -1 && ufunc_index == -1)
     {
         tms_error_handler(EH_SAVE, TMS_PARSER, NO_FUNCTION_SHADOWING, EH_FATAL, NULL);
@@ -422,17 +422,38 @@ int tms_set_ufunction(char *name, char *function)
     }
 
     // Check if the name is used by a variable
-    i = tms_find_str_in_array(name, tms_g_vars, tms_g_var_count, TMS_V_DOUBLE);
+    i = tms_find_str_in_array(fname, tms_g_vars, tms_g_var_count, TMS_V_DOUBLE);
     if (i != -1)
     {
         tms_error_handler(EH_SAVE, TMS_PARSER, FUNCTION_NAME_MATCHES_VAR, EH_FATAL, NULL);
         return -1;
     }
 
+    tms_arg_list *unknowns = tms_get_args(unknowns_list);
+
+    // Check that names are unique
+    if (!tms_is_unique_string_array(unknowns->arguments))
+    {
+        tms_free_arg_list(unknowns);
+        return -1;
+    }
+
+    // Check that the variable names are valid
+    for (int j = 0; j < unknowns->count; ++j)
+    {
+        if (!tms_valid_name(unknowns->arguments[j]))
+        {
+            tms_error_handler(EH_SAVE, TMS_PARSER, INVALID_NAME, EH_FATAL, NULL);
+            tms_free_arg_list(unknowns);
+            return -1;
+        }
+    }
+
     // Function already exists
     if (ufunc_index != -1)
     {
-        tms_math_expr *new = tms_parse_expr(function, true, true), *old = tms_g_ufunc[ufunc_index].F;
+        tms_math_expr *new = tms_parse_expr(function, TMS_ENABLE_CMPLX | TMS_ENABLE_UNK, unknowns),
+                      *old = tms_g_ufunc[ufunc_index].F;
         tms_math_subexpr *old_subexpr = tms_g_ufunc[ufunc_index].F->S;
         if (new == NULL)
             return -1;
@@ -464,7 +485,7 @@ int tms_set_ufunction(char *name, char *function)
     {
         // Create a new function
         DYNAMIC_RESIZE(tms_g_ufunc, tms_g_ufunc_count, tms_g_ufunc_max, tms_ufunc);
-        tms_math_expr *F = tms_parse_expr(function, true, true);
+        tms_math_expr *F = tms_parse_expr(function, TMS_ENABLE_CMPLX | TMS_ENABLE_UNK, unknowns);
         if (F == NULL)
         {
             return -1;
@@ -474,7 +495,7 @@ int tms_set_ufunction(char *name, char *function)
             i = tms_g_ufunc_count;
             // Set function
             tms_g_ufunc[i].F = F;
-            tms_g_ufunc[i].name = strdup(name);
+            tms_g_ufunc[i].name = strdup(fname);
             ++tms_g_ufunc_count;
             DYNAMIC_RESIZE(tms_g_all_func_names, tms_g_all_func_count, tms_g_all_func_max, char *);
             tms_g_all_func_names[tms_g_all_func_count++] = tms_g_ufunc[i].name;
@@ -559,7 +580,7 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M)
     }
 
     // If the nodes have unknowns, regenerate the unknowns pointers array
-    if (NM->unknowns_count > 0)
+    if (NM->unknowns_instances > 0)
         _tms_generate_unknowns_refs(NM);
 
     return NM;

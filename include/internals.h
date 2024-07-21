@@ -183,7 +183,14 @@ int tms_new_var(char *name, bool is_constant);
 
 int tms_new_int_var(char *name);
 
-int tms_set_ufunction(char *name, char *function);
+/**
+ * @brief Add/Update a runtime function.
+ * @param fname Function name.
+ * @param unknowns_list A comma separated string of unknowns names.
+ * @param function The expression with the unknowns.
+ * @return 0 on success, -1 on failure.
+ */
+int tms_set_ufunction(char *fname, char *unknowns_list, char *function);
 
 bool _tms_validate_args_count(int expected, int actual, int facility_id);
 
