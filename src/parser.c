@@ -128,7 +128,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
             S[s_i].depth = ++depth;
 
             // Treat extended functions as a subexpression
-            if (i > 1 && tms_legal_char_in_name(local_expr[i - 1]))
+            if (i > 0 && tms_legal_char_in_name(local_expr[i - 1]))
             {
                 char *name = tms_get_name(local_expr, i - 1, false);
 
@@ -154,12 +154,14 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                 // Set the part common for the extended and user defined functions
                 else
                 {
+                    // Remember, "i" here is at the open parenthesis
                     is_extended_or_runtime = true;
                     S[s_i].subexpr_start = i - strlen(name);
+                    S[s_i].solve_start = i + 1;
                     S[s_i].solve_end = tms_find_closing_parenthesis(local_expr, i) - 1;
                     S[s_i].start_node = -1;
                     // Generate the argument list at parsing time instead of during evaluation for better performance
-                    char *arguments = tms_strndup(local_expr + i + 1, S[s_i].solve_end - i + 2);
+                    char *arguments = tms_strndup(local_expr + i + 1, S[s_i].solve_end - i);
                     S[s_i].L = tms_get_args(arguments);
                     free(arguments);
                     // Set "i" at the end of the subexpression to avoid iterating within the extended/user function
@@ -186,6 +188,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                 S[s_i].func.extended = NULL;
                 S[s_i].func_type = TMS_NOFUNC;
                 S[s_i].exec_extf = false;
+                S[s_i].solve_start = i + 1;
 
                 // The expression start is the parenthesis, may change if a function is found
                 S[s_i].subexpr_start = i;
@@ -201,7 +204,6 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                 }
             }
             // Common between the 3 possible cases
-            S[s_i].solve_start = i + 1;
             if (S[s_i].solve_end == -2)
             {
                 tms_error_handler(EH_SAVE, TMS_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, local_expr, i);
@@ -867,7 +869,7 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *unk
     {
         // Extended functions use a subexpression without nodes, but the subexpression result pointer should point at something
         // Allocate a small block and use that for the result pointer
-        if (S[s_i].func_type == TMS_F_EXTENDED)
+        if (S[s_i].func_type == TMS_F_EXTENDED || S[s_i].func_type == TMS_F_RUNTIME)
         {
             S[s_i].result = malloc(sizeof(double complex *));
             continue;
