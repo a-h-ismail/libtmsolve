@@ -64,7 +64,7 @@ int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_inde
  * @param s_index Index of the current subexpression.
  * @return 0 on success, -1 on failure.
  */
-int _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_index);
+int _tms_set_rcfunction_ptr(char *local_expr, tms_math_expr *M, int s_index);
 
 /**
  * @brief Allocates nodes and sets basic metadata.
@@ -88,13 +88,13 @@ int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_index, int *operat
 int _tms_set_all_operands(char *local_expr, tms_math_expr *M, int s_index, bool enable_unknowns);
 
 /**
- * @brief Reads a value from the expression at start, supports numbers, constants and variables.
+ * @brief Parses an operand and returns its value (could be a number or a variable)
  * @param expr The string to read the value from.
  * @param start The index where the start of the value is located.
  * @param enable_complex Toggles complex number support.
  * @return The value read from the string, or NaN in case of failure.
  */
-double complex _tms_set_operand_value(char *expr, int start, bool enable_complex);
+double complex _tms_get_operand_value(char *expr, int start, bool enable_complex);
 
 /**
  * @brief Sets metadata/value for the specified operand.
@@ -153,22 +153,24 @@ void tms_convert_real_to_complex(tms_math_expr *M);
  * @param operand Informs the function which operand to set as unknown.
  * @return 0 if the unknown x was found at either operands of x_node, -1 otherwise.
  */
-int _tms_set_unknowns_data(char *expr, tms_op_node *x_node, char operand);
+int _tms_set_unknowns_data(tms_math_expr *M, int start, tms_op_node *x_node, char operand);
+
+#define TMS_ENABLE_UNK 1
+#define TMS_ENABLE_CMPLX 2
 
 /**
  * @brief Parses a math expression into a structure.
  * @note This function automatically prints errors to stderr if any.
  * @param expr The string containing the math expression.
- * @param enable_vars When set to true, the parser will look for unknowns (currently x only) and set its metadata in the corresponding nodes.\n
- * Use tms_set_unknown() to specify the value taken by the unknown.
- * @param enable_complex When set to true, enables the parser to read complex values and set complex variant of scientific functions.
+ * @param options Provides the parser with options (currently: TMS_ENABLE_UNK, TMS_ENABLE_CMPLX). A 0 here means defaults.
+ * @param unknowns If the option to enable unknowns is set, provide the unknowns names here.
  * @return A (malloc'd) pointer to the generated math structure.
  */
-tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_complex);
+tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *unknowns);
 
 /// @brief The actual parser logic is here, but it isn't thread safe and doesn't automatically print errors.
 /// @warning Usage is not recommended unless you know what you're doing.
-tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool enable_complex);
+tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *unknowns);
 
 /**
  * @brief Frees the memory used by the members of a math_expr.

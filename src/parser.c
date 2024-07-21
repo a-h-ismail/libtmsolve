@@ -96,7 +96,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
         return NULL;
     }
 
-    int s_max = 8, i, j, s_i, length = strlen(local_expr), s_count;
+    int s_max = 8, i, s_i, length = strlen(local_expr), s_count;
 
     // Pointer to subexpressions heap array
     tms_math_subexpr *S;
@@ -104,7 +104,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
     // Pointer to the math_expr generated
     tms_math_expr *M = malloc(sizeof(tms_math_expr));
 
-    M->unknowns_count = 0;
+    M->unknowns_instances = 0;
     M->x_data = NULL;
     M->enable_complex = enable_complex;
     M->S = NULL;
@@ -116,14 +116,14 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
 
     int depth = 0;
     s_i = 0;
-    bool is_extended;
+    bool is_extended_or_runtime;
     // Determine the depth and start/end of each subexpression parenthesis
     for (i = 0; i < length; ++i)
     {
         if (local_expr[i] == '(')
         {
             DYNAMIC_RESIZE(S, s_i, s_max, tms_math_subexpr)
-            is_extended = false;
+            is_extended_or_runtime = false;
             S[s_i].nodes = NULL;
             S[s_i].depth = ++depth;
 
@@ -140,40 +140,49 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                     tms_delete_math_expr(M);
                     return NULL;
                 }
-
-                j = tms_find_str_in_array(name, tms_g_extf, tms_g_extf_count, TMS_F_EXTENDED);
-
-                // It is an extended function indeed
-                if (j != -1)
+                int extf_i, ufunc_i;
+                extf_i = tms_find_str_in_array(name, tms_g_extf, tms_g_extf_count, TMS_F_EXTENDED);
+                ufunc_i = tms_find_str_in_array(name, tms_g_ufunc, tms_g_ufunc_count, TMS_F_RUNTIME);
+                // Name collision, should not happen using the library functions
+                if (extf_i != -1 && ufunc_i != -1)
                 {
-                    is_extended = true;
+                    tms_error_handler(EH_SAVE, TMS_PARSER, INTERNAL_ERROR, EH_FATAL, local_expr, i - 1);
+                    free(S);
+                    tms_delete_math_expr(M);
+                    return NULL;
+                }
+                // Set the part common for the extended and user defined functions
+                else
+                {
+                    is_extended_or_runtime = true;
                     S[s_i].subexpr_start = i - strlen(name);
-                    S[s_i].solve_start = i + 1;
-                    i = tms_find_closing_parenthesis(local_expr, i);
-                    if (i == -1)
-                    {
-                        tms_error_handler(EH_SAVE, TMS_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, local_expr,
-                                          S[s_i].solve_start - 1);
-                        M->S = S;
-                        free(name);
-                        tms_delete_math_expr(M);
-                        return NULL;
-                    }
-                    S[s_i].solve_end = i - 1;
-                    S[s_i].func.extended = tms_g_extf[j].ptr;
-                    S[s_i].func_type = TMS_F_EXTENDED;
+                    S[s_i].solve_end = tms_find_closing_parenthesis(local_expr, i) - 1;
                     S[s_i].start_node = -1;
+                    // Generate the argument list at parsing time instead of during evaluation for better performance
+                    char *arguments = tms_strndup(local_expr + i + 1, S[s_i].solve_end - i + 2);
+                    S[s_i].L = tms_get_args(arguments);
+                    free(arguments);
+                    // Set "i" at the end of the subexpression to avoid iterating within the extended/user function
+                    i = S[s_i].solve_end;
+                }
+                // Specific to extended functions
+                if (extf_i != -1)
+                {
+                    S[s_i].func.extended = tms_g_extf[extf_i].ptr;
+                    S[s_i].func_type = TMS_F_EXTENDED;
                     S[s_i].exec_extf = true;
-
-                    // Decrement i so that the loop counter would hit the closing parenthesis and perform checks
-                    --i;
+                }
+                // Specific to user functions
+                else if (ufunc_i != -1)
+                {
+                    S[s_i].func.runtime = tms_g_ufunc + ufunc_i;
+                    S[s_i].func_type = TMS_F_RUNTIME;
                 }
                 free(name);
             }
-            if (is_extended == false)
+            if (is_extended_or_runtime == false)
             {
-                // Not an extended function, either no function at all or a regular function
-                S[s_i].solve_start = i + 1;
+                // Not an extended function, either no function at all or a single variable function
                 S[s_i].func.extended = NULL;
                 S[s_i].func_type = TMS_NOFUNC;
                 S[s_i].exec_extf = false;
@@ -190,15 +199,16 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                     tms_delete_math_expr(M);
                     return NULL;
                 }
-
-                if (S[s_i].solve_end == -2)
-                {
-                    tms_error_handler(EH_SAVE, TMS_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, local_expr, i);
-                    // S isn't part of M yet
-                    free(S);
-                    tms_delete_math_expr(M);
-                    return NULL;
-                }
+            }
+            // Common between the 3 possible cases
+            S[s_i].solve_start = i + 1;
+            if (S[s_i].solve_end == -2)
+            {
+                tms_error_handler(EH_SAVE, TMS_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, local_expr, i);
+                // S isn't part of M yet
+                free(S);
+                tms_delete_math_expr(M);
+                return NULL;
             }
             ++s_i;
         }
@@ -315,7 +325,7 @@ int *_tms_get_operator_indexes(char *local_expr, tms_math_subexpr *S, int s_i)
     return operator_index;
 }
 
-int _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_i)
+int _tms_set_rcfunction_ptr(char *local_expr, tms_math_expr *M, int s_i)
 {
     int i;
     tms_math_subexpr *S = &(M->S[s_i]);
@@ -327,17 +337,6 @@ int _tms_set_function_ptr(char *local_expr, tms_math_expr *M, int s_i)
         char *name = tms_get_name(local_expr, solve_start - 2, false);
         if (name == NULL)
             return 0;
-
-        // Runtime user functions
-        if ((i = tms_find_str_in_array(name, tms_g_ufunc, tms_g_ufunc_count, TMS_F_RUNTIME)) != -1)
-        {
-            S->func.runtime = tms_g_ufunc + i;
-            S->func_type = TMS_F_RUNTIME;
-            // Set the start of the subexpression to the start of the function name
-            S->subexpr_start = solve_start - strlen(tms_g_ufunc[i].name) - 1;
-            free(name);
-            return 0;
-        }
 
         if (!M->enable_complex)
         {
@@ -511,7 +510,7 @@ int _tms_set_all_operands(char *local_expr, tms_math_expr *M, int s_i, bool enab
     return 0;
 }
 
-double complex _tms_set_operand_value(char *expr, int start, bool enable_complex)
+double complex _tms_get_operand_value(char *expr, int start, bool enable_complex)
 {
     double complex value = NAN;
     bool is_negative = false;
@@ -600,14 +599,14 @@ int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start,
     // The operand is a variable or a numeric value
     if (tmp == -1)
     {
-        *operand_ptr = _tms_set_operand_value(expr, op_start, M->enable_complex);
+        *operand_ptr = _tms_get_operand_value(expr, op_start, M->enable_complex);
 
         if (isnan((double)*operand_ptr))
         {
             // Check for the unknown 'x'
             if (enable_unknowns == true)
             {
-                tmp = _tms_set_unknowns_data(expr + op_start, N, operand);
+                tmp = _tms_set_unknowns_data(M, op_start, N, operand);
                 if (tmp == -1)
                 {
                     // If the value reader failed with no error reported, set the error to be a syntax error
@@ -769,7 +768,7 @@ void _tms_set_result_pointers(tms_math_expr *M, int s_i)
         tmp_node->result = &M->answer;
 }
 
-tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_complex)
+tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *unknowns)
 {
     tms_lock_parser(TMS_PARSER);
 
@@ -779,7 +778,7 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_comp
         tms_error_handler(EH_CLEAR, TMS_PARSER);
     }
 
-    tms_math_expr *M = _tms_parse_expr_unsafe(expr, enable_unknowns, enable_complex);
+    tms_math_expr *M = _tms_parse_expr_unsafe(expr, options, unknowns);
     if (M == NULL)
         tms_error_handler(EH_PRINT, TMS_PARSER);
 
@@ -787,7 +786,7 @@ tms_math_expr *tms_parse_expr(char *expr, bool enable_unknowns, bool enable_comp
     return M;
 }
 
-tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool enable_complex)
+tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *unknowns)
 {
     int i;
     // Number of subexpressions
@@ -798,6 +797,8 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool ena
     int variable_index = -1;
     // Local expression may be offset compared to the expression due to the assignment operator (if it exists).
     char *local_expr;
+    bool enable_unknowns = (options & TMS_ENABLE_UNK) && 1;
+    bool enable_complex = (options & TMS_ENABLE_CMPLX) && 1;
 
     if (strlen(expr) > __INT_MAX__)
     {
@@ -818,7 +819,7 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool ena
     // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
     _tms_combine_add_sub(expr);
 
-    // Search for assignment operator, to enable user defined variables
+    // Search for assignment operator to set user defined variables or functions
     i = tms_f_search(expr, "=", 0, false);
     if (i != -1)
     {
@@ -836,6 +837,9 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool ena
     tms_math_expr *M = _tms_init_math_expr(expr, enable_complex);
     if (M == NULL)
         return NULL;
+
+    // Add the unknowns to the math expression if necessary
+    M->unknowns = (enable_unknowns ? unknowns : NULL);
 
     // After calling expression initializer, no need to manually free the "expr" string
     // It is now a part of the math_expr struct and will be freed with it
@@ -878,7 +882,7 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, bool enable_unknowns, bool ena
             return NULL;
         }
 
-        status = _tms_set_function_ptr(local_expr, M, s_i);
+        status = _tms_set_rcfunction_ptr(local_expr, M, s_i);
         if (status == -1)
         {
             tms_delete_math_expr(M);
@@ -999,45 +1003,48 @@ void tms_convert_real_to_complex(tms_math_expr *M)
     M->enable_complex = true;
 }
 
-int _tms_set_unknowns_data(char *expr, tms_op_node *x_node, char operand)
+int _tms_set_unknowns_data(tms_math_expr *M, int start, tms_op_node *x_node, char rl)
 {
-    bool is_negative = false, is_x = false;
-    if (tms_match_word(expr, 0, "x", true))
-        is_x = true;
-    else if (tms_match_word(expr, 1, "x", true))
-    {
-        if (*expr == '+')
-            is_x = true;
-        else if (*expr == '-')
-            is_x = is_negative = true;
-        else
-            return -1;
-    }
-    // The value is not the unknown x
-    else
+    char *expr = M->local_expr;
+    bool is_negative = false;
+
+    char *name = tms_get_name(expr, start, true);
+
+    int id = tms_find_str_in_array(name, M->unknowns->arguments, M->unknowns->count, TMS_NOFUNC);
+    if (id == -1)
         return -1;
-    if (is_x)
+
+    if (expr[start] == '+')
     {
-        // x as left operand, set bits using bitwise OR
-        if (operand == 'l')
-        {
-            x_node->unknowns_data |= UNK_LEFT;
-            if (is_negative)
-                x_node->unknowns_data |= UNK_LNEG;
-        }
-        // x as right op
-        else if (operand == 'r')
-        {
-            x_node->unknowns_data |= UNK_RIGHT;
-            if (is_negative)
-                x_node->unknowns_data |= UNK_RNEG;
-        }
-        else
-        {
-            tms_error_handler(EH_SAVE, TMS_PARSER, INTERNAL_ERROR, EH_FATAL, NULL);
-            return -1;
-        }
+        is_negative = false;
+        ++start;
     }
+    else if (expr[start] == '-')
+    {
+        is_negative = true;
+        ++start;
+    }
+
+    if (rl == 'l')
+    {
+        x_node->unknowns_data |= UNK_LEFT;
+        SET_LEFT_ID(x_node->unknowns_data, id);
+        if (is_negative)
+            x_node->unknowns_data |= UNK_LNEG;
+    }
+    else if (rl == 'r')
+    {
+        x_node->unknowns_data |= UNK_RIGHT;
+        SET_RIGHT_ID(x_node->unknowns_data, id);
+        if (is_negative)
+            x_node->unknowns_data |= UNK_RNEG;
+    }
+    else
+    {
+        tms_error_handler(EH_SAVE, TMS_PARSER, INTERNAL_ERROR, EH_FATAL, NULL);
+        return -1;
+    }
+
     return 0;
 }
 
