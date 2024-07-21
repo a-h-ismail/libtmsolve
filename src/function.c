@@ -195,7 +195,9 @@ double complex tms_derivative(tms_arg_list *L)
         tms_error_handler(EH_CLEAR, TMS_EVALUATOR);
         return NAN;
     }
-    M = _tms_parse_expr_unsafe(L->arguments[0], TMS_ENABLE_CMPLX, NULL);
+    // Compile the expression to the desired structure
+    tms_arg_list *tmp = tms_get_args("x");
+    M = _tms_parse_expr_unsafe(L->arguments[0], TMS_ENABLE_UNK, tmp);
 
     if (M == NULL)
     {
@@ -268,7 +270,8 @@ double complex tms_integrate(tms_arg_list *L)
     }
 
     // Compile the expression to the desired structure
-    M = _tms_parse_expr_unsafe(L->arguments[2], true, false);
+    tms_arg_list *tmp = tms_get_args("x");
+    M = _tms_parse_expr_unsafe(L->arguments[2], TMS_ENABLE_UNK, tmp);
 
     if (M == NULL)
         return NAN;
