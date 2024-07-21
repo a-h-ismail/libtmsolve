@@ -420,6 +420,7 @@ void _tms_generate_unknowns_refs(tms_math_expr *M)
             {
                 x_data[i].is_negative = i_node->unknowns_data & UNK_LNEG;
                 x_data[i].unknown_ptr = &(i_node->left_operand);
+                x_data[i].id = GET_LEFT_ID(i_node->unknowns_data);
                 i_node->left_operand = 0;
                 ++i;
             }
@@ -428,6 +429,7 @@ void _tms_generate_unknowns_refs(tms_math_expr *M)
             {
                 x_data[i].is_negative = i_node->unknowns_data & UNK_RNEG;
                 x_data[i].unknown_ptr = &(i_node->right_operand);
+                x_data[i].id = GET_RIGHT_ID(i_node->unknowns_data);
                 i_node->right_operand = 0;
                 ++i;
             }
@@ -437,7 +439,7 @@ void _tms_generate_unknowns_refs(tms_math_expr *M)
     if (i != 0)
     {
         x_data = realloc(x_data, i * sizeof(tms_unknown_operand));
-        M->unknowns_count = i;
+        M->unknowns_instances = i;
         M->x_data = x_data;
     }
     else
@@ -447,7 +449,7 @@ void _tms_generate_unknowns_refs(tms_math_expr *M)
 void tms_set_unknown(tms_math_expr *M, double complex value)
 {
     int i;
-    for (i = 0; i < M->unknowns_count; ++i)
+    for (i = 0; i < M->unknowns_instances; ++i)
     {
         if (M->x_data[i].is_negative)
             *(M->x_data[i].unknown_ptr) = -value;
