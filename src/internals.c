@@ -432,7 +432,7 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
     tms_arg_list *unknowns = tms_get_args(unknowns_list);
 
     // Check that names are unique
-    if (!tms_is_unique_string_array(unknowns->arguments))
+    if (!tms_is_unique_string_array(unknowns->arguments, unknowns->count))
     {
         tms_free_arg_list(unknowns);
         return -1;

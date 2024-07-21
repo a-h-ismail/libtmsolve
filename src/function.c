@@ -185,10 +185,11 @@ double complex tms_derivative(tms_arg_list *L)
     if (_tms_validate_args_count(2, L->count, TMS_EVALUATOR) == false)
         return NAN;
 
-    double x, f_prime, fx1, fx2;
+    double complex x, fx1, fx2;
+    double f_prime;
 
     x = _tms_solve_e_unsafe(L->arguments[1], false);
-    if (isnan(x))
+    if (isnan(creal(x)))
     {
         tms_error_handler(EH_CLEAR, TMS_PARSER);
         tms_error_handler(EH_CLEAR, TMS_EVALUATOR);
@@ -212,11 +213,13 @@ double complex tms_derivative(tms_arg_list *L)
     // Scale epsilon with the dimensions of the required value.
     epsilon = x * epsilon;
 
-    // Solve for x
-    tms_set_unknown(M, x - epsilon);
+    // Solve for x - epsilon
+    x -= epsilon;
+    tms_set_unknowns(M, &x);
     fx1 = _tms_evaluate_unsafe(M);
     // Solve for x + epsilon
-    tms_set_unknown(M, x + epsilon);
+    x += 2 * epsilon;
+    tms_set_unknowns(M, &x);
     fx2 = _tms_evaluate_unsafe(M);
     tms_error_handler(EH_CLEAR, TMS_EVALUATOR);
 
@@ -238,11 +241,12 @@ double complex tms_integrate(tms_arg_list *L)
 
     int n;
     bool flip_result = false;
-    double lower_bound, upper_bound, result, an, fn, rounds, delta;
+    double complex lower_bound, upper_bound, an;
+    double result, rounds, delta, fn;
 
     lower_bound = _tms_solve_e_unsafe(L->arguments[0], false);
     upper_bound = _tms_solve_e_unsafe(L->arguments[1], false);
-    if (isnan(lower_bound) || isnan(upper_bound))
+    if (isnan(creal(lower_bound)) || isnan(creal(upper_bound)))
     {
         tms_error_handler(EH_CLEAR, TMS_PARSER);
         tms_error_handler(EH_CLEAR, TMS_EVALUATOR);
@@ -284,9 +288,11 @@ double complex tms_integrate(tms_arg_list *L)
     // Simpson 3/8 formula:
     // 3h/8[(y0 + yn) + 3(y1 + y2 + y4 + y5 + … + yn-1) + 2(y3 + y6 + y9 + … + yn-3)]
     // First step: y0 + yn
-    tms_set_unknown(M, lower_bound);
+    tms_set_unknowns(M, &lower_bound);
     result = _tms_evaluate_unsafe(M);
-    tms_set_unknown(M, lower_bound + delta);
+    lower_bound += delta;
+    tms_set_unknowns(M, &lower_bound);
+    lower_bound -= delta;
     result += _tms_evaluate_unsafe(M);
     // Clear errors collected from the previous evaluator calls
     tms_error_handler(EH_CLEAR, TMS_EVALUATOR);
@@ -306,7 +312,7 @@ double complex tms_integrate(tms_arg_list *L)
         if (i == 3)
         {
             an = lower_bound + delta * n / rounds;
-            tms_set_unknown(M, an);
+            tms_set_unknowns(M, &an);
             fn = _tms_evaluate_unsafe(M);
             if (isnan(fn) == true)
             {
@@ -320,7 +326,7 @@ double complex tms_integrate(tms_arg_list *L)
         else
         {
             an = lower_bound + delta * n / rounds;
-            tms_set_unknown(M, an);
+            tms_set_unknowns(M, &an);
             fn = _tms_evaluate_unsafe(M);
             if (isnan(fn) == true)
             {

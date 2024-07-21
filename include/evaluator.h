@@ -56,9 +56,11 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result);
 void _tms_generate_unknowns_refs(tms_math_expr *M);
 
 /**
- * @brief Sets a value to all the unknown members of M.
+ * @brief Sets the values of unknown operands.
+ * @param M The math expression with unknown operands.
+ * @param values_list A list of all unknowns values, should be indexed by the unknown ID.
  */
-void tms_set_unknown(tms_math_expr *M, double complex value);
+void tms_set_unknowns(tms_math_expr *M, double complex *values_list);
 
 /// @brief Dumps the data of the math expression M.
 /// @details The dumped data includes: \n
