@@ -34,177 +34,185 @@ double complex tms_evaluate(tms_math_expr *M)
     return result;
 }
 
+double complex *tms_solve_list(tms_arg_list *expr_list, bool enable_complex)
+{
+    if (expr_list->count < 1)
+        return NULL;
+    double complex *answer_list = malloc(expr_list->count * sizeof(double complex));
+
+    for (int i = 0; i < expr_list->count; ++i)
+    {
+        answer_list[i] = _tms_solve_e_unsafe(expr_list->arguments[i], enable_complex);
+        if (isnan(creal(answer_list[i])))
+        {
+            free(answer_list);
+            answer_list = NULL;
+            break;
+        }
+    }
+
+    return answer_list;
+}
+
 double complex _tms_evaluate_unsafe(tms_math_expr *M)
 {
-    // No NULL pointer dereference allowed.
     if (M == NULL)
         return NAN;
     tms_op_node *i_node;
-    int s_i = 0, s_count = M->subexpr_count;
-    // Subexpression pointer to access the subexpression array.
+    int i;
+
     tms_math_subexpr *S = M->S;
-    while (s_i < s_count)
+    for (i = 0; i < M->subexpr_count; ++i)
     {
-        // Extended functions have no nodes
-        if (S[s_i].nodes == NULL)
+        // Extended and User functions have no nodes
+        if (S[i].nodes == NULL)
         {
-            if (S[s_i].exec_extf)
+            if (S[i].func_type == TMS_F_EXTENDED && S[i].exec_extf)
             {
-                char *arguments;
                 bool _debug_state = _tms_debug;
-                tms_arg_list *L;
-
-                int length = S[s_i].solve_end - S[s_i].solve_start + 1;
-
-                // Copy arguments
-                arguments = tms_strndup(M->local_expr + S[s_i].solve_start, length);
-                L = tms_get_args(arguments);
 
                 // Disable debug output for extended functions
                 _tms_debug = false;
 
                 // Call the extended function using its pointer
-                **(S[s_i].result) = (*(S[s_i].func.extended))(L);
+                **(S[i].result) = (*(S[i].func.extended))(S[i].L);
 
                 _tms_debug = _debug_state;
 
-                if (isnan(creal(**(S[s_i].result))))
+                if (isnan(creal(**(S[i].result))))
                 {
                     // If the function didn't generate an error itself, provide a generic one
                     if (tms_error_handler(EH_ERROR_COUNT, TMS_EVALUATOR | TMS_PARSER, EH_ALL_ERRORS) == 0)
                         tms_error_handler(EH_SAVE, TMS_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->local_expr,
-                                          S[s_i].subexpr_start);
+                                          S[i].subexpr_start);
                     else
-                        tms_error_handler(EH_MODIFY, TMS_EVALUATOR | TMS_PARSER, M->local_expr, S[s_i].subexpr_start,
+                        tms_error_handler(EH_MODIFY, TMS_EVALUATOR | TMS_PARSER, M->local_expr, S[i].subexpr_start,
                                           "In function args: ");
 
-                    free(arguments);
-                    tms_free_arg_list(L);
                     return NAN;
                 }
-                if (!tms_is_real(**(S[s_i].result)) && M->enable_complex == false)
+                if (!tms_is_real(**(S[i].result)) && M->enable_complex == false)
                 {
                     tms_error_handler(EH_SAVE, TMS_EVALUATOR, COMPLEX_DISABLED, EH_NONFATAL, NULL);
-                    free(arguments);
-                    tms_free_arg_list(L);
                     return NAN;
                 }
-
-                S[s_i].exec_extf = false;
-                free(arguments);
-                tms_free_arg_list(L);
+                S[i].exec_extf = false;
             }
-            ++s_i;
-
-            continue;
-        }
-        i_node = S[s_i].nodes + S[s_i].start_node;
-
-        // Case of an expression with one operand
-        if (S[s_i].op_count == 0)
-            *(i_node->result) = i_node->left_operand;
-        // Normal case, iterate through the nodes following the evaluation order.
-        else
-            while (i_node != NULL)
+            else if (S[i].func_type == TMS_F_RUNTIME)
             {
-                // Probably a parsing bug
-                if (i_node->result == NULL)
+                double complex *arguments = tms_solve_list(S[i].L, M->enable_complex);
+                if (arguments == NULL)
                 {
-                    tms_error_handler(EH_SAVE, TMS_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL);
                     return NAN;
                 }
-                switch (i_node->operator)
+                tms_math_expr *F = tms_dup_mexpr(S[i].func.runtime->F);
+                // Set the values of the unknowns (passed as arguments earlier)
+                tms_set_unknowns(F, arguments);
+                **(S[i].result) = _tms_evaluate_unsafe(F);
+            }
+        }
+        else
+        {
+            i_node = S[i].nodes + S[i].start_node;
+
+            // Case of an expression with one operand
+            if (S[i].op_count == 0)
+                *(i_node->result) = i_node->left_operand;
+            // Normal case, iterate through the nodes following the evaluation order.
+            else
+                while (i_node != NULL)
                 {
-                case '+':
-                    *(i_node->result) = i_node->left_operand + i_node->right_operand;
-                    break;
-
-                case '-':
-                    *(i_node->result) = i_node->left_operand - i_node->right_operand;
-                    break;
-
-                case '*':
-                    *(i_node->result) = i_node->left_operand * i_node->right_operand;
-                    break;
-
-                case '/':
-                    if (i_node->right_operand == 0)
+                    // Probably a parsing bug
+                    if (i_node->result == NULL)
                     {
-                        tms_error_handler(EH_SAVE, TMS_EVALUATOR, DIVISION_BY_ZERO, EH_FATAL, M->local_expr,
-                                          i_node->operator_index);
+                        tms_error_handler(EH_SAVE, TMS_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL);
                         return NAN;
                     }
-                    *(i_node->result) = i_node->left_operand / i_node->right_operand;
-                    break;
+                    switch (i_node->operator)
+                    {
+                    case '+':
+                        *(i_node->result) = i_node->left_operand + i_node->right_operand;
+                        break;
 
-                case '%':
-                    if (i_node->right_operand == 0)
-                    {
-                        tms_error_handler(EH_SAVE, TMS_EVALUATOR, MODULO_ZERO, EH_FATAL, M->local_expr,
-                                          i_node->operator_index);
-                        return NAN;
-                    }
-                    if (cimag(i_node->left_operand) != 0 || cimag(i_node->right_operand) != 0)
-                    {
-                        tms_error_handler(EH_SAVE, TMS_EVALUATOR, MODULO_COMPLEX_NOT_SUPPORTED, EH_FATAL, M->local_expr,
-                                          i_node->operator_index);
-                        return NAN;
-                    }
-                    else
-                    {
-                        *(i_node->result) = fmod(i_node->left_operand, i_node->right_operand);
-                        if (isnan(creal(*(i_node->result))))
+                    case '-':
+                        *(i_node->result) = i_node->left_operand - i_node->right_operand;
+                        break;
+
+                    case '*':
+                        *(i_node->result) = i_node->left_operand * i_node->right_operand;
+                        break;
+
+                    case '/':
+                        if (i_node->right_operand == 0)
                         {
-                            tms_error_handler(EH_SAVE, TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->local_expr,
+                            tms_error_handler(EH_SAVE, TMS_EVALUATOR, DIVISION_BY_ZERO, EH_FATAL, M->local_expr,
                                               i_node->operator_index);
                             return NAN;
                         }
-                    }
-                    break;
+                        *(i_node->result) = i_node->left_operand / i_node->right_operand;
+                        break;
 
-                case '^':
-                    // Use non complex power function if the operands are real
-                    if (M->enable_complex == false)
-                    {
-                        *(i_node->result) = pow(i_node->left_operand, i_node->right_operand);
-                        if (isnan(creal(*(i_node->result))))
+                    case '%':
+                        if (i_node->right_operand == 0)
                         {
-                            tms_error_handler(EH_SAVE, TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->local_expr,
+                            tms_error_handler(EH_SAVE, TMS_EVALUATOR, MODULO_ZERO, EH_FATAL, M->local_expr,
                                               i_node->operator_index);
                             return NAN;
                         }
+                        if (cimag(i_node->left_operand) != 0 || cimag(i_node->right_operand) != 0)
+                        {
+                            tms_error_handler(EH_SAVE, TMS_EVALUATOR, MODULO_COMPLEX_NOT_SUPPORTED, EH_FATAL,
+                                              M->local_expr, i_node->operator_index);
+                            return NAN;
+                        }
+                        else
+                        {
+                            *(i_node->result) = fmod(i_node->left_operand, i_node->right_operand);
+                            if (isnan(creal(*(i_node->result))))
+                            {
+                                tms_error_handler(EH_SAVE, TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->local_expr,
+                                                  i_node->operator_index);
+                                return NAN;
+                            }
+                        }
+                        break;
+
+                    case '^':
+                        // Use non complex power function if the operands are real
+                        if (M->enable_complex == false)
+                        {
+                            *(i_node->result) = pow(i_node->left_operand, i_node->right_operand);
+                            if (isnan(creal(*(i_node->result))))
+                            {
+                                tms_error_handler(EH_SAVE, TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->local_expr,
+                                                  i_node->operator_index);
+                                return NAN;
+                            }
+                        }
+                        else
+                            *(i_node->result) = tms_cpow(i_node->left_operand, i_node->right_operand);
+                        break;
                     }
-                    else
-                        *(i_node->result) = tms_cpow(i_node->left_operand, i_node->right_operand);
-                    break;
+                    i_node = i_node->next;
                 }
-                i_node = i_node->next;
+
+            // Executing function on the subexpression result
+            switch (S[i].func_type)
+            {
+            case TMS_F_REAL:
+                **(S[i].result) = (*(S[i].func.real))(**(S[i].result));
+                break;
+            case TMS_F_CMPLX:
+                **(S[i].result) = (*(S[i].func.cmplx))(**(S[i].result));
+                break;
             }
 
-        // Executing function on the subexpression result
-        switch (S[s_i].func_type)
-        {
-        case TMS_F_REAL:
-            **(S[s_i].result) = (*(S[s_i].func.real))(**(S[s_i].result));
-            break;
-        case TMS_F_CMPLX:
-            **(S[s_i].result) = (*(S[s_i].func.cmplx))(**(S[s_i].result));
-            break;
-        case TMS_F_RUNTIME:
-            // Copy the function structure, set the unknown and solve
-            tms_math_expr *F = tms_dup_mexpr(S[s_i].func.runtime->F);
-            tms_set_unknown(F, **(S[s_i].result));
-            **(S[s_i].result) = _tms_evaluate_unsafe(F);
-            tms_error_handler(EH_CLEAR, TMS_EVALUATOR);
-            tms_delete_math_expr(F);
+            if (isnan((double)**(S[i].result)))
+            {
+                tms_error_handler(EH_SAVE, TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->local_expr, S[i].subexpr_start);
+                return NAN;
+            }
         }
-
-        if (isnan((double)**(S[s_i].result)))
-        {
-            tms_error_handler(EH_SAVE, TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->local_expr, S[s_i].subexpr_start);
-            return NAN;
-        }
-        ++s_i;
     }
 
     if (M->runvar_i != -1 && !tms_g_vars[M->runvar_i].is_constant)
@@ -446,15 +454,15 @@ void _tms_generate_unknowns_refs(tms_math_expr *M)
         free(x_data);
 }
 
-void tms_set_unknown(tms_math_expr *M, double complex value)
+void tms_set_unknowns(tms_math_expr *M, double complex *values_list)
 {
     int i;
     for (i = 0; i < M->unknowns_instances; ++i)
     {
         if (M->x_data[i].is_negative)
-            *(M->x_data[i].unknown_ptr) = -value;
+            *(M->x_data[i].unknown_ptr) = -values_list[M->x_data[i].id];
         else
-            *(M->x_data[i].unknown_ptr) = value;
+            *(M->x_data[i].unknown_ptr) = values_list[M->x_data[i].id];
     }
 }
 
