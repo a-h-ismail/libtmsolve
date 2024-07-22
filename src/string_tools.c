@@ -905,8 +905,24 @@ tms_arg_list *tms_get_args(char *string)
     return A;
 }
 
+tms_arg_list *tms_dup_arg_list(tms_arg_list *L)
+{
+    if (L == NULL)
+        return NULL;
+
+    tms_arg_list *new = malloc(sizeof(tms_arg_list));
+    new->count = L->count;
+    new->arguments = malloc(new->count * sizeof(char *));
+    for (int i = 0; i < new->count; ++i)
+        new->arguments[i] = strdup(L->arguments[i]);
+
+    return new;
+}
+
 void tms_free_arg_list(tms_arg_list *list)
 {
+    if (list == NULL)
+        return;
     for (int i = 0; i < list->count; ++i)
         free(list->arguments[i]);
     free(list->arguments);

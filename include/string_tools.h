@@ -194,6 +194,12 @@ int tms_compare_priority(char operator1, char operator2);
 tms_arg_list *tms_get_args(char *string);
 
 /**
+ * @brief Creates a copy of the argument list.
+ * @return The new argument list, or NULL on failure.
+ */
+tms_arg_list *tms_dup_arg_list(tms_arg_list *L);
+
+/**
  * @brief Determines if the specified character is allowed in variable names.
  */
 bool tms_legal_char_in_name(char c);
