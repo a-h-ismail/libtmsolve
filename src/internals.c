@@ -514,6 +514,7 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M)
     // Copy the math expression
     *NM = *M;
     NM->expr = strdup(M->expr);
+    NM->unknowns = tms_dup_arg_list(M->unknowns);
     NM->local_expr = NM->expr + (M->local_expr - M->expr);
     NM->S = malloc(NM->subexpr_count * sizeof(tms_math_subexpr));
     // Copy subexpressions
@@ -544,8 +545,9 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M)
         }
         else
         {
-            // Likely this is an extended function subexpr
+            // An extended/user function subexpr
             NS->result = malloc(sizeof(double complex *));
+            NS->L = tms_dup_arg_list(S->L);
         }
     }
 
