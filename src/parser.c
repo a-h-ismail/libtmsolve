@@ -1017,6 +1017,7 @@ int _tms_set_unknowns_data(tms_math_expr *M, int start, tms_op_node *x_node, cha
     char *name = tms_get_name(expr, start, true);
 
     int id = tms_find_str_in_array(name, M->unknowns->arguments, M->unknowns->count, TMS_NOFUNC);
+    free(name);
     if (id == -1)
         return -1;
 
