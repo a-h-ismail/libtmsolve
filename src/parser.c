@@ -151,9 +151,10 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                     tms_delete_math_expr(M);
                     return NULL;
                 }
-                // Set the part common for the extended and user defined functions
-                else
+                // Found either extf or user function
+                if (extf_i != -1 || ufunc_i != -1)
                 {
+                    // Set the part common for the extended and user defined functions
                     // Remember, "i" here is at the open parenthesis
                     is_extended_or_runtime = true;
                     S[s_i].subexpr_start = i - strlen(name);
@@ -166,19 +167,20 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                     free(arguments);
                     // Set "i" at the end of the subexpression to avoid iterating within the extended/user function
                     i = S[s_i].solve_end;
-                }
-                // Specific to extended functions
-                if (extf_i != -1)
-                {
-                    S[s_i].func.extended = tms_g_extf[extf_i].ptr;
-                    S[s_i].func_type = TMS_F_EXTENDED;
-                    S[s_i].exec_extf = true;
-                }
-                // Specific to user functions
-                else if (ufunc_i != -1)
-                {
-                    S[s_i].func.runtime = tms_g_ufunc + ufunc_i;
-                    S[s_i].func_type = TMS_F_RUNTIME;
+
+                    // Specific to extended functions
+                    if (extf_i != -1)
+                    {
+                        S[s_i].func.extended = tms_g_extf[extf_i].ptr;
+                        S[s_i].func_type = TMS_F_EXTENDED;
+                        S[s_i].exec_extf = true;
+                    }
+                    // Specific to user functions
+                    else
+                    {
+                        S[s_i].func.runtime = tms_g_ufunc + ufunc_i;
+                        S[s_i].func_type = TMS_F_RUNTIME;
+                    }
                 }
                 free(name);
             }
