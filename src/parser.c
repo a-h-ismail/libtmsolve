@@ -106,6 +106,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
 
     M->unknowns_instances = 0;
     M->x_data = NULL;
+    M->unknowns = NULL;
     M->enable_complex = enable_complex;
     M->S = NULL;
     M->subexpr_count = 0;
@@ -188,6 +189,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
             {
                 // Not an extended function, either no function at all or a single variable function
                 S[s_i].func.extended = NULL;
+                S[s_i].L = NULL;
                 S[s_i].func_type = TMS_NOFUNC;
                 S[s_i].exec_extf = false;
                 S[s_i].solve_start = i + 1;
@@ -1061,13 +1063,17 @@ void tms_delete_math_expr_members(tms_math_expr *M)
     tms_math_subexpr *S = M->S;
     for (i = 0; i < M->subexpr_count; ++i)
     {
-        if (S[i].func_type == TMS_F_EXTENDED)
+        if (S[i].func_type == TMS_F_EXTENDED || S[i].func_type == TMS_F_RUNTIME)
+        {
             free(S[i].result);
+            tms_free_arg_list(S[i].L);
+        }
         free(S[i].nodes);
     }
     free(S);
     free(M->x_data);
     free(M->expr);
+    tms_free_arg_list(M->unknowns);
 }
 
 void tms_delete_math_expr(tms_math_expr *M)
