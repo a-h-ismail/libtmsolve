@@ -88,7 +88,7 @@ void test_integer(char *buffer)
     // Read the answer to expect
     if (tms_int_solve(buffer + field_separator + 1, &expected_ans) == -1)
     {
-        tms_error_handler(EH_PRINT);
+        tms_print_errors(TMS_ALL_FACILITIES);
         exit(1);
     }
     expected_ans = tms_sign_extend(expected_ans);
@@ -99,7 +99,7 @@ void test_integer(char *buffer)
     // Solve the expression
     if (tms_int_solve(expr, &tms_g_int_ans) == -1)
     {
-        tms_error_handler(EH_PRINT);
+        tms_print_errors(TMS_ALL_FACILITIES);
         exit(1);
     }
     tms_g_int_ans = tms_sign_extend(tms_g_int_ans);
