@@ -102,6 +102,8 @@ int tms_save_error(int facility_id, char *error_msg, int severity, char *expr, i
     tms_save_expr_with_error(expr, error_position, error_table + last_error);
 
     last_error = fatal + non_fatal;
+
+    _unlock_error_database();
     return 0;
 }
 
@@ -116,6 +118,8 @@ int tms_print_errors(int facility_id)
 
 int tms_clear_errors(int facility_id)
 {
+    _lock_error_database();
+
     int i, deleted_count = 0;
     for (i = 0; i < last_error; ++i)
     {
@@ -147,20 +151,27 @@ int tms_clear_errors(int facility_id)
     }
 
     last_error = fatal + non_fatal;
+
+    _unlock_error_database();
     return deleted_count;
 }
 
 int tms_find_error(int facility_id, char *error_msg)
 {
+    _lock_error_database();
     for (int i = 0; i < last_error; ++i)
         if ((facility_id & error_table[i].facility_id) != 0 && (strcmp(error_msg, error_table[i].message) == 0))
+        {
+            _unlock_error_database();
             return i;
-
+        }
+    _unlock_error_database();
     return -1;
 }
 
 int tms_get_error_count(int facility_id, int error_type)
 {
+    _lock_error_database();
     int select_fatal, select_non_fatal;
     if (facility_id == TMS_ALL_FACILITIES)
     {
@@ -179,6 +190,7 @@ int tms_get_error_count(int facility_id, int error_type)
                     ++select_non_fatal;
             }
     }
+    _unlock_error_database();
     switch (error_type)
     {
     case EH_NONFATAL:
@@ -193,6 +205,7 @@ int tms_get_error_count(int facility_id, int error_type)
 
 int tms_modify_last_error(int facility_id, char *expr, int error_position, char *prefix)
 {
+    _lock_error_database();
     int i;
     // Find the last error
     for (i = last_error - 1; i >= 0; --i)
@@ -201,7 +214,10 @@ int tms_modify_last_error(int facility_id, char *expr, int error_position, char 
             break;
     }
     if (i == -1)
+    {
+        _unlock_error_database();
         return -1;
+    }
 
     error_table[i].expr_len = strlen(expr);
 
@@ -213,6 +229,7 @@ int tms_modify_last_error(int facility_id, char *expr, int error_position, char 
     }
 
     tms_save_expr_with_error(expr, error_position, error_table + i);
+    _unlock_error_database();
     return 0;
 }
 
