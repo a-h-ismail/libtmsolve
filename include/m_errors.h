@@ -60,4 +60,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define EXPR_NOT_DETERMINISTIC "The expression should not contain random functions."
 #define INVALID_RANGE "Minimum should be smaller than maximum."
 #define INCOMPLETE_RANGE "This function expects a range (min,max) or no argument."
+#define TOO_MANY_LABELS "User functions support up to 64 arguments."
+#define LABELS_NOT_UNIQUE "Provided argument names must be unique."
 #endif
