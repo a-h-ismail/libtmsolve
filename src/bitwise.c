@@ -4,6 +4,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 
 #include "bitwise.h"
+#include "error_handler.h"
 #include "internals.h"
 #include "scientific.h"
 #include "string_tools.h"
@@ -67,7 +68,7 @@ int tms_mask_bit(int64_t bit, int64_t *result)
 {
     if (bit < 0 || bit >= tms_int_mask_size)
     {
-        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, BIT_OUT_OF_RANGE, EH_FATAL, NULL);
+        tms_save_error(TMS_INT_EVALUATOR, BIT_OUT_OF_RANGE, EH_FATAL, NULL, 0);
         return -1;
     }
 
@@ -99,7 +100,7 @@ int _tms_rotate_circular(tms_arg_list *args, char direction, int64_t *result)
     shift = tms_sign_extend(shift);
     if (shift < 0)
     {
-        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, ROTATION_AMOUNT_NEGATIVE, EH_FATAL, NULL);
+        tms_save_error(TMS_INT_EVALUATOR, ROTATION_AMOUNT_NEGATIVE, EH_FATAL, NULL, 0);
         return -1;
     }
 
@@ -115,7 +116,7 @@ int _tms_rotate_circular(tms_arg_list *args, char direction, int64_t *result)
         return 0;
 
     default:
-        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL);
+        tms_save_error(TMS_INT_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL, 0);
         return -1;
     }
 }
@@ -137,7 +138,7 @@ int tms_int_rand(tms_arg_list *args, int64_t *result)
     }
     else if (args->count == 1)
     {
-        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, INCOMPLETE_RANGE, EH_FATAL, NULL);
+        tms_save_error(TMS_INT_EVALUATOR, INCOMPLETE_RANGE, EH_FATAL, NULL, 0);
         return -1;
     }
     else if (args->count == 2)
@@ -151,7 +152,7 @@ int tms_int_rand(tms_arg_list *args, int64_t *result)
         max = tms_sign_extend(max);
         if (min >= max)
         {
-            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, INVALID_RANGE, EH_FATAL, NULL);
+            tms_save_error(TMS_INT_EVALUATOR, INVALID_RANGE, EH_FATAL, NULL, 0);
             return -1;
         }
         // The int mask is the largest value for the current int width
@@ -181,12 +182,12 @@ int tms_sr(tms_arg_list *args, int64_t *result)
         shift = tms_sign_extend(shift);
         if (shift < 0)
         {
-            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SHIFT_AMOUNT_NEGATIVE, EH_FATAL, NULL);
+            tms_save_error(TMS_INT_EVALUATOR, SHIFT_AMOUNT_NEGATIVE, EH_FATAL, NULL, 0);
             return -1;
         }
         else if (shift >= tms_int_mask_size)
         {
-            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL);
+            tms_save_error(TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL, 0);
             return -1;
         }
         // The cast to unsigned is necessary to avoid right shift sign extending
@@ -205,12 +206,12 @@ int tms_sra(tms_arg_list *args, int64_t *result)
         shift = tms_sign_extend(shift);
         if (shift < 0)
         {
-            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SHIFT_AMOUNT_NEGATIVE, EH_FATAL, NULL);
+            tms_save_error(TMS_INT_EVALUATOR, SHIFT_AMOUNT_NEGATIVE, EH_FATAL, NULL, 0);
             return -1;
         }
         else if (shift >= tms_int_mask_size)
         {
-            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL);
+            tms_save_error(TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL, 0);
             return -1;
         }
         value = tms_sign_extend(value);
@@ -229,12 +230,12 @@ int tms_sl(tms_arg_list *args, int64_t *result)
         shift = tms_sign_extend(shift);
         if (shift < 0)
         {
-            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SHIFT_AMOUNT_NEGATIVE, EH_FATAL, NULL);
+            tms_save_error(TMS_INT_EVALUATOR, SHIFT_AMOUNT_NEGATIVE, EH_FATAL, NULL, 0);
             return -1;
         }
         if (shift >= tms_int_mask_size)
         {
-            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL);
+            tms_save_error(TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL, 0);
             return -1;
         }
         *result = (uint64_t)value << shift;
@@ -316,12 +317,12 @@ int _tms_calculate_dot_decimal(tms_arg_list *L, int64_t *result)
         status = _tms_read_int_helper(L->arguments[i], 10, &tmp);
         if (status == -1)
         {
-            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, SYNTAX_ERROR, EH_FATAL, NULL);
+            tms_save_error(TMS_INT_EVALUATOR, SYNTAX_ERROR, EH_FATAL, NULL, 0);
             return -1;
         }
         else if (tmp > 255 || tmp < 0)
         {
-            tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, NOT_A_DOT_DECIMAL, EH_FATAL, NULL);
+            tms_save_error(TMS_INT_EVALUATOR, NOT_A_DOT_DECIMAL, EH_FATAL, NULL, 0);
             return -1;
         }
         else
@@ -362,21 +363,19 @@ int tms_mask_range(tms_arg_list *args, int64_t *result)
     status = _tms_int_solve_unsafe(args->arguments[0], &start);
     if (status == -1)
     {
-        tms_error_handler(EH_CLEAR, TMS_INT_EVALUATOR);
-        tms_error_handler(EH_CLEAR, TMS_INT_PARSER);
+        tms_clear_errors(TMS_INT_EVALUATOR | TMS_INT_PARSER);
         return -1;
     }
     status = _tms_int_solve_unsafe(args->arguments[1], &end);
     if (status == -1)
     {
-        tms_error_handler(EH_CLEAR, TMS_INT_EVALUATOR);
-        tms_error_handler(EH_CLEAR, TMS_INT_PARSER);
+        tms_clear_errors(TMS_INT_EVALUATOR | TMS_INT_PARSER);
         return -1;
     }
 
     if (start < 0 || start >= tms_int_mask_size || end < 0 || end >= tms_int_mask_size)
     {
-        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, BIT_OUT_OF_RANGE, EH_FATAL, NULL);
+        tms_save_error(TMS_INT_EVALUATOR, BIT_OUT_OF_RANGE, EH_FATAL, NULL, 0);
         return -1;
     }
 
@@ -402,7 +401,7 @@ int tms_ipv4(tms_arg_list *args, int64_t *result)
 
     if (tms_int_mask_size != 32)
     {
-        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, NOT_AN_IPV4_SIZE, EH_FATAL, NULL);
+        tms_save_error(TMS_INT_EVALUATOR, NOT_AN_IPV4_SIZE, EH_FATAL, NULL, 0);
         return -1;
     }
 
@@ -419,7 +418,7 @@ int tms_ipv4(tms_arg_list *args, int64_t *result)
 
     if (L->count != 4)
     {
-        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, NOT_A_VALID_IPV4, EH_FATAL, NULL);
+        tms_save_error(TMS_INT_EVALUATOR, NOT_A_VALID_IPV4, EH_FATAL, NULL, 0);
         return -1;
     }
 
@@ -432,13 +431,13 @@ int tms_ipv4_prefix(int64_t length, int64_t *result)
 {
     if (tms_int_mask_size != 32)
     {
-        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, NOT_AN_IPV4_SIZE, EH_FATAL, NULL);
+        tms_save_error(TMS_INT_EVALUATOR, NOT_AN_IPV4_SIZE, EH_FATAL, NULL, 0);
         return -1;
     }
 
     if (length < 0 || length > 32)
     {
-        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, NOT_A_VALID_IPV4_PREFIX, EH_FATAL, NULL);
+        tms_save_error(TMS_INT_EVALUATOR, NOT_A_VALID_IPV4_PREFIX, EH_FATAL, NULL, 0);
         return -1;
     }
 

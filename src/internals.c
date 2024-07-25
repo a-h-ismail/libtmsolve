@@ -3,6 +3,7 @@ Copyright (C) 2022-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "internals.h"
+#include "error_handler.h"
 #include "evaluator.h"
 #include "int_parser.h"
 #include "m_errors.h"
@@ -229,9 +230,9 @@ bool _tms_validate_args_count(int expected, int actual, int facility_id)
     if (expected == actual)
         return true;
     else if (expected > actual)
-        tms_error_handler(EH_SAVE, facility_id, TOO_FEW_ARGS, EH_FATAL, NULL);
+        tms_save_error(facility_id, TOO_FEW_ARGS, EH_FATAL, NULL, 0);
     else if (expected < actual)
-        tms_error_handler(EH_SAVE, facility_id, TOO_MANY_ARGS, EH_FATAL, NULL);
+        tms_save_error(facility_id, TOO_MANY_ARGS, EH_FATAL, NULL, 0);
     return false;
 }
 
@@ -239,9 +240,9 @@ bool _tms_validate_args_count_range(int actual, int min, int max, int facility_i
 {
     // If max is set to -1 this means no argument limit (for functions like min and max)
     if (max != -1 && actual > max)
-        tms_error_handler(EH_SAVE, facility_id, TOO_MANY_ARGS, EH_FATAL, NULL);
+        tms_save_error(facility_id, TOO_MANY_ARGS, EH_FATAL, NULL, 0);
     else if (actual < min)
-        tms_error_handler(EH_SAVE, facility_id, TOO_FEW_ARGS, EH_FATAL, NULL);
+        tms_save_error(facility_id, TOO_FEW_ARGS, EH_FATAL, NULL, 0);
     else
         return true;
 
@@ -256,7 +257,7 @@ int tms_new_var(char *name, bool is_constant)
     {
         if (strcmp(name, tms_g_illegal_names[i]) == 0)
         {
-            tms_error_handler(EH_SAVE, TMS_PARSER, ILLEGAL_NAME, EH_FATAL, NULL);
+            tms_save_error(TMS_PARSER, ILLEGAL_NAME, EH_FATAL, NULL, 0);
             return -1;
         }
     }
@@ -264,7 +265,7 @@ int tms_new_var(char *name, bool is_constant)
     // Check if the name has illegal characters
     if (tms_valid_name(name) == false)
     {
-        tms_error_handler(EH_SAVE, TMS_PARSER, INVALID_NAME, EH_FATAL, NULL);
+        tms_save_error(TMS_PARSER, INVALID_NAME, EH_FATAL, NULL, 0);
         return -1;
     }
 
@@ -274,7 +275,7 @@ int tms_new_var(char *name, bool is_constant)
     {
         if (tms_g_vars[i].is_constant)
         {
-            tms_error_handler(EH_SAVE, TMS_PARSER, OVERWRITE_CONST_VARIABLE, EH_FATAL, NULL);
+            tms_save_error(TMS_PARSER, OVERWRITE_CONST_VARIABLE, EH_FATAL, NULL, 0);
             return -1;
         }
         else
@@ -284,7 +285,7 @@ int tms_new_var(char *name, bool is_constant)
     {
         if (tms_find_str_in_array(name, tms_g_all_func_names, tms_g_all_func_count, TMS_NOFUNC) != -1)
         {
-            tms_error_handler(EH_SAVE, TMS_PARSER, VAR_NAME_MATCHES_FUNCTION, EH_FATAL, NULL);
+            tms_save_error(TMS_PARSER, VAR_NAME_MATCHES_FUNCTION, EH_FATAL, NULL, 0);
             return -1;
         }
         else
@@ -309,7 +310,7 @@ int tms_new_int_var(char *name)
     {
         if (strcmp(name, tms_g_illegal_names[i]) == 0)
         {
-            tms_error_handler(EH_SAVE, TMS_INT_PARSER, ILLEGAL_NAME, EH_FATAL, NULL);
+            tms_save_error(TMS_INT_PARSER, ILLEGAL_NAME, EH_FATAL, NULL, 0);
             return -1;
         }
     }
@@ -317,7 +318,7 @@ int tms_new_int_var(char *name)
     // Check if the name has illegal characters
     if (tms_valid_name(name) == false)
     {
-        tms_error_handler(EH_SAVE, TMS_INT_PARSER, INVALID_NAME, EH_FATAL, NULL);
+        tms_save_error(TMS_INT_PARSER, INVALID_NAME, EH_FATAL, NULL, 0);
         return -1;
     }
 
@@ -330,7 +331,7 @@ int tms_new_int_var(char *name)
     {
         if (tms_find_str_in_array(name, tms_g_all_int_func_names, tms_g_all_int_func_count, TMS_NOFUNC) != -1)
         {
-            tms_error_handler(EH_SAVE, TMS_INT_PARSER, VAR_NAME_MATCHES_FUNCTION, EH_FATAL, NULL);
+            tms_save_error(TMS_INT_PARSER, VAR_NAME_MATCHES_FUNCTION, EH_FATAL, NULL, 0);
             return -1;
         }
         // Create a new variable
@@ -351,7 +352,7 @@ bool _tms_ufunc_has_self_ref(tms_math_expr *F)
         // Detect self reference (new function has pointer to its previous version)
         if (S[s_index].func_type == TMS_F_RUNTIME && S[s_index].func.runtime->F == F)
         {
-            tms_error_handler(EH_SAVE, TMS_PARSER, NO_FSELF_REFERENCE, EH_FATAL, NULL);
+            tms_save_error(TMS_PARSER, NO_FSELF_REFERENCE, EH_FATAL, NULL, 0);
             return true;
         }
     }
@@ -383,7 +384,7 @@ bool _tms_ufunc_has_circular_refs(tms_math_expr *F)
 
             if (is_ufunc_referenced_by(S[i].func.runtime->F, F))
             {
-                tms_error_handler(EH_SAVE, TMS_PARSER, NO_FCIRCULAR_REFERENCE, EH_FATAL, NULL);
+                tms_save_error(TMS_PARSER, NO_FCIRCULAR_REFERENCE, EH_FATAL, NULL, 0);
                 return true;
             }
         }
@@ -399,7 +400,7 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
     // Check if the name has illegal characters
     if (tms_valid_name(fname) == false)
     {
-        tms_error_handler(EH_SAVE, TMS_PARSER, INVALID_NAME, EH_FATAL, NULL);
+        tms_save_error(TMS_PARSER, INVALID_NAME, EH_FATAL, NULL, 0);
         return -1;
     }
 
@@ -408,7 +409,7 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
     {
         if (strcmp(fname, tms_g_illegal_names[i]) == 0)
         {
-            tms_error_handler(EH_SAVE, TMS_PARSER, ILLEGAL_NAME, EH_FATAL, NULL);
+            tms_save_error(TMS_PARSER, ILLEGAL_NAME, EH_FATAL, NULL, 0);
             return -1;
         }
     }
@@ -417,7 +418,7 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
     i = tms_find_str_in_array(fname, tms_g_all_func_names, tms_g_all_func_count, TMS_NOFUNC);
     if (i != -1 && ufunc_index == -1)
     {
-        tms_error_handler(EH_SAVE, TMS_PARSER, NO_FUNCTION_SHADOWING, EH_FATAL, NULL);
+        tms_save_error(TMS_PARSER, NO_FUNCTION_SHADOWING, EH_FATAL, NULL, 0);
         return -1;
     }
 
@@ -425,7 +426,7 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
     i = tms_find_str_in_array(fname, tms_g_vars, tms_g_var_count, TMS_V_DOUBLE);
     if (i != -1)
     {
-        tms_error_handler(EH_SAVE, TMS_PARSER, FUNCTION_NAME_MATCHES_VAR, EH_FATAL, NULL);
+        tms_save_error(TMS_PARSER, FUNCTION_NAME_MATCHES_VAR, EH_FATAL, NULL, 0);
         return -1;
     }
 
@@ -433,7 +434,7 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
 
     if (unknowns->count > 64)
     {
-        tms_error_handler(EH_SAVE, TMS_PARSER, TOO_MANY_LABELS, EH_FATAL, NULL);
+        tms_save_error(TMS_PARSER, TOO_MANY_LABELS, EH_FATAL, NULL, 0);
         tms_free_arg_list(unknowns);
         return -1;
     }
@@ -441,7 +442,7 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
     // Check that names are unique
     if (!tms_is_unique_string_array(unknowns->arguments, unknowns->count))
     {
-        tms_error_handler(EH_SAVE, TMS_PARSER, LABELS_NOT_UNIQUE, EH_FATAL, NULL);
+        tms_save_error(TMS_PARSER, LABELS_NOT_UNIQUE, EH_FATAL, NULL, 0);
         tms_free_arg_list(unknowns);
         return -1;
     }
@@ -451,7 +452,7 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
     {
         if (!tms_valid_name(unknowns->arguments[j]))
         {
-            tms_error_handler(EH_SAVE, TMS_PARSER, "In user function args: " INVALID_NAME, EH_FATAL, NULL);
+            tms_save_error(TMS_PARSER, "In user function args: " INVALID_NAME, EH_FATAL, NULL, 0);
             tms_free_arg_list(unknowns);
             return -1;
         }

@@ -4,6 +4,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "string_tools.h"
 #include "bitwise.h"
+#include "error_handler.h"
 #include "internals.h"
 #include "scientific.h"
 #include <ctype.h>
@@ -611,7 +612,7 @@ int tms_find_endofnumber(char *number, int start)
         {
             if (remaining_dots == 0)
             {
-                tms_error_handler(EH_SAVE, TMS_PARSER, SYNTAX_ERROR, EH_FATAL, number, end);
+                tms_save_error(TMS_PARSER, SYNTAX_ERROR, EH_FATAL, number, end);
                 return -1;
             }
             else

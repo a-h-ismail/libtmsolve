@@ -3,12 +3,13 @@ Copyright (C) 2021-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "matrix.h"
+#include "error_handler.h"
 #include "internals.h"
 #include "m_errors.h"
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
 tms_matrix *tms_new_matrix(int rows, int columns)
 {
@@ -176,7 +177,7 @@ tms_matrix *tms_comatrix(tms_matrix *M)
         return NULL;
     if (M->rows < 2 || M->rows != M->columns)
     {
-        tms_error_handler(EH_SAVE, TMS_MATRIX, INVALID_MATRIX, EH_FATAL, NULL);
+        tms_save_error(TMS_MATRIX, INVALID_MATRIX, EH_FATAL, NULL, 0);
         return NULL;
     }
     comatrix = tms_new_matrix(M->rows, M->columns);

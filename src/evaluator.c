@@ -4,6 +4,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "evaluator.h"
 #include "bitwise.h"
+#include "error_handler.h"
 #include "int_parser.h"
 #include "internals.h"
 #include "parser.h"
@@ -19,16 +20,16 @@ double complex tms_evaluate(tms_math_expr *M)
 {
     tms_lock_evaluator(TMS_EVALUATOR);
 
-    if (tms_error_handler(EH_ERROR_COUNT, TMS_EVALUATOR | TMS_PARSER, EH_ALL_ERRORS) != 0)
+    if (tms_get_error_count(TMS_EVALUATOR | TMS_PARSER, EH_ALL_ERRORS) != 0)
     {
         fputs(ERROR_DB_NOT_EMPTY, stderr);
-        tms_error_handler(EH_CLEAR, TMS_EVALUATOR | TMS_PARSER);
+        tms_clear_errors(TMS_EVALUATOR | TMS_PARSER);
     }
 
     double complex result = _tms_evaluate_unsafe(M);
 
     if (isnan(creal(result)))
-        tms_error_handler(EH_PRINT, TMS_EVALUATOR | TMS_PARSER);
+        tms_print_errors(TMS_EVALUATOR | TMS_PARSER);
 
     tms_unlock_evaluator(TMS_EVALUATOR);
     return result;
@@ -82,18 +83,17 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                 if (isnan(creal(**(S[i].result))))
                 {
                     // If the function didn't generate an error itself, provide a generic one
-                    if (tms_error_handler(EH_ERROR_COUNT, TMS_EVALUATOR | TMS_PARSER, EH_ALL_ERRORS) == 0)
-                        tms_error_handler(EH_SAVE, TMS_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->local_expr,
-                                          S[i].subexpr_start);
+                    if (tms_get_error_count(TMS_EVALUATOR | TMS_PARSER, EH_ALL_ERRORS) == 0)
+                        tms_save_error(TMS_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->local_expr, S[i].subexpr_start);
                     else
-                        tms_error_handler(EH_MODIFY, TMS_EVALUATOR | TMS_PARSER, M->local_expr, S[i].subexpr_start,
-                                          "In function args: ");
+                        tms_modify_last_error(TMS_EVALUATOR | TMS_PARSER, M->local_expr, S[i].subexpr_start,
+                                              "In function args: ");
 
                     return NAN;
                 }
                 if (!tms_is_real(**(S[i].result)) && M->enable_complex == false)
                 {
-                    tms_error_handler(EH_SAVE, TMS_EVALUATOR, COMPLEX_DISABLED, EH_NONFATAL, NULL);
+                    tms_save_error(TMS_EVALUATOR, COMPLEX_DISABLED, EH_NONFATAL, NULL, 0);
                     return NAN;
                 }
                 S[i].exec_extf = false;
@@ -125,7 +125,7 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                     // Probably a parsing bug
                     if (i_node->result == NULL)
                     {
-                        tms_error_handler(EH_SAVE, TMS_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL);
+                        tms_save_error(TMS_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL, 0);
                         return NAN;
                     }
                     switch (i_node->operator)
@@ -145,8 +145,8 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                     case '/':
                         if (i_node->right_operand == 0)
                         {
-                            tms_error_handler(EH_SAVE, TMS_EVALUATOR, DIVISION_BY_ZERO, EH_FATAL, M->local_expr,
-                                              i_node->operator_index);
+                            tms_save_error(TMS_EVALUATOR, DIVISION_BY_ZERO, EH_FATAL, M->local_expr,
+                                           i_node->operator_index);
                             return NAN;
                         }
                         *(i_node->result) = i_node->left_operand / i_node->right_operand;
@@ -155,14 +155,13 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                     case '%':
                         if (i_node->right_operand == 0)
                         {
-                            tms_error_handler(EH_SAVE, TMS_EVALUATOR, MODULO_ZERO, EH_FATAL, M->local_expr,
-                                              i_node->operator_index);
+                            tms_save_error(TMS_EVALUATOR, MODULO_ZERO, EH_FATAL, M->local_expr, i_node->operator_index);
                             return NAN;
                         }
                         if (cimag(i_node->left_operand) != 0 || cimag(i_node->right_operand) != 0)
                         {
-                            tms_error_handler(EH_SAVE, TMS_EVALUATOR, MODULO_COMPLEX_NOT_SUPPORTED, EH_FATAL,
-                                              M->local_expr, i_node->operator_index);
+                            tms_save_error(TMS_EVALUATOR, MODULO_COMPLEX_NOT_SUPPORTED, EH_FATAL, M->local_expr,
+                                           i_node->operator_index);
                             return NAN;
                         }
                         else
@@ -170,8 +169,8 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                             *(i_node->result) = fmod(i_node->left_operand, i_node->right_operand);
                             if (isnan(creal(*(i_node->result))))
                             {
-                                tms_error_handler(EH_SAVE, TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->local_expr,
-                                                  i_node->operator_index);
+                                tms_save_error(TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->local_expr,
+                                               i_node->operator_index);
                                 return NAN;
                             }
                         }
@@ -184,8 +183,8 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                             *(i_node->result) = pow(i_node->left_operand, i_node->right_operand);
                             if (isnan(creal(*(i_node->result))))
                             {
-                                tms_error_handler(EH_SAVE, TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->local_expr,
-                                                  i_node->operator_index);
+                                tms_save_error(TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->local_expr,
+                                               i_node->operator_index);
                                 return NAN;
                             }
                         }
@@ -209,7 +208,7 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
 
             if (isnan((double)**(S[i].result)))
             {
-                tms_error_handler(EH_SAVE, TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->local_expr, S[i].subexpr_start);
+                tms_save_error(TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->local_expr, S[i].subexpr_start);
                 return NAN;
             }
         }
@@ -228,15 +227,15 @@ int tms_int_evaluate(tms_int_expr *M, int64_t *result)
 {
     tms_lock_evaluator(TMS_INT_EVALUATOR);
 
-    if (tms_error_handler(EH_ERROR_COUNT, TMS_INT_EVALUATOR | TMS_INT_PARSER, EH_ALL_ERRORS) != 0)
+    if (tms_get_error_count(TMS_INT_EVALUATOR | TMS_INT_PARSER, EH_ALL_ERRORS) != 0)
     {
         fputs(ERROR_DB_NOT_EMPTY, stderr);
-        tms_error_handler(EH_CLEAR, TMS_INT_EVALUATOR | TMS_INT_PARSER);
+        tms_clear_errors(TMS_INT_EVALUATOR | TMS_INT_PARSER);
     }
 
     int exit_status = _tms_int_evaluate_unsafe(M, result);
     if (exit_status != 0)
-        tms_error_handler(EH_PRINT, TMS_INT_EVALUATOR | TMS_INT_PARSER);
+        tms_print_errors(TMS_INT_EVALUATOR | TMS_INT_PARSER);
 
     tms_unlock_evaluator(TMS_INT_EVALUATOR);
     return exit_status;
@@ -281,12 +280,11 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                 if (state == -1)
                 {
                     // If the function didn't generate an error itself, provide a generic one
-                    if (tms_error_handler(EH_ERROR_COUNT, TMS_INT_EVALUATOR | TMS_INT_PARSER, EH_ALL_ERRORS) == 0)
-                        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->local_expr,
-                                          S[s_i].subexpr_start);
+                    if (tms_get_error_count(TMS_INT_EVALUATOR | TMS_INT_PARSER, EH_ALL_ERRORS) == 0)
+                        tms_save_error(TMS_INT_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->local_expr, S[s_i].subexpr_start);
                     else
-                        tms_error_handler(EH_MODIFY, TMS_INT_EVALUATOR | TMS_INT_PARSER, M->local_expr,
-                                          S[s_i].subexpr_start, "In function args: ");
+                        tms_modify_last_error(TMS_INT_EVALUATOR | TMS_INT_PARSER, M->local_expr, S[s_i].subexpr_start,
+                                              "In function args: ");
 
                     free(arguments);
                     tms_free_arg_list(L);
@@ -316,7 +314,7 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                 // Probably a parsing bug
                 if (i_node->result == NULL)
                 {
-                    tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL);
+                    tms_save_error(TMS_INT_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL, 0);
                     return -1;
                 }
                 switch (i_node->operator)
@@ -348,8 +346,8 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                 case '/':
                     if (i_node->right_operand == 0)
                     {
-                        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, DIVISION_BY_ZERO, EH_FATAL, M->local_expr,
-                                          i_node->operator_index);
+                        tms_save_error(TMS_INT_EVALUATOR, DIVISION_BY_ZERO, EH_FATAL, M->local_expr,
+                                       i_node->operator_index);
                         return -1;
                     }
                     *(i_node->result) = i_node->left_operand / i_node->right_operand;
@@ -358,8 +356,7 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                 case '%':
                     if (i_node->right_operand == 0)
                     {
-                        tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, MODULO_ZERO, EH_FATAL, M->local_expr,
-                                          i_node->operator_index);
+                        tms_save_error(TMS_INT_EVALUATOR, MODULO_ZERO, EH_FATAL, M->local_expr, i_node->operator_index);
                         return -1;
                     }
                     else
@@ -379,12 +376,12 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
             if (state == -1)
             {
                 // If the function didn't generate an error itself, provide a generic one
-                if (tms_error_handler(EH_ERROR_COUNT, TMS_INT_EVALUATOR, EH_ALL_ERRORS) == 0)
-                    tms_error_handler(EH_SAVE, TMS_INT_EVALUATOR, UNKNOWN_FUNC_ERROR, EH_FATAL, M->local_expr,
-                                      S[s_i].subexpr_start);
+                if (tms_get_error_count(TMS_INT_EVALUATOR, EH_ALL_ERRORS) == 0)
+                    tms_save_error(TMS_INT_EVALUATOR, UNKNOWN_FUNC_ERROR, EH_FATAL, M->local_expr,
+                                   S[s_i].subexpr_start);
                 else
                     // No need to include the flag for INT_PARSER since regular functions will never call the parser
-                    tms_error_handler(EH_MODIFY, TMS_INT_EVALUATOR, M->local_expr, S[s_i].subexpr_start, NULL);
+                    tms_modify_last_error(TMS_INT_EVALUATOR, M->local_expr, S[s_i].subexpr_start, NULL);
                 return -1;
             }
 
