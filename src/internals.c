@@ -431,19 +431,27 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
 
     tms_arg_list *unknowns = tms_get_args(unknowns_list);
 
-    // Check that names are unique
-    if (!tms_is_unique_string_array(unknowns->arguments, unknowns->count))
+    if (unknowns->count > 64)
     {
+        tms_error_handler(EH_SAVE, TMS_PARSER, TOO_MANY_LABELS, EH_FATAL, NULL);
         tms_free_arg_list(unknowns);
         return -1;
     }
 
-    // Check that the variable names are valid
+    // Check that names are unique
+    if (!tms_is_unique_string_array(unknowns->arguments, unknowns->count))
+    {
+        tms_error_handler(EH_SAVE, TMS_PARSER, LABELS_NOT_UNIQUE, EH_FATAL, NULL);
+        tms_free_arg_list(unknowns);
+        return -1;
+    }
+
+    // Check that argument names are valid
     for (int j = 0; j < unknowns->count; ++j)
     {
         if (!tms_valid_name(unknowns->arguments[j]))
         {
-            tms_error_handler(EH_SAVE, TMS_PARSER, INVALID_NAME, EH_FATAL, NULL);
+            tms_error_handler(EH_SAVE, TMS_PARSER, "In user function args: " INVALID_NAME, EH_FATAL, NULL);
             tms_free_arg_list(unknowns);
             return -1;
         }
@@ -586,295 +594,6 @@ tms_math_expr *tms_dup_mexpr(tms_math_expr *M)
         _tms_generate_unknowns_refs(NM);
 
     return NM;
-}
-
-int _tms_error_handler_unsafe(int _mode, va_list handler_args)
-{
-    static int last_error = 0, fatal = 0, non_fatal = 0;
-    static tms_error_data error_table[EH_MAX_ERRORS];
-
-    int i, error_type;
-    int facility_id = va_arg(handler_args, int);
-
-    switch (_mode)
-    {
-    case EH_SAVE: {
-        char *error_msg = va_arg(handler_args, char *);
-        // Case of error table being full
-        if (last_error == EH_MAX_ERRORS - 1)
-        {
-            free(error_table[0].message);
-            // Before ovewriting oldest error, update error counters to reflect the new state
-            if (error_table[0].fatal)
-                --fatal;
-            else
-                --non_fatal;
-
-            // Overwrite the oldest error
-            for (i = 0; i < EH_MAX_ERRORS - 1; ++i)
-                error_table[i] = error_table[i + 1];
-
-            // The last position is free, update last_error
-            --last_error;
-        }
-        error_table[last_error].message = strdup(error_msg);
-        error_table[last_error].facility_id = facility_id;
-        error_type = va_arg(handler_args, int);
-        switch (error_type)
-        {
-        case EH_NONFATAL:
-            error_table[last_error].fatal = false;
-            ++non_fatal;
-            break;
-        case EH_FATAL:
-            error_table[last_error].fatal = true;
-            ++fatal;
-            break;
-        default:
-            return -1;
-        }
-
-        // Get the current expression
-        char *expr = va_arg(handler_args, char *);
-        if (expr != NULL)
-        {
-            int error_position = va_arg(handler_args, int);
-
-            error_table[last_error].expr_len = strlen(expr);
-
-            if (error_position < 0 || error_position > error_table[last_error].expr_len)
-            {
-                fputs("libtmsolve warning: Error index out of expression range, ignoring...\n\n", stderr);
-                error_table[last_error].relative_index = -1;
-                error_table[last_error].real_index = -1;
-                error_table[last_error].bad_snippet[0] = '\0';
-                last_error = fatal + non_fatal;
-                return 1;
-            }
-
-            // Center the error in the string
-            if (error_position > 24)
-            {
-                strncpy(error_table[last_error].bad_snippet, expr + error_position - 24, 49);
-                error_table[last_error].bad_snippet[49] = '\0';
-                error_table[last_error].relative_index = 24;
-                error_table[last_error].real_index = error_position;
-            }
-            else
-            {
-                strncpy(error_table[last_error].bad_snippet, expr, 49);
-                error_table[last_error].bad_snippet[49] = '\0';
-                error_table[last_error].relative_index = error_position;
-                error_table[last_error].real_index = error_position;
-            }
-        }
-        else
-            error_table[last_error].relative_index = error_table[last_error].real_index = -1;
-
-        last_error = fatal + non_fatal;
-        return 0;
-    }
-    case EH_PRINT:
-        for (i = 0; i < last_error; ++i)
-            if ((error_table[i].facility_id & facility_id) != 0)
-                tms_print_error(error_table[i]);
-
-        // Intentional fall through since printing errors should clear them too
-    case EH_CLEAR: {
-        int deleted_count = 0;
-        for (i = 0; i < last_error; ++i)
-        {
-            if ((error_table[i].facility_id & facility_id) != 0)
-            {
-                free(error_table[i].message);
-                error_table[i].message = NULL;
-                if (error_table[i].fatal)
-                    --fatal;
-                else
-                    --non_fatal;
-
-                ++deleted_count;
-            }
-        }
-        // Move remaining errors back to make the table contiguous again
-        // No need to do anything if the last element is empty
-        for (i = 0; i < last_error - 1; ++i)
-        {
-            if (error_table[i].message == NULL)
-            {
-                for (int j = i + 1; j < last_error; ++j)
-                {
-                    error_table[i] = error_table[j];
-                    // Move the hole forward
-                    error_table[j].message = NULL;
-                }
-            }
-        }
-
-        last_error = fatal + non_fatal;
-        return deleted_count;
-    }
-
-    case EH_SEARCH: {
-        char *error_msg = va_arg(handler_args, char *);
-        for (i = 0; i < last_error; ++i)
-            if ((facility_id & error_table[i].facility_id) != 0 && (strcmp(error_msg, error_table[i].message) == 0))
-                return i;
-
-        return -1;
-    }
-
-    // Return the number of saved errors
-    case EH_ERROR_COUNT: {
-        error_type = va_arg(handler_args, int);
-        int select_fatal, select_non_fatal;
-        if (facility_id == TMS_ALL_FACILITIES)
-        {
-            select_fatal = fatal;
-            select_non_fatal = non_fatal;
-        }
-        else
-        {
-            select_fatal = select_non_fatal = 0;
-            for (int i = 0; i < last_error; ++i)
-                if ((facility_id & error_table[i].facility_id) != 0)
-                {
-                    if (error_table[i].fatal)
-                        ++select_fatal;
-                    else
-                        ++select_non_fatal;
-                }
-        }
-        switch (error_type)
-        {
-        case EH_NONFATAL:
-            return select_non_fatal;
-        case EH_FATAL:
-            return select_fatal;
-        case EH_ALL_ERRORS:
-            return select_non_fatal + select_fatal;
-        }
-        return -1;
-    }
-
-    case EH_MODIFY: {
-        // Find the last error
-        for (i = last_error - 1; i >= 0; --i)
-        {
-            if ((error_table[i].facility_id & facility_id) != 0)
-                break;
-        }
-        if (i == -1)
-            return -1;
-
-        char *expr = va_arg(handler_args, char *);
-        error_table[i].expr_len = strlen(expr);
-        int error_position = va_arg(handler_args, int);
-        char *prefix = va_arg(handler_args, char *);
-
-        if (prefix != NULL)
-        {
-            char *tmp = error_table[i].message;
-            error_table[i].message = tms_strcat_dup(prefix, error_table[i].message);
-            free(tmp);
-        }
-
-        if (error_position < 0 || error_position > error_table[i].expr_len)
-        {
-            fputs("libtmsolve warning: Error index out of expression range, ignoring...\n\n", stderr);
-            error_table[i].relative_index = -1;
-            error_table[i].real_index = -1;
-            error_table[i].bad_snippet[0] = '\0';
-            return 1;
-        }
-
-        // Center the error in the string
-        if (error_position > 24)
-        {
-            strncpy(error_table[i].bad_snippet, expr + error_position - 24, 49);
-            error_table[i].bad_snippet[49] = '\0';
-            error_table[i].relative_index = 24;
-            error_table[i].real_index = error_position;
-        }
-        else
-        {
-            strncpy(error_table[i].bad_snippet, expr, 49);
-            error_table[i].bad_snippet[49] = '\0';
-            error_table[i].relative_index = error_position;
-            error_table[i].real_index = error_position;
-        }
-        return 0;
-    }
-    }
-    return -1;
-}
-
-int tms_error_handler(int _mode, ...)
-{
-    va_list handler_args;
-    static atomic_bool lock;
-    va_start(handler_args, _mode);
-
-    // Wait if the error handler is used by someone else
-    while (atomic_flag_test_and_set(&lock))
-        ;
-
-    int status = _tms_error_handler_unsafe(_mode, handler_args);
-    atomic_flag_clear(&lock);
-    return status;
-}
-
-void tms_print_error(tms_error_data E)
-{
-    int i;
-    char *facility_name;
-
-    switch (E.facility_id)
-    {
-    case TMS_PARSER:
-        facility_name = "parser";
-        break;
-    case TMS_INT_PARSER:
-        facility_name = "int_parser";
-        break;
-    case TMS_EVALUATOR:
-        facility_name = "evaluator";
-        break;
-    case TMS_INT_EVALUATOR:
-        facility_name = "int_evaluator";
-        break;
-    case TMS_MATRIX:
-        facility_name = "matrix";
-        break;
-    default:
-        facility_name = NULL;
-        break;
-    }
-    if (facility_name != NULL)
-        fprintf(stderr, "%s: ", facility_name);
-
-    // Error index is provided
-    // Print the snippet where the error occured
-    if (E.real_index != -1)
-    {
-        fprintf(stderr, "%s\nAt col %d: \n", E.message, E.real_index);
-        if (E.real_index > 24)
-        {
-            E.relative_index += 3;
-            fprintf(stderr, "...");
-        }
-        fprintf(stderr, "%s", E.bad_snippet);
-        if (E.expr_len > E.real_index + 25)
-            fprintf(stderr, "...");
-        fprintf(stderr, "\n");
-
-        for (i = 0; i < E.relative_index; ++i)
-            fprintf(stderr, "~");
-        fprintf(stderr, "^\n\n");
-    }
-    else
-        // No index is provided -> print the error only
-        fprintf(stderr, "%s\n\n", E.message);
 }
 
 int compare_ints(const void *a, const void *b)

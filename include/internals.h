@@ -10,43 +10,16 @@ SPDX-License-Identifier: LGPL-2.1-only
  */
 
 #include <complex.h>
-#include <stdarg.h>
 #include <stdbool.h>
 #ifndef LOCAL_BUILD
 #include <tmsolve/m_errors.h>
 #include <tmsolve/tms_math_strs.h>
 #else
-
 #include "m_errors.h"
 #include "tms_math_strs.h"
 #endif
 
 #define array_length(z) (sizeof(z) / sizeof(*z))
-/// @brief Maximum number of errors in tms_error_handler
-#define EH_MAX_ERRORS 10
-
-/// @brief Error handler modes
-#define EH_SAVE 1
-#define EH_PRINT 2
-#define EH_CLEAR 3
-#define EH_SEARCH 4
-#define EH_ERROR_COUNT 5
-#define EH_MODIFY 6
-
-#define EH_NONFATAL 11
-#define EH_FATAL 12
-#define EH_ALL_ERRORS 13
-
-enum tms_facilities
-{
-    TMS_GENERAL = 1,
-    TMS_PARSER = 2,
-    TMS_EVALUATOR = 4,
-    TMS_INT_PARSER = 8,
-    TMS_INT_EVALUATOR = 16,
-    TMS_MATRIX = 32,
-    TMS_ALL_FACILITIES = -1
-};
 
 // Simple macro to ease dynamic resizing
 #define DYNAMIC_RESIZE(ptr, current, max, type)         \
@@ -117,26 +90,6 @@ extern uint64_t tms_int_mask;
 
 extern int8_t tms_int_mask_size;
 
-/**
- * @brief Error metadata structure.
- */
-typedef struct tms_error_data
-{
-    char *message, bad_snippet[50];
-    bool fatal;
-    int relative_index;
-    int real_index;
-    int expr_len;
-    int facility_id;
-} tms_error_data;
-
-typedef struct tms_error_database
-{
-    tms_error_data *error_table;
-    int fatal_count;
-    int non_fatal_count;
-} tms_error_database;
-
 /// @brief Initializes the variables required for the proper operation of the calculator.
 void tmsolve_init() __attribute__((constructor));
 
@@ -200,30 +153,6 @@ bool _tms_validate_args_count_range(int actual, int min, int max, int facility_i
  * @brief Duplicates an existing math expression.
  */
 tms_math_expr *tms_dup_mexpr(tms_math_expr *M);
-
-/**
- * @brief Error handling function, collects and manages errors.
- * @param _mode The mode of error handler.
- * @param arg The list of argumets to pass to the error handler, according to the mode.
- * @details
- * Possible arguments: \n
- * EH_SAVE, int facility_id, char *error, EH_FATAL | EH_NONFATAL, expr, error_index (if expr!=NULL)  \n
- * EH_PRINT, int facility_id (prints errors to stdout and clears them. Returns number of printed errors). \n
- * EH_CLEAR, int facility_id \n
- * EH_SEARCH, char *error, int facility_id (returns -1 if no match is found). \n
- * EH_ERROR_COUNT, int facility_id, EH_FATAL | EH_NONFATAL | EH_ALL_ERRORS (returns number of errors specified). \n
- * EH_MODIFY, int facility_id, expr, error_index, error_prefix
-
- * @note To perform an action on all facilities, use TMS_ALL_FACILITIES
- * @return Depends on the argument list.
- */
-int tms_error_handler(int _mode, ...);
-
-/**
- * @brief Prints the expression and points at the location of the error found.
- * @param E The error metadata
- */
-void tms_print_error(tms_error_data E);
 
 /**
  * @brief Simple function to find the minimum of 2 integers.
