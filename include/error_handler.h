@@ -5,6 +5,11 @@ SPDX-License-Identifier: LGPL-2.1-only
 #ifndef _TMS_ERROR_HANDLER_H
 #define _TMS_ERROR_HANDLER_H
 
+/**
+ * @file
+ * @brief Declares functions and structures related to libtmsolve's error handler.
+ */
+
 #include <stdbool.h>
 
 /**
@@ -17,7 +22,7 @@ typedef struct tms_error_data
     int relative_index;
     int real_index;
     int expr_len;
-    int facility_id;
+    int facilities;
 } tms_error_data;
 
 typedef struct tms_error_database
@@ -45,22 +50,52 @@ enum tms_facilities
 #define EH_NONFATAL 2
 #define EH_ALL_ERRORS (EH_FATAL | EH_NONFATAL)
 
-int tms_save_error(int facility_id, char *error_msg, int severity, char *expr, int error_position);
-
-int tms_print_errors(int facility_id);
-
-int tms_clear_errors(int facility_id);
-
-int tms_find_error(int facility_id, char *error_msg);
-
-int tms_get_error_count(int facility_id, int error_type);
-
-int tms_modify_last_error(int facility_id, char *expr, int error_position, char *prefix);
+/**
+ * @brief Saves an error in the global error database.
+ * @param facilities Facilities where the error originated (ex: TMS_PARSER).
+ * @param error_msg The error message.
+ * @param severity Indicates the seriousness of the error (fatal or not fatal).
+ * @param expr The expression string where the error occured
+ * @param error_position Index where the error is in the expression string.
+ * @return 0 on success, 1 on success with warnings, -1 on failure.
+ */
+int tms_save_error(int facilities, char *error_msg, int severity, char *expr, int error_position);
 
 /**
- * @brief Prints the expression and points at the location of the error found.
- * @param E The error metadata
+ * @brief Print all errors for the specified facilities.
+ * @note This function clears the printed errors from the database.
+ * @return Number of printed errors.
  */
-void tms_print_error(tms_error_data E);
+int tms_print_errors(int facilities);
+
+/**
+ * @brief Clear all errors for the specified facilities.
+ * @return Number of cleared errors.
+ */
+int tms_clear_errors(int facilities);
+
+/**
+ * @brief Find the index of the first occurence of an error in the error database
+ * @param facilities Facilities where the error originated.
+ * @param error_msg The exact error message to find.
+ * @return The index of the error in the database, or -1 if no match is found.
+ */
+int tms_find_error(int facilities, char *error_msg);
+
+/**
+ * @brief Get the number of errors per facilities and specified type.
+ * @return Number of errors, or -1 on failure.
+ */
+int tms_get_error_count(int facilities, int error_type);
+
+/**
+ * @brief Replaces the expression and index in the last saved error.
+ * @param facilities Facilities to match.
+ * @param expr The new expr to replace the old one (if any).
+ * @param error_position The new error position.
+ * @param prefix A string to add to as prefix to the existing error message if necessary.
+ * @return 0 on success, 1 on success with warnings, -1 on failure.
+ */
+int tms_modify_last_error(int facilities, char *expr, int error_position, char *prefix);
 
 #endif

@@ -6,7 +6,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define _TMS_INTERNALS_H
 /**
  * @file
- * @brief Declares general purpose functionality like error handling, init and runtime variables.
+ * @brief Declares general purpose functionality like library initialization, useful macros, runtime variables and functions.
  */
 
 #include <complex.h>
