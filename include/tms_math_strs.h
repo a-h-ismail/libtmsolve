@@ -67,6 +67,7 @@ typedef struct tms_int_var
 {
     char *name;
     int64_t value;
+    bool is_constant;
 } tms_int_var;
 
 /// @brief Operator node, stores the required metadata for an operator and its operands.
@@ -116,12 +117,19 @@ typedef struct tms_unknown_operand
     bool is_negative;
 } tms_unknown_operand;
 
-/// @brief User runtime function structure.
+/// @brief User runtime function.
 typedef struct tms_ufunc
 {
     char *name;
     struct tms_math_expr *F;
 } tms_ufunc;
+
+/// @brief User runtime int function.
+typedef struct tms_int_ufunc
+{
+    char *name;
+    struct tms_math_expr *F;
+} tms_int_ufunc;
 
 /// @brief Union to store function pointers
 typedef union tms_mfunc_ptrs {
@@ -135,7 +143,7 @@ typedef union tms_mfunc_ptrs {
 typedef union tms_int_functions {
     int (*simple)(int64_t, int64_t *);
     int (*extended)(tms_arg_list *, int64_t *);
-
+    tms_int_ufunc *runtime;
 } int_fptr;
 
 #define TMS_NOFUNC 0
@@ -233,9 +241,18 @@ typedef struct tms_int_op_node
     int operator_index;
     /// Index of the op_node in the op_node array.
     int node_index;
-
     /// Node operator priority.
     uint8_t priority;
+    /**
+     * Used to store data about unknown operands as follows:
+     * b0:left_operand, b1:right_operand, b2:left_operand_negative, b3:right_operand_negative.
+     * Use masks UNK_* with bitwise OR to set the bits correctly
+     * The 6 MSB are the ID of of the right unknown
+     * The remaining are the ID of the left unknown
+     * RRRRRRLLLLLLRLRL
+     * Use macros below to set the ID easily
+     */
+    uint16_t unknowns_data;
 
     int64_t left_operand, right_operand, *result;
     /// Points to the next op_node in evaluation order.
@@ -268,6 +285,8 @@ typedef struct tms_int_subexpr
     /// The array of int_op_nodes composing this subexpression.
     struct tms_int_op_node *nodes;
 
+    tms_arg_list *L;
+
     /// @brief Set to one of the op_nodes result pointer, indicating that the answer of that node is the answer of this subexpression.
     int64_t **result;
 
@@ -290,13 +309,22 @@ typedef struct tms_int_expr
     /// The string form of the expression, after adding offset to skip assignment operator
     char *local_expr;
 
-    /// The subexpression array created by parsing theexpression.
+    /// The subexpression array created by parsing the expression.
     tms_int_subexpr *S;
 
-    /// Number of subexpression in this expression
+    /// Number of subexpression in this math expression.
     int subexpr_count;
 
-    /// Answer of the expression
+    /// Number of unknown operands.
+    int unknowns_instances;
+
+    /// Array of unknown operands metadata.
+    tms_unknown_operand *x_data;
+
+    /// List of unknowns
+    tms_arg_list *unknowns;
+
+    /// Answer of the expression.
     int64_t answer;
 
     /// Indicates the index of tms_g_int_vars to copy the answer to.
