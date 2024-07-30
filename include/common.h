@@ -1,13 +1,22 @@
 #include "tms_math_strs.h"
 
 #ifndef OVERRIDE_DEFAULTS
+#define operand_type double complex
 #define math_expr tms_math_expr
 #define math_subexpr tms_math_subexpr
 #define op_node tms_op_node
 #define PARSER TMS_PARSER
+#define get_operand_value _tms_get_operand_value
+#define set_priority _tms_set_priority
 #endif
 
-int *_tms_get_operator_indexes(char *expr, math_subexpr *S, int s_i)
+static int _tms_set_operand(math_expr *M, op_node *N, int op_start, int s_i, char operand, bool enable_unknowns);
+
+static int _tms_find_subexpr_starting_at(math_subexpr *S, int start, int s_i, int8_t mode);
+
+static int _tms_set_evaluation_order(math_subexpr *S);
+
+static int *_tms_get_operator_indexes(char *expr, math_subexpr *S, int s_i)
 {
     // For simplicity
     int solve_start = S[s_i].solve_start;
@@ -72,7 +81,7 @@ int *_tms_get_operator_indexes(char *expr, math_subexpr *S, int s_i)
     return operator_index;
 }
 
-int _tms_set_evaluation_order(math_subexpr *S)
+static int _tms_set_evaluation_order(math_subexpr *S)
 {
     int op_count = S->op_count;
     int i, j;
@@ -131,7 +140,7 @@ int _tms_set_evaluation_order(math_subexpr *S)
     return 0;
 }
 
-void _tms_set_result_pointers(math_expr *M, int s_i)
+static void _tms_set_result_pointers(math_expr *M, int s_i)
 {
     math_subexpr *S = M->S;
     op_node *tmp_node, *NB = S[s_i].nodes;
@@ -207,9 +216,10 @@ void _tms_set_result_pointers(math_expr *M, int s_i)
         tmp_node->result = &M->answer;
 }
 
-int _tms_set_all_operands(char *expr, math_expr *M, int s_i, bool enable_unknowns)
+static int _tms_set_all_operands(math_expr *M, int s_i, bool enable_unknowns)
 {
     math_subexpr *S = M->S;
+    char *expr = M->expr;
     int op_count = S[s_i].op_count;
     int i, status;
     op_node *NB = S[s_i].nodes;
@@ -218,7 +228,7 @@ int _tms_set_all_operands(char *expr, math_expr *M, int s_i, bool enable_unknown
     if (op_count == 0)
     {
         // Read to the left operand
-        if (_tms_set_operand(expr, M, NB, solve_start, s_i, 'l', enable_unknowns))
+        if (_tms_set_operand(M, NB, solve_start, s_i, 'l', enable_unknowns))
             return -1;
         else
             return 0;
@@ -238,7 +248,7 @@ int _tms_set_all_operands(char *expr, math_expr *M, int s_i, bool enable_unknown
     }
     else
     {
-        status = _tms_set_operand(expr, M, NB, solve_start, s_i, 'l', enable_unknowns);
+        status = _tms_set_operand(M, NB, solve_start, s_i, 'l', enable_unknowns);
         if (status == -1)
             return -1;
     }
@@ -249,7 +259,7 @@ int _tms_set_all_operands(char *expr, math_expr *M, int s_i, bool enable_unknown
         // same in case of x-y+z
         if (NB[i].priority >= NB[i + 1].priority)
         {
-            status = _tms_set_operand(expr, M, NB + i, NB[i].operator_index + 1, s_i, 'r', enable_unknowns);
+            status = _tms_set_operand(M, NB + i, NB[i].operator_index + 1, s_i, 'r', enable_unknowns);
             if (status == -1)
                 return -1;
         }
@@ -257,20 +267,19 @@ int _tms_set_all_operands(char *expr, math_expr *M, int s_i, bool enable_unknown
         // x+y^z : y is set in the node containing z (node i+1) as the left operand
         else
         {
-            status = _tms_set_operand(expr, M, NB + i + 1, NB[i].operator_index + 1, s_i, 'l', enable_unknowns);
+            status = _tms_set_operand(M, NB + i + 1, NB[i].operator_index + 1, s_i, 'l', enable_unknowns);
             if (status == -1)
                 return -1;
         }
     }
     // Set the last operand as the right operand of the last node
-    status =
-        _tms_set_operand(expr, M, NB + op_count - 1, NB[op_count - 1].operator_index + 1, s_i, 'r', enable_unknowns);
+    status = _tms_set_operand(M, NB + op_count - 1, NB[op_count - 1].operator_index + 1, s_i, 'r', enable_unknowns);
     if (status == -1)
         return -1;
     return 0;
 }
 
-int _tms_find_subexpr_starting_at(math_subexpr *S, int start, int s_i, int8_t mode)
+static int _tms_find_subexpr_starting_at(math_subexpr *S, int start, int s_i, int8_t mode)
 {
     int i;
     // If a subexpression is an operand in another subexpression, it will have a depth higher by only 1
@@ -308,7 +317,7 @@ int _tms_find_subexpr_starting_at(math_subexpr *S, int start, int s_i, int8_t mo
 }
 
 // Function that finds the subexpression that ends at 'end'
-int _tms_find_subexpr_ending_at(math_subexpr *S, int end, int s_i, int s_count)
+static int _tms_find_subexpr_ending_at(math_subexpr *S, int end, int s_i, int s_count)
 {
     int i;
     i = s_i - 1;
@@ -320,4 +329,174 @@ int _tms_find_subexpr_ending_at(math_subexpr *S, int end, int s_i, int s_count)
             --i;
     }
     return -1;
+}
+
+static int _tms_set_unknowns_data(math_expr *M, int start, op_node *x_node, char rl)
+{
+    char *expr = M->local_expr;
+    bool is_negative = false;
+
+    char *name = tms_get_name(expr, start, true);
+
+    int id = tms_find_str_in_array(name, M->unknowns->arguments, M->unknowns->count, TMS_NOFUNC);
+    free(name);
+    if (id == -1)
+        return -1;
+
+    if (expr[start] == '+')
+    {
+        is_negative = false;
+        ++start;
+    }
+    else if (expr[start] == '-')
+    {
+        is_negative = true;
+        ++start;
+    }
+
+    if (rl == 'l')
+    {
+        x_node->unknowns_data |= UNK_LEFT;
+        SET_LEFT_ID(x_node->unknowns_data, id);
+        if (is_negative)
+            x_node->unknowns_data |= UNK_LNEG;
+    }
+    else if (rl == 'r')
+    {
+        x_node->unknowns_data |= UNK_RIGHT;
+        SET_RIGHT_ID(x_node->unknowns_data, id);
+        if (is_negative)
+            x_node->unknowns_data |= UNK_RNEG;
+    }
+    else
+    {
+        tms_save_error(TMS_PARSER, INTERNAL_ERROR, EH_FATAL, NULL, 0);
+        return -1;
+    }
+
+    return 0;
+}
+
+static int _tms_set_operand(math_expr *M, op_node *N, int op_start, int s_i, char operand, bool enable_unknowns)
+{
+    math_subexpr *S = M->S;
+    operand_type *operand_ptr;
+    char *expr = M->expr;
+    int tmp;
+
+    switch (operand)
+    {
+    case 'r':
+        operand_ptr = &(N->right_operand);
+        break;
+    case 'l':
+        operand_ptr = &(N->left_operand);
+        break;
+    default:
+        tms_save_error(TMS_PARSER, INTERNAL_ERROR, EH_FATAL, expr, N->operator_index);
+        return -1;
+    }
+
+    // Check if the operand is the result of a subexpression
+    tmp = _tms_find_subexpr_starting_at(S, op_start, s_i, 1);
+
+    // The operand is a variable or a numeric value
+    if (tmp == -1)
+    {
+        int status = get_operand_value(M, op_start, operand_ptr);
+
+        if (status != 0)
+        {
+            // Check for the unknown 'x'
+            if (enable_unknowns == true)
+            {
+                tmp = _tms_set_unknowns_data(M, op_start, N, operand);
+                if (tmp == -1)
+                {
+                    // If the value reader failed with no error reported, set the error to be a syntax error
+                    if (tms_get_error_count(TMS_PARSER, EH_ALL_ERRORS) == 0)
+                        tms_save_error(TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, op_start);
+                    return -1;
+                }
+                else
+                    tms_clear_errors(TMS_PARSER);
+            }
+            else
+            {
+                // If the value reader failed with no error reported, set the error to be a syntax error
+                if (tms_get_error_count(TMS_PARSER, EH_ALL_ERRORS) == 0)
+                    tms_save_error(TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, op_start);
+                return -1;
+            }
+        }
+    }
+    else
+        // It's official: we have a subexpression result as operand
+        *(S[tmp].result) = operand_ptr;
+
+    return 0;
+}
+
+static int _tms_init_nodes(math_expr *M, int s_i, int *operator_index, bool enable_unknowns)
+{
+    math_subexpr *S = M->S;
+    int op_count = S[s_i].op_count;
+    int i;
+    op_node *NB;
+    int solve_start = S[s_i].solve_start;
+    int solve_end = S[s_i].solve_end;
+    char *expr = M->expr;
+
+    if (op_count < 0)
+    {
+        tms_save_error(TMS_PARSER, INTERNAL_ERROR, EH_FATAL, expr, solve_start);
+        return -1;
+    }
+
+    // Allocate nodes
+    S[s_i].nodes = malloc((op_count == 0 ? 1 : op_count) * sizeof(op_node));
+
+    NB = S[s_i].nodes;
+    // Case where at least one operator was found
+    if (op_count > 0)
+    {
+        // Check if the expression is terminated with an operator
+        if (operator_index[op_count - 1] == solve_end)
+        {
+            tms_save_error(TMS_PARSER, RIGHT_OP_MISSING, EH_FATAL, expr, operator_index[op_count - 1]);
+            return -1;
+        }
+
+        for (i = 0; i < op_count; ++i)
+        {
+            NB[i].operator_index = operator_index[i];
+            NB[i].operator= expr[operator_index[i]];
+        }
+
+        // Set each op_node's operator priority data
+        set_priority(NB, op_count);
+
+        for (i = 0; i < op_count; ++i)
+        {
+            NB[i].node_index = i;
+            NB[i].unknowns_data = 0;
+            NB[i].operator_index = operator_index[i];
+            NB[i].operator= expr[operator_index[i]];
+        }
+        // Check if the expression is terminated with an operator
+        if (operator_index[op_count - 1] == solve_end)
+        {
+            tms_save_error(TMS_PARSER, RIGHT_OP_MISSING, EH_FATAL, expr, operator_index[op_count - 1]);
+            return -1;
+        }
+    }
+    // No operands at all
+    else
+    {
+        NB->operator= '\0';
+        NB->unknowns_data = 0;
+        NB->operator_index = -1;
+        NB->priority = -1;
+    }
+    return 0;
 }
