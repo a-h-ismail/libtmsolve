@@ -1151,7 +1151,7 @@ int tms_find_str_in_array(char *key, const void *array, int arr_len, uint8_t typ
         LOOKUP_STRING_IN_STRUCT(key, tms_extf, name, array)
         break;
 
-    case TMS_F_RUNTIME:
+    case TMS_F_USER:
         LOOKUP_STRING_IN_STRUCT(key, tms_ufunc, name, array)
         break;
 

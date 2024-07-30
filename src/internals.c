@@ -350,7 +350,7 @@ bool _tms_ufunc_has_self_ref(tms_math_expr *F)
     for (int s_index = 0; s_index < F->subexpr_count; ++s_index)
     {
         // Detect self reference (new function has pointer to its previous version)
-        if (S[s_index].func_type == TMS_F_RUNTIME && S[s_index].func.runtime->F == F)
+        if (S[s_index].func_type == TMS_F_USER && S[s_index].func.runtime->F == F)
         {
             tms_save_error(TMS_PARSER, NO_FSELF_REFERENCE, EH_FATAL, NULL, 0);
             return true;
@@ -364,7 +364,7 @@ bool is_ufunc_referenced_by(tms_math_expr *referrer, tms_math_expr *F)
     tms_math_subexpr *S = referrer->S;
     for (int s_index = 0; s_index < referrer->subexpr_count; ++s_index)
     {
-        if (S[s_index].func_type == TMS_F_RUNTIME && S[s_index].func.runtime->F == F)
+        if (S[s_index].func_type == TMS_F_USER && S[s_index].func.runtime->F == F)
             return true;
     }
     return false;
@@ -376,7 +376,7 @@ bool _tms_ufunc_has_circular_refs(tms_math_expr *F)
     tms_math_subexpr *S = F->S;
     for (i = 0; i < F->subexpr_count; ++i)
     {
-        if (S[i].func_type == TMS_F_RUNTIME)
+        if (S[i].func_type == TMS_F_USER)
         {
             // A self reference, none of our business here
             if (S[i].func.runtime->F == F)
@@ -395,7 +395,7 @@ bool _tms_ufunc_has_circular_refs(tms_math_expr *F)
 int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
 {
     int i;
-    int ufunc_index = tms_find_str_in_array(fname, tms_g_ufunc, tms_g_ufunc_count, TMS_F_RUNTIME);
+    int ufunc_index = tms_find_str_in_array(fname, tms_g_ufunc, tms_g_ufunc_count, TMS_F_USER);
 
     // Check if the name has illegal characters
     if (tms_valid_name(fname) == false)

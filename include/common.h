@@ -320,7 +320,7 @@ static int _tms_find_subexpr_starting_at(math_subexpr *S, int start, int s_i, in
 
 static int _tms_set_unknowns_data(math_expr *M, int start, op_node *x_node, char rl)
 {
-    char *expr = M->local_expr;
+    char *expr = M->expr;
     bool is_negative = false;
 
     char *name = tms_get_name(expr, start, true);
@@ -357,7 +357,7 @@ static int _tms_set_unknowns_data(math_expr *M, int start, op_node *x_node, char
     }
     else
     {
-        tms_save_error(TMS_PARSER, INTERNAL_ERROR, EH_FATAL, NULL, 0);
+        tms_save_error(PARSER, INTERNAL_ERROR, EH_FATAL, NULL, 0);
         return -1;
     }
 
@@ -380,7 +380,7 @@ static int _tms_set_operand(math_expr *M, op_node *N, int op_start, int s_i, cha
         operand_ptr = &(N->left_operand);
         break;
     default:
-        tms_save_error(TMS_PARSER, INTERNAL_ERROR, EH_FATAL, expr, N->operator_index);
+        tms_save_error(PARSER, INTERNAL_ERROR, EH_FATAL, expr, N->operator_index);
         return -1;
     }
 
@@ -401,18 +401,18 @@ static int _tms_set_operand(math_expr *M, op_node *N, int op_start, int s_i, cha
                 if (tmp == -1)
                 {
                     // If the value reader failed with no error reported, set the error to be a syntax error
-                    if (tms_get_error_count(TMS_PARSER, EH_ALL_ERRORS) == 0)
-                        tms_save_error(TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, op_start);
+                    if (tms_get_error_count(PARSER, EH_ALL_ERRORS) == 0)
+                        tms_save_error(PARSER, SYNTAX_ERROR, EH_FATAL, expr, op_start);
                     return -1;
                 }
                 else
-                    tms_clear_errors(TMS_PARSER);
+                    tms_clear_errors(PARSER);
             }
             else
             {
                 // If the value reader failed with no error reported, set the error to be a syntax error
-                if (tms_get_error_count(TMS_PARSER, EH_ALL_ERRORS) == 0)
-                    tms_save_error(TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, op_start);
+                if (tms_get_error_count(PARSER, EH_ALL_ERRORS) == 0)
+                    tms_save_error(PARSER, SYNTAX_ERROR, EH_FATAL, expr, op_start);
                 return -1;
             }
         }
@@ -436,7 +436,7 @@ static int _tms_init_nodes(math_expr *M, int s_i, int *operator_index, bool enab
 
     if (op_count < 0)
     {
-        tms_save_error(TMS_PARSER, INTERNAL_ERROR, EH_FATAL, expr, solve_start);
+        tms_save_error(PARSER, INTERNAL_ERROR, EH_FATAL, expr, solve_start);
         return -1;
     }
 
@@ -450,7 +450,7 @@ static int _tms_init_nodes(math_expr *M, int s_i, int *operator_index, bool enab
         // Check if the expression is terminated with an operator
         if (operator_index[op_count - 1] == solve_end)
         {
-            tms_save_error(TMS_PARSER, RIGHT_OP_MISSING, EH_FATAL, expr, operator_index[op_count - 1]);
+            tms_save_error(PARSER, RIGHT_OP_MISSING, EH_FATAL, expr, operator_index[op_count - 1]);
             return -1;
         }
 
@@ -473,7 +473,7 @@ static int _tms_init_nodes(math_expr *M, int s_i, int *operator_index, bool enab
         // Check if the expression is terminated with an operator
         if (operator_index[op_count - 1] == solve_end)
         {
-            tms_save_error(TMS_PARSER, RIGHT_OP_MISSING, EH_FATAL, expr, operator_index[op_count - 1]);
+            tms_save_error(PARSER, RIGHT_OP_MISSING, EH_FATAL, expr, operator_index[op_count - 1]);
             return -1;
         }
     }
@@ -498,7 +498,7 @@ math_expr *dup_mexpr(math_expr *M)
     *NM = *M;
     NM->expr = strdup(M->expr);
     NM->unknowns = tms_dup_arg_list(M->unknowns);
-    NM->local_expr = NM->expr + (M->local_expr - M->expr);
+    NM->expr = NM->expr + (M->expr - M->expr);
     NM->S = malloc(NM->subexpr_count * sizeof(math_subexpr));
     // Copy subexpressions
     memcpy(NM->S, M->S, M->subexpr_count * sizeof(math_subexpr));

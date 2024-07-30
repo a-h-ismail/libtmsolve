@@ -87,21 +87,7 @@ int _tms_set_runtime_var(char *expr, int i)
 
 tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
 {
-    char *local_expr = strchr(expr, '=');
-
-    if (local_expr == NULL)
-        local_expr = expr;
-    else
-        ++local_expr;
-
-    if (local_expr[0] == '\0')
-    {
-        tms_save_error(TMS_PARSER, MISSING_EXPRESSION, EH_FATAL, NULL, 0);
-        free(expr);
-        return NULL;
-    }
-
-    int s_max = 8, i, s_i, length = strlen(local_expr), s_count;
+    int s_max = 8, i, s_i, length = strlen(expr), s_count;
 
     // Pointer to subexpressions heap array
     tms_math_subexpr *S;
@@ -115,7 +101,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
     M->enable_complex = enable_complex;
     M->S = NULL;
     M->subexpr_count = 0;
-    M->local_expr = local_expr;
+    M->expr = expr;
     M->expr = expr;
 
     S = malloc(s_max * sizeof(tms_math_subexpr));
@@ -126,7 +112,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
     // Determine the depth and start/end of each subexpression parenthesis
     for (i = 0; i < length; ++i)
     {
-        if (local_expr[i] == '(')
+        if (expr[i] == '(')
         {
             DYNAMIC_RESIZE(S, s_i, s_max, tms_math_subexpr)
             is_extended_or_runtime = false;
@@ -134,25 +120,25 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
             S[s_i].depth = ++depth;
 
             // Treat extended functions as a subexpression
-            if (i > 0 && tms_legal_char_in_name(local_expr[i - 1]))
+            if (i > 0 && tms_legal_char_in_name(expr[i - 1]))
             {
-                char *name = tms_get_name(local_expr, i - 1, false);
+                char *name = tms_get_name(expr, i - 1, false);
 
                 // This means the function name used is not valid
                 if (name == NULL)
                 {
-                    tms_save_error(TMS_PARSER, SYNTAX_ERROR, EH_FATAL, local_expr, i - 1);
+                    tms_save_error(TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, i - 1);
                     free(S);
                     tms_delete_math_expr(M);
                     return NULL;
                 }
                 int extf_i, ufunc_i;
                 extf_i = tms_find_str_in_array(name, tms_g_extf, tms_g_extf_count, TMS_F_EXTENDED);
-                ufunc_i = tms_find_str_in_array(name, tms_g_ufunc, tms_g_ufunc_count, TMS_F_RUNTIME);
+                ufunc_i = tms_find_str_in_array(name, tms_g_ufunc, tms_g_ufunc_count, TMS_F_USER);
                 // Name collision, should not happen using the library functions
                 if (extf_i != -1 && ufunc_i != -1)
                 {
-                    tms_save_error(TMS_PARSER, INTERNAL_ERROR, EH_FATAL, local_expr, i - 1);
+                    tms_save_error(TMS_PARSER, INTERNAL_ERROR, EH_FATAL, expr, i - 1);
                     free(S);
                     tms_delete_math_expr(M);
                     return NULL;
@@ -165,10 +151,10 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                     is_extended_or_runtime = true;
                     S[s_i].subexpr_start = i - strlen(name);
                     S[s_i].solve_start = i + 1;
-                    S[s_i].solve_end = tms_find_closing_parenthesis(local_expr, i) - 1;
+                    S[s_i].solve_end = tms_find_closing_parenthesis(expr, i) - 1;
                     S[s_i].start_node = -1;
                     // Generate the argument list at parsing time instead of during evaluation for better performance
-                    char *arguments = tms_strndup(local_expr + i + 1, S[s_i].solve_end - i);
+                    char *arguments = tms_strndup(expr + i + 1, S[s_i].solve_end - i);
                     S[s_i].L = tms_get_args(arguments);
                     free(arguments);
                     // Set "i" at the end of the subexpression to avoid iterating within the extended/user function
@@ -185,7 +171,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                     else
                     {
                         S[s_i].func.runtime = tms_g_ufunc + ufunc_i;
-                        S[s_i].func_type = TMS_F_RUNTIME;
+                        S[s_i].func_type = TMS_F_USER;
                     }
                 }
                 free(name);
@@ -201,12 +187,12 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
 
                 // The expression start is the parenthesis, may change if a function is found
                 S[s_i].subexpr_start = i;
-                S[s_i].solve_end = tms_find_closing_parenthesis(local_expr, i) - 1;
+                S[s_i].solve_end = tms_find_closing_parenthesis(expr, i) - 1;
 
                 // Empty parenthesis pair is only allowed for extended functions
                 if (S[s_i].solve_end == i)
                 {
-                    tms_save_error(TMS_PARSER, PARENTHESIS_EMPTY, EH_FATAL, local_expr, i);
+                    tms_save_error(TMS_PARSER, PARENTHESIS_EMPTY, EH_FATAL, expr, i);
                     free(S);
                     tms_delete_math_expr(M);
                     return NULL;
@@ -215,7 +201,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
             // Common between the 3 possible cases
             if (S[s_i].solve_end == -2)
             {
-                tms_save_error(TMS_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, local_expr, i);
+                tms_save_error(TMS_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, expr, i);
                 // S isn't part of M yet
                 free(S);
                 tms_delete_math_expr(M);
@@ -223,12 +209,12 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
             }
             ++s_i;
         }
-        else if (local_expr[i] == ')')
+        else if (expr[i] == ')')
         {
             // An extra ')'
             if (depth == 0)
             {
-                tms_save_error(TMS_PARSER, PARENTHESIS_NOT_OPEN, EH_FATAL, local_expr, i);
+                tms_save_error(TMS_PARSER, PARENTHESIS_NOT_OPEN, EH_FATAL, expr, i);
                 free(S);
                 tms_delete_math_expr(M);
                 return NULL;
@@ -237,9 +223,9 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
                 --depth;
 
             // Make sure a ')' is followed by an operator, ')' or \0
-            if (!(tms_is_op(local_expr[i + 1]) || local_expr[i + 1] == ')' || local_expr[i + 1] == '\0'))
+            if (!(tms_is_op(expr[i + 1]) || expr[i + 1] == ')' || expr[i + 1] == '\0'))
             {
-                tms_save_error(TMS_PARSER, SYNTAX_ERROR, EH_FATAL, local_expr, i + 1);
+                tms_save_error(TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, i + 1);
                 free(S);
                 tms_delete_math_expr(M);
                 return NULL;
@@ -270,7 +256,7 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
     return M;
 }
 
-int _tms_set_rcfunction_ptr(char *local_expr, tms_math_expr *M, int s_i)
+int _tms_set_rcfunction_ptr(char *expr, tms_math_expr *M, int s_i)
 {
     int i;
     tms_math_subexpr *S = &(M->S[s_i]);
@@ -279,7 +265,7 @@ int _tms_set_rcfunction_ptr(char *local_expr, tms_math_expr *M, int s_i)
     // Search for any function preceding the expression to set the function pointer
     if (solve_start > 1)
     {
-        char *name = tms_get_name(local_expr, solve_start - 2, false);
+        char *name = tms_get_name(expr, solve_start - 2, false);
         if (name == NULL)
             return 0;
 
@@ -289,7 +275,7 @@ int _tms_set_rcfunction_ptr(char *local_expr, tms_math_expr *M, int s_i)
             {
                 if (tms_g_rc_func[i].real == NULL)
                 {
-                    tms_save_error(TMS_PARSER, COMPLEX_ONLY_FUNCTION, EH_NONFATAL, local_expr, solve_start - 2);
+                    tms_save_error(TMS_PARSER, COMPLEX_ONLY_FUNCTION, EH_NONFATAL, expr, solve_start - 2);
                 }
                 S->func.real = tms_g_rc_func[i].real;
                 S->func_type = TMS_F_REAL;
@@ -299,7 +285,7 @@ int _tms_set_rcfunction_ptr(char *local_expr, tms_math_expr *M, int s_i)
             }
             else
             {
-                tms_save_error(TMS_PARSER, UNDEFINED_FUNCTION, EH_NONFATAL, local_expr, solve_start - 2);
+                tms_save_error(TMS_PARSER, UNDEFINED_FUNCTION, EH_NONFATAL, expr, solve_start - 2);
                 free(name);
                 return -1;
             }
@@ -317,7 +303,7 @@ int _tms_set_rcfunction_ptr(char *local_expr, tms_math_expr *M, int s_i)
 
             else
             {
-                tms_save_error(TMS_PARSER, UNDEFINED_FUNCTION, EH_NONFATAL, local_expr, solve_start - 2);
+                tms_save_error(TMS_PARSER, UNDEFINED_FUNCTION, EH_NONFATAL, expr, solve_start - 2);
                 free(name);
                 return -1;
             }
@@ -410,15 +396,11 @@ tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *unknowns)
 
 tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *unknowns)
 {
-    int i;
     // Number of subexpressions
     int s_count;
     // Used for indexing of subexpressions
     int s_i;
-    // Used to store the index of the variable to assign the answer to.
-    int variable_index = -1;
-    // Local expression may be offset compared to the expression due to the assignment operator (if it exists).
-    char *local_expr;
+
     bool enable_unknowns = (options & TMS_ENABLE_UNK) && 1;
     bool enable_complex = (options & TMS_ENABLE_CMPLX) && 1;
 
@@ -440,21 +422,6 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *unk
     tms_remove_whitespace(expr);
     // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
     _tms_combine_add_sub(expr);
-
-    // Search for assignment operator to set user defined variables or functions
-    i = tms_f_search(expr, "=", 0, false);
-    if (i != -1)
-    {
-        variable_index = _tms_set_runtime_var(expr, i);
-        if (variable_index == -1)
-        {
-            free(expr);
-            return NULL;
-        }
-        local_expr = expr + i + 1;
-    }
-    else
-        local_expr = expr;
 
     tms_math_expr *M = _tms_init_math_expr(expr, enable_complex);
     if (M == NULL)
@@ -489,14 +456,14 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *unk
     {
         // Extended functions use a subexpression without nodes, but the subexpression result pointer should point at something
         // Allocate a small block and use that for the result pointer
-        if (S[s_i].func_type == TMS_F_EXTENDED || S[s_i].func_type == TMS_F_RUNTIME)
+        if (S[s_i].func_type == TMS_F_EXTENDED || S[s_i].func_type == TMS_F_USER)
         {
             S[s_i].result = malloc(sizeof(double complex *));
             continue;
         }
 
         // Get an array of the index of all operators and set their count
-        int *operator_index = _tms_get_operator_indexes(local_expr, S, s_i);
+        int *operator_index = _tms_get_operator_indexes(expr, S, s_i);
 
         if (operator_index == NULL)
         {
@@ -504,7 +471,7 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *unk
             return NULL;
         }
 
-        status = _tms_set_rcfunction_ptr(local_expr, M, s_i);
+        status = _tms_set_rcfunction_ptr(expr, M, s_i);
         if (status == -1)
         {
             tms_delete_math_expr(M);
@@ -542,11 +509,6 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *unk
     if (enable_unknowns)
         _tms_generate_unknowns_refs(M);
 
-    // Detect assignment operator (local_expr offset from expr)
-    if (local_expr != expr)
-        M->runvar_i = variable_index;
-    else
-        M->runvar_i = -1;
     return M;
 }
 
@@ -634,7 +596,7 @@ void tms_delete_math_expr_members(tms_math_expr *M)
     tms_math_subexpr *S = M->S;
     for (i = 0; i < M->subexpr_count; ++i)
     {
-        if (S[i].func_type == TMS_F_EXTENDED || S[i].func_type == TMS_F_RUNTIME)
+        if (S[i].func_type == TMS_F_EXTENDED || S[i].func_type == TMS_F_USER)
         {
             free(S[i].result);
             tms_free_arg_list(S[i].L);

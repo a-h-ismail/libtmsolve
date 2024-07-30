@@ -165,21 +165,7 @@ int _tms_set_runtime_int_var(char *expr, int i)
 
 tms_int_expr *_tms_init_int_expr(char *expr)
 {
-    char *local_expr = strchr(expr, '=');
-
-    if (local_expr == NULL)
-        local_expr = expr;
-    else
-        ++local_expr;
-
-    if (local_expr[0] == '\0')
-    {
-        tms_save_error(TMS_INT_PARSER, MISSING_EXPRESSION, EH_FATAL, NULL, 0);
-        free(expr);
-        return NULL;
-    }
-
-    int s_max = 8, i, j, s_i, length = strlen(local_expr), s_count;
+    int s_max = 8, i, j, s_i, length = strlen(expr), s_count;
 
     // Pointer to subexpressions heap array
     tms_int_subexpr *S;
@@ -189,7 +175,6 @@ tms_int_expr *_tms_init_int_expr(char *expr)
     M->S = NULL;
     M->subexpr_count = 0;
     M->expr = expr;
-    M->local_expr = local_expr;
 
     S = malloc(s_max * sizeof(tms_int_subexpr));
 
@@ -199,7 +184,7 @@ tms_int_expr *_tms_init_int_expr(char *expr)
     // Determine the depth and start/end of each subexpression parenthesis
     for (i = 0; i < length; ++i)
     {
-        if (local_expr[i] == '(')
+        if (expr[i] == '(')
         {
             DYNAMIC_RESIZE(S, s_i, s_max, tms_int_subexpr)
             is_extended = false;
@@ -207,14 +192,14 @@ tms_int_expr *_tms_init_int_expr(char *expr)
             S[s_i].depth = ++depth;
 
             // Treat extended functions as a subexpression
-            if (i > 1 && tms_legal_char_in_name(local_expr[i - 1]))
+            if (i > 1 && tms_legal_char_in_name(expr[i - 1]))
             {
-                char *name = tms_get_name(local_expr, i - 1, false);
+                char *name = tms_get_name(expr, i - 1, false);
 
                 // The function name is not valid
                 if (name == NULL)
                 {
-                    tms_save_error(TMS_INT_PARSER, SYNTAX_ERROR, EH_FATAL, local_expr, i - 1);
+                    tms_save_error(TMS_INT_PARSER, SYNTAX_ERROR, EH_FATAL, expr, i - 1);
                     free(S);
                     tms_delete_int_expr(M);
                     return NULL;
@@ -228,11 +213,10 @@ tms_int_expr *_tms_init_int_expr(char *expr)
                     is_extended = true;
                     S[s_i].subexpr_start = i - strlen(name);
                     S[s_i].solve_start = i + 1;
-                    i = tms_find_closing_parenthesis(local_expr, i);
+                    i = tms_find_closing_parenthesis(expr, i);
                     if (i == -1)
                     {
-                        tms_save_error(TMS_INT_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, local_expr,
-                                       S[s_i].solve_start - 1);
+                        tms_save_error(TMS_INT_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, expr, S[s_i].solve_start - 1);
                         M->S = S;
                         free(name);
                         tms_delete_int_expr(M);
@@ -260,12 +244,12 @@ tms_int_expr *_tms_init_int_expr(char *expr)
 
                 // The expression start is the parenthesis, may change if a function is found
                 S[s_i].subexpr_start = i;
-                S[s_i].solve_end = tms_find_closing_parenthesis(local_expr, i) - 1;
+                S[s_i].solve_end = tms_find_closing_parenthesis(expr, i) - 1;
 
                 // Empty parenthesis pair is only allowed for extended functions
                 if (S[s_i].solve_end == i)
                 {
-                    tms_save_error(TMS_INT_PARSER, PARENTHESIS_EMPTY, EH_FATAL, local_expr, i);
+                    tms_save_error(TMS_INT_PARSER, PARENTHESIS_EMPTY, EH_FATAL, expr, i);
                     free(S);
                     tms_delete_int_expr(M);
                     return NULL;
@@ -273,7 +257,7 @@ tms_int_expr *_tms_init_int_expr(char *expr)
 
                 if (S[s_i].solve_end == -2)
                 {
-                    tms_save_error(TMS_INT_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, local_expr, i);
+                    tms_save_error(TMS_INT_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, expr, i);
                     // S isn't part of M yet
                     free(S);
                     tms_delete_int_expr(M);
@@ -282,12 +266,12 @@ tms_int_expr *_tms_init_int_expr(char *expr)
             }
             ++s_i;
         }
-        else if (local_expr[i] == ')')
+        else if (expr[i] == ')')
         {
             // An extra ')'
             if (depth == 0)
             {
-                tms_save_error(TMS_INT_PARSER, PARENTHESIS_NOT_OPEN, EH_FATAL, local_expr, i);
+                tms_save_error(TMS_INT_PARSER, PARENTHESIS_NOT_OPEN, EH_FATAL, expr, i);
                 free(S);
                 tms_delete_int_expr(M);
                 return NULL;
@@ -296,9 +280,9 @@ tms_int_expr *_tms_init_int_expr(char *expr)
                 --depth;
 
             // Make sure a ')' is followed by an operator, ')' or \0
-            if (!(tms_is_int_op(local_expr[i + 1]) || local_expr[i + 1] == ')' || local_expr[i + 1] == '\0'))
+            if (!(tms_is_int_op(expr[i + 1]) || expr[i + 1] == ')' || expr[i + 1] == '\0'))
             {
-                tms_save_error(TMS_INT_PARSER, SYNTAX_ERROR, EH_FATAL, local_expr, i + 1);
+                tms_save_error(TMS_INT_PARSER, SYNTAX_ERROR, EH_FATAL, expr, i + 1);
                 free(S);
                 tms_delete_int_expr(M);
                 return NULL;
@@ -329,7 +313,7 @@ tms_int_expr *_tms_init_int_expr(char *expr)
     return M;
 }
 
-int _tms_set_int_function_ptr(char *local_expr, tms_int_expr *M, int s_i)
+int _tms_set_int_function_ptr(char *expr, tms_int_expr *M, int s_i)
 {
     int i;
     tms_int_subexpr *S = &(M->S[s_i]);
@@ -338,7 +322,7 @@ int _tms_set_int_function_ptr(char *local_expr, tms_int_expr *M, int s_i)
     // Search for any function preceding the expression to set the function pointer
     if (solve_start > 1)
     {
-        char *name = tms_get_name(local_expr, solve_start - 2, false);
+        char *name = tms_get_name(expr, solve_start - 2, false);
         if (name == NULL)
             return 0;
 
@@ -353,7 +337,7 @@ int _tms_set_int_function_ptr(char *local_expr, tms_int_expr *M, int s_i)
         }
         else
         {
-            tms_save_error(TMS_INT_PARSER, UNDEFINED_FUNCTION, EH_FATAL, local_expr, solve_start - 2);
+            tms_save_error(TMS_INT_PARSER, UNDEFINED_FUNCTION, EH_FATAL, expr, solve_start - 2);
             free(name);
             return -1;
         }
@@ -388,8 +372,6 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
     int s_i;
     // Stores the index of runtime var that will receive a copy of the answer
     int variable_index = -1;
-    // Local expression may be offset compared to the expression due to the assignment operator (if it exists).
-    char *local_expr;
 
     bool enable_unknowns = (options & TMS_ENABLE_UNK) && 1;
 
@@ -422,10 +404,10 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
             free(expr);
             return NULL;
         }
-        local_expr = expr + i + 1;
+        expr = expr + i + 1;
     }
     else
-        local_expr = expr;
+        expr = expr;
 
     tms_int_expr *M = _tms_init_int_expr(expr);
     if (M == NULL)
@@ -461,7 +443,7 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
         }
 
         // Get an array of the index of all operators and set their count
-        int *operator_index = _tms_get_operator_indexes(local_expr, S, s_i);
+        int *operator_index = _tms_get_operator_indexes(expr, S, s_i);
 
         if (operator_index == NULL)
         {
@@ -469,7 +451,7 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
             return NULL;
         }
 
-        status = _tms_set_int_function_ptr(local_expr, M, s_i);
+        status = _tms_set_int_function_ptr(expr, M, s_i);
         if (status == -1)
         {
             tms_delete_int_expr(M);
@@ -503,11 +485,6 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
         _tms_set_result_pointers(M, s_i);
     }
 
-    // Detect assignment operator (local_expr offset from expr)
-    if (local_expr != expr)
-        M->runvar_i = variable_index;
-    else
-        M->runvar_i = -1;
     return M;
 }
 
