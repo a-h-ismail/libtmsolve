@@ -150,11 +150,6 @@ bool _tms_validate_args_count(int expected, int actual, int facility_id);
 bool _tms_validate_args_count_range(int actual, int min, int max, int facility_id);
 
 /**
- * @brief Duplicates an existing math expression.
- */
-tms_math_expr *tms_dup_mexpr(tms_math_expr *M);
-
-/**
  * @brief Simple function to find the minimum of 2 integers.
  * @return The minimum among the integers.
  */
