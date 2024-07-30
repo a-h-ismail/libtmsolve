@@ -400,66 +400,27 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
     return 0;
 }
 
-void _tms_generate_unknowns_refs(tms_math_expr *M)
-{
-    int i = 0, s_i, buffer_size = 16;
-    tms_unknown_operand *x_data = malloc(buffer_size * sizeof(tms_unknown_operand));
-    tms_math_subexpr *subexpr_ptr = M->S;
-    tms_op_node *i_node;
-
-    for (s_i = 0; s_i < M->subexpr_count; ++s_i)
-    {
-        if (subexpr_ptr[s_i].nodes == NULL)
-            continue;
-
-        i_node = subexpr_ptr[s_i].nodes + subexpr_ptr[s_i].start_node;
-        while (i_node != NULL)
-        {
-            if (i == buffer_size)
-            {
-                buffer_size *= 2;
-                x_data = realloc(x_data, buffer_size * sizeof(tms_unknown_operand));
-            }
-            // Case of unknown left operand
-            if (i_node->unknowns_data & UNK_LEFT)
-            {
-                x_data[i].is_negative = i_node->unknowns_data & UNK_LNEG;
-                x_data[i].unknown_ptr = &(i_node->left_operand);
-                x_data[i].id = GET_LEFT_ID(i_node->unknowns_data);
-                i_node->left_operand = 0;
-                ++i;
-            }
-            // Case of a unknown right operand
-            if (i_node->unknowns_data & UNK_RIGHT)
-            {
-                x_data[i].is_negative = i_node->unknowns_data & UNK_RNEG;
-                x_data[i].unknown_ptr = &(i_node->right_operand);
-                x_data[i].id = GET_RIGHT_ID(i_node->unknowns_data);
-                i_node->right_operand = 0;
-                ++i;
-            }
-            i_node = i_node->next;
-        }
-    }
-    if (i != 0)
-    {
-        x_data = realloc(x_data, i * sizeof(tms_unknown_operand));
-        M->unknowns_instances = i;
-        M->x_data = x_data;
-    }
-    else
-        free(x_data);
-}
-
 void tms_set_unknowns(tms_math_expr *M, double complex *values_list)
 {
     int i;
     for (i = 0; i < M->unknowns_instances; ++i)
     {
         if (M->x_data[i].is_negative)
-            *(M->x_data[i].unknown_ptr) = -values_list[M->x_data[i].id];
+            *(double complex *)(M->x_data[i].unknown_ptr) = -values_list[M->x_data[i].id];
         else
-            *(M->x_data[i].unknown_ptr) = values_list[M->x_data[i].id];
+            *(double complex *)(M->x_data[i].unknown_ptr) = values_list[M->x_data[i].id];
+    }
+}
+
+void tms_set_int_unknowns(tms_int_expr *M, int64_t *values_list)
+{
+    int i;
+    for (i = 0; i < M->unknowns_instances; ++i)
+    {
+        if (M->x_data[i].is_negative)
+            *(int64_t *)(M->x_data[i].unknown_ptr) = -values_list[M->x_data[i].id];
+        else
+            *(int64_t *)(M->x_data[i].unknown_ptr) = values_list[M->x_data[i].id];
     }
 }
 

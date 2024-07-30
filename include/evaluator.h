@@ -49,13 +49,6 @@ int tms_int_evaluate(tms_int_expr *M, int64_t *result);
 int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result);
 
 /**
- * @brief Generates a heap allocated array of structure containing all unknown members metadata and stores it in M.
- * @param M The math_expr used to generate and store the metadata.
- * @remark You won't need to call this manually, the parser will call it if unknowns are enabled.
- */
-void _tms_generate_unknowns_refs(tms_math_expr *M);
-
-/**
  * @brief Sets the values of unknown operands.
  * @param M The math expression with unknown operands.
  * @param values_list A list of all unknowns values, should be indexed by the unknown ID.
