@@ -373,7 +373,9 @@ int _tms_get_operand_value(tms_math_expr *M, int start, double complex *out)
 
     if (is_negative)
         value = -value;
-    return value;
+
+    *out = value;
+    return 0;
 }
 
 tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *unknowns)
