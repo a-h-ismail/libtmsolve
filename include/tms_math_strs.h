@@ -146,16 +146,23 @@ typedef union tms_int_functions {
     tms_int_ufunc *runtime;
 } int_fptr;
 
-#define TMS_NOFUNC 0
-#define TMS_F_REAL 1
-#define TMS_F_CMPLX 2
-#define TMS_F_EXTENDED 3
-#define TMS_F_RUNTIME 4
-#define TMS_F_INT64 5
-#define TMS_F_INT_EXTENDED 6
+enum tms_function_types
+{
+    TMS_NOFUNC,
+    TMS_F_REAL,
+    TMS_F_CMPLX,
+    TMS_F_EXTENDED,
+    TMS_F_USER,
+    TMS_F_INT64,
+    TMS_F_INT_EXTENDED,
+    TMS_F_INT_USER
+};
 
-#define TMS_V_DOUBLE 10
-#define TMS_V_INT64 11
+enum tms_variable_types
+{
+    TMS_V_DOUBLE = 16,
+    TMS_V_INT64
+};
 
 /// @brief Holds the metadata of a subexpression.
 typedef struct tms_math_subexpr
@@ -204,9 +211,6 @@ typedef struct tms_math_expr
     /// The full expression string, after removing whitespaces and compacting +/- operators
     char *expr;
 
-    /// The string form of the expression, after adding offset to skip assignment operator
-    char *local_expr;
-
     /// The subexpression array created by parsing the math expression.
     tms_math_subexpr *S;
 
@@ -215,9 +219,6 @@ typedef struct tms_math_expr
 
     /// Number of unknown operands.
     int unknowns_instances;
-
-    /// Indicates the index of tms_g_var_values to copy the answer to.
-    int runvar_i;
 
     /// Array of unknown operands metadata.
     tms_unknown_operand *x_data;
@@ -306,9 +307,6 @@ typedef struct tms_int_expr
     /// The full expression string, after removing whitespaces and compacting +/- operators
     char *expr;
 
-    /// The string form of the expression, after adding offset to skip assignment operator
-    char *local_expr;
-
     /// The subexpression array created by parsing the expression.
     tms_int_subexpr *S;
 
@@ -326,9 +324,6 @@ typedef struct tms_int_expr
 
     /// Answer of the expression.
     int64_t answer;
-
-    /// Indicates the index of tms_g_int_vars to copy the answer to.
-    int runvar_i;
 } tms_int_expr;
 
 #endif
