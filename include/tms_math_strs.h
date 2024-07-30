@@ -110,7 +110,7 @@ typedef struct tms_op_node
 typedef struct tms_unknown_operand
 {
     /// @brief Pointer to the unknown operand.
-    double complex *unknown_ptr;
+    void *unknown_ptr;
     /// @brief ID of the unknown operand
     int id;
     /// @brief Set to true if the operand is negative.
