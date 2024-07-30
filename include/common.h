@@ -6,8 +6,10 @@
 #define math_subexpr tms_math_subexpr
 #define op_node tms_op_node
 #define PARSER TMS_PARSER
+#define is_op tms_is_op
 #define get_operand_value _tms_get_operand_value
 #define set_priority _tms_set_priority
+#define MAX_PRIORITY 3
 #endif
 
 static int _tms_set_operand(math_expr *M, op_node *N, int op_start, int s_i, char operand, bool enable_unknowns);
@@ -47,7 +49,7 @@ static int *_tms_get_operator_indexes(char *expr, math_subexpr *S, int s_i)
         else if (tms_legal_char_in_name(expr[i]) || expr[i] == '.')
             continue;
 
-        else if (tms_is_op(expr[i]))
+        else if (is_op(expr[i]))
         {
             // Skip a + or - used in scientific notation (like 1e+5)
             if (i > 0 && (expr[i - 1] == 'e' || expr[i - 1] == 'E') && (expr[i] == '+' || expr[i] == '-'))
@@ -97,7 +99,7 @@ static int _tms_set_evaluation_order(math_subexpr *S)
     else
     {
         // Set the starting op_node by searching the first op_node with the highest priority
-        for (i = 3; i > 0; --i)
+        for (i = MAX_PRIORITY; i > 0; --i)
         {
             for (j = 0; j < op_count; ++j)
             {
