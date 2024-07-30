@@ -26,6 +26,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define operand_type int64_t
 #define get_operand_value _tms_read_int_operand
 #define set_priority _tms_set_priority_int
+#define dup_mexpr tms_dup_int_expr
 
 #include "common.h"
 

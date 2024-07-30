@@ -28,6 +28,8 @@ extern const tms_extf tms_g_extf[];
 
 extern const int tms_g_extf_count;
 
+tms_math_expr *tms_dup_mexpr(tms_math_expr *M);
+
 /// @brief Comparator function for use with qsort(), compares the depth of 2 subexpressions.
 /// @return 1 if a.depth < b.depth; -1 if a.depth > b.depth; 0 otherwise.
 int tms_compare_subexpr_depth(const void *a, const void *b);

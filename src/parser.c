@@ -18,6 +18,8 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "string_tools.h"
 #include "tms_complex.h"
 
+#define dup_mexpr tms_dup_mexpr
+
 #include "common.h"
 
 int tms_compare_subexpr_depth(const void *a, const void *b)
