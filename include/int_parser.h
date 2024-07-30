@@ -19,6 +19,8 @@ extern const tms_int_extf tms_g_int_extf[];
 
 extern const int tms_g_int_extf_count;
 
+#define TMS_ENABLE_UNK 1
+
 int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op_start, int s_index, char operand);
 
 /**
@@ -27,11 +29,11 @@ int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op
  * @param expr The expression to parse.
  * @return A (malloc'd) pointer to the generated int expression structure.
  */
-tms_int_expr *tms_parse_int_expr(char *expr);
+tms_int_expr *tms_parse_int_expr(char *expr, int options, tms_arg_list *unknowns);
 
 /// @brief The actual int parser logic is here, but it isn't thread safe and doesn't automatically print errors.
 /// @warning Usage is not recommended unless you know what you're doing.
-tms_int_expr *_tms_parse_int_expr_unsafe(char *expr);
+tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *unknowns);
 
 /**
  * @brief Deletes an int expression.
@@ -39,9 +41,7 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr);
  */
 void tms_delete_int_expr(tms_int_expr *M);
 
-int _tms_read_int_operand(char *expr, int start, int64_t *result);
-
-int _tms_find_int_subexpr_starting_at(tms_int_subexpr *S, int start, int s_index, int mode);
+int _tms_read_int_operand(tms_int_expr *M, int start, int64_t *result);
 
 void _tms_set_priority_int(tms_int_op_node *list, int op_count);
 
