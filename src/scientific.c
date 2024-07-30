@@ -265,7 +265,7 @@ double complex tms_solve(char *expr)
 int tms_int_solve(char *expr, int64_t *result)
 {
     tms_int_expr *M;
-    M = tms_parse_int_expr(expr);
+    M = tms_parse_int_expr(expr, 0, NULL);
     int state = tms_int_evaluate(M, result);
     tms_delete_int_expr(M);
     return state;
@@ -274,7 +274,7 @@ int tms_int_solve(char *expr, int64_t *result)
 int _tms_int_solve_unsafe(char *expr, int64_t *result)
 {
     tms_int_expr *M;
-    M = _tms_parse_int_expr_unsafe(expr);
+    M = _tms_parse_int_expr_unsafe(expr, 0, NULL);
     int state = _tms_int_evaluate_unsafe(M, result);
     tms_delete_int_expr(M);
     return state;
