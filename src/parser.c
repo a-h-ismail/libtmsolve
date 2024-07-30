@@ -324,83 +324,21 @@ int _tms_set_rcfunction_ptr(char *local_expr, tms_math_expr *M, int s_i)
     return 0;
 }
 
-int _tms_init_nodes(char *local_expr, tms_math_expr *M, int s_i, int *operator_index, bool enable_unknowns)
-{
-    tms_math_subexpr *S = M->S;
-    int op_count = S[s_i].op_count;
-    int i;
-    tms_op_node *NB;
-    int solve_start = S[s_i].solve_start;
-    int solve_end = S[s_i].solve_end;
-
-    if (op_count < 0)
-    {
-        tms_save_error(TMS_PARSER, INTERNAL_ERROR, EH_FATAL, local_expr, solve_start);
-        return -1;
-    }
-
-    // Allocate nodes
-    S[s_i].nodes = malloc((op_count == 0 ? 1 : op_count) * sizeof(tms_op_node));
-
-    NB = S[s_i].nodes;
-    // Case where at least one operator was found
-    if (op_count > 0)
-    {
-        // Check if the expression is terminated with an operator
-        if (operator_index[op_count - 1] == solve_end)
-        {
-            tms_save_error(TMS_PARSER, RIGHT_OP_MISSING, EH_FATAL, local_expr, operator_index[op_count - 1]);
-            return -1;
-        }
-
-        for (i = 0; i < op_count; ++i)
-        {
-            NB[i].operator_index = operator_index[i];
-            NB[i].operator= local_expr[operator_index[i]];
-        }
-
-        // Set each op_node's operator priority data
-        _tms_set_priority(NB, op_count);
-
-        for (i = 0; i < op_count; ++i)
-        {
-            NB[i].node_index = i;
-            NB[i].unknowns_data = 0;
-            NB[i].operator_index = operator_index[i];
-            NB[i].operator= local_expr[operator_index[i]];
-        }
-        // Check if the expression is terminated with an operator
-        if (operator_index[op_count - 1] == solve_end)
-        {
-            tms_save_error(TMS_PARSER, RIGHT_OP_MISSING, EH_FATAL, local_expr, operator_index[op_count - 1]);
-            return -1;
-        }
-    }
-    // No operands at all
-    else
-    {
-        NB->operator= '\0';
-        NB->unknowns_data = 0;
-        NB->operator_index = -1;
-        NB->priority = -1;
-    }
-    return 0;
-}
-
-double complex _tms_get_operand_value(char *expr, int start, bool enable_complex)
+int _tms_get_operand_value(tms_math_expr *M, int start, double complex *out)
 {
     double complex value = NAN;
     bool is_negative = false;
+    char *expr = M->expr;
 
     // Avoid negative offsets
     if (start < 0)
-        return NAN;
+        return -1;
 
     // Catch incorrect start like )5 (no implied multiplication allowed)
     if (start > 0 && !tms_is_valid_number_start(expr[start - 1]))
     {
         tms_save_error(TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, start - 1);
-        return NAN;
+        return -1;
     }
 
     if (expr[start] == '-')
@@ -418,7 +356,7 @@ double complex _tms_get_operand_value(char *expr, int start, bool enable_complex
     {
         char *name = tms_get_name(expr, start, true);
         if (name == NULL)
-            return NAN;
+            return -2;
 
         int i = tms_find_str_in_array(name, tms_g_vars, tms_g_var_count, TMS_V_DOUBLE);
         if (i != -1)
@@ -434,80 +372,20 @@ double complex _tms_get_operand_value(char *expr, int start, bool enable_complex
             else
                 tms_save_error(TMS_PARSER, UNDEFINED_VARIABLE, EH_FATAL, expr, start);
             free(name);
-            return NAN;
+            return -3;
         }
         free(name);
     }
 
-    if (!enable_complex && cimag(value) != 0)
+    if (!M->enable_complex && cimag(value) != 0)
     {
         tms_save_error(TMS_PARSER, COMPLEX_DISABLED, EH_NONFATAL, expr, start);
-        return NAN;
+        return -4;
     }
 
     if (is_negative)
         value = -value;
     return value;
-}
-
-int _tms_set_operand(char *expr, tms_math_expr *M, tms_op_node *N, int op_start, int s_i, char operand,
-                     bool enable_unknowns)
-{
-    tms_math_subexpr *S = M->S;
-    double complex *operand_ptr;
-    int tmp;
-
-    switch (operand)
-    {
-    case 'r':
-        operand_ptr = &(N->right_operand);
-        break;
-    case 'l':
-        operand_ptr = &(N->left_operand);
-        break;
-    default:
-        tms_save_error(TMS_PARSER, INTERNAL_ERROR, EH_FATAL, expr, N->operator_index);
-        return -1;
-    }
-
-    // Check if the operand is the result of a subexpression
-    tmp = _tms_find_subexpr_starting_at(S, op_start, s_i, 1);
-
-    // The operand is a variable or a numeric value
-    if (tmp == -1)
-    {
-        *operand_ptr = _tms_get_operand_value(expr, op_start, M->enable_complex);
-
-        if (isnan((double)*operand_ptr))
-        {
-            // Check for the unknown 'x'
-            if (enable_unknowns == true)
-            {
-                tmp = _tms_set_unknowns_data(M, op_start, N, operand);
-                if (tmp == -1)
-                {
-                    // If the value reader failed with no error reported, set the error to be a syntax error
-                    if (tms_get_error_count(TMS_PARSER, EH_ALL_ERRORS) == 0)
-                        tms_save_error(TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, op_start);
-                    return -1;
-                }
-                else
-                    tms_clear_errors(TMS_PARSER);
-            }
-            else
-            {
-                // If the value reader failed with no error reported, set the error to be a syntax error
-                if (tms_get_error_count(TMS_PARSER, EH_ALL_ERRORS) == 0)
-                    tms_save_error(TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, op_start);
-                return -1;
-            }
-        }
-    }
-    else
-        // It's official: we have a subexpression result as operand
-        *(S[tmp].result) = operand_ptr;
-
-    return 0;
 }
 
 tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *unknowns)
@@ -632,7 +510,7 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *unk
             return NULL;
         }
 
-        status = _tms_init_nodes(local_expr, M, s_i, operator_index, enable_unknowns);
+        status = _tms_init_nodes(M, s_i, operator_index, enable_unknowns);
         free(operator_index);
 
         // Exiting due to error
@@ -642,7 +520,7 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *unk
             return NULL;
         }
 
-        status = _tms_set_all_operands(local_expr, M, s_i, enable_unknowns);
+        status = _tms_set_all_operands(M, s_i, enable_unknowns);
         if (status == -1)
         {
             tms_delete_math_expr(M);
@@ -743,52 +621,6 @@ void tms_convert_real_to_complex(tms_math_expr *M)
         }
     }
     M->enable_complex = true;
-}
-
-int _tms_set_unknowns_data(tms_math_expr *M, int start, tms_op_node *x_node, char rl)
-{
-    char *expr = M->local_expr;
-    bool is_negative = false;
-
-    char *name = tms_get_name(expr, start, true);
-
-    int id = tms_find_str_in_array(name, M->unknowns->arguments, M->unknowns->count, TMS_NOFUNC);
-    free(name);
-    if (id == -1)
-        return -1;
-
-    if (expr[start] == '+')
-    {
-        is_negative = false;
-        ++start;
-    }
-    else if (expr[start] == '-')
-    {
-        is_negative = true;
-        ++start;
-    }
-
-    if (rl == 'l')
-    {
-        x_node->unknowns_data |= UNK_LEFT;
-        SET_LEFT_ID(x_node->unknowns_data, id);
-        if (is_negative)
-            x_node->unknowns_data |= UNK_LNEG;
-    }
-    else if (rl == 'r')
-    {
-        x_node->unknowns_data |= UNK_RIGHT;
-        SET_RIGHT_ID(x_node->unknowns_data, id);
-        if (is_negative)
-            x_node->unknowns_data |= UNK_RNEG;
-    }
-    else
-    {
-        tms_save_error(TMS_PARSER, INTERNAL_ERROR, EH_FATAL, NULL, 0);
-        return -1;
-    }
-
-    return 0;
 }
 
 void tms_delete_math_expr_members(tms_math_expr *M)
