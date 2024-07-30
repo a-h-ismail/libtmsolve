@@ -16,6 +16,8 @@ static int _tms_find_subexpr_starting_at(math_subexpr *S, int start, int s_i, in
 
 static int _tms_set_evaluation_order(math_subexpr *S);
 
+static void _tms_generate_unknowns_refs(math_expr *M);
+
 static int *_tms_get_operator_indexes(char *expr, math_subexpr *S, int s_i)
 {
     // For simplicity
@@ -316,21 +318,6 @@ static int _tms_find_subexpr_starting_at(math_subexpr *S, int start, int s_i, in
     return -1;
 }
 
-// Function that finds the subexpression that ends at 'end'
-static int _tms_find_subexpr_ending_at(math_subexpr *S, int end, int s_i, int s_count)
-{
-    int i;
-    i = s_i - 1;
-    while (i < s_count)
-    {
-        if (S[i].solve_end == end)
-            return i;
-        else
-            --i;
-    }
-    return -1;
-}
-
 static int _tms_set_unknowns_data(math_expr *M, int start, op_node *x_node, char rl)
 {
     char *expr = M->local_expr;
@@ -499,4 +486,138 @@ static int _tms_init_nodes(math_expr *M, int s_i, int *operator_index, bool enab
         NB->priority = -1;
     }
     return 0;
+}
+
+math_expr *dup_mexpr(math_expr *M)
+{
+    if (M == NULL)
+        return NULL;
+
+    math_expr *NM = malloc(sizeof(math_expr));
+    // Copy the math expression
+    *NM = *M;
+    NM->expr = strdup(M->expr);
+    NM->unknowns = tms_dup_arg_list(M->unknowns);
+    NM->local_expr = NM->expr + (M->local_expr - M->expr);
+    NM->S = malloc(NM->subexpr_count * sizeof(math_subexpr));
+    // Copy subexpressions
+    memcpy(NM->S, M->S, M->subexpr_count * sizeof(math_subexpr));
+
+    int op_count, node_count;
+    math_subexpr *S, *NS;
+
+    // Allocate nodes and set the result pointers
+    // Here NM is the new math expression and NS is the new subexpressions array
+    for (int s = 0; s < NM->subexpr_count; ++s)
+    {
+        // New variables to keep lines from becoming too long
+        NS = NM->S + s;
+        S = M->S + s;
+        if (M->S[s].nodes != NULL)
+        {
+            op_count = M->S[s].op_count;
+            node_count = (op_count > 0 ? op_count : 1);
+            NS->nodes = malloc(node_count * sizeof(tms_op_node));
+            // Copy nodes
+            memcpy(NS->nodes, S->nodes, node_count * sizeof(tms_op_node));
+
+            // Copying nodes will also copy result and next pointers which point to the original node members
+            // Regenerate the pointers using parser functions
+            _tms_set_evaluation_order(NS);
+            _tms_set_result_pointers(NM, s);
+        }
+        else
+        {
+            // An extended/user function subexpr
+            NS->result = malloc(sizeof(operand_type *));
+            NS->L = tms_dup_arg_list(S->L);
+        }
+    }
+
+    // Fix the subexpressions result pointers
+    for (int s = 0; s < NM->subexpr_count; ++s)
+    {
+        S = M->S + s;
+        void *result = S->result, *start, *end, *tmp;
+
+        // Find which operand in the original expression received the answer of the current subexpression
+        tmp = *(operand_type **)result;
+        for (int i = 0; i < M->subexpr_count; ++i)
+        {
+            op_count = M->S[i].op_count;
+            node_count = (op_count > 0 ? op_count : 1);
+            start = M->S[i].nodes;
+            end = M->S[i].nodes + node_count;
+
+            // The nodes are contiguous, so we can pinpoint the correct node by pointer comparisons
+            if (tmp >= start && tmp <= end)
+            {
+                int n = (tmp - start) / sizeof(tms_op_node);
+
+                if (&(M->S[i].nodes[n].right_operand) == *(operand_type **)result)
+                    *(NM->S[s].result) = &(NM->S[i].nodes[n].right_operand);
+                else if (&(M->S[i].nodes[n].left_operand) == *(operand_type **)result)
+                    *(NM->S[s].result) = &(NM->S[i].nodes[n].left_operand);
+
+                break;
+            }
+        }
+    }
+
+    // If the nodes have unknowns, regenerate the unknowns pointers array
+    if (NM->unknowns_instances > 0)
+        _tms_generate_unknowns_refs(NM);
+
+    return NM;
+}
+
+static void _tms_generate_unknowns_refs(math_expr *M)
+{
+    int i = 0, s_i, buffer_size = 16;
+    tms_unknown_operand *x_data = malloc(buffer_size * sizeof(tms_unknown_operand));
+    math_subexpr *subexpr_ptr = M->S;
+    op_node *i_node;
+
+    for (s_i = 0; s_i < M->subexpr_count; ++s_i)
+    {
+        if (subexpr_ptr[s_i].nodes == NULL)
+            continue;
+
+        i_node = subexpr_ptr[s_i].nodes + subexpr_ptr[s_i].start_node;
+        while (i_node != NULL)
+        {
+            if (i == buffer_size)
+            {
+                buffer_size *= 2;
+                x_data = realloc(x_data, buffer_size * sizeof(tms_unknown_operand));
+            }
+            // Case of unknown left operand
+            if (i_node->unknowns_data & UNK_LEFT)
+            {
+                x_data[i].is_negative = i_node->unknowns_data & UNK_LNEG;
+                x_data[i].unknown_ptr = &(i_node->left_operand);
+                x_data[i].id = GET_LEFT_ID(i_node->unknowns_data);
+                i_node->left_operand = 0;
+                ++i;
+            }
+            // Case of unknown right operand
+            if (i_node->unknowns_data & UNK_RIGHT)
+            {
+                x_data[i].is_negative = i_node->unknowns_data & UNK_RNEG;
+                x_data[i].unknown_ptr = &(i_node->right_operand);
+                x_data[i].id = GET_RIGHT_ID(i_node->unknowns_data);
+                i_node->right_operand = 0;
+                ++i;
+            }
+            i_node = i_node->next;
+        }
+    }
+    if (i != 0)
+    {
+        x_data = realloc(x_data, i * sizeof(tms_unknown_operand));
+        M->unknowns_instances = i;
+        M->x_data = x_data;
+    }
+    else
+        free(x_data);
 }
