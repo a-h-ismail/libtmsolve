@@ -60,31 +60,6 @@ const tms_extf tms_g_extf[] = {{"avg", tms_avg},
 
 const int tms_g_extf_count = array_length(tms_g_extf);
 
-int _tms_set_runtime_var(char *expr, int i)
-{
-    if (i == 0)
-    {
-        tms_save_error(TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, 0);
-        return -1;
-    }
-    else
-    {
-        int j;
-        // Check if another assignment operator is used
-        j = tms_f_search(expr, "=", i + 1, false);
-        if (j != -1)
-        {
-            tms_save_error(TMS_PARSER, MULTIPLE_ASSIGNMENT_ERROR, EH_FATAL, expr, j);
-            return -1;
-        }
-
-        char name[i + 1];
-        strncpy(name, expr, i);
-        name[i] = '\0';
-        return tms_new_var(name, false);
-    }
-}
-
 tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex)
 {
     int s_max = 8, i, s_i, length = strlen(expr), s_count;

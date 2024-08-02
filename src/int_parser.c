@@ -140,31 +140,6 @@ int _tms_compare_int_subexpr_depth(const void *a, const void *b)
         return 0;
 }
 
-int _tms_set_runtime_int_var(char *expr, int i)
-{
-    if (i == 0)
-    {
-        tms_save_error(TMS_INT_PARSER, SYNTAX_ERROR, EH_FATAL, expr, 0);
-        return -1;
-    }
-    else
-    {
-        int j;
-        // Check if another assignment operator is used
-        j = tms_f_search(expr, "=", i + 1, false);
-        if (j != -1)
-        {
-            tms_save_error(TMS_INT_PARSER, MULTIPLE_ASSIGNMENT_ERROR, EH_FATAL, expr, j);
-            return -1;
-        }
-
-        char name[i + 1];
-        strncpy(name, expr, i);
-        name[i] = '\0';
-        return tms_new_int_var(name);
-    }
-}
-
 tms_int_expr *_tms_init_int_expr(char *expr)
 {
     int s_max = 8, i, j, s_i, length = strlen(expr), s_count;
@@ -367,13 +342,10 @@ tms_int_expr *tms_parse_int_expr(char *expr, int options, tms_arg_list *unknowns
 
 tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *unknowns)
 {
-    int i;
     // Number of subexpressions
     int s_count;
     // Current subexpression index
     int s_i;
-    // Stores the index of runtime var that will receive a copy of the answer
-    int variable_index = -1;
 
     bool enable_unknowns = (options & TMS_ENABLE_UNK) && 1;
 
@@ -396,20 +368,6 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
     tms_remove_whitespace(expr);
     // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
     _tms_combine_add_sub(expr);
-    // Search for assignment operator, to enable user defined variables
-    i = tms_f_search(expr, "=", 0, false);
-    if (i != -1)
-    {
-        variable_index = _tms_set_runtime_int_var(expr, i);
-        if (variable_index == -1)
-        {
-            free(expr);
-            return NULL;
-        }
-        expr = expr + i + 1;
-    }
-    else
-        expr = expr;
 
     tms_int_expr *M = _tms_init_int_expr(expr);
     if (M == NULL)
