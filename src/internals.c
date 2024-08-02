@@ -302,6 +302,14 @@ int tms_new_var(char *name, bool is_constant)
     }
 }
 
+void tms_set_var(double complex value, int index)
+{
+    while (atomic_flag_test_and_set(&_variables_lock))
+        ;
+    tms_g_vars[index].value = value;
+    atomic_flag_clear(&_variables_lock);
+}
+
 int tms_new_int_var(char *name)
 {
     int i;

@@ -134,6 +134,8 @@ void tms_set_int_mask(int size);
  */
 int tms_new_var(char *name, bool is_constant);
 
+void tms_set_var(double complex value, int index);
+
 int tms_new_int_var(char *name);
 
 /**
