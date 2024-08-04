@@ -244,6 +244,8 @@ int tms_name_bounds(char *expr, int i, bool is_at_start);
  */
 char *tms_get_name(char *expr, int i, bool is_at_start);
 
+bool tms_legal_name(char *name);
+
 /**
  * @brief Finds the index of a string within an array of strings
  * @param key The string to find

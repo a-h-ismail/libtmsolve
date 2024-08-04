@@ -1233,6 +1233,15 @@ char *tms_get_name(char *expr, int i, bool is_at_start)
     }
 }
 
+bool tms_legal_name(char *name)
+{
+    for (int i = 0; i < tms_g_illegal_names_count; ++i)
+        if (strcmp(name, tms_g_illegal_names[i]) == 0)
+            return false;
+
+    return true;
+}
+
 char *tms_strcat_dup(char *s1, char *s2)
 {
     char *concatenated_string = malloc((strlen(s1) + strlen(s2) + 1) * sizeof(char));
