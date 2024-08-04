@@ -44,12 +44,6 @@ extern bool _tms_debug;
 /// @brief Contains all built in variables (like pi).
 extern tms_var tms_g_builtin_vars[];
 
-/// @brief Contains all variables, including built in ones, dynamically expanded on demand.
-extern tms_var *tms_g_vars;
-
-/// @brief Contains all int64 variables, dynamically expanded on demand.
-extern tms_int_var *tms_g_int_vars;
-
 /// @brief Contains all runtime functions.
 extern tms_ufunc *tms_g_ufunc;
 
@@ -58,18 +52,6 @@ extern int tms_g_ufunc_count;
 
 /// @brief Max number of runtime functions.
 extern int tms_g_ufunc_max;
-
-/// @brief Total number of variables, including built in ones.
-extern int tms_g_var_count;
-
-/// @brief Current maximum variable capacity, use to dynamically resize variable storage.
-extern int tms_g_var_max;
-
-/// @brief Total number of int64 variables.
-extern int tms_g_int_var_count;
-
-/// @brief Current maximum int64 variable capacity, use to dynamically resize variable storage.
-extern int tms_g_int_var_max;
 
 extern char **tms_g_all_func_names;
 
@@ -92,6 +74,10 @@ extern int8_t tms_int_mask_size;
 
 /// @brief Initializes the variables required for the proper operation of the calculator.
 void tmsolve_init() __attribute__((constructor));
+
+const tms_var *tms_get_var_by_name(char *name);
+
+const tms_int_var *tms_get_int_var_by_name(char *name);
 
 /**
  * @brief Locks one of the parsers.
@@ -126,15 +112,9 @@ void tms_unlock_evaluator(int variant);
  */
 void tms_set_int_mask(int size);
 
-/**
- * @brief Creates a new variable if it doesn't exist
- * @param name Name of the variable
- * @param is_constant Sets the constant bit to protect the variable from being changed by the evaluator
- * @return The index of the variable in the all vars array (whether it already exists or is newly created)
- */
-int tms_new_var(char *name, bool is_constant);
+int tms_set_var(char *name, double complex value, bool is_constant);
 
-void tms_set_var(double complex value, int index);
+int tms_set_int_var(char *name, int64_t value, bool is_constant);
 
 int tms_new_int_var(char *name);
 

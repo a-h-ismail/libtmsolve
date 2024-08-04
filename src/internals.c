@@ -5,6 +5,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "internals.h"
 #include "error_handler.h"
 #include "evaluator.h"
+#include "hashmap.h"
 #include "int_parser.h"
 #include "m_errors.h"
 #include "parser.h"
@@ -36,14 +37,13 @@ int tms_g_all_func_count, tms_g_all_func_max = 64;
 char **tms_g_all_int_func_names;
 int tms_g_all_int_func_count, tms_g_all_int_func_max = 16;
 
-char *tms_g_illegal_names[] = {"x", "i", "ans"};
+char *tms_g_illegal_names[] = {"ans"};
 const int tms_g_illegal_names_count = array_length(tms_g_illegal_names);
 
 tms_var tms_g_builtin_vars[] = {{"i", I, true}, {"pi", M_PI, true}, {"e", M_E, true}, {"c", 299792458, true}};
-tms_var *tms_g_vars = NULL;
-int tms_g_var_count, tms_g_var_max = array_length(tms_g_builtin_vars);
+hashmap *tms_g_vars, *tms_g_int_vars;
 
-tms_int_var *tms_g_int_vars = NULL;
+hashmap *tms_g_int_vars = NULL;
 int tms_g_int_var_count = 0, tms_g_int_var_max = 8;
 
 tms_ufunc *tms_g_ufunc = NULL;
@@ -53,6 +53,42 @@ uint64_t tms_int_mask = 0xFFFFFFFF;
 
 int8_t tms_int_mask_size = 32;
 
+int _tms_var_compare(const void *a, const void *b, void *udata)
+{
+    const tms_var *va = a, *vb = b;
+    return strcmp(va->name, vb->name);
+}
+
+uint64_t _tms_var_hash(const void *item, uint64_t seed0, uint64_t seed1)
+{
+    const tms_var *v = item;
+    return hashmap_sip(v->name, strlen(v->name), seed0, seed1);
+}
+
+int _tms_int_var_compare(const void *a, const void *b, void *udata)
+{
+    const tms_int_var *va = a, *vb = b;
+    return strcmp(va->name, vb->name);
+}
+
+uint64_t _tms_int_var_hash(const void *item, uint64_t seed0, uint64_t seed1)
+{
+    const tms_int_var *v = item;
+    return hashmap_sip(v->name, strlen(v->name), seed0, seed1);
+}
+
+const tms_var *tms_get_var_by_name(char *name)
+{
+    tms_var tmp = {.name = name};
+    return hashmap_get(tms_g_vars, &tmp);
+}
+
+const tms_int_var *tms_get_int_var_by_name(char *name)
+{
+    tms_int_var tmp = {.name = name};
+    return hashmap_get(tms_g_int_vars, &tmp);
+}
+
 void tmsolve_init()
 {
     int i, j;
@@ -61,15 +97,13 @@ void tmsolve_init()
         // Seed the random number generator
         srand(time(NULL));
 
-        // Initialize variable names and values arrays
-        tms_g_vars = malloc(tms_g_var_max * sizeof(tms_var));
-        tms_g_var_count = array_length(tms_g_builtin_vars);
+        // Prepare hashmaps
+        tms_g_vars = hashmap_new(sizeof(tms_var), 0, rand(), rand(), _tms_var_hash, _tms_var_compare, NULL, NULL);
+        tms_g_int_vars =
+            hashmap_new(sizeof(tms_int_var), 0, rand(), rand(), _tms_int_var_hash, _tms_int_var_compare, NULL, NULL);
 
-        for (i = 0; i < tms_g_var_count; ++i)
-            tms_g_vars[i] = tms_g_builtin_vars[i];
-
-        // Int64 variables
-        tms_g_int_vars = malloc(tms_g_int_var_max * sizeof(tms_int_var));
+        for (int i = 0; i < array_length(tms_g_builtin_vars); ++i)
+            hashmap_set(tms_g_vars, tms_g_builtin_vars + i);
 
         // Initialize runtime function array
         tms_g_ufunc = malloc(tms_g_ufunc_max * sizeof(tms_ufunc));
@@ -249,18 +283,10 @@ bool _tms_validate_args_count_range(int actual, int min, int max, int facility_i
     return false;
 }
 
-int tms_new_var(char *name, bool is_constant)
+int _tms_set_var_unsafe(char *name, double complex value, bool is_constant)
 {
-    int i;
-    // Check if the name is allowed
-    for (i = 0; i < tms_g_illegal_names_count; ++i)
-    {
-        if (strcmp(name, tms_g_illegal_names[i]) == 0)
-        {
-            tms_save_error(TMS_PARSER, ILLEGAL_NAME, EH_FATAL, NULL, 0);
-            return -1;
-        }
-    }
+    if (isnan(creal(value)) || isnan(cimag(value)))
+        return -1;
 
     // Check if the name has illegal characters
     if (tms_valid_name(name) == false)
@@ -269,60 +295,42 @@ int tms_new_var(char *name, bool is_constant)
         return -1;
     }
 
-    // Check if the variable already exists
-    i = tms_find_str_in_array(name, tms_g_vars, tms_g_var_count, TMS_V_DOUBLE);
-    if (i != -1)
+    // Check if the name is allowed
+    if (!tms_legal_name(name))
     {
-        if (tms_g_vars[i].is_constant)
-        {
-            tms_save_error(TMS_PARSER, OVERWRITE_CONST_VARIABLE, EH_FATAL, NULL, 0);
-            return -1;
-        }
-        else
-            return i;
+        tms_save_error(TMS_PARSER, ILLEGAL_NAME, EH_FATAL, NULL, 0);
+        return -1;
     }
-    else
+
+    if (tms_find_str_in_array(name, tms_g_all_func_names, tms_g_all_func_count, TMS_NOFUNC) != -1)
     {
-        if (tms_find_str_in_array(name, tms_g_all_func_names, tms_g_all_func_count, TMS_NOFUNC) != -1)
-        {
-            tms_save_error(TMS_PARSER, VAR_NAME_MATCHES_FUNCTION, EH_FATAL, NULL, 0);
-            return -1;
-        }
-        else
-        {
-            // Create a new variable
-            DYNAMIC_RESIZE(tms_g_vars, tms_g_var_count, tms_g_var_max, tms_var);
-            tms_g_vars[tms_g_var_count].name = strdup(name);
-            // Initialize the new variable to zero
-            tms_g_vars[tms_g_var_count].value = 0;
-            tms_g_vars[tms_g_var_count].is_constant = is_constant;
-            ++tms_g_var_count;
-            return tms_g_var_count - 1;
-        }
+        tms_save_error(TMS_PARSER, VAR_NAME_MATCHES_FUNCTION, EH_FATAL, NULL, 0);
+        return -1;
     }
+
+    const tms_var *tmp = tms_get_var_by_name(name);
+    if (tmp != NULL && tmp->is_constant)
+    {
+        tms_save_error(TMS_PARSER, OVERWRITE_CONST_VARIABLE, EH_FATAL, NULL, 0);
+        return -1;
+    }
+
+    tms_var v = {.name = strdup(name), .value = value, .is_constant = is_constant};
+    hashmap_set(tms_g_vars, &v);
+    return 0;
 }
 
-void tms_set_var(double complex value, int index)
+int tms_set_var(char *name, double complex value, bool is_constant)
 {
     while (atomic_flag_test_and_set(&_variables_lock))
         ;
-    tms_g_vars[index].value = value;
+    int status = _tms_set_var_unsafe(name, value, is_constant);
     atomic_flag_clear(&_variables_lock);
+    return status;
 }
 
-int tms_new_int_var(char *name)
+int _tms_set_int_var_unsafe(char *name, int64_t value, bool is_constant)
 {
-    int i;
-    // Check if the name is allowed
-    for (i = 0; i < tms_g_illegal_names_count; ++i)
-    {
-        if (strcmp(name, tms_g_illegal_names[i]) == 0)
-        {
-            tms_save_error(TMS_INT_PARSER, ILLEGAL_NAME, EH_FATAL, NULL, 0);
-            return -1;
-        }
-    }
-
     // Check if the name has illegal characters
     if (tms_valid_name(name) == false)
     {
@@ -330,26 +338,38 @@ int tms_new_int_var(char *name)
         return -1;
     }
 
-    // Check if the variable already exists
-    i = tms_find_str_in_array(name, tms_g_int_vars, tms_g_int_var_count, TMS_V_INT64);
-
-    if (i != -1)
-        return i;
-    else
+    // Check if the name is allowed
+    if (!tms_legal_name(name))
     {
-        if (tms_find_str_in_array(name, tms_g_all_int_func_names, tms_g_all_int_func_count, TMS_NOFUNC) != -1)
-        {
-            tms_save_error(TMS_INT_PARSER, VAR_NAME_MATCHES_FUNCTION, EH_FATAL, NULL, 0);
-            return -1;
-        }
-        // Create a new variable
-        DYNAMIC_RESIZE(tms_g_int_vars, tms_g_int_var_count, tms_g_int_var_max, tms_int_var);
-        tms_g_int_vars[tms_g_int_var_count].name = strdup(name);
-        // Initialize the new variable to zero
-        tms_g_int_vars[tms_g_int_var_count].value = 0;
-        ++tms_g_int_var_count;
-        return tms_g_int_var_count - 1;
+        tms_save_error(TMS_INT_PARSER, ILLEGAL_NAME, EH_FATAL, NULL, 0);
+        return -1;
     }
+
+    if (tms_find_str_in_array(name, tms_g_all_int_func_names, tms_g_all_int_func_count, TMS_NOFUNC) != -1)
+    {
+        tms_save_error(TMS_INT_PARSER, VAR_NAME_MATCHES_FUNCTION, EH_FATAL, NULL, 0);
+        return -1;
+    }
+
+    const tms_int_var *tmp = tms_get_int_var_by_name(name);
+    if (tmp != NULL && tmp->is_constant)
+    {
+        tms_save_error(TMS_INT_PARSER, OVERWRITE_CONST_VARIABLE, EH_FATAL, NULL, 0);
+        return -1;
+    }
+
+    tms_int_var v = {.name = strdup(name), .value = value, .is_constant = is_constant};
+    hashmap_set(tms_g_int_vars, &v);
+    return 0;
+}
+
+int tms_set_int_var(char *name, int64_t value, bool is_constant)
+{
+    while (atomic_flag_test_and_set(&_int_variables_lock))
+        ;
+    int status = _tms_set_int_var_unsafe(name, value, is_constant);
+    atomic_flag_clear(&_int_variables_lock);
+    return status;
 }
 
 bool _tms_ufunc_has_self_ref(tms_math_expr *F)
@@ -431,8 +451,7 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
     }
 
     // Check if the name is used by a variable
-    i = tms_find_str_in_array(fname, tms_g_vars, tms_g_var_count, TMS_V_DOUBLE);
-    if (i != -1)
+    if (tms_get_var_by_name(fname) != NULL)
     {
         tms_save_error(TMS_PARSER, FUNCTION_NAME_MATCHES_VAR, EH_FATAL, NULL, 0);
         return -1;
