@@ -11,6 +11,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 #include <complex.h>
 #include <stdbool.h>
+#include <stddef.h>
 #ifndef LOCAL_BUILD
 #include <tmsolve/m_errors.h>
 #include <tmsolve/tms_math_strs.h>
@@ -78,6 +79,10 @@ void tmsolve_init() __attribute__((constructor));
 const tms_var *tms_get_var_by_name(char *name);
 
 const tms_int_var *tms_get_int_var_by_name(char *name);
+
+tms_var *tms_get_all_vars(size_t *out);
+
+tms_int_var *tms_get_all_int_vars(size_t *out);
 
 /**
  * @brief Locks one of the parsers.

@@ -89,6 +89,16 @@ const tms_int_var *tms_get_int_var_by_name(char *name)
     return hashmap_get(tms_g_int_vars, &tmp);
 }
 
+tms_var *tms_get_all_vars(size_t *out)
+{
+    return hashmap_to_array(tms_g_vars, out);
+}
+
+tms_int_var *tms_get_all_int_vars(size_t *out)
+{
+    return hashmap_to_array(tms_g_int_vars, out);
+}
+
 void tmsolve_init()
 {
     int i, j;

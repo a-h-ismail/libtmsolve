@@ -143,12 +143,14 @@ double complex tms_solve(char *expr)
     if (i != -1)
         likely_complex = 2;
 
+    size_t var_count;
+    tms_var *all_vars = tms_get_all_vars(&var_count);
     // Look for user defined complex variables
-    for (i = 0; i < tms_g_var_count; ++i)
+    for (i = 0; i < var_count; ++i)
     {
-        if (!tms_is_real(tms_g_vars[i].value))
+        if (!tms_is_real(all_vars[i].value))
         {
-            j = tms_f_search(local_expr, tms_g_vars[i].name, 0, true);
+            j = tms_f_search(local_expr, all_vars[i].name, 0, true);
             if (j != -1)
             {
                 likely_complex = 2;
@@ -156,6 +158,7 @@ double complex tms_solve(char *expr)
             }
         }
     }
+    free(all_vars);
 
     // Special case of ans
     if (!tms_is_real(tms_g_ans))
