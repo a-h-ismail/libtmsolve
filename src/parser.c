@@ -321,9 +321,10 @@ int _tms_get_operand_value(tms_math_expr *M, int start, double complex *out)
         if (name == NULL)
             return -2;
 
-        int i = tms_find_str_in_array(name, tms_g_vars, tms_g_var_count, TMS_V_DOUBLE);
-        if (i != -1)
-            value = tms_g_vars[i].value;
+        // Check if the name matches a defined variable
+        const tms_var *v = tms_get_var_by_name(name);
+        if (v != NULL)
+            value = v->value;
         // ans is a special case
         else if (strcmp(name, "ans") == 0)
             value = tms_g_ans;

@@ -91,10 +91,11 @@ int _tms_read_int_operand(tms_int_expr *M, int start, int64_t *result)
         if (name == NULL)
             return -1;
 
-        int i = tms_find_str_in_array(name, tms_g_int_vars, tms_g_int_var_count, TMS_V_INT64);
-        if (i != -1)
-            value = tms_g_int_vars[i].value;
-        // ans is a special case
+        // Check if the name matches a defined variable
+        const tms_int_var *v = tms_get_int_var_by_name(name);
+        if (v != NULL)
+            value = v->value;
+        // ans is a special variable
         else if (strcmp(name, "ans") == 0)
             value = tms_g_int_ans;
         else
