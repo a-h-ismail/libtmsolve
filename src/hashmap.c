@@ -780,7 +780,7 @@ uint64_t hashmap_xxhash3(const void *data, size_t len, uint64_t seed0,
 void *hashmap_to_array(hashmap *map, size_t *len)
 {
     size_t iter = 0, size = map->elsize;
-    void *item;
+    void *item = NULL;
     void *array = malloc(size * map->count);
     for (int i = 0; i < map->count; ++i)
     {
