@@ -45,22 +45,9 @@ extern bool _tms_debug;
 /// @brief Contains all built in variables (like pi).
 extern tms_var tms_g_builtin_vars[];
 
-/// @brief Contains all runtime functions.
-extern tms_ufunc *tms_g_ufunc;
-
-/// @brief Total number of runtime functions.
-extern int tms_g_ufunc_count;
-
-/// @brief Max number of runtime functions.
-extern int tms_g_ufunc_max;
-
 extern char **tms_g_all_func_names;
 
-extern int tms_g_all_func_count, tms_g_all_func_max;
-
 extern char **tms_g_all_int_func_names;
-
-extern int tms_g_all_int_func_count, tms_g_all_int_func_max;
 
 /// @brief Names that should not be usable.
 extern char *tms_g_illegal_names[];
@@ -80,9 +67,25 @@ const tms_var *tms_get_var_by_name(char *name);
 
 const tms_int_var *tms_get_int_var_by_name(char *name);
 
+const tms_rc_func *tms_get_rc_func_by_name(char *name);
+
+const tms_extf *tms_get_extf_by_name(char *name);
+
+const tms_int_func *tms_get_int_func_by_name(char *name);
+
+const tms_int_extf *tms_get_int_extf_by_name(char *name);
+
+const tms_ufunc *tms_get_ufunc_by_name(char *name);
+
+const tms_int_ufunc *tms_get_int_ufunc_by_name(char *name);
+
 tms_var *tms_get_all_vars(size_t *out);
 
 tms_int_var *tms_get_all_int_vars(size_t *out);
+
+bool tms_function_exists(char *name);
+
+bool tms_int_function_name_exists(char *name);
 
 /**
  * @brief Locks one of the parsers.

@@ -2,16 +2,9 @@
 Copyright (C) 2022-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
-#include "internals.h"
-#include "error_handler.h"
-#include "evaluator.h"
 #include "hashmap.h"
-#include "int_parser.h"
+#include "libtmsolve.h"
 #include "m_errors.h"
-#include "parser.h"
-#include "scientific.h"
-#include "string_tools.h"
-#include "tms_math_strs.h"
 #include <math.h>
 #include <stdatomic.h>
 #include <stdio.h>
@@ -22,6 +15,46 @@ SPDX-License-Identifier: LGPL-2.1-only
 double complex tms_g_ans = 0;
 int64_t tms_g_int_ans = 0;
 
+const tms_rc_func tms_g_rc_func[] = {
+    {"fact", tms_fact, tms_cfact}, {"abs", fabs, cabs_z},        {"exp", exp, tms_cexp},
+    {"ceil", ceil, tms_cceil},     {"floor", floor, tms_cfloor}, {"round", round, tms_cround},
+    {"sign", tms_sign, tms_csign}, {"arg", tms_carg_d, carg_z},  {"sqrt", sqrt, csqrt},
+    {"cbrt", cbrt, tms_ccbrt},     {"cos", tms_cos, tms_ccos},   {"sin", tms_sin, tms_csin},
+    {"tan", tms_tan, tms_ctan},    {"acos", acos, cacos},        {"asin", asin, casin},
+    {"atan", atan, catan},         {"cosh", cosh, ccosh},        {"sinh", sinh, csinh},
+    {"tanh", tanh, ctanh},         {"acosh", acosh, cacosh},     {"asinh", asinh, casinh},
+    {"atanh", atanh, catanh},      {"ln", log, tms_cln},         {"log2", log2, tms_clog2},
+    {"log10", log10, tms_clog10}};
+
+// Extended functions, may take more than one argument (stored in a comma separated string)
+const tms_extf tms_g_extf[] = {{"avg", tms_avg},
+                               {"min", tms_min},
+                               {"max", tms_max},
+                               {"integrate", tms_integrate},
+                               {"derivative", tms_derivative},
+                               {"logn", tms_logn},
+                               {"hex", tms_hex},
+                               {"oct", tms_oct},
+                               {"bin", tms_bin},
+                               {"rand", tms_rand},
+                               {"int", tms_int}};
+
+const tms_int_func tms_g_int_func[] = {{"not", tms_not},
+                                       {"mask", tms_mask},
+                                       {"mask_bit", tms_mask_bit},
+                                       {"inv_mask", tms_inv_mask},
+                                       {"ipv4_prefix", tms_ipv4_prefix},
+                                       {"zeros", tms_zeros},
+                                       {"ones", tms_ones}};
+
+const tms_int_extf tms_g_int_extf[] = {{"rand", tms_int_rand}, {"rr", tms_rr},
+                                       {"rl", tms_rl},         {"sr", tms_sr},
+                                       {"sra", tms_sra},       {"sl", tms_sl},
+                                       {"nand", tms_nand},     {"and", tms_and},
+                                       {"xor", tms_xor},       {"nor", tms_nor},
+                                       {"or", tms_or},         {"ipv4", tms_ipv4},
+                                       {"dotted", tms_dotted}, {"mask_range", tms_mask_range}};
+
 bool _tms_do_init = true;
 bool _tms_debug = false;
 
@@ -30,10 +63,6 @@ atomic_bool _ufunc_lock = false;
 atomic_bool _variables_lock = false, _int_variables_lock = false;
 atomic_bool _evaluator_lock = false, _int_evaluator_lock = false;
 
-// Function names used by the parser
-char **tms_g_all_func_names;
-int tms_g_all_func_count, tms_g_all_func_max = 64;
-
 char **tms_g_all_int_func_names;
 int tms_g_all_int_func_count, tms_g_all_int_func_max = 16;
 
@@ -41,18 +70,15 @@ char *tms_g_illegal_names[] = {"ans"};
 const int tms_g_illegal_names_count = array_length(tms_g_illegal_names);
 
 tms_var tms_g_builtin_vars[] = {{"i", I, true}, {"pi", M_PI, true}, {"e", M_E, true}, {"c", 299792458, true}};
-hashmap *tms_g_vars, *tms_g_int_vars;
-
-hashmap *tms_g_int_vars = NULL;
-int tms_g_int_var_count = 0, tms_g_int_var_max = 8;
-
-tms_ufunc *tms_g_ufunc = NULL;
-int tms_g_ufunc_count, tms_g_ufunc_max = 8;
+hashmap *var_hmap, *int_var_hmap, *ufunc_hmap, *int_ufunc_hmap;
+hashmap *rc_func_hmap, *extf_hmap, *int_func_hmap, *int_extf_hmap;
 
 uint64_t tms_int_mask = 0xFFFFFFFF;
 
 int8_t tms_int_mask_size = 32;
 
+// Too many boilerplates, incoming!
+// What they do is hash, compare and retrieve for all hashmaps
 int _tms_var_compare(const void *a, const void *b, void *udata)
 {
     const tms_var *va = a, *vb = b;
@@ -62,7 +88,7 @@ int _tms_var_compare(const void *a, const void *b, void *udata)
 uint64_t _tms_var_hash(const void *item, uint64_t seed0, uint64_t seed1)
 {
     const tms_var *v = item;
-    return hashmap_sip(v->name, strlen(v->name), seed0, seed1);
+    return hashmap_xxhash3(v->name, strlen(v->name), seed0, seed1);
 }
 
 int _tms_int_var_compare(const void *a, const void *b, void *udata)
@@ -74,77 +100,200 @@ int _tms_int_var_compare(const void *a, const void *b, void *udata)
 uint64_t _tms_int_var_hash(const void *item, uint64_t seed0, uint64_t seed1)
 {
     const tms_int_var *v = item;
-    return hashmap_sip(v->name, strlen(v->name), seed0, seed1);
+    return hashmap_xxhash3(v->name, strlen(v->name), seed0, seed1);
+}
+
+int _tms_ufunc_compare(const void *a, const void *b, void *udata)
+{
+    const tms_ufunc *va = a, *vb = b;
+    return strcmp(va->name, vb->name);
+}
+
+uint64_t _tms_ufunc_hash(const void *item, uint64_t seed0, uint64_t seed1)
+{
+    const tms_ufunc *v = item;
+    return hashmap_xxhash3(v->name, strlen(v->name), seed0, seed1);
+}
+
+int _tms_int_ufunc_compare(const void *a, const void *b, void *udata)
+{
+    const tms_int_ufunc *va = a, *vb = b;
+    return strcmp(va->name, vb->name);
+}
+
+uint64_t _tms_int_ufunc_hash(const void *item, uint64_t seed0, uint64_t seed1)
+{
+    const tms_int_ufunc *v = item;
+    return hashmap_xxhash3(v->name, strlen(v->name), seed0, seed1);
+}
+
+int _tms_rc_func_compare(const void *a, const void *b, void *udata)
+{
+    const tms_rc_func *va = a, *vb = b;
+    return strcmp(va->name, vb->name);
+}
+
+uint64_t _tms_rc_func_hash(const void *item, uint64_t seed0, uint64_t seed1)
+{
+    const tms_rc_func *v = item;
+    return hashmap_xxhash3(v->name, strlen(v->name), seed0, seed1);
+}
+
+int _tms_extf_compare(const void *a, const void *b, void *udata)
+{
+    const tms_extf *va = a, *vb = b;
+    return strcmp(va->name, vb->name);
+}
+
+uint64_t _tms_extf_hash(const void *item, uint64_t seed0, uint64_t seed1)
+{
+    const tms_extf *v = item;
+    return hashmap_xxhash3(v->name, strlen(v->name), seed0, seed1);
+}
+
+int _tms_int_func_compare(const void *a, const void *b, void *udata)
+{
+    const tms_int_func *va = a, *vb = b;
+    return strcmp(va->name, vb->name);
+}
+
+uint64_t _tms_int_func_hash(const void *item, uint64_t seed0, uint64_t seed1)
+{
+    const tms_int_func *v = item;
+    return hashmap_xxhash3(v->name, strlen(v->name), seed0, seed1);
+}
+
+int _tms_int_extf_compare(const void *a, const void *b, void *udata)
+{
+    const tms_int_extf *va = a, *vb = b;
+    return strcmp(va->name, vb->name);
+}
+
+uint64_t _tms_int_extf_hash(const void *item, uint64_t seed0, uint64_t seed1)
+{
+    const tms_int_extf *v = item;
+    return hashmap_xxhash3(v->name, strlen(v->name), seed0, seed1);
 }
 
 const tms_var *tms_get_var_by_name(char *name)
 {
     tms_var tmp = {.name = name};
-    return hashmap_get(tms_g_vars, &tmp);
+    return hashmap_get(var_hmap, &tmp);
 }
 
 const tms_int_var *tms_get_int_var_by_name(char *name)
 {
     tms_int_var tmp = {.name = name};
-    return hashmap_get(tms_g_int_vars, &tmp);
+    return hashmap_get(int_var_hmap, &tmp);
+}
+
+const tms_rc_func *tms_get_rc_func_by_name(char *name)
+{
+    tms_rc_func tmp = {.name = name};
+    return hashmap_get(rc_func_hmap, &tmp);
+}
+
+const tms_extf *tms_get_extf_by_name(char *name)
+{
+    tms_extf tmp = {.name = name};
+    return hashmap_get(extf_hmap, &tmp);
+}
+
+const tms_int_func *tms_get_int_func_by_name(char *name)
+{
+    tms_rc_func tmp = {.name = name};
+    return hashmap_get(int_func_hmap, &tmp);
+}
+
+const tms_int_extf *tms_get_int_extf_by_name(char *name)
+{
+    tms_int_extf tmp = {.name = name};
+    return hashmap_get(int_extf_hmap, &tmp);
+}
+
+const tms_ufunc *tms_get_ufunc_by_name(char *name)
+{
+    tms_ufunc tmp = {.name = name};
+    return hashmap_get(ufunc_hmap, &tmp);
+}
+
+const tms_int_ufunc *tms_get_int_ufunc_by_name(char *name)
+{
+    tms_int_ufunc tmp = {.name = name};
+    return hashmap_get(int_ufunc_hmap, &tmp);
 }
 
 tms_var *tms_get_all_vars(size_t *out)
 {
-    return hashmap_to_array(tms_g_vars, out);
+    return hashmap_to_array(var_hmap, out);
 }
 
 tms_int_var *tms_get_all_int_vars(size_t *out)
 {
-    return hashmap_to_array(tms_g_int_vars, out);
+    return hashmap_to_array(int_var_hmap, out);
+}
+
+bool tms_function_exists(char *name)
+{
+    if (tms_get_rc_func_by_name(name) != NULL || tms_get_extf_by_name(name) != NULL ||
+        tms_get_ufunc_by_name(name) != NULL)
+        return true;
+    else
+        return false;
+}
+
+bool tms_int_function_name_exists(char *name)
+{
+    if (tms_get_int_func_by_name(name) != NULL || tms_get_int_extf_by_name(name) != NULL ||
+        tms_get_int_ufunc_by_name(name) != NULL)
+        return true;
+    else
+        return false;
 }
 
 void tmsolve_init()
 {
-    int i, j;
-    if (_tms_do_init == true)
+    if (_tms_do_init)
     {
         // Seed the random number generator
         srand(time(NULL));
 
         // Prepare hashmaps
-        tms_g_vars = hashmap_new(sizeof(tms_var), 0, rand(), rand(), _tms_var_hash, _tms_var_compare, NULL, NULL);
-        tms_g_int_vars =
+        var_hmap = hashmap_new(sizeof(tms_var), 0, rand(), rand(), _tms_var_hash, _tms_var_compare, NULL, NULL);
+
+        int_var_hmap =
             hashmap_new(sizeof(tms_int_var), 0, rand(), rand(), _tms_int_var_hash, _tms_int_var_compare, NULL, NULL);
 
-        for (int i = 0; i < array_length(tms_g_builtin_vars); ++i)
-            hashmap_set(tms_g_vars, tms_g_builtin_vars + i);
+        ufunc_hmap = hashmap_new(sizeof(tms_ufunc), 0, rand(), rand(), _tms_ufunc_hash, _tms_ufunc_compare, NULL, NULL);
 
-        // Initialize runtime function array
-        tms_g_ufunc = malloc(tms_g_ufunc_max * sizeof(tms_ufunc));
+        int_ufunc_hmap = hashmap_new(sizeof(tms_int_ufunc), 0, rand(), rand(), _tms_int_ufunc_hash,
+                                     _tms_int_ufunc_compare, NULL, NULL);
 
-        // Generate the array of all floating point related functions
-        tms_g_all_func_count = tms_g_rc_func_count + tms_g_extf_count;
+        rc_func_hmap =
+            hashmap_new(sizeof(tms_rc_func), 0, rand(), rand(), _tms_rc_func_hash, _tms_rc_func_compare, NULL, NULL);
 
-        while (tms_g_all_func_max < tms_g_all_func_count)
-            tms_g_all_func_max *= 2;
+        extf_hmap = hashmap_new(sizeof(tms_extf), 0, rand(), rand(), _tms_extf_hash, _tms_extf_compare, NULL, NULL);
 
-        tms_g_all_func_names = malloc(tms_g_all_func_max * sizeof(char *));
+        int_func_hmap =
+            hashmap_new(sizeof(tms_int_func), 0, rand(), rand(), _tms_int_func_hash, _tms_int_func_compare, NULL, NULL);
 
-        i = 0;
-        for (j = 0; j < tms_g_rc_func_count; ++j)
-            tms_g_all_func_names[i++] = tms_g_rc_func[j].name;
-        for (j = 0; j < tms_g_extf_count; ++j)
-            tms_g_all_func_names[i++] = tms_g_extf[j].name;
+        int_extf_hmap =
+            hashmap_new(sizeof(tms_int_extf), 0, rand(), rand(), _tms_int_extf_hash, _tms_int_extf_compare, NULL, NULL);
+        int i;
+        for (i = 0; i < array_length(tms_g_builtin_vars); ++i)
+            hashmap_set(var_hmap, tms_g_builtin_vars + i);
 
-        // Generate the array of all int functions
-        tms_g_all_int_func_count = tms_g_int_func_count + tms_g_int_extf_count;
+        for (i = 0; i < array_length(tms_g_rc_func); ++i)
+            hashmap_set(rc_func_hmap, tms_g_rc_func + i);
 
-        while (tms_g_all_int_func_max < tms_g_all_int_func_count)
-            tms_g_all_int_func_max *= 2;
+        for (i = 0; i < array_length(tms_g_extf); ++i)
+            hashmap_set(extf_hmap, tms_g_extf + i);
 
-        tms_g_all_int_func_names = malloc(tms_g_all_int_func_max * sizeof(char *));
+        for (i = 0; i < array_length(tms_g_int_func); ++i)
+            hashmap_set(int_func_hmap, tms_g_int_func + i);
 
-        i = 0;
-        for (j = 0; j < tms_g_int_func_count; ++j)
-            tms_g_all_int_func_names[i++] = tms_g_int_func[j].name;
-        for (j = 0; j < tms_g_int_extf_count; ++j)
-            tms_g_all_int_func_names[i++] = tms_g_int_extf[j].name;
+        for (i = 0; i < array_length(tms_g_int_func); ++i)
+            hashmap_set(int_func_hmap, tms_g_int_func + i);
 
         _tms_do_init = false;
     }
@@ -312,7 +461,7 @@ int _tms_set_var_unsafe(char *name, double complex value, bool is_constant)
         return -1;
     }
 
-    if (tms_find_str_in_array(name, tms_g_all_func_names, tms_g_all_func_count, TMS_NOFUNC) != -1)
+    if (tms_function_exists(name))
     {
         tms_save_error(TMS_PARSER, VAR_NAME_MATCHES_FUNCTION, EH_FATAL, NULL, 0);
         return -1;
@@ -326,7 +475,7 @@ int _tms_set_var_unsafe(char *name, double complex value, bool is_constant)
     }
 
     tms_var v = {.name = strdup(name), .value = value, .is_constant = is_constant};
-    hashmap_set(tms_g_vars, &v);
+    hashmap_set(var_hmap, &v);
     return 0;
 }
 
@@ -369,7 +518,7 @@ int _tms_set_int_var_unsafe(char *name, int64_t value, bool is_constant)
     }
 
     tms_int_var v = {.name = strdup(name), .value = value, .is_constant = is_constant};
-    hashmap_set(tms_g_int_vars, &v);
+    hashmap_set(int_var_hmap, &v);
     return 0;
 }
 
@@ -388,7 +537,7 @@ bool _tms_ufunc_has_self_ref(tms_math_expr *F)
     for (int s_index = 0; s_index < F->subexpr_count; ++s_index)
     {
         // Detect self reference (new function has pointer to its previous version)
-        if (S[s_index].func_type == TMS_F_USER && S[s_index].func.runtime->F == F)
+        if (S[s_index].func_type == TMS_F_USER && S[s_index].func.user->F == F)
         {
             tms_save_error(TMS_PARSER, NO_FSELF_REFERENCE, EH_FATAL, NULL, 0);
             return true;
@@ -402,7 +551,7 @@ bool is_ufunc_referenced_by(tms_math_expr *referrer, tms_math_expr *F)
     tms_math_subexpr *S = referrer->S;
     for (int s_index = 0; s_index < referrer->subexpr_count; ++s_index)
     {
-        if (S[s_index].func_type == TMS_F_USER && S[s_index].func.runtime->F == F)
+        if (S[s_index].func_type == TMS_F_USER && S[s_index].func.user->F == F)
             return true;
     }
     return false;
@@ -417,10 +566,10 @@ bool _tms_ufunc_has_circular_refs(tms_math_expr *F)
         if (S[i].func_type == TMS_F_USER)
         {
             // A self reference, none of our business here
-            if (S[i].func.runtime->F == F)
+            if (S[i].func.user->F == F)
                 continue;
 
-            if (is_ufunc_referenced_by(S[i].func.runtime->F, F))
+            if (is_ufunc_referenced_by(S[i].func.user->F, F))
             {
                 tms_save_error(TMS_PARSER, NO_FCIRCULAR_REFERENCE, EH_FATAL, NULL, 0);
                 return true;
@@ -432,8 +581,7 @@ bool _tms_ufunc_has_circular_refs(tms_math_expr *F)
 
 int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
 {
-    int i;
-    int ufunc_index = tms_find_str_in_array(fname, tms_g_ufunc, tms_g_ufunc_count, TMS_F_USER);
+    const tms_ufunc *old = tms_get_ufunc_by_name(fname);
 
     // Check if the name has illegal characters
     if (tms_valid_name(fname) == false)
@@ -443,18 +591,14 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
     }
 
     // Check if the function name is allowed
-    for (i = 0; i < tms_g_illegal_names_count; ++i)
+    if (!tms_legal_name(fname))
     {
-        if (strcmp(fname, tms_g_illegal_names[i]) == 0)
-        {
-            tms_save_error(TMS_PARSER, ILLEGAL_NAME, EH_FATAL, NULL, 0);
-            return -1;
-        }
+        tms_save_error(TMS_PARSER, ILLEGAL_NAME, EH_FATAL, NULL, 0);
+        return -1;
     }
 
     // Check if the name was already used by builtin functions
-    i = tms_find_str_in_array(fname, tms_g_all_func_names, tms_g_all_func_count, TMS_NOFUNC);
-    if (i != -1 && ufunc_index == -1)
+    if (tms_function_exists(fname) && old == NULL)
     {
         tms_save_error(TMS_PARSER, NO_FUNCTION_SHADOWING, EH_FATAL, NULL, 0);
         return -1;
@@ -496,55 +640,47 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
     }
 
     // Function already exists
-    if (ufunc_index != -1)
+    if (old != NULL)
     {
-        tms_math_expr *new = tms_parse_expr(function, TMS_ENABLE_CMPLX | TMS_ENABLE_UNK, unknowns),
-                      *old = tms_g_ufunc[ufunc_index].F;
-        tms_math_subexpr *old_subexpr = tms_g_ufunc[ufunc_index].F->S;
-        if (new == NULL)
+        tms_math_expr *new_F = tms_parse_expr(function, TMS_ENABLE_CMPLX | TMS_ENABLE_UNK, unknowns), *old_F = old->F;
+        tms_math_subexpr *old_subexpr = old->F->S;
+        if (new_F == NULL)
             return -1;
         else
         {
-            // Place the newly generated subexpr in the global array for checks to work
-            old->S = new->S;
+            // Place the newly generated subexpr in the old expr
+            old_F->S = new_F->S;
             // Check for self and circular function references
-            if (_tms_ufunc_has_self_ref(old) || _tms_ufunc_has_circular_refs(old))
+            if (_tms_ufunc_has_self_ref(old_F) || _tms_ufunc_has_circular_refs(old_F))
             {
                 // Restore the original function since the new one is problematic
-                old->S = old_subexpr;
-                tms_delete_math_expr(new);
+                old_F->S = old_subexpr;
+                tms_delete_math_expr(new_F);
                 return -1;
             }
             else
             {
                 // Temporarily restore the old subexpr array for deletion
-                old->S = old_subexpr;
-                tms_delete_math_expr_members(old);
+                old_F->S = old_subexpr;
+                tms_delete_math_expr_members(old_F);
                 // Copy the content of the new function math_expr
-                *old = *new;
-                free(new);
+                *old_F = *new_F;
+                free(new_F);
                 return 0;
             }
         }
     }
     else
     {
-        // Create a new function
-        DYNAMIC_RESIZE(tms_g_ufunc, tms_g_ufunc_count, tms_g_ufunc_max, tms_ufunc);
         tms_math_expr *F = tms_parse_expr(function, TMS_ENABLE_CMPLX | TMS_ENABLE_UNK, unknowns);
         if (F == NULL)
-        {
             return -1;
-        }
         else
         {
-            i = tms_g_ufunc_count;
-            // Set function
-            tms_g_ufunc[i].F = F;
-            tms_g_ufunc[i].name = strdup(fname);
-            ++tms_g_ufunc_count;
-            DYNAMIC_RESIZE(tms_g_all_func_names, tms_g_all_func_count, tms_g_all_func_max, char *);
-            tms_g_all_func_names[tms_g_all_func_count++] = tms_g_ufunc[i].name;
+            tms_ufunc new;
+            new.F = F;
+            new.name = strdup(fname);
+            hashmap_set(ufunc_hmap, &new);
             return 0;
         }
     }
