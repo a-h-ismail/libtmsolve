@@ -136,14 +136,14 @@ typedef union tms_mfunc_ptrs {
     double (*real)(double);
     double complex (*cmplx)(double complex);
     double complex (*extended)(tms_arg_list *);
-    tms_ufunc *runtime;
+    char *user;
 } fptr;
 
 /// @brief Union to store int function pointers
 typedef union tms_int_functions {
     int (*simple)(int64_t, int64_t *);
     int (*extended)(tms_arg_list *, int64_t *);
-    tms_int_ufunc *runtime;
+    char *user;
 } int_fptr;
 
 enum tms_function_types
