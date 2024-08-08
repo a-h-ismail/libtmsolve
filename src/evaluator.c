@@ -105,10 +105,12 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                 {
                     return NAN;
                 }
-                tms_math_expr *F = tms_dup_mexpr(S[i].func.runtime->F);
+                const tms_ufunc *userf = tms_get_ufunc_by_name(S[i].func.user);
+                tms_math_expr *F = tms_dup_mexpr(userf->F);
                 // Set the values of the unknowns (passed as arguments earlier)
                 tms_set_unknowns(F, arguments);
                 **(S[i].result) = _tms_evaluate_unsafe(F);
+                tms_delete_math_expr(F);
             }
         }
         else
@@ -474,7 +476,7 @@ void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
             break;
 
         case TMS_F_USER:
-            tmp = S[s_i].func.runtime->name;
+            tmp = S[s_i].func.user;
             break;
 
         default:
