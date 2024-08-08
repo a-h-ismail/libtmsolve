@@ -531,45 +531,36 @@ int tms_set_int_var(char *name, int64_t value, bool is_constant)
     return status;
 }
 
-bool _tms_ufunc_has_self_ref(tms_math_expr *F)
+bool is_ufunc_referenced_by(tms_math_expr *M, char *fname)
 {
-    tms_math_subexpr *S = F->S;
-    for (int s_index = 0; s_index < F->subexpr_count; ++s_index)
+    tms_math_subexpr *S = M->S;
+    for (int i = 0; i < M->subexpr_count; ++i)
     {
-        // Detect self reference (new function has pointer to its previous version)
-        if (S[s_index].func_type == TMS_F_USER && S[s_index].func.user->F == F)
-        {
-            tms_save_error(TMS_PARSER, NO_FSELF_REFERENCE, EH_FATAL, NULL, 0);
-            return true;
-        }
-    }
-    return false;
-}
-
-bool is_ufunc_referenced_by(tms_math_expr *referrer, tms_math_expr *F)
-{
-    tms_math_subexpr *S = referrer->S;
-    for (int s_index = 0; s_index < referrer->subexpr_count; ++s_index)
-    {
-        if (S[s_index].func_type == TMS_F_USER && S[s_index].func.user->F == F)
+        if (S[i].func_type == TMS_F_USER && strcmp(fname, S[i].func.user) == 0)
             return true;
     }
     return false;
 }
 
-bool _tms_ufunc_has_circular_refs(tms_math_expr *F)
+bool _tms_ufunc_has_bad_refs(char *fname)
 {
     int i;
-    tms_math_subexpr *S = F->S;
-    for (i = 0; i < F->subexpr_count; ++i)
+    const tms_ufunc *F = tms_get_ufunc_by_name(fname);
+    if (F == NULL)
+        return false;
+    tms_math_expr *M = F->F;
+    tms_math_subexpr *S = M->S;
+
+    for (i = 0; i < M->subexpr_count; ++i)
     {
         if (S[i].func_type == TMS_F_USER)
         {
-            // A self reference, none of our business here
-            if (S[i].func.user->F == F)
-                continue;
-
-            if (is_ufunc_referenced_by(S[i].func.user->F, F))
+            if (strcmp(S[i].func.user, fname) == 0)
+            {
+                tms_save_error(TMS_PARSER, NO_FSELF_REFERENCE, EH_FATAL, NULL, 0);
+                return true;
+            }
+            else if (is_ufunc_referenced_by(M, fname))
             {
                 tms_save_error(TMS_PARSER, NO_FCIRCULAR_REFERENCE, EH_FATAL, NULL, 0);
                 return true;
@@ -638,51 +629,39 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
             return -1;
         }
     }
-
+    tms_math_expr *new = tms_parse_expr(function, TMS_ENABLE_CMPLX | TMS_ENABLE_UNK, unknowns);
     // Function already exists
     if (old != NULL)
     {
-        tms_math_expr *new_F = tms_parse_expr(function, TMS_ENABLE_CMPLX | TMS_ENABLE_UNK, unknowns), *old_F = old->F;
-        tms_math_subexpr *old_subexpr = old->F->S;
-        if (new_F == NULL)
+        // The old ufunc members is kept to either free the old function or restore it on failure of the new function
+        tms_ufunc old_F;
+        old_F = *old;
+
+        tms_ufunc tmp = {.F = new, .name = old->name};
+
+        // We need to update the hashmap because the function checks will lookup the name in the hashmap
+        // otherwise we will get the old function checked instead
+        hashmap_set(ufunc_hmap, new);
+        if (_tms_ufunc_has_bad_refs(function))
+        {
+            // Restore the original function since the new one is problematic
+            hashmap_set(ufunc_hmap, &old_F);
+            tms_delete_math_expr(tmp.F);
             return -1;
+        }
         else
         {
-            // Place the newly generated subexpr in the old expr
-            old_F->S = new_F->S;
-            // Check for self and circular function references
-            if (_tms_ufunc_has_self_ref(old_F) || _tms_ufunc_has_circular_refs(old_F))
-            {
-                // Restore the original function since the new one is problematic
-                old_F->S = old_subexpr;
-                tms_delete_math_expr(new_F);
-                return -1;
-            }
-            else
-            {
-                // Temporarily restore the old subexpr array for deletion
-                old_F->S = old_subexpr;
-                tms_delete_math_expr_members(old_F);
-                // Copy the content of the new function math_expr
-                *old_F = *new_F;
-                free(new_F);
-                return 0;
-            }
+            tms_delete_math_expr(old_F.F);
+            return 0;
         }
     }
     else
     {
-        tms_math_expr *F = tms_parse_expr(function, TMS_ENABLE_CMPLX | TMS_ENABLE_UNK, unknowns);
-        if (F == NULL)
-            return -1;
-        else
-        {
-            tms_ufunc new;
-            new.F = F;
-            new.name = strdup(fname);
-            hashmap_set(ufunc_hmap, &new);
-            return 0;
-        }
+        tms_ufunc tmp;
+        tmp.F = new;
+        tmp.name = strdup(fname);
+        hashmap_set(ufunc_hmap, &tmp);
+        return 0;
     }
     return -1;
 }
