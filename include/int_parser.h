@@ -11,14 +11,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "tms_math_strs.h"
 #endif
 
-extern const tms_int_func tms_g_int_func[];
-
-extern const int tms_g_int_func_count;
-
-extern const tms_int_extf tms_g_int_extf[];
-
-extern const int tms_g_int_extf_count;
-
 #define TMS_ENABLE_UNK 1
 
 int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op_start, int s_index, char operand);

@@ -18,16 +18,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <stdbool.h>
 #include <inttypes.h>
 
-/// @brief Contains real and complex functions metadata.
-extern const tms_rc_func tms_g_rc_func[];
-
-extern const int tms_g_rc_func_count;
-
-/// @brief Contains extended function metadata.
-extern const tms_extf tms_g_extf[];
-
-extern const int tms_g_extf_count;
-
 tms_math_expr *tms_dup_mexpr(tms_math_expr *M);
 
 /// @brief Comparator function for use with qsort(), compares the depth of 2 subexpressions.
