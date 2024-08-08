@@ -6,6 +6,14 @@
 #define math_subexpr tms_math_subexpr
 #define op_node tms_op_node
 #define PARSER TMS_PARSER
+#define F_EXTENDED TMS_F_EXTENDED
+#define F_USER TMS_F_USER
+#define init_math_expr _tms_init_math_expr
+#define delete_math_expr tms_delete_math_expr
+#define ufunc tms_ufunc
+#define extf tms_extf
+#define get_ufunc_by_name tms_get_ufunc_by_name
+#define get_extf_by_name tms_get_extf_by_name
 #define is_op tms_is_op
 #define get_operand_value _tms_get_operand_value
 #define set_priority _tms_set_priority
@@ -19,6 +27,184 @@ static int _tms_find_subexpr_starting_at(math_subexpr *S, int start, int s_i, in
 static int _tms_set_evaluation_order(math_subexpr *S);
 
 static void _tms_generate_unknowns_refs(math_expr *M);
+
+static int compare_subexpr_depth(const void *a, const void *b)
+{
+    if (((math_subexpr *)a)->depth < ((math_subexpr *)b)->depth)
+        return 1;
+    else if ((*((math_subexpr *)a)).depth > (*((math_subexpr *)b)).depth)
+        return -1;
+    else
+        return 0;
+}
+
+math_expr *init_math_expr(char *expr)
+{
+    int s_max = 8, i, s_i, length = strlen(expr), s_count;
+
+    // Pointer to subexpressions heap array
+    math_subexpr *S;
+
+    // Pointer to the math_expr generated
+    math_expr *M = malloc(sizeof(math_expr));
+
+    M->unknowns_instances = 0;
+    M->x_data = NULL;
+    M->unknowns = NULL;
+    M->S = NULL;
+    M->subexpr_count = 0;
+    M->expr = expr;
+
+    S = malloc(s_max * sizeof(math_subexpr));
+
+    int depth = 0;
+    s_i = 0;
+    bool is_extended_or_runtime;
+    // Determine the depth and start/end of each subexpression parenthesis
+    for (i = 0; i < length; ++i)
+    {
+        if (expr[i] == '(')
+        {
+            DYNAMIC_RESIZE(S, s_i, s_max, math_subexpr)
+            is_extended_or_runtime = false;
+            S[s_i].nodes = NULL;
+            S[s_i].depth = ++depth;
+
+            // Treat extended functions as a subexpression
+            if (i > 0 && tms_legal_char_in_name(expr[i - 1]))
+            {
+                char *name = tms_get_name(expr, i - 1, false);
+
+                // This means the function name used is not valid
+                if (name == NULL)
+                {
+                    tms_save_error(PARSER, SYNTAX_ERROR, EH_FATAL, expr, i - 1);
+                    free(S);
+                    delete_math_expr(M);
+                    return NULL;
+                }
+                const ufunc *ufunc_i = get_ufunc_by_name(name);
+                const extf *extf_i = get_extf_by_name(name);
+                // Name collision, should not happen using the library functions
+                if (extf_i != NULL && ufunc_i != NULL)
+                {
+                    tms_save_error(PARSER, INTERNAL_ERROR, EH_FATAL, expr, i - 1);
+                    free(S);
+                    delete_math_expr(M);
+                    return NULL;
+                }
+                // Found either extf or user function
+                if (extf_i != NULL || ufunc_i != NULL)
+                {
+                    // Set the part common for the extended and user defined functions
+                    // Remember, "i" here is at the open parenthesis
+                    is_extended_or_runtime = true;
+                    S[s_i].subexpr_start = i - strlen(name);
+                    S[s_i].solve_start = i + 1;
+                    S[s_i].solve_end = tms_find_closing_parenthesis(expr, i) - 1;
+                    S[s_i].start_node = -1;
+                    // Generate the argument list at parsing time instead of during evaluation for better performance
+                    char *arguments = tms_strndup(expr + i + 1, S[s_i].solve_end - i);
+                    S[s_i].L = tms_get_args(arguments);
+                    free(arguments);
+                    // Set "i" at the end of the subexpression to avoid iterating within the extended/user function
+                    i = S[s_i].solve_end;
+
+                    // Specific to extended functions
+                    if (extf_i != NULL)
+                    {
+                        S[s_i].func.extended = extf_i->ptr;
+                        S[s_i].func_type = F_EXTENDED;
+                        S[s_i].exec_extf = true;
+                    }
+                    // Specific to user functions
+                    else
+                    {
+                        S[s_i].func.user = ufunc_i->name;
+                        S[s_i].func_type = F_USER;
+                    }
+                }
+                free(name);
+            }
+            if (is_extended_or_runtime == false)
+            {
+                // Not an extended function, either no function at all or a single variable function
+                S[s_i].func.extended = NULL;
+                S[s_i].L = NULL;
+                S[s_i].func_type = TMS_NOFUNC;
+                S[s_i].exec_extf = false;
+                S[s_i].solve_start = i + 1;
+
+                // The expression start is the parenthesis, may change if a function is found
+                S[s_i].subexpr_start = i;
+                S[s_i].solve_end = tms_find_closing_parenthesis(expr, i) - 1;
+
+                // Empty parenthesis pair is only allowed for extended functions
+                if (S[s_i].solve_end == i)
+                {
+                    tms_save_error(PARSER, PARENTHESIS_EMPTY, EH_FATAL, expr, i);
+                    free(S);
+                    delete_math_expr(M);
+                    return NULL;
+                }
+            }
+            // Common between the 3 possible cases
+            if (S[s_i].solve_end == -2)
+            {
+                tms_save_error(PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, expr, i);
+                // S isn't part of M yet
+                free(S);
+                delete_math_expr(M);
+                return NULL;
+            }
+            ++s_i;
+        }
+        else if (expr[i] == ')')
+        {
+            // An extra ')'
+            if (depth == 0)
+            {
+                tms_save_error(PARSER, PARENTHESIS_NOT_OPEN, EH_FATAL, expr, i);
+                free(S);
+                delete_math_expr(M);
+                return NULL;
+            }
+            else
+                --depth;
+
+            // Make sure a ')' is followed by an operator, ')' or \0
+            if (!(tms_is_op(expr[i + 1]) || expr[i + 1] == ')' || expr[i + 1] == '\0'))
+            {
+                tms_save_error(PARSER, SYNTAX_ERROR, EH_FATAL, expr, i + 1);
+                free(S);
+                delete_math_expr(M);
+                return NULL;
+            }
+        }
+    }
+    // + 1 for the subexpression with depth 0
+    s_count = s_i + 1;
+    // Shrink the block to the required size
+    S = realloc(S, s_count * sizeof(math_subexpr));
+
+    // Copy the pointer to the structure
+    M->S = S;
+
+    M->subexpr_count = s_count;
+
+    // The whole expression's "subexpression"
+    S[s_i].depth = 0;
+    S[s_i].solve_start = S[s_i].subexpr_start = 0;
+    S[s_i].solve_end = length - 1;
+    S[s_i].func.extended = NULL;
+    S[s_i].nodes = NULL;
+    S[s_i].func_type = TMS_NOFUNC;
+    S[s_i].exec_extf = true;
+
+    // Sort by depth (high to low)
+    qsort(S, s_count, sizeof(math_subexpr), compare_subexpr_depth);
+    return M;
+}
 
 static int *_tms_get_operator_indexes(char *expr, math_subexpr *S, int s_i)
 {
