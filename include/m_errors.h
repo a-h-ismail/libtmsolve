@@ -40,7 +40,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define MODULO_COMPLEX_NOT_SUPPORTED "Modulo operation for complex numbers is not supported."
 #define NO_COMPLEX_LOG_BASE "Base-N logarithm doesn't support complex base."
 #define NO_FSELF_REFERENCE "Can't reference a user function within itself."
-#define NO_FCIRCULAR_REFERENCE "Circular function reference detected, function unchanged."
+#define NO_FCIRCULAR_REFERENCE "Circular function reference detected, ignoring changes..."
 #define INTEGER_OVERFLOW "Warning: Integer overflow detected."
 #define VAR_NAME_MATCHES_FUNCTION "Variable name can't shadow an existing function."
 #define FUNCTION_NAME_MATCHES_VAR "Function name can't shadow an existing variable."
