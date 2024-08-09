@@ -20,25 +20,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 tms_math_expr *tms_dup_mexpr(tms_math_expr *M);
 
-/// @brief Comparator function for use with qsort(), compares the depth of 2 subexpressions.
-/// @return 1 if a.depth < b.depth; -1 if a.depth > b.depth; 0 otherwise.
-int tms_compare_subexpr_depth(const void *a, const void *b);
-
-/**
- * @brief First parsing step, detects assignment to runtime variables.
- * @param eq Index of the assignment operator.
- * @return Index of the variable in the global array.
- */
-int _tms_set_runtime_var(char *expr, int eq);
-
-/**
- * @brief Initializes the math expression structure.
- * @param expr Math expression string
- * @param enable_complex Set complex support status.
- * @return Pointer to the initialized structure.
- */
-tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex);
-
 /**
  * @brief Sets the (non extended) function pointer in the subexpression.
  * @param local_expr Expression, offset from the assignment operator (if any).
@@ -47,22 +28,6 @@ tms_math_expr *_tms_init_math_expr(char *expr, bool enable_complex);
  * @return 0 on success, -1 on failure.
  */
 int _tms_set_rcfunction_ptr(char *local_expr, tms_math_expr *M, int s_index);
-
-/**
- * @brief Returns the name of the function possessing the specified pointer.
- * @param function The function pointer to look for.
- * @param func_type Type of the function pointer (1:real, 2:complex, 3: extended)
- * @return A pointer to the name, or NULL if nothing is found.
- */
-char *_tms_lookup_function_name(void *function, int func_type);
-
-/**
- * @brief Returns the pointer to a function knowing its name.
- * @param function_name The name of the function.
- * @param is_complex Toggles between searching real and complex functions.
- * @return The function pointer, or NULL in case of failure.
- */
-void *_tms_lookup_function_pointer(char *function_name, bool is_complex);
 
 /**
  * @brief Coverts a math_expr parsed with complex disabled into a complex enabled one.

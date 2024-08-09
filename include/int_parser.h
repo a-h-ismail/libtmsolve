@@ -38,6 +38,4 @@ int _tms_read_int_operand(tms_int_expr *M, int start, int64_t *result);
 void _tms_set_priority_int(tms_int_op_node *list, int op_count);
 
 tms_int_expr *tms_dup_int_expr(tms_int_expr *M);
-
-char *_tms_lookup_int_function_name(void *function, int func_type);
 #endif
