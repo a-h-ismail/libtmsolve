@@ -23,6 +23,14 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define math_subexpr tms_int_subexpr
 #define op_node tms_int_op_node
 #define PARSER TMS_INT_PARSER
+#define F_EXTENDED TMS_F_INT_EXTENDED
+#define F_USER TMS_F_INT_USER
+#define init_math_expr _tms_init_int_expr
+#define delete_math_expr tms_delete_int_expr
+#define ufunc tms_int_ufunc
+#define extf tms_int_extf
+#define get_ufunc_by_name tms_get_int_ufunc_by_name
+#define get_extf_by_name tms_get_int_extf_by_name
 #define operand_type int64_t
 #define get_operand_value _tms_read_int_operand
 #define is_op tms_is_int_op
@@ -31,26 +39,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define dup_mexpr tms_dup_int_expr
 
 #include "common.h"
-
-const tms_int_func tms_g_int_func[] = {{"not", tms_not},
-                                       {"mask", tms_mask},
-                                       {"mask_bit", tms_mask_bit},
-                                       {"inv_mask", tms_inv_mask},
-                                       {"ipv4_prefix", tms_ipv4_prefix},
-                                       {"zeros", tms_zeros},
-                                       {"ones", tms_ones}};
-
-const int tms_g_int_func_count = array_length(tms_g_int_func);
-
-const tms_int_extf tms_g_int_extf[] = {{"rand", tms_int_rand}, {"rr", tms_rr},
-                                       {"rl", tms_rl},         {"sr", tms_sr},
-                                       {"sra", tms_sra},       {"sl", tms_sl},
-                                       {"nand", tms_nand},     {"and", tms_and},
-                                       {"xor", tms_xor},       {"nor", tms_nor},
-                                       {"or", tms_or},         {"ipv4", tms_ipv4},
-                                       {"dotted", tms_dotted}, {"mask_range", tms_mask_range}};
-
-const int tms_g_int_extf_count = array_length(tms_g_int_extf);
 
 int _tms_read_int_operand(tms_int_expr *M, int start, int64_t *result)
 {
@@ -101,7 +89,7 @@ int _tms_read_int_operand(tms_int_expr *M, int start, int64_t *result)
         else
         {
             // The name is already used by a function
-            if (tms_find_str_in_array(name, tms_g_all_int_func_names, tms_g_all_int_func_count, TMS_NOFUNC) != -1)
+            if (tms_int_function_name_exists(name))
                 tms_save_error(TMS_INT_PARSER, PARENTHESIS_MISSING, EH_FATAL, expr, start + strlen(name));
             else
                 tms_save_error(TMS_INT_PARSER, UNDEFINED_VARIABLE, EH_FATAL, expr, start);
@@ -141,159 +129,8 @@ int _tms_compare_int_subexpr_depth(const void *a, const void *b)
         return 0;
 }
 
-tms_int_expr *_tms_init_int_expr(char *expr)
-{
-    int s_max = 8, i, j, s_i, length = strlen(expr), s_count;
-
-    // Pointer to subexpressions heap array
-    tms_int_subexpr *S;
-
-    tms_int_expr *M = malloc(sizeof(tms_int_expr));
-
-    M->S = NULL;
-    M->subexpr_count = 0;
-    M->expr = expr;
-
-    S = malloc(s_max * sizeof(tms_int_subexpr));
-
-    int depth = 0;
-    s_i = 0;
-    bool is_extended;
-    // Determine the depth and start/end of each subexpression parenthesis
-    for (i = 0; i < length; ++i)
-    {
-        if (expr[i] == '(')
-        {
-            DYNAMIC_RESIZE(S, s_i, s_max, tms_int_subexpr)
-            is_extended = false;
-            S[s_i].nodes = NULL;
-            S[s_i].depth = ++depth;
-
-            // Treat extended functions as a subexpression
-            if (i > 1 && tms_legal_char_in_name(expr[i - 1]))
-            {
-                char *name = tms_get_name(expr, i - 1, false);
-
-                // The function name is not valid
-                if (name == NULL)
-                {
-                    tms_save_error(TMS_INT_PARSER, SYNTAX_ERROR, EH_FATAL, expr, i - 1);
-                    free(S);
-                    tms_delete_int_expr(M);
-                    return NULL;
-                }
-
-                j = tms_find_str_in_array(name, tms_g_int_extf, tms_g_int_extf_count, TMS_F_INT_EXTENDED);
-
-                // It is an extended function indeed
-                if (j != -1)
-                {
-                    is_extended = true;
-                    S[s_i].subexpr_start = i - strlen(name);
-                    S[s_i].solve_start = i + 1;
-                    i = tms_find_closing_parenthesis(expr, i);
-                    if (i == -1)
-                    {
-                        tms_save_error(TMS_INT_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, expr, S[s_i].solve_start - 1);
-                        M->S = S;
-                        free(name);
-                        tms_delete_int_expr(M);
-                        return NULL;
-                    }
-                    S[s_i].solve_end = i - 1;
-                    S[s_i].func.extended = tms_g_int_extf[j].ptr;
-                    S[s_i].func_type = TMS_F_INT_EXTENDED;
-                    S[s_i].start_node = -1;
-                    S[s_i].op_count = 0;
-                    S[s_i].exec_extf = true;
-
-                    // Decrement i so that the loop counter would hit the closing parenthesis and perform checks
-                    --i;
-                }
-                free(name);
-            }
-            if (is_extended == false)
-            {
-                // Not an extended function, either no function at all or a regular function
-                S[s_i].solve_start = i + 1;
-                S[s_i].func.extended = NULL;
-                S[s_i].func_type = TMS_NOFUNC;
-                S[s_i].exec_extf = false;
-
-                // The expression start is the parenthesis, may change if a function is found
-                S[s_i].subexpr_start = i;
-                S[s_i].solve_end = tms_find_closing_parenthesis(expr, i) - 1;
-
-                // Empty parenthesis pair is only allowed for extended functions
-                if (S[s_i].solve_end == i)
-                {
-                    tms_save_error(TMS_INT_PARSER, PARENTHESIS_EMPTY, EH_FATAL, expr, i);
-                    free(S);
-                    tms_delete_int_expr(M);
-                    return NULL;
-                }
-
-                if (S[s_i].solve_end == -2)
-                {
-                    tms_save_error(TMS_INT_PARSER, PARENTHESIS_NOT_CLOSED, EH_FATAL, expr, i);
-                    // S isn't part of M yet
-                    free(S);
-                    tms_delete_int_expr(M);
-                    return NULL;
-                }
-            }
-            ++s_i;
-        }
-        else if (expr[i] == ')')
-        {
-            // An extra ')'
-            if (depth == 0)
-            {
-                tms_save_error(TMS_INT_PARSER, PARENTHESIS_NOT_OPEN, EH_FATAL, expr, i);
-                free(S);
-                tms_delete_int_expr(M);
-                return NULL;
-            }
-            else
-                --depth;
-
-            // Make sure a ')' is followed by an operator, ')' or \0
-            if (!(tms_is_int_op(expr[i + 1]) || expr[i + 1] == ')' || expr[i + 1] == '\0'))
-            {
-                tms_save_error(TMS_INT_PARSER, SYNTAX_ERROR, EH_FATAL, expr, i + 1);
-                free(S);
-                tms_delete_int_expr(M);
-                return NULL;
-            }
-        }
-    }
-    // + 1 for the subexpression with depth 0
-    s_count = s_i + 1;
-    // Shrink the block to the required size
-    S = realloc(S, s_count * sizeof(tms_int_subexpr));
-
-    // Copy the pointer to the structure
-    M->S = S;
-
-    M->subexpr_count = s_count;
-
-    // The whole expression's "subexpression"
-    S[s_i].depth = 0;
-    S[s_i].solve_start = S[s_i].subexpr_start = 0;
-    S[s_i].solve_end = length - 1;
-    S[s_i].func.extended = NULL;
-    S[s_i].nodes = NULL;
-    S[s_i].func_type = TMS_NOFUNC;
-    S[s_i].exec_extf = true;
-
-    // Sort by depth (high to low)
-    qsort(S, s_count, sizeof(tms_int_subexpr), _tms_compare_int_subexpr_depth);
-    return M;
-}
-
 int _tms_set_int_function_ptr(char *expr, tms_int_expr *M, int s_i)
 {
-    int i;
     tms_int_subexpr *S = &(M->S[s_i]);
     int solve_start = S->solve_start;
 
@@ -304,21 +141,19 @@ int _tms_set_int_function_ptr(char *expr, tms_int_expr *M, int s_i)
         if (name == NULL)
             return 0;
 
-        if ((i = tms_find_str_in_array(name, tms_g_int_func, tms_g_int_func_count, TMS_F_INT64)) != -1)
+        const tms_int_func *func;
+        func = tms_get_int_func_by_name(name);
+        if (func == NULL)
         {
-            S->func.simple = tms_g_int_func[i].ptr;
-            S->func_type = TMS_F_INT64;
-            // Set the start of the subexpression to the start of the function name
-            S->subexpr_start = solve_start - strlen(tms_g_int_func[i].name) - 1;
-            free(name);
-            return 0;
-        }
-        else
-        {
-            tms_save_error(TMS_INT_PARSER, UNDEFINED_FUNCTION, EH_FATAL, expr, solve_start - 2);
+            tms_save_error(TMS_INT_PARSER, UNDEFINED_FUNCTION, EH_NONFATAL, expr, solve_start - 2);
             free(name);
             return -1;
         }
+
+        S->func.simple = func->ptr;
+        S->func_type = TMS_F_INT64;
+        S->subexpr_start = solve_start - strlen(func->name) - 1;
+        free(name);
     }
     return 0;
 }
@@ -483,37 +318,4 @@ void _tms_set_priority_int(tms_int_op_node *list, int op_count)
             }
         }
     }
-}
-
-char *_tms_lookup_int_function_name(void *function, int func_type)
-{
-    int i;
-    switch (func_type)
-    {
-    case TMS_F_INT64:
-        for (i = 0; i < tms_g_int_func_count; ++i)
-        {
-            if (function == (void *)(tms_g_int_func[i].ptr))
-                break;
-        }
-        if (i < tms_g_int_func_count)
-            return tms_g_int_func[i].name;
-        else
-            break;
-
-    case TMS_F_INT_EXTENDED:
-        for (i = 0; i < tms_g_int_extf_count; ++i)
-        {
-            if (function == (void *)(tms_g_int_extf[i].ptr))
-                break;
-        }
-        if (i < tms_g_int_extf_count)
-            return tms_g_int_extf[i].name;
-        else
-            break;
-    default:
-        tms_save_error(TMS_INT_PARSER, INTERNAL_ERROR, EH_FATAL, NULL, 0);
-    }
-
-    return NULL;
 }
