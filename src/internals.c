@@ -666,6 +666,141 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
     return -1;
 }
 
+bool is_int_ufunc_referenced_by(tms_int_expr *M, char *fname)
+{
+    tms_int_subexpr *S = M->S;
+    for (int i = 0; i < M->subexpr_count; ++i)
+    {
+        if (S[i].func_type == TMS_F_INT_USER && strcmp(fname, S[i].func.user) == 0)
+            return true;
+    }
+    return false;
+}
+
+bool _tms_int_ufunc_has_bad_refs(char *fname)
+{
+    int i;
+    const tms_int_ufunc *F = tms_get_int_ufunc_by_name(fname);
+    if (F == NULL)
+        return false;
+    tms_int_expr *M = F->F;
+    tms_int_subexpr *S = M->S;
+
+    for (i = 0; i < M->subexpr_count; ++i)
+    {
+        if (S[i].func_type == TMS_F_INT_USER)
+        {
+            if (strcmp(S[i].func.user, fname) == 0)
+            {
+                tms_save_error(TMS_INT_PARSER, NO_FSELF_REFERENCE, EH_FATAL, NULL, 0);
+                return true;
+            }
+            else if (is_int_ufunc_referenced_by(M, fname))
+            {
+                tms_save_error(TMS_INT_PARSER, NO_FCIRCULAR_REFERENCE, EH_FATAL, NULL, 0);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+int tms_set_int_ufunction(char *fname, char *unknowns_list, char *function)
+{
+    const tms_int_ufunc *old = tms_get_int_ufunc_by_name(fname);
+
+    // Check if the name has illegal characters
+    if (tms_valid_name(fname) == false)
+    {
+        tms_save_error(TMS_INT_PARSER, INVALID_NAME, EH_FATAL, NULL, 0);
+        return -1;
+    }
+
+    // Check if the function name is allowed
+    if (!tms_legal_name(fname))
+    {
+        tms_save_error(TMS_INT_PARSER, ILLEGAL_NAME, EH_FATAL, NULL, 0);
+        return -1;
+    }
+
+    // Check if the name was already used by builtin functions
+    if (tms_function_exists(fname) && old == NULL)
+    {
+        tms_save_error(TMS_INT_PARSER, NO_FUNCTION_SHADOWING, EH_FATAL, NULL, 0);
+        return -1;
+    }
+
+    // Check if the name is used by a variable
+    if (tms_get_var_by_name(fname) != NULL)
+    {
+        tms_save_error(TMS_INT_PARSER, FUNCTION_NAME_MATCHES_VAR, EH_FATAL, NULL, 0);
+        return -1;
+    }
+
+    tms_arg_list *unknowns = tms_get_args(unknowns_list);
+
+    if (unknowns->count > 64)
+    {
+        tms_save_error(TMS_INT_PARSER, TOO_MANY_LABELS, EH_FATAL, NULL, 0);
+        tms_free_arg_list(unknowns);
+        return -1;
+    }
+
+    // Check that names are unique
+    if (!tms_is_unique_string_array(unknowns->arguments, unknowns->count))
+    {
+        tms_save_error(TMS_INT_PARSER, LABELS_NOT_UNIQUE, EH_FATAL, NULL, 0);
+        tms_free_arg_list(unknowns);
+        return -1;
+    }
+
+    // Check that argument names are valid
+    for (int j = 0; j < unknowns->count; ++j)
+    {
+        if (!tms_valid_name(unknowns->arguments[j]))
+        {
+            tms_save_error(TMS_INT_PARSER, "In user function args: " INVALID_NAME, EH_FATAL, NULL, 0);
+            tms_free_arg_list(unknowns);
+            return -1;
+        }
+    }
+    tms_int_expr *new = tms_parse_int_expr(function, TMS_ENABLE_UNK, unknowns);
+    // Function already exists
+    if (old != NULL)
+    {
+        // The old ufunc members is kept to either free the old function or restore it on failure of the new function
+        tms_int_ufunc old_F;
+        old_F = *old;
+
+        tms_int_ufunc tmp = {.F = new, .name = old->name};
+
+        // We need to update the hashmap because the function checks will lookup the name in the hashmap
+        // otherwise we will get the old function checked instead
+        hashmap_set(int_ufunc_hmap, new);
+        if (_tms_int_ufunc_has_bad_refs(function))
+        {
+            // Restore the original function since the new one is problematic
+            hashmap_set(int_ufunc_hmap, &old_F);
+            tms_delete_int_expr(tmp.F);
+            return -1;
+        }
+        else
+        {
+            tms_delete_int_expr(old_F.F);
+            return 0;
+        }
+    }
+    else
+    {
+        tms_int_ufunc tmp;
+        tmp.F = new;
+        tmp.name = strdup(fname);
+        hashmap_set(int_ufunc_hmap, &tmp);
+        return 0;
+    }
+    return -1;
+}
+
 int compare_ints(const void *a, const void *b)
 {
     if (*(int *)a < *(int *)b)

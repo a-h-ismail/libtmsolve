@@ -135,6 +135,8 @@ int tms_new_int_var(char *name);
  */
 int tms_set_ufunction(char *fname, char *unknowns_list, char *function);
 
+int tms_set_int_ufunction(char *fname, char *unknowns_list, char *function);
+
 bool _tms_validate_args_count(int expected, int actual, int facility_id);
 
 bool _tms_validate_args_count_range(int actual, int min, int max, int facility_id);
