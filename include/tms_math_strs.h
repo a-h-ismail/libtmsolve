@@ -128,7 +128,7 @@ typedef struct tms_ufunc
 typedef struct tms_int_ufunc
 {
     char *name;
-    struct tms_math_expr *F;
+    struct tms_int_expr *F;
 } tms_int_ufunc;
 
 /// @brief Union to store function pointers
