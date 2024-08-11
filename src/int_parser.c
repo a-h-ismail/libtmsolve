@@ -89,7 +89,7 @@ int _tms_read_int_operand(tms_int_expr *M, int start, int64_t *result)
         else
         {
             // The name is already used by a function
-            if (tms_int_function_name_exists(name))
+            if (tms_int_function_exists(name))
                 tms_save_error(TMS_INT_PARSER, PARENTHESIS_MISSING, EH_FATAL, expr, start + strlen(name));
             else
                 tms_save_error(TMS_INT_PARSER, UNDEFINED_VARIABLE, EH_FATAL, expr, start);
@@ -209,6 +209,9 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
     if (M == NULL)
         return NULL;
 
+    // Add the unknowns to the math expression if necessary
+    M->unknowns = (enable_unknowns ? unknowns : NULL);
+
     tms_int_subexpr *S = M->S;
     s_count = M->subexpr_count;
 
@@ -232,7 +235,7 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
     {
         // Extended functions use a subexpression without nodes, but the subexpression result pointer should point at something
         // Allocate a small block and use that for the result pointer
-        if (S[s_i].func_type == TMS_F_INT_EXTENDED)
+        if (S[s_i].func_type == TMS_F_INT_EXTENDED || S[s_i].func_type == TMS_F_INT_USER)
         {
             S[s_i].result = malloc(sizeof(double complex *));
             continue;
@@ -280,6 +283,10 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
         }
         _tms_set_result_pointers(M, s_i);
     }
+
+    // Set unknowns metadata
+    if (enable_unknowns)
+        _tms_generate_unknowns_refs(M);
 
     return M;
 }
