@@ -686,7 +686,6 @@ math_expr *dup_mexpr(math_expr *M)
     *NM = *M;
     NM->expr = strdup(M->expr);
     NM->unknowns = tms_dup_arg_list(M->unknowns);
-    NM->expr = NM->expr + (M->expr - M->expr);
     NM->S = malloc(NM->subexpr_count * sizeof(math_subexpr));
     // Copy subexpressions
     memcpy(NM->S, M->S, M->subexpr_count * sizeof(math_subexpr));
@@ -705,9 +704,9 @@ math_expr *dup_mexpr(math_expr *M)
         {
             op_count = M->S[s].op_count;
             node_count = (op_count > 0 ? op_count : 1);
-            NS->nodes = malloc(node_count * sizeof(tms_op_node));
+            NS->nodes = malloc(node_count * sizeof(op_node));
             // Copy nodes
-            memcpy(NS->nodes, S->nodes, node_count * sizeof(tms_op_node));
+            memcpy(NS->nodes, S->nodes, node_count * sizeof(op_node));
 
             // Copying nodes will also copy result and next pointers which point to the original node members
             // Regenerate the pointers using parser functions
@@ -740,7 +739,7 @@ math_expr *dup_mexpr(math_expr *M)
             // The nodes are contiguous, so we can pinpoint the correct node by pointer comparisons
             if (tmp >= start && tmp <= end)
             {
-                int n = (tmp - start) / sizeof(tms_op_node);
+                int n = (tmp - start) / sizeof(op_node);
 
                 if (&(M->S[i].nodes[n].right_operand) == *(operand_type **)result)
                     *(NM->S[s].result) = &(NM->S[i].nodes[n].right_operand);
