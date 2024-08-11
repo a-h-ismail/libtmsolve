@@ -173,7 +173,7 @@ math_expr *init_math_expr(char *expr)
                 --depth;
 
             // Make sure a ')' is followed by an operator, ')' or \0
-            if (!(tms_is_op(expr[i + 1]) || expr[i + 1] == ')' || expr[i + 1] == '\0'))
+            if (!(is_op(expr[i + 1]) || expr[i + 1] == ')' || expr[i + 1] == '\0'))
             {
                 tms_save_error(PARSER, SYNTAX_ERROR, EH_FATAL, expr, i + 1);
                 free(S);
