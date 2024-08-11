@@ -27,6 +27,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define F_USER TMS_F_INT_USER
 #define init_math_expr _tms_init_int_expr
 #define delete_math_expr tms_delete_int_expr
+#define delete_math_expr_members tms_delete_int_expr_members
 #define ufunc tms_int_ufunc
 #define extf tms_int_extf
 #define get_ufunc_by_name tms_get_int_ufunc_by_name
@@ -237,7 +238,7 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
         // Allocate a small block and use that for the result pointer
         if (S[s_i].func_type == TMS_F_INT_EXTENDED || S[s_i].func_type == TMS_F_INT_USER)
         {
-            S[s_i].result = malloc(sizeof(double complex *));
+            S[s_i].result = malloc(sizeof(int64_t *));
             continue;
         }
 
@@ -289,24 +290,6 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
         _tms_generate_unknowns_refs(M);
 
     return M;
-}
-
-void tms_delete_int_expr(tms_int_expr *M)
-{
-    if (M == NULL)
-        return;
-
-    int i = 0;
-    tms_int_subexpr *S = M->S;
-    for (i = 0; i < M->subexpr_count; ++i)
-    {
-        if (S[i].func_type == TMS_F_INT_EXTENDED)
-            free(S[i].result);
-        free(S[i].nodes);
-    }
-    free(S);
-    free(M->expr);
-    free(M);
 }
 
 void _tms_set_priority_int(tms_int_op_node *list, int op_count)

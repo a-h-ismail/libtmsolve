@@ -10,6 +10,7 @@
 #define F_USER TMS_F_USER
 #define init_math_expr _tms_init_math_expr
 #define delete_math_expr tms_delete_math_expr
+#define delete_math_expr_members tms_delete_math_expr_members
 #define ufunc tms_ufunc
 #define extf tms_extf
 #define get_ufunc_by_name tms_get_ufunc_by_name
@@ -807,4 +808,32 @@ static void _tms_generate_unknowns_refs(math_expr *M)
     }
     else
         free(x_data);
+}
+
+void delete_math_expr_members(math_expr *M)
+{
+    if (M == NULL)
+        return;
+
+    int i = 0;
+    math_subexpr *S = M->S;
+    for (i = 0; i < M->subexpr_count; ++i)
+    {
+        if (S[i].func_type == F_EXTENDED || S[i].func_type == F_USER)
+        {
+            free(S[i].result);
+            tms_free_arg_list(S[i].L);
+        }
+        free(S[i].nodes);
+    }
+    free(S);
+    free(M->x_data);
+    free(M->expr);
+    tms_free_arg_list(M->unknowns);
+}
+
+void delete_math_expr(math_expr *M)
+{
+    delete_math_expr_members(M);
+    free(M);
 }

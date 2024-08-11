@@ -277,7 +277,7 @@ void tms_convert_real_to_complex(tms_math_expr *M)
             if (S[s_i].func_type == TMS_F_REAL)
             {
                 // Lookup the name of the real function and find the equivalent function pointer
-                function_name = tms_get_name(M->expr, S[s_i].subexpr_start, false);
+                function_name = tms_get_name(M->expr, S[s_i].subexpr_start, true);
                 if (function_name == NULL)
                 {
                     tms_save_error(TMS_PARSER, INTERNAL_ERROR, EH_FATAL, M->expr, S[s_i].subexpr_start);
@@ -301,34 +301,6 @@ void tms_convert_real_to_complex(tms_math_expr *M)
         }
     }
     M->enable_complex = true;
-}
-
-void tms_delete_math_expr_members(tms_math_expr *M)
-{
-    if (M == NULL)
-        return;
-
-    int i = 0;
-    tms_math_subexpr *S = M->S;
-    for (i = 0; i < M->subexpr_count; ++i)
-    {
-        if (S[i].func_type == TMS_F_EXTENDED || S[i].func_type == TMS_F_USER)
-        {
-            free(S[i].result);
-            tms_free_arg_list(S[i].L);
-        }
-        free(S[i].nodes);
-    }
-    free(S);
-    free(M->x_data);
-    free(M->expr);
-    tms_free_arg_list(M->unknowns);
-}
-
-void tms_delete_math_expr(tms_math_expr *M)
-{
-    tms_delete_math_expr_members(M);
-    free(M);
 }
 
 void _tms_set_priority(tms_op_node *list, int op_count)
