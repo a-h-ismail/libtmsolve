@@ -311,6 +311,7 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                 _tms_int_evaluate_unsafe(F, *(S[i].result));
                 tms_delete_int_expr(F);
             }
+            **(S[i].result) &= tms_int_mask;
         }
         else
         {
