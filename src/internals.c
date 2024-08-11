@@ -201,7 +201,7 @@ const tms_extf *tms_get_extf_by_name(char *name)
 
 const tms_int_func *tms_get_int_func_by_name(char *name)
 {
-    tms_rc_func tmp = {.name = name};
+    tms_int_func tmp = {.name = name};
     return hashmap_get(int_func_hmap, &tmp);
 }
 
@@ -242,10 +242,26 @@ bool tms_function_exists(char *name)
         return false;
 }
 
-bool tms_int_function_name_exists(char *name)
+bool tms_int_function_exists(char *name)
 {
     if (tms_get_int_func_by_name(name) != NULL || tms_get_int_extf_by_name(name) != NULL ||
         tms_get_int_ufunc_by_name(name) != NULL)
+        return true;
+    else
+        return false;
+}
+
+bool tms_builtin_function_exists(char *name)
+{
+    if (tms_get_rc_func_by_name(name) != NULL || tms_get_extf_by_name(name) != NULL)
+        return true;
+    else
+        return false;
+}
+
+bool tms_builtin_int_function_exists(char *name)
+{
+    if (tms_get_int_func_by_name(name) != NULL || tms_get_int_extf_by_name(name) != NULL)
         return true;
     else
         return false;
@@ -292,8 +308,8 @@ void tmsolve_init()
         for (i = 0; i < array_length(tms_g_int_func); ++i)
             hashmap_set(int_func_hmap, tms_g_int_func + i);
 
-        for (i = 0; i < array_length(tms_g_int_func); ++i)
-            hashmap_set(int_func_hmap, tms_g_int_func + i);
+        for (i = 0; i < array_length(tms_g_int_extf); ++i)
+            hashmap_set(int_extf_hmap, tms_g_int_extf + i);
 
         _tms_do_init = false;
     }
@@ -589,7 +605,7 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
     }
 
     // Check if the name was already used by builtin functions
-    if (tms_function_exists(fname) && old == NULL)
+    if (tms_builtin_function_exists(fname))
     {
         tms_save_error(TMS_PARSER, NO_FUNCTION_SHADOWING, EH_FATAL, NULL, 0);
         return -1;
@@ -641,8 +657,8 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
 
         // We need to update the hashmap because the function checks will lookup the name in the hashmap
         // otherwise we will get the old function checked instead
-        hashmap_set(ufunc_hmap, new);
-        if (_tms_ufunc_has_bad_refs(function))
+        hashmap_set(ufunc_hmap, &tmp);
+        if (_tms_ufunc_has_bad_refs(fname))
         {
             // Restore the original function since the new one is problematic
             hashmap_set(ufunc_hmap, &old_F);
@@ -657,9 +673,7 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
     }
     else
     {
-        tms_ufunc tmp;
-        tmp.F = new;
-        tmp.name = strdup(fname);
+        tms_ufunc tmp = {.F = new, .name = strdup(fname)};
         hashmap_set(ufunc_hmap, &tmp);
         return 0;
     }
@@ -724,7 +738,7 @@ int tms_set_int_ufunction(char *fname, char *unknowns_list, char *function)
     }
 
     // Check if the name was already used by builtin functions
-    if (tms_function_exists(fname) && old == NULL)
+    if (tms_builtin_int_function_exists(fname))
     {
         tms_save_error(TMS_INT_PARSER, NO_FUNCTION_SHADOWING, EH_FATAL, NULL, 0);
         return -1;
@@ -772,12 +786,12 @@ int tms_set_int_ufunction(char *fname, char *unknowns_list, char *function)
         tms_int_ufunc old_F;
         old_F = *old;
 
-        tms_int_ufunc tmp = {.F = new, .name = old->name};
+        tms_int_ufunc tmp = {.F = new, .name = fname};
 
         // We need to update the hashmap because the function checks will lookup the name in the hashmap
         // otherwise we will get the old function checked instead
-        hashmap_set(int_ufunc_hmap, new);
-        if (_tms_int_ufunc_has_bad_refs(function))
+        hashmap_set(int_ufunc_hmap, &tmp);
+        if (_tms_int_ufunc_has_bad_refs(fname))
         {
             // Restore the original function since the new one is problematic
             hashmap_set(int_ufunc_hmap, &old_F);
@@ -792,9 +806,7 @@ int tms_set_int_ufunction(char *fname, char *unknowns_list, char *function)
     }
     else
     {
-        tms_int_ufunc tmp;
-        tmp.F = new;
-        tmp.name = strdup(fname);
+        tms_int_ufunc tmp = {.F = new, .name = strdup(fname)};
         hashmap_set(int_ufunc_hmap, &tmp);
         return 0;
     }
