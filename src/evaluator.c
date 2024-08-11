@@ -131,6 +131,7 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                 tms_set_unknowns(F, arguments);
                 **(S[i].result) = _tms_evaluate_unsafe(F);
                 tms_delete_math_expr(F);
+                free(arguments);
             }
         }
         else
@@ -310,6 +311,7 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                 tms_set_int_unknowns(F, arguments);
                 _tms_int_evaluate_unsafe(F, *(S[i].result));
                 tms_delete_int_expr(F);
+                free(arguments);
             }
             **(S[i].result) &= tms_int_mask;
         }
