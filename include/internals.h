@@ -85,7 +85,7 @@ tms_int_var *tms_get_all_int_vars(size_t *out);
 
 bool tms_function_exists(char *name);
 
-bool tms_int_function_name_exists(char *name);
+bool tms_int_function_exists(char *name);
 
 /**
  * @brief Locks one of the parsers.
