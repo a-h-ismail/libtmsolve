@@ -52,7 +52,6 @@ int _tms_set_rcfunction_ptr(char *expr, tms_math_expr *M, int s_i)
         {
             S->func.cmplx = func->cmplx;
             S->func_type = TMS_F_CMPLX;
-            return 0;
         }
         S->subexpr_start = solve_start - strlen(func->name) - 1;
         free(name);
