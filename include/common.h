@@ -824,7 +824,11 @@ void delete_math_expr_members(math_expr *M)
             free(S[i].result);
             tms_free_arg_list(S[i].L);
         }
-        free(S[i].nodes);
+        else
+            free(S[i].nodes);
+        // User function names are mallocd unlike other function types that use a function pointer
+        if (S[i].func_type == F_USER)
+            free(S[i].func.user);
     }
     free(S);
     free(M->x_data);
