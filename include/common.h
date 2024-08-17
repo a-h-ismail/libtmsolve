@@ -21,13 +21,13 @@
 #define MAX_PRIORITY 3
 #endif
 
-static int _tms_set_operand(math_expr *M, op_node *N, int op_start, int s_i, char operand, bool enable_unknowns);
+static int _tms_set_operand(math_expr *M, op_node *N, int op_start, int s_i, char operand, bool enable_labels);
 
 static int _tms_find_subexpr_starting_at(math_subexpr *S, int start, int s_i, int8_t mode);
 
 static int _tms_set_evaluation_order(math_subexpr *S);
 
-static void _tms_generate_unknowns_refs(math_expr *M);
+static void _tms_generate_labels_refs(math_expr *M);
 
 static int compare_subexpr_depth(const void *a, const void *b)
 {
@@ -49,9 +49,9 @@ math_expr *init_math_expr(char *expr)
     // Pointer to the math_expr generated
     math_expr *M = malloc(sizeof(math_expr));
 
-    M->unknowns_instances = 0;
-    M->x_data = NULL;
-    M->unknowns = NULL;
+    M->labeled_operands_count = 0;
+    M->all_labeled_ops = NULL;
+    M->label_names = NULL;
     M->S = NULL;
     M->subexpr_count = 0;
     M->expr = expr;
@@ -407,7 +407,7 @@ static void _tms_set_result_pointers(math_expr *M, int s_i)
         tmp_node->result = &M->answer;
 }
 
-static int _tms_set_all_operands(math_expr *M, int s_i, bool enable_unknowns)
+static int _tms_set_all_operands(math_expr *M, int s_i, bool enable_labels)
 {
     math_subexpr *S = M->S;
     char *expr = M->expr;
@@ -419,7 +419,7 @@ static int _tms_set_all_operands(math_expr *M, int s_i, bool enable_unknowns)
     if (op_count == 0)
     {
         // Read to the left operand
-        if (_tms_set_operand(M, NB, solve_start, s_i, 'l', enable_unknowns))
+        if (_tms_set_operand(M, NB, solve_start, s_i, 'l', enable_labels))
             return -1;
         else
             return 0;
@@ -439,7 +439,7 @@ static int _tms_set_all_operands(math_expr *M, int s_i, bool enable_unknowns)
     }
     else
     {
-        status = _tms_set_operand(M, NB, solve_start, s_i, 'l', enable_unknowns);
+        status = _tms_set_operand(M, NB, solve_start, s_i, 'l', enable_labels);
         if (status == -1)
             return -1;
     }
@@ -450,7 +450,7 @@ static int _tms_set_all_operands(math_expr *M, int s_i, bool enable_unknowns)
         // same in case of x-y+z
         if (NB[i].priority >= NB[i + 1].priority)
         {
-            status = _tms_set_operand(M, NB + i, NB[i].operator_index + 1, s_i, 'r', enable_unknowns);
+            status = _tms_set_operand(M, NB + i, NB[i].operator_index + 1, s_i, 'r', enable_labels);
             if (status == -1)
                 return -1;
         }
@@ -458,13 +458,13 @@ static int _tms_set_all_operands(math_expr *M, int s_i, bool enable_unknowns)
         // x+y^z : y is set in the node containing z (node i+1) as the left operand
         else
         {
-            status = _tms_set_operand(M, NB + i + 1, NB[i].operator_index + 1, s_i, 'l', enable_unknowns);
+            status = _tms_set_operand(M, NB + i + 1, NB[i].operator_index + 1, s_i, 'l', enable_labels);
             if (status == -1)
                 return -1;
         }
     }
     // Set the last operand as the right operand of the last node
-    status = _tms_set_operand(M, NB + op_count - 1, NB[op_count - 1].operator_index + 1, s_i, 'r', enable_unknowns);
+    status = _tms_set_operand(M, NB + op_count - 1, NB[op_count - 1].operator_index + 1, s_i, 'r', enable_labels);
     if (status == -1)
         return -1;
     return 0;
@@ -507,14 +507,14 @@ static int _tms_find_subexpr_starting_at(math_subexpr *S, int start, int s_i, in
     return -1;
 }
 
-static int _tms_set_unknowns_data(math_expr *M, int start, op_node *x_node, char rl)
+static int _tms_set_labels(math_expr *M, int start, op_node *x_node, char rl)
 {
     char *expr = M->expr;
     bool is_negative = false;
 
     char *name = tms_get_name(expr, start, true);
 
-    int id = tms_find_str_in_array(name, M->unknowns->arguments, M->unknowns->count, TMS_NOFUNC);
+    int id = tms_find_str_in_array(name, M->label_names->arguments, M->label_names->count, TMS_NOFUNC);
     free(name);
     if (id == -1)
         return -1;
@@ -532,17 +532,17 @@ static int _tms_set_unknowns_data(math_expr *M, int start, op_node *x_node, char
 
     if (rl == 'l')
     {
-        x_node->unknowns_data |= UNK_LEFT;
-        SET_LEFT_ID(x_node->unknowns_data, id);
+        x_node->labels |= UNK_LEFT;
+        SET_LEFT_ID(x_node->labels, id);
         if (is_negative)
-            x_node->unknowns_data |= UNK_LNEG;
+            x_node->labels |= UNK_LNEG;
     }
     else if (rl == 'r')
     {
-        x_node->unknowns_data |= UNK_RIGHT;
-        SET_RIGHT_ID(x_node->unknowns_data, id);
+        x_node->labels |= UNK_RIGHT;
+        SET_RIGHT_ID(x_node->labels, id);
         if (is_negative)
-            x_node->unknowns_data |= UNK_RNEG;
+            x_node->labels |= UNK_RNEG;
     }
     else
     {
@@ -553,7 +553,7 @@ static int _tms_set_unknowns_data(math_expr *M, int start, op_node *x_node, char
     return 0;
 }
 
-static int _tms_set_operand(math_expr *M, op_node *N, int op_start, int s_i, char operand, bool enable_unknowns)
+static int _tms_set_operand(math_expr *M, op_node *N, int op_start, int s_i, char operand, bool enable_labels)
 {
     math_subexpr *S = M->S;
     operand_type *operand_ptr;
@@ -583,10 +583,10 @@ static int _tms_set_operand(math_expr *M, op_node *N, int op_start, int s_i, cha
 
         if (status != 0)
         {
-            // Check for the unknown 'x'
-            if (enable_unknowns == true)
+            // Set labels to the specified operand
+            if (enable_labels == true)
             {
-                tmp = _tms_set_unknowns_data(M, op_start, N, operand);
+                tmp = _tms_set_labels(M, op_start, N, operand);
                 if (tmp == -1)
                 {
                     // If the value reader failed with no error reported, set the error to be a syntax error
@@ -613,7 +613,7 @@ static int _tms_set_operand(math_expr *M, op_node *N, int op_start, int s_i, cha
     return 0;
 }
 
-static int _tms_init_nodes(math_expr *M, int s_i, int *operator_index, bool enable_unknowns)
+static int _tms_init_nodes(math_expr *M, int s_i, int *operator_index, bool enable_labels)
 {
     math_subexpr *S = M->S;
     int op_count = S[s_i].op_count;
@@ -655,7 +655,7 @@ static int _tms_init_nodes(math_expr *M, int s_i, int *operator_index, bool enab
         for (i = 0; i < op_count; ++i)
         {
             NB[i].node_index = i;
-            NB[i].unknowns_data = 0;
+            NB[i].labels = 0;
             NB[i].operator_index = operator_index[i];
             NB[i].operator= expr[operator_index[i]];
         }
@@ -670,7 +670,7 @@ static int _tms_init_nodes(math_expr *M, int s_i, int *operator_index, bool enab
     else
     {
         NB->operator= '\0';
-        NB->unknowns_data = 0;
+        NB->labels = 0;
         NB->operator_index = -1;
         NB->priority = -1;
     }
@@ -686,7 +686,7 @@ math_expr *dup_mexpr(math_expr *M)
     // Copy the math expression
     *NM = *M;
     NM->expr = strdup(M->expr);
-    NM->unknowns = tms_dup_arg_list(M->unknowns);
+    NM->label_names = tms_dup_arg_list(M->label_names);
     NM->S = malloc(NM->subexpr_count * sizeof(math_subexpr));
     // Copy subexpressions
     memcpy(NM->S, M->S, M->subexpr_count * sizeof(math_subexpr));
@@ -752,17 +752,17 @@ math_expr *dup_mexpr(math_expr *M)
         }
     }
 
-    // If the nodes have unknowns, regenerate the unknowns pointers array
-    if (NM->unknowns_instances > 0)
-        _tms_generate_unknowns_refs(NM);
+    // If the nodes have labels, regenerate the labels pointers array
+    if (NM->labeled_operands_count > 0)
+        _tms_generate_labels_refs(NM);
 
     return NM;
 }
 
-static void _tms_generate_unknowns_refs(math_expr *M)
+static void _tms_generate_labels_refs(math_expr *M)
 {
     int i = 0, s_i, buffer_size = 16;
-    tms_unknown_operand *x_data = malloc(buffer_size * sizeof(tms_unknown_operand));
+    tms_labeled_operand *x_data = malloc(buffer_size * sizeof(tms_labeled_operand));
     math_subexpr *subexpr_ptr = M->S;
     op_node *i_node;
 
@@ -777,23 +777,23 @@ static void _tms_generate_unknowns_refs(math_expr *M)
             if (i == buffer_size)
             {
                 buffer_size *= 2;
-                x_data = realloc(x_data, buffer_size * sizeof(tms_unknown_operand));
+                x_data = realloc(x_data, buffer_size * sizeof(tms_labeled_operand));
             }
-            // Case of unknown left operand
-            if (i_node->unknowns_data & UNK_LEFT)
+            // Case of label left operand
+            if (i_node->labels & UNK_LEFT)
             {
-                x_data[i].is_negative = i_node->unknowns_data & UNK_LNEG;
-                x_data[i].unknown_ptr = &(i_node->left_operand);
-                x_data[i].id = GET_LEFT_ID(i_node->unknowns_data);
+                x_data[i].is_negative = i_node->labels & UNK_LNEG;
+                x_data[i].ptr = &(i_node->left_operand);
+                x_data[i].id = GET_LEFT_ID(i_node->labels);
                 i_node->left_operand = 0;
                 ++i;
             }
-            // Case of unknown right operand
-            if (i_node->unknowns_data & UNK_RIGHT)
+            // Case of label right operand
+            if (i_node->labels & UNK_RIGHT)
             {
-                x_data[i].is_negative = i_node->unknowns_data & UNK_RNEG;
-                x_data[i].unknown_ptr = &(i_node->right_operand);
-                x_data[i].id = GET_RIGHT_ID(i_node->unknowns_data);
+                x_data[i].is_negative = i_node->labels & UNK_RNEG;
+                x_data[i].ptr = &(i_node->right_operand);
+                x_data[i].id = GET_RIGHT_ID(i_node->labels);
                 i_node->right_operand = 0;
                 ++i;
             }
@@ -802,9 +802,9 @@ static void _tms_generate_unknowns_refs(math_expr *M)
     }
     if (i != 0)
     {
-        x_data = realloc(x_data, i * sizeof(tms_unknown_operand));
-        M->unknowns_instances = i;
-        M->x_data = x_data;
+        x_data = realloc(x_data, i * sizeof(tms_labeled_operand));
+        M->labeled_operands_count = i;
+        M->all_labeled_ops = x_data;
     }
     else
         free(x_data);
@@ -831,9 +831,9 @@ void delete_math_expr_members(math_expr *M)
             free(S[i].func.user);
     }
     free(S);
-    free(M->x_data);
+    free(M->all_labeled_ops);
     free(M->expr);
-    tms_free_arg_list(M->unknowns);
+    tms_free_arg_list(M->label_names);
 }
 
 void delete_math_expr(math_expr *M)

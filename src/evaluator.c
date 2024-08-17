@@ -127,8 +127,8 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                 }
                 const tms_ufunc *userf = tms_get_ufunc_by_name(S[i].func.user);
                 tms_math_expr *F = tms_dup_mexpr(userf->F);
-                // Set the values of the unknowns (passed as arguments earlier)
-                tms_set_unknowns(F, arguments);
+                // Set the label values (passed as arguments earlier)
+                tms_set_labels_values(F, arguments);
                 **(S[i].result) = _tms_evaluate_unsafe(F);
                 tms_delete_math_expr(F);
                 free(arguments);
@@ -307,8 +307,8 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                 }
                 const tms_int_ufunc *userf = tms_get_int_ufunc_by_name(S[i].func.user);
                 tms_int_expr *F = tms_dup_int_expr(userf->F);
-                // Set the values of the unknowns (passed as arguments earlier)
-                tms_set_int_unknowns(F, arguments);
+                // Set the label values (passed as arguments earlier)
+                tms_set_int_labels_values(F, arguments);
                 _tms_int_evaluate_unsafe(F, *(S[i].result));
                 tms_delete_int_expr(F);
                 free(arguments);
@@ -411,27 +411,27 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
     return 0;
 }
 
-void tms_set_unknowns(tms_math_expr *M, double complex *values_list)
+void tms_set_labels_values(tms_math_expr *M, double complex *values_list)
 {
     int i;
-    for (i = 0; i < M->unknowns_instances; ++i)
+    for (i = 0; i < M->labeled_operands_count; ++i)
     {
-        if (M->x_data[i].is_negative)
-            *(double complex *)(M->x_data[i].unknown_ptr) = -values_list[M->x_data[i].id];
+        if (M->all_labeled_ops[i].is_negative)
+            *(double complex *)(M->all_labeled_ops[i].ptr) = -values_list[M->all_labeled_ops[i].id];
         else
-            *(double complex *)(M->x_data[i].unknown_ptr) = values_list[M->x_data[i].id];
+            *(double complex *)(M->all_labeled_ops[i].ptr) = values_list[M->all_labeled_ops[i].id];
     }
 }
 
-void tms_set_int_unknowns(tms_int_expr *M, int64_t *values_list)
+void tms_set_int_labels_values(tms_int_expr *M, int64_t *values_list)
 {
     int i;
-    for (i = 0; i < M->unknowns_instances; ++i)
+    for (i = 0; i < M->labeled_operands_count; ++i)
     {
-        if (M->x_data[i].is_negative)
-            *(int64_t *)(M->x_data[i].unknown_ptr) = -values_list[M->x_data[i].id];
+        if (M->all_labeled_ops[i].is_negative)
+            *(int64_t *)(M->all_labeled_ops[i].ptr) = -values_list[M->all_labeled_ops[i].id];
         else
-            *(int64_t *)(M->x_data[i].unknown_ptr) = values_list[M->x_data[i].id];
+            *(int64_t *)(M->all_labeled_ops[i].ptr) = values_list[M->all_labeled_ops[i].id];
     }
 }
 

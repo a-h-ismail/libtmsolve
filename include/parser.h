@@ -37,22 +37,22 @@ int _tms_set_rcfunction_ptr(char *local_expr, tms_math_expr *M, int s_index);
  */
 void tms_convert_real_to_complex(tms_math_expr *M);
 
-#define TMS_ENABLE_UNK 1
+#define TMS_ENABLE_LABELS 1
 #define TMS_ENABLE_CMPLX 2
 
 /**
  * @brief Parses a math expression into a structure.
  * @note This function automatically prints errors to stderr if any.
  * @param expr The string containing the math expression.
- * @param options Provides the parser with options (currently: TMS_ENABLE_UNK, TMS_ENABLE_CMPLX). A 0 here means defaults.
- * @param unknowns If the option to enable unknowns is set, provide the unknowns names here.
+ * @param options Provides the parser with options (currently: TMS_ENABLE_LABELS, TMS_ENABLE_CMPLX). A 0 here means defaults.
+ * @param labels If the option to enable labels is set, provide them here.
  * @return A (malloc'd) pointer to the generated math structure.
  */
-tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *unknowns);
+tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *labels);
 
 /// @brief The actual parser logic is here, but it isn't thread safe and doesn't automatically print errors.
 /// @warning Usage is not recommended unless you know what you're doing.
-tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *unknowns);
+tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *labels);
 
 int _tms_get_operand_value(tms_math_expr *M, int start, double complex *out);
 

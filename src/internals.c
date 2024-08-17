@@ -586,7 +586,7 @@ bool _tms_ufunc_has_bad_refs(char *fname)
     return false;
 }
 
-int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
+int tms_set_ufunction(char *fname, char *function_args, char *function)
 {
     const tms_ufunc *old = tms_get_ufunc_by_name(fname);
 
@@ -618,34 +618,35 @@ int tms_set_ufunction(char *fname, char *unknowns_list, char *function)
         return -1;
     }
 
-    tms_arg_list *unknowns = tms_get_args(unknowns_list);
+    // The received args are in a comma separated string, we convert them to an argument list
+    tms_arg_list *arg_list = tms_get_args(function_args);
 
-    if (unknowns->count > 64)
+    if (arg_list->count > 64)
     {
         tms_save_error(TMS_PARSER, TOO_MANY_LABELS, EH_FATAL, NULL, 0);
-        tms_free_arg_list(unknowns);
+        tms_free_arg_list(arg_list);
         return -1;
     }
 
     // Check that names are unique
-    if (!tms_is_unique_string_array(unknowns->arguments, unknowns->count))
+    if (!tms_is_unique_string_array(arg_list->arguments, arg_list->count))
     {
         tms_save_error(TMS_PARSER, LABELS_NOT_UNIQUE, EH_FATAL, NULL, 0);
-        tms_free_arg_list(unknowns);
+        tms_free_arg_list(arg_list);
         return -1;
     }
 
     // Check that argument names are valid
-    for (int j = 0; j < unknowns->count; ++j)
+    for (int j = 0; j < arg_list->count; ++j)
     {
-        if (!tms_valid_name(unknowns->arguments[j]))
+        if (!tms_valid_name(arg_list->arguments[j]))
         {
             tms_save_error(TMS_PARSER, "In user function args: " INVALID_NAME, EH_FATAL, NULL, 0);
-            tms_free_arg_list(unknowns);
+            tms_free_arg_list(arg_list);
             return -1;
         }
     }
-    tms_math_expr *new = tms_parse_expr(function, TMS_ENABLE_CMPLX | TMS_ENABLE_UNK, unknowns);
+    tms_math_expr *new = tms_parse_expr(function, TMS_ENABLE_CMPLX | TMS_ENABLE_LABELS, arg_list);
     // Function already exists
     if (old != NULL)
     {
@@ -719,7 +720,7 @@ bool _tms_int_ufunc_has_bad_refs(char *fname)
     return false;
 }
 
-int tms_set_int_ufunction(char *fname, char *unknowns_list, char *function)
+int tms_set_int_ufunction(char *fname, char *function_args, char *function)
 {
     const tms_int_ufunc *old = tms_get_int_ufunc_by_name(fname);
 
@@ -745,40 +746,41 @@ int tms_set_int_ufunction(char *fname, char *unknowns_list, char *function)
     }
 
     // Check if the name is used by a variable
-    if (tms_get_var_by_name(fname) != NULL)
+    if (tms_get_int_var_by_name(fname) != NULL)
     {
         tms_save_error(TMS_INT_PARSER, FUNCTION_NAME_MATCHES_VAR, EH_FATAL, NULL, 0);
         return -1;
     }
 
-    tms_arg_list *unknowns = tms_get_args(unknowns_list);
+    // The received args are in a comma separated string, we convert them to an argument list
+    tms_arg_list *arg_list = tms_get_args(function_args);
 
-    if (unknowns->count > 64)
+    if (arg_list->count > 64)
     {
         tms_save_error(TMS_INT_PARSER, TOO_MANY_LABELS, EH_FATAL, NULL, 0);
-        tms_free_arg_list(unknowns);
+        tms_free_arg_list(arg_list);
         return -1;
     }
 
     // Check that names are unique
-    if (!tms_is_unique_string_array(unknowns->arguments, unknowns->count))
+    if (!tms_is_unique_string_array(arg_list->arguments, arg_list->count))
     {
         tms_save_error(TMS_INT_PARSER, LABELS_NOT_UNIQUE, EH_FATAL, NULL, 0);
-        tms_free_arg_list(unknowns);
+        tms_free_arg_list(arg_list);
         return -1;
     }
 
     // Check that argument names are valid
-    for (int j = 0; j < unknowns->count; ++j)
+    for (int j = 0; j < arg_list->count; ++j)
     {
-        if (!tms_valid_name(unknowns->arguments[j]))
+        if (!tms_valid_name(arg_list->arguments[j]))
         {
             tms_save_error(TMS_INT_PARSER, "In user function args: " INVALID_NAME, EH_FATAL, NULL, 0);
-            tms_free_arg_list(unknowns);
+            tms_free_arg_list(arg_list);
             return -1;
         }
     }
-    tms_int_expr *new = tms_parse_int_expr(function, TMS_ENABLE_UNK, unknowns);
+    tms_int_expr *new = tms_parse_int_expr(function, TMS_ENABLE_LABELS, arg_list);
     // Function already exists
     if (old != NULL)
     {

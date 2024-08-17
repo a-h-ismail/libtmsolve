@@ -11,7 +11,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "tms_math_strs.h"
 #endif
 
-#define TMS_ENABLE_UNK 1
+#define TMS_ENABLE_LABELS 1
 
 int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op_start, int s_index, char operand);
 
@@ -21,11 +21,11 @@ int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op
  * @param expr The expression to parse.
  * @return A (malloc'd) pointer to the generated int expression structure.
  */
-tms_int_expr *tms_parse_int_expr(char *expr, int options, tms_arg_list *unknowns);
+tms_int_expr *tms_parse_int_expr(char *expr, int options, tms_arg_list *labels);
 
 /// @brief The actual int parser logic is here, but it isn't thread safe and doesn't automatically print errors.
 /// @warning Usage is not recommended unless you know what you're doing.
-tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *unknowns);
+tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *labels);
 
 /**
  * @brief Deletes an int expression.

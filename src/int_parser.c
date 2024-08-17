@@ -159,7 +159,7 @@ int _tms_set_int_function_ptr(char *expr, tms_int_expr *M, int s_i)
     return 0;
 }
 
-tms_int_expr *tms_parse_int_expr(char *expr, int options, tms_arg_list *unknowns)
+tms_int_expr *tms_parse_int_expr(char *expr, int options, tms_arg_list *labels)
 {
     tms_lock_parser(TMS_INT_PARSER);
 
@@ -169,7 +169,7 @@ tms_int_expr *tms_parse_int_expr(char *expr, int options, tms_arg_list *unknowns
         tms_clear_errors(TMS_INT_PARSER);
     }
 
-    tms_int_expr *M = _tms_parse_int_expr_unsafe(expr, options, unknowns);
+    tms_int_expr *M = _tms_parse_int_expr_unsafe(expr, options, labels);
     if (M == NULL)
         tms_print_errors(TMS_INT_PARSER);
 
@@ -177,14 +177,14 @@ tms_int_expr *tms_parse_int_expr(char *expr, int options, tms_arg_list *unknowns
     return M;
 }
 
-tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *unknowns)
+tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *labels)
 {
     // Number of subexpressions
     int s_count;
     // Current subexpression index
     int s_i;
 
-    bool enable_unknowns = (options & TMS_ENABLE_UNK) && 1;
+    bool enable_labels = (options & TMS_ENABLE_LABELS) && 1;
 
     // Check for empty input
     if (expr[0] == '\0')
@@ -210,8 +210,8 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
     if (M == NULL)
         return NULL;
 
-    // Add the unknowns to the math expression if necessary
-    M->unknowns = (enable_unknowns ? unknowns : NULL);
+    // Add the labels to the math expression if necessary
+    M->label_names = (enable_labels ? labels : NULL);
 
     tms_int_subexpr *S = M->S;
     s_count = M->subexpr_count;
@@ -226,7 +226,7 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
     - Allocate the array of nodes
     - Use the operator index array to fill the nodes data on operators type and location
     - Fill nodes operator priority
-    - Fill nodes with values or set as unknown (using x)
+    - Fill nodes with values or set as label (using x)
     - Set nodes order of calculation (using *next)
     - Set the result pointer of each op_node relying on its position and neighbor priorities
     - Set the subexpr result double pointer to the result pointer of the last op_node in the calculation order
@@ -259,7 +259,7 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
             return NULL;
         }
 
-        status = _tms_init_nodes(M, s_i, operator_index, enable_unknowns);
+        status = _tms_init_nodes(M, s_i, operator_index, enable_labels);
         free(operator_index);
 
         // Exiting due to error
@@ -269,7 +269,7 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
             return NULL;
         }
 
-        status = _tms_set_all_operands(M, s_i, enable_unknowns);
+        status = _tms_set_all_operands(M, s_i, enable_labels);
         if (status == -1)
         {
             tms_delete_int_expr(M);
@@ -285,9 +285,9 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
         _tms_set_result_pointers(M, s_i);
     }
 
-    // Set unknowns metadata
-    if (enable_unknowns)
-        _tms_generate_unknowns_refs(M);
+    // Set labels metadata
+    if (enable_labels)
+        _tms_generate_labels_refs(M);
 
     return M;
 }

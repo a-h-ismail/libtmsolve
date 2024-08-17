@@ -82,15 +82,11 @@ typedef struct tms_op_node
     /// Node operator priority.
     uint8_t priority;
     /**
-     * Used to store data about unknown operands as follows:
-     * b0:left_operand, b1:right_operand, b2:left_operand_negative, b3:right_operand_negative.
-     * Use masks UNK_* with bitwise OR to set the bits correctly
-     * The 6 MSB are the ID of of the right unknown
-     * The remaining are the ID of the left unknown
-     * RRRRRRLLLLLLRLRL
-     * Use macros below to set the ID easily
+     * Labels are the mechanism used to implement user defined functions in the parser.
+     * A label allows the value of an operand to be changed after the parse step.
+     * @note Labels are unique to the parsed expression, unlike global variables that are copied during parsing.
      */
-    uint16_t unknowns_data;
+    uint16_t labels;
 
     double complex left_operand, right_operand, *result;
     /// Points to the next op_node in evaluation order.
@@ -106,16 +102,16 @@ typedef struct tms_op_node
 #define GET_LEFT_ID(source) ((source >> 4) & 63)
 #define GET_RIGHT_ID(source) ((source >> 10) & 63)
 
-/// @brief Holds the data required to locate and set a value to an unknown in the expression.
-typedef struct tms_unknown_operand
+/// @brief Holds the data required to locate and set a value to a labeled operand
+typedef struct tms_labeled_operand
 {
-    /// @brief Pointer to the unknown operand.
-    void *unknown_ptr;
-    /// @brief ID of the unknown operand
+    /// @brief Pointer to the labeled operand.
+    void *ptr;
+    /// @brief ID of the labeled operand
     int id;
     /// @brief Set to true if the operand is negative.
     bool is_negative;
-} tms_unknown_operand;
+} tms_labeled_operand;
 
 /// @brief User runtime function.
 typedef struct tms_ufunc
@@ -217,14 +213,14 @@ typedef struct tms_math_expr
     /// Number of subexpression in this math expression.
     int subexpr_count;
 
-    /// Number of unknown operands.
-    int unknowns_instances;
+    /// Number of labeled operands.
+    int labeled_operands_count;
 
-    /// Array of unknown operands metadata.
-    tms_unknown_operand *x_data;
+    /// Array of labeled operands metadata.
+    tms_labeled_operand *all_labeled_ops;
 
-    /// List of unknowns
-    tms_arg_list *unknowns;
+    /// List of label names
+    tms_arg_list *label_names;
 
     /// Answer of the expression.
     double complex answer;
@@ -245,15 +241,11 @@ typedef struct tms_int_op_node
     /// Node operator priority.
     uint8_t priority;
     /**
-     * Used to store data about unknown operands as follows:
-     * b0:left_operand, b1:right_operand, b2:left_operand_negative, b3:right_operand_negative.
-     * Use masks UNK_* with bitwise OR to set the bits correctly
-     * The 6 MSB are the ID of of the right unknown
-     * The remaining are the ID of the left unknown
-     * RRRRRRLLLLLLRLRL
-     * Use macros below to set the ID easily
+     * Labels are the mechanism used to implement user defined functions in the parser.
+     * A label allows the value of an operand to be changed after the parse step.
+     * @note Labels are unique to the parsed expression, unlike global variables that are copied during parsing.
      */
-    uint16_t unknowns_data;
+    uint16_t labels;
 
     int64_t left_operand, right_operand, *result;
     /// Points to the next op_node in evaluation order.
@@ -313,14 +305,13 @@ typedef struct tms_int_expr
     /// Number of subexpression in this math expression.
     int subexpr_count;
 
-    /// Number of unknown operands.
-    int unknowns_instances;
+    /// Number of labeled operands.
+    int labeled_operands_count;
 
-    /// Array of unknown operands metadata.
-    tms_unknown_operand *x_data;
+    /// Array of labeled operands metadata.
+    tms_labeled_operand *all_labeled_ops;
 
-    /// List of unknowns
-    tms_arg_list *unknowns;
+    tms_arg_list *label_names;
 
     /// Answer of the expression.
     int64_t answer;

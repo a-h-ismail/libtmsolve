@@ -198,7 +198,7 @@ double complex tms_derivative(tms_arg_list *L)
     }
     // Compile the expression to the desired structure
     tms_arg_list *tmp = tms_get_args("x");
-    M = _tms_parse_expr_unsafe(L->arguments[0], TMS_ENABLE_UNK, tmp);
+    M = _tms_parse_expr_unsafe(L->arguments[0], TMS_ENABLE_LABELS, tmp);
 
     if (M == NULL)
     {
@@ -218,11 +218,11 @@ double complex tms_derivative(tms_arg_list *L)
 
     // Solve for x - epsilon
     x -= epsilon;
-    tms_set_unknowns(M, &x);
+    tms_set_labels_values(M, &x);
     fx1 = _tms_evaluate_unsafe(M);
     // Solve for x + epsilon
     x += 2 * epsilon;
-    tms_set_unknowns(M, &x);
+    tms_set_labels_values(M, &x);
     fx2 = _tms_evaluate_unsafe(M);
     tms_clear_errors(TMS_EVALUATOR);
 
@@ -272,7 +272,7 @@ double complex tms_integrate(tms_arg_list *L)
 
     // Compile the expression to the desired structure
     tms_arg_list *tmp = tms_get_args("x");
-    M = _tms_parse_expr_unsafe(L->arguments[2], TMS_ENABLE_UNK, tmp);
+    M = _tms_parse_expr_unsafe(L->arguments[2], TMS_ENABLE_LABELS, tmp);
 
     if (M == NULL)
         return NAN;
@@ -292,10 +292,10 @@ double complex tms_integrate(tms_arg_list *L)
     // Simpson 3/8 formula:
     // 3h/8[(y0 + yn) + 3(y1 + y2 + y4 + y5 + … + yn-1) + 2(y3 + y6 + y9 + … + yn-3)]
     // First step: y0 + yn
-    tms_set_unknowns(M, &lower_bound);
+    tms_set_labels_values(M, &lower_bound);
     result = _tms_evaluate_unsafe(M);
     lower_bound += delta;
-    tms_set_unknowns(M, &lower_bound);
+    tms_set_labels_values(M, &lower_bound);
     lower_bound -= delta;
     result += _tms_evaluate_unsafe(M);
     // Clear errors collected from the previous evaluator calls
@@ -316,7 +316,7 @@ double complex tms_integrate(tms_arg_list *L)
         if (i == 3)
         {
             an = lower_bound + delta * n / rounds;
-            tms_set_unknowns(M, &an);
+            tms_set_labels_values(M, &an);
             fn = _tms_evaluate_unsafe(M);
             if (isnan(fn) == true)
             {
@@ -330,7 +330,7 @@ double complex tms_integrate(tms_arg_list *L)
         else
         {
             an = lower_bound + delta * n / rounds;
-            tms_set_unknowns(M, &an);
+            tms_set_labels_values(M, &an);
             fn = _tms_evaluate_unsafe(M);
             if (isnan(fn) == true)
             {
