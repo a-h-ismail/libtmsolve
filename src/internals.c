@@ -815,6 +815,84 @@ int tms_set_int_ufunction(char *fname, char *function_args, char *function)
     return -1;
 }
 
+char **tms_smode_autocompletion_helper(const char *name)
+{
+    size_t max_count =
+        array_length(tms_g_rc_func) + array_length(tms_g_extf) + hashmap_count(ufunc_hmap) + hashmap_count(var_hmap);
+    size_t i, next = 0;
+    // +1 for the extra NULL
+    char **matches = malloc((max_count + 1) * sizeof(char *));
+
+    // Real/Complex functions
+    for (i = 0; i < array_length(tms_g_rc_func); ++i)
+        if (_tms_string_is_prefix(tms_g_rc_func[i].name, name))
+            matches[next++] = tms_strcat_dup(tms_g_rc_func[i].name, "(");
+
+    // Extended
+    for (i = 0; i < array_length(tms_g_extf); ++i)
+        if (_tms_string_is_prefix(tms_g_extf[i].name, name))
+            matches[next++] = tms_strcat_dup(tms_g_extf[i].name, "(");
+
+    // User functions
+    size_t count;
+    tms_ufunc *ufuncs = hashmap_to_array(ufunc_hmap, &count);
+    for (i = 0; i < count; ++i)
+        if (_tms_string_is_prefix(ufuncs[i].name, name))
+            matches[next++] = tms_strcat_dup(ufuncs[i].name, "(");
+
+    // Variables
+    tms_var *vars = hashmap_to_array(var_hmap, &count);
+    for (i = 0; i < count; ++i)
+        if (_tms_string_is_prefix(vars[i].name, name))
+            matches[next++] = strdup(vars[i].name);
+
+    // Readline needs a NULL to know the end of the array
+    matches[next++] = NULL;
+    matches = realloc(matches, next * sizeof(char *));
+    free(ufuncs);
+    free(vars);
+    return matches;
+}
+
+char **tms_imode_autocompletion_helper(const char *name)
+{
+    size_t max_count = array_length(tms_g_int_func) + array_length(tms_g_int_extf) + hashmap_count(int_ufunc_hmap) +
+                       hashmap_count(int_var_hmap);
+    size_t i, next = 0;
+    // +1 for the extra NULL
+    char **matches = malloc((max_count + 1) * sizeof(char *));
+
+    // Int functions
+    for (i = 0; i < array_length(tms_g_int_func); ++i)
+        if (_tms_string_is_prefix(tms_g_int_func[i].name, name))
+            matches[next++] = tms_strcat_dup(tms_g_int_func[i].name, "(");
+
+    // Extended
+    for (i = 0; i < array_length(tms_g_int_extf); ++i)
+        if (_tms_string_is_prefix(tms_g_int_extf[i].name, name))
+            matches[next++] = tms_strcat_dup(tms_g_int_extf[i].name, "(");
+
+    // User functions
+    size_t count;
+    tms_ufunc *int_ufuncs = hashmap_to_array(int_ufunc_hmap, &count);
+    for (i = 0; i < count; ++i)
+        if (_tms_string_is_prefix(int_ufuncs[i].name, name))
+            matches[next++] = tms_strcat_dup(int_ufuncs[i].name, "(");
+
+    // Variables
+    tms_var *int_vars = hashmap_to_array(int_var_hmap, &count);
+    for (i = 0; i < count; ++i)
+        if (_tms_string_is_prefix(int_vars[i].name, name))
+            matches[next++] = strdup(int_vars[i].name);
+
+    // Readline needs a NULL to know the end of the array
+    matches[next++] = NULL;
+    matches = realloc(matches, next * sizeof(char *));
+    free(int_ufuncs);
+    free(int_vars);
+    return matches;
+}
+
 int compare_ints(const void *a, const void *b)
 {
     if (*(int *)a < *(int *)b)

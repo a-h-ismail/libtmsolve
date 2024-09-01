@@ -141,6 +141,10 @@ bool _tms_validate_args_count(int expected, int actual, int facility_id);
 
 bool _tms_validate_args_count_range(int actual, int min, int max, int facility_id);
 
+char **tms_smode_autocompletion_helper(const char *name);
+
+char **tms_imode_autocompletion_helper(const char *name);
+
 /**
  * @brief Simple function to find the minimum of 2 integers.
  * @return The minimum among the integers.
