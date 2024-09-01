@@ -256,6 +256,8 @@ bool tms_legal_name(char *name);
  */
 int tms_find_str_in_array(char *key, const void *array, int arr_len, uint8_t type);
 
+bool _tms_string_is_prefix(const char *target, const char *prefix);
+
 /**
  * @brief Concatenate two strings into a new string
  * @param s1 The first string

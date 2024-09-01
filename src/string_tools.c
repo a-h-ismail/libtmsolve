@@ -1252,6 +1252,15 @@ char *tms_strcat_dup(char *s1, char *s2)
     return concatenated_string;
 }
 
+bool _tms_string_is_prefix(const char *target, const char *prefix)
+{
+    int target_len = strlen(target);
+    int prefix_len = strlen(prefix);
+    if (target_len < prefix_len)
+        return false;
+    return (strncmp(target, prefix, prefix_len) == 0 ? true : false);
+}
+
 bool tms_is_unique_string_array(char **array, int size)
 {
     // This works by iterating over the array and doing a forward search for the specific string
