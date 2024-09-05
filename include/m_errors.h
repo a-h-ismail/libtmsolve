@@ -61,4 +61,5 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define INCOMPLETE_RANGE "This function expects a range (min,max) or no argument"
 #define TOO_MANY_LABELS "User functions support up to 64 arguments"
 #define LABELS_NOT_UNIQUE "Provided argument names must be unique"
+#define USER_FUNCTION_NOT_FOUND "This user function is no longer defined, redefine it and try again"
 #endif
