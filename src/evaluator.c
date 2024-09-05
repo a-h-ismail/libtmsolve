@@ -120,12 +120,22 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
             }
             else if (S[i].func_type == TMS_F_USER)
             {
+                const tms_ufunc *userf = tms_get_ufunc_by_name(S[i].func.user);
+                if (userf == NULL)
+                {
+                    tms_save_error(TMS_EVALUATOR, USER_FUNCTION_NOT_FOUND, EH_FATAL, M->expr, M->S[i].subexpr_start);
+                    return NAN;
+                }
+                if (!_tms_validate_args_count(userf->F->label_names->count, S[i].L->count, TMS_EVALUATOR))
+                {
+                    tms_modify_last_error(TMS_EVALUATOR, M->expr, M->S[i].subexpr_start, NULL);
+                    return NAN;
+                }
                 double complex *arguments = tms_solve_list(S[i].L, M->enable_complex);
                 if (arguments == NULL)
                 {
                     return NAN;
                 }
-                const tms_ufunc *userf = tms_get_ufunc_by_name(S[i].func.user);
                 tms_math_expr *F = tms_dup_mexpr(userf->F);
                 // Set the label values (passed as arguments earlier)
                 tms_set_labels_values(F, arguments);
@@ -300,12 +310,23 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
             }
             else if (S[i].func_type == TMS_F_INT_USER)
             {
+                const tms_int_ufunc *userf = tms_get_int_ufunc_by_name(S[i].func.user);
+                if (userf == NULL)
+                {
+                    tms_save_error(TMS_INT_EVALUATOR, USER_FUNCTION_NOT_FOUND, EH_FATAL, M->expr,
+                                   M->S[i].subexpr_start);
+                    return -1;
+                }
+                if (!_tms_validate_args_count(userf->F->label_names->count, S[i].L->count, TMS_INT_EVALUATOR))
+                {
+                    tms_modify_last_error(TMS_INT_EVALUATOR, M->expr, M->S[i].subexpr_start, NULL);
+                    return -1;
+                }
                 int64_t *arguments = tms_int_solve_list(S[i].L);
                 if (arguments == NULL)
                 {
                     return -1;
                 }
-                const tms_int_ufunc *userf = tms_get_int_ufunc_by_name(S[i].func.user);
                 tms_int_expr *F = tms_dup_int_expr(userf->F);
                 // Set the label values (passed as arguments earlier)
                 tms_set_int_labels_values(F, arguments);
