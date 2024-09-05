@@ -121,7 +121,10 @@ math_expr *init_math_expr(char *expr)
                     // Specific to user functions
                     else
                     {
-                        S[s_i].func.user = ufunc_i->name;
+                        // Duplicate the function name to avoid breaking an expression if this user function is removed
+                        // Remember that the mallocd name is removed when a user function is removed
+                        // So this provides independence from the original ufunc (at the expense of more mallocs)
+                        S[s_i].func.user = strdup(ufunc_i->name);
                         S[s_i].func_type = F_USER;
                     }
                 }
