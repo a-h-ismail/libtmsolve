@@ -144,7 +144,7 @@ double complex tms_solve(char *expr)
         likely_complex = 2;
 
     size_t var_count;
-    tms_var *all_vars = tms_get_all_vars(&var_count);
+    tms_var *all_vars = tms_get_all_vars(&var_count, false);
     // Look for user defined complex variables
     for (i = 0; i < var_count; ++i)
     {
