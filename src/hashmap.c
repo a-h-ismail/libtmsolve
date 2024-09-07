@@ -793,6 +793,9 @@ int hashmap_qsort_increasing(const void *a, const void *b)
 
 void *hashmap_to_array(hashmap *map, size_t *len, bool sort)
 {
+    if (map == NULL || map->count == 0 || len == NULL)
+        return NULL;
+
     size_t iter = 0, elsize = map->elsize;
     void *item = NULL;
     void *array = malloc(elsize * map->count);
