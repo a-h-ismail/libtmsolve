@@ -79,9 +79,21 @@ const tms_ufunc *tms_get_ufunc_by_name(char *name);
 
 const tms_int_ufunc *tms_get_int_ufunc_by_name(char *name);
 
-tms_var *tms_get_all_vars(size_t *out);
+tms_var *tms_get_all_vars(size_t *count, bool sort);
 
-tms_int_var *tms_get_all_int_vars(size_t *out);
+tms_int_var *tms_get_all_int_vars(size_t *count, bool sort);
+
+tms_rc_func *tms_get_all_rc_func(size_t *count, bool sort);
+
+tms_extf *tms_get_all_extf(size_t *count, bool sort);
+
+tms_ufunc *tms_get_all_ufunc(size_t *count, bool sort);
+
+tms_int_func *tms_get_all_int_func(size_t *count, bool sort);
+
+tms_int_extf *tms_get_all_int_extf(size_t *count, bool sort);
+
+tms_int_ufunc *tms_get_all_int_ufunc(size_t *count, bool sort);
 
 bool tms_function_exists(char *name);
 

@@ -223,14 +223,44 @@ const tms_int_ufunc *tms_get_int_ufunc_by_name(char *name)
     return hashmap_get(int_ufunc_hmap, &tmp);
 }
 
-tms_var *tms_get_all_vars(size_t *out)
+tms_var *tms_get_all_vars(size_t *count, bool sort)
 {
-    return hashmap_to_array(var_hmap, out);
+    return hashmap_to_array(var_hmap, count, sort);
 }
 
-tms_int_var *tms_get_all_int_vars(size_t *out)
+tms_int_var *tms_get_all_int_vars(size_t *count, bool sort)
 {
-    return hashmap_to_array(int_var_hmap, out);
+    return hashmap_to_array(int_var_hmap, count, sort);
+}
+
+tms_rc_func *tms_get_all_rc_func(size_t *count, bool sort)
+{
+    return hashmap_to_array(rc_func_hmap, count, sort);
+}
+
+tms_extf *tms_get_all_extf(size_t *count, bool sort)
+{
+    return hashmap_to_array(extf_hmap, count, sort);
+}
+
+tms_ufunc *tms_get_all_ufunc(size_t *count, bool sort)
+{
+    return hashmap_to_array(ufunc_hmap, count, sort);
+}
+
+tms_int_func *tms_get_all_int_func(size_t *count, bool sort)
+{
+    return hashmap_to_array(int_func_hmap, count, sort);
+}
+
+tms_int_extf *tms_get_all_int_extf(size_t *count, bool sort)
+{
+    return hashmap_to_array(int_extf_hmap, count, sort);
+}
+
+tms_int_ufunc *tms_get_all_int_ufunc(size_t *count, bool sort)
+{
+    return hashmap_to_array(int_ufunc_hmap, count, sort);
 }
 
 bool tms_function_exists(char *name)
@@ -835,13 +865,13 @@ char **tms_smode_autocompletion_helper(const char *name)
 
     // User functions
     size_t count;
-    tms_ufunc *ufuncs = hashmap_to_array(ufunc_hmap, &count);
+    tms_ufunc *ufuncs = hashmap_to_array(ufunc_hmap, &count, true);
     for (i = 0; i < count; ++i)
         if (_tms_string_is_prefix(ufuncs[i].name, name))
             matches[next++] = tms_strcat_dup(ufuncs[i].name, "(");
 
     // Variables
-    tms_var *vars = hashmap_to_array(var_hmap, &count);
+    tms_var *vars = hashmap_to_array(var_hmap, &count, true);
     for (i = 0; i < count; ++i)
         if (_tms_string_is_prefix(vars[i].name, name))
             matches[next++] = strdup(vars[i].name);
@@ -874,13 +904,13 @@ char **tms_imode_autocompletion_helper(const char *name)
 
     // User functions
     size_t count;
-    tms_ufunc *int_ufuncs = hashmap_to_array(int_ufunc_hmap, &count);
+    tms_ufunc *int_ufuncs = hashmap_to_array(int_ufunc_hmap, &count, true);
     for (i = 0; i < count; ++i)
         if (_tms_string_is_prefix(int_ufuncs[i].name, name))
             matches[next++] = tms_strcat_dup(int_ufuncs[i].name, "(");
 
     // Variables
-    tms_var *int_vars = hashmap_to_array(int_var_hmap, &count);
+    tms_var *int_vars = hashmap_to_array(int_var_hmap, &count, true);
     for (i = 0; i < count; ++i)
         if (_tms_string_is_prefix(int_vars[i].name, name))
             matches[next++] = strdup(int_vars[i].name);
