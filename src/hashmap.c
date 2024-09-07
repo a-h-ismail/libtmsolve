@@ -777,15 +777,35 @@ uint64_t hashmap_xxhash3(const void *data, size_t len, uint64_t seed0,
     return xxh3(data, len ,seed0);
 }
 
-void *hashmap_to_array(hashmap *map, size_t *len)
+// Needs a global variable to smuggle the actual comparator for qsort
+int (*g_comparator)(const void *a, const void *b, void *udata);
+
+int hashmap_qsort_increasing(const void *a, const void *b)
 {
-    size_t iter = 0, size = map->elsize;
+    int status = (*(g_comparator))(a, b, NULL);
+    if (status > 0)
+        return 1;
+    else if (status < 0)
+        return -1;
+    else
+        return 0;
+}
+
+void *hashmap_to_array(hashmap *map, size_t *len, bool sort)
+{
+    size_t iter = 0, elsize = map->elsize;
     void *item = NULL;
-    void *array = malloc(size * map->count);
+    void *array = malloc(elsize * map->count);
     for (int i = 0; i < map->count; ++i)
     {
         hashmap_iter(map, &iter, &item);
-        memcpy(array + (i * size), item, size);
+        memcpy(array + (i * elsize), item, elsize);
+    }
+    if (sort)
+    {
+        g_comparator = map->compare;
+        qsort(array, map->count, elsize, hashmap_qsort_increasing);
+        g_comparator = NULL;
     }
     *len = map->count;
     return array;
