@@ -906,6 +906,38 @@ tms_arg_list *tms_get_args(char *string)
     return A;
 }
 
+char *tms_args_to_string(tms_arg_list *args)
+{
+    if (args == NULL || args->arguments == NULL)
+        return NULL;
+
+    int i, total_size = 0;
+    // Calculate the length of the final string
+    for (i = 0; i < args->count; ++i)
+        total_size += strlen(args->arguments[i]);
+
+    // We need need a comma and a space between every two arguments and 1 extra for the null
+    total_size += 2 * (args->count - 1) + 1;
+    char *argstring = malloc(total_size * sizeof(char));
+
+    int seeker = 0, len;
+    // Copy the arguments and add the ", "
+    for (i = 0; i < args->count; ++i)
+    {
+        len = strlen(args->arguments[i]);
+        strncpy(argstring + seeker, args->arguments[i], len);
+        seeker += len;
+        if (i != args->count - 1)
+        {
+            argstring[seeker] = ',';
+            argstring[seeker + 1] = ' ';
+            seeker += 2;
+        }
+    }
+    argstring[total_size] = '\0';
+    return argstring;
+}
+
 tms_arg_list *tms_dup_arg_list(tms_arg_list *L)
 {
     if (L == NULL)

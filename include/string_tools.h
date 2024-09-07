@@ -194,6 +194,12 @@ int tms_compare_priority(char operator1, char operator2);
 tms_arg_list *tms_get_args(char *string);
 
 /**
+ * @brief Converts an argument list back into its string form.
+ * @return The comma separated string on success, or NULL on failure.
+ */
+char *tms_args_to_string(tms_arg_list *args);
+
+/**
  * @brief Creates a copy of the argument list.
  * @return The new argument list, or NULL on failure.
  */
