@@ -18,16 +18,13 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <stdbool.h>
 #include <inttypes.h>
 
+/**
+ * @brief Duplicates a math expression, returning an identical malloc'd one.
+ * @return The new math expression or NULL on failure.
+ */
 tms_math_expr *tms_dup_mexpr(tms_math_expr *M);
 
-/**
- * @brief Sets the (non extended) function pointer in the subexpression.
- * @param local_expr Expression, offset from the assignment operator (if any).
- * @param M tms_math_expr being processed.
- * @param s_index Index of the current subexpression.
- * @return 0 on success, -1 on failure.
- */
-int _tms_set_rcfunction_ptr(char *local_expr, tms_math_expr *M, int s_index);
+int _tms_set_rcfunction_ptr(char *expr, tms_math_expr *M, int s_index);
 
 /**
  * @brief Coverts a math_expr parsed with complex disabled into a complex enabled one.
@@ -37,14 +34,14 @@ int _tms_set_rcfunction_ptr(char *local_expr, tms_math_expr *M, int s_index);
  */
 void tms_convert_real_to_complex(tms_math_expr *M);
 
-#define TMS_ENABLE_LABELS 1
-#define TMS_ENABLE_CMPLX 2
+#define ENABLE_LABELS 1
+#define ENABLE_CMPLX 2
 
 /**
  * @brief Parses a math expression into a structure.
  * @note This function automatically prints errors to stderr if any.
  * @param expr The string containing the math expression.
- * @param options Provides the parser with options (currently: TMS_ENABLE_LABELS, TMS_ENABLE_CMPLX). A 0 here means defaults.
+ * @param options Provides the parser with options (currently: ENABLE_LABELS, ENABLE_CMPLX). A 0 here means defaults.
  * @param labels If the option to enable labels is set, provide them here.
  * @return A (malloc'd) pointer to the generated math structure.
  */

@@ -42,13 +42,6 @@ extern bool _tms_do_init;
 /// @brief Toggles additional debugging information.
 extern bool _tms_debug;
 
-/// @brief Contains all built in variables (like pi).
-extern tms_var tms_g_builtin_vars[];
-
-extern char **tms_g_all_func_names;
-
-extern char **tms_g_all_int_func_names;
-
 /// @brief Names that should not be usable.
 extern char *tms_g_illegal_names[];
 

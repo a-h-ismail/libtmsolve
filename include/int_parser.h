@@ -11,7 +11,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "tms_math_strs.h"
 #endif
 
-#define TMS_ENABLE_LABELS 1
+#define ENABLE_LABELS 1
 
 int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op_start, int s_index, char operand);
 
@@ -37,5 +37,9 @@ int _tms_read_int_operand(tms_int_expr *M, int start, int64_t *result);
 
 void _tms_set_priority_int(tms_int_op_node *list, int op_count);
 
+/**
+ * @brief Duplicates an integer expression, returning an identical malloc'd one.
+ * @return The new integer expression or NULL on failure.
+ */
 tms_int_expr *tms_dup_int_expr(tms_int_expr *M);
 #endif

@@ -103,7 +103,7 @@ double complex tms_solve_e(char *expr, bool enable_complex)
     double complex result;
     tms_math_expr *M;
 
-    M = tms_parse_expr(expr, (enable_complex == true ? TMS_ENABLE_CMPLX : 0), NULL);
+    M = tms_parse_expr(expr, (enable_complex == true ? ENABLE_CMPLX : 0), NULL);
     if (M == NULL)
         return NAN;
     result = tms_evaluate(M);
@@ -116,7 +116,7 @@ double complex _tms_solve_e_unsafe(char *expr, bool enable_complex)
     double complex result;
     tms_math_expr *M;
 
-    M = _tms_parse_expr_unsafe(expr, (enable_complex == true ? TMS_ENABLE_CMPLX : 0), NULL);
+    M = _tms_parse_expr_unsafe(expr, (enable_complex == true ? ENABLE_CMPLX : 0), NULL);
     if (M == NULL)
         return NAN;
     result = _tms_evaluate_unsafe(M);
@@ -199,7 +199,7 @@ double complex tms_solve(char *expr)
             {
                 // Clear previous errors and try again with complex enabled
                 tms_clear_errors(TMS_PARSER);
-                M = _tms_parse_expr_unsafe(expr, TMS_ENABLE_CMPLX, NULL);
+                M = _tms_parse_expr_unsafe(expr, ENABLE_CMPLX, NULL);
 
                 // Failed again somehow with complex enabled, so abort
                 if (M == NULL)
@@ -255,7 +255,7 @@ double complex tms_solve(char *expr)
         }
 
     case 2:
-        M = tms_parse_expr(expr, TMS_ENABLE_CMPLX, NULL);
+        M = tms_parse_expr(expr, ENABLE_CMPLX, NULL);
         result = tms_evaluate(M);
         tms_delete_math_expr(M);
         return result;

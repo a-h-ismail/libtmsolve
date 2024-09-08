@@ -184,7 +184,7 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
     // Current subexpression index
     int s_i;
 
-    bool enable_labels = (options & TMS_ENABLE_LABELS) && 1;
+    bool enable_labels = (options & ENABLE_LABELS) && 1;
 
     // Check for empty input
     if (expr[0] == '\0')

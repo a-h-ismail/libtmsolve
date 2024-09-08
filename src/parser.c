@@ -151,8 +151,8 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *lab
     // Used for indexing of subexpressions
     int s_i;
 
-    bool enable_labels = (options & TMS_ENABLE_LABELS) && 1;
-    bool enable_complex = (options & TMS_ENABLE_CMPLX) && 1;
+    bool enable_labels = (options & ENABLE_LABELS) && 1;
+    bool enable_complex = (options & ENABLE_CMPLX) && 1;
 
     if (strlen(expr) > __INT_MAX__)
     {

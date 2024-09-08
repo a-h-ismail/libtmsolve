@@ -10,6 +10,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 /**
  * @file
  * @brief Contains bitwise regular and extended function declarations.
+ * @note The functions intended for use in the integer evaluator need that their result get masked.
  */
 
 /// @brief Sign extend to 64 bits
