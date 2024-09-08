@@ -297,6 +297,44 @@ bool tms_builtin_int_function_exists(char *name)
         return false;
 }
 
+int tms_remove_var(char *name)
+{
+    const tms_var t = {.name = name}, *check;
+    check = hashmap_get(var_hmap, &t);
+    if (check == NULL)
+        return -1;
+    // Can't remove a built in variable, so return 1 to tell it
+    if (check->is_constant)
+        return 1;
+    else
+        return (hashmap_delete(var_hmap, &t) == NULL ? -1 : 0);
+}
+
+int tms_remove_int_var(char *name)
+{
+    const tms_int_var t = {.name = name}, *check;
+    check = hashmap_get(int_var_hmap, &t);
+    if (check == NULL)
+        return -1;
+    // Can't remove a built in variable, so return 1 to tell it
+    if (check->is_constant)
+        return 1;
+    else
+        return (hashmap_delete(int_var_hmap, &t) == NULL ? -1 : 0);
+}
+
+int tms_remove_ufunc(char *name)
+{
+    tms_ufunc t = {.name = name};
+    return (hashmap_delete(ufunc_hmap, &t) == NULL ? -1 : 0);
+}
+
+int tms_remove_int_ufunc(char *name)
+{
+    tms_int_ufunc t = {.name = name};
+    return (hashmap_delete(int_ufunc_hmap, &t) == NULL ? -1 : 0);
+}
+
 void tmsolve_init()
 {
     if (_tms_do_init)

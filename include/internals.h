@@ -95,6 +95,14 @@ tms_int_extf *tms_get_all_int_extf(size_t *count, bool sort);
 
 tms_int_ufunc *tms_get_all_int_ufunc(size_t *count, bool sort);
 
+int tms_remove_var(char *name);
+
+int tms_remove_int_var(char *name);
+
+int tms_remove_ufunc(char *name);
+
+int tms_remove_int_ufunc(char *name);
+
 bool tms_function_exists(char *name);
 
 bool tms_int_function_exists(char *name);
