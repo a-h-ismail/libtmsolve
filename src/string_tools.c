@@ -934,7 +934,7 @@ char *tms_args_to_string(tms_arg_list *args)
             seeker += 2;
         }
     }
-    argstring[total_size] = '\0';
+    argstring[total_size - 1] = '\0';
     return argstring;
 }
 
