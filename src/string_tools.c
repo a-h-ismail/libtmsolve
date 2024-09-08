@@ -1143,10 +1143,11 @@ void tms_print_dot_decimal(int64_t value)
 int tms_find_str_in_array(char *key, const void *array, int arr_len, uint8_t type)
 {
     int i;
+    char **c_array;
     switch (type)
     {
     case TMS_NOFUNC:
-        char **c_array = (char **)array;
+        c_array = (char **)array;
         if (arr_len != -1)
         {
             for (i = 0; i < arr_len; ++i)
