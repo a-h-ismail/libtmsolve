@@ -59,7 +59,7 @@ bool _tms_do_init = true;
 bool _tms_debug = false;
 
 atomic_bool _parser_lock = false, _int_parser_lock = false;
-atomic_bool _ufunc_lock = false;
+atomic_bool _ufunc_lock = false, _int_ufunc_lock = false;
 atomic_bool _variables_lock = false, _int_variables_lock = false;
 atomic_bool _evaluator_lock = false, _int_evaluator_lock = false;
 
@@ -467,6 +467,78 @@ void tms_unlock_evaluator(int variant)
 
     default:
         fputs("libtmsolve: Error while unlocking evaluator: invalid ID...", stderr);
+        exit(1);
+    }
+}
+
+void tms_lock_vars(int variant)
+{
+    switch (variant)
+    {
+    case TMS_V_DOUBLE:
+        while (atomic_flag_test_and_set(&_variables_lock))
+            ;
+        return;
+    case TMS_V_INT64:
+        while (atomic_flag_test_and_set(&_int_variables_lock))
+            ;
+        return;
+
+    default:
+        fputs("libtmsolve: Error while locking variables: invalid ID...", stderr);
+        exit(1);
+    }
+}
+
+void tms_unlock_vars(int variant)
+{
+    switch (variant)
+    {
+    case TMS_V_DOUBLE:
+        atomic_flag_clear(&_variables_lock);
+        return;
+    case TMS_V_INT64:
+        atomic_flag_clear(&_int_variables_lock);
+        return;
+
+    default:
+        fputs("libtmsolve: Error while unlocking variables: invalid ID...", stderr);
+        exit(1);
+    }
+}
+
+void tms_lock_ufuncs(int variant)
+{
+    switch (variant)
+    {
+    case TMS_V_DOUBLE:
+        while (atomic_flag_test_and_set(&_ufunc_lock))
+            ;
+        return;
+    case TMS_V_INT64:
+        while (atomic_flag_test_and_set(&_int_ufunc_lock))
+            ;
+        return;
+
+    default:
+        fputs("libtmsolve: Error while locking user functions: invalid ID...", stderr);
+        exit(1);
+    }
+}
+
+void tms_unlock_ufuncs(int variant)
+{
+    switch (variant)
+    {
+    case TMS_V_DOUBLE:
+        atomic_flag_clear(&_ufunc_lock);
+        return;
+    case TMS_V_INT64:
+        atomic_flag_clear(&_int_ufunc_lock);
+        return;
+
+    default:
+        fputs("libtmsolve: Error while unlocking user functions: invalid ID...", stderr);
         exit(1);
     }
 }
