@@ -63,9 +63,6 @@ atomic_bool _ufunc_lock = false, _int_ufunc_lock = false;
 atomic_bool _variables_lock = false, _int_variables_lock = false;
 atomic_bool _evaluator_lock = false, _int_evaluator_lock = false;
 
-char **tms_g_all_int_func_names;
-int tms_g_all_int_func_count, tms_g_all_int_func_max = 16;
-
 char *tms_g_illegal_names[] = {"ans"};
 const int tms_g_illegal_names_count = array_length(tms_g_illegal_names);
 
@@ -660,7 +657,7 @@ int _tms_set_int_var_unsafe(char *name, int64_t value, bool is_constant)
         return -1;
     }
 
-    if (tms_find_str_in_array(name, tms_g_all_int_func_names, tms_g_all_int_func_count, TMS_NOFUNC) != -1)
+    if (tms_int_function_exists(name))
     {
         tms_save_error(TMS_INT_PARSER, VAR_NAME_MATCHES_FUNCTION, EH_FATAL, NULL, 0);
         return -1;
