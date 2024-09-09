@@ -1,3 +1,7 @@
+/*
+Copyright (C) 2022-2024 Ahmad Ismail
+SPDX-License-Identifier: LGPL-2.1-only
+*/
 #include "tms_math_strs.h"
 
 #ifndef OVERRIDE_DEFAULTS

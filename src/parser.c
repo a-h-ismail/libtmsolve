@@ -20,7 +20,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 #define dup_mexpr tms_dup_mexpr
 
-#include "common.h"
+#include "parser_common.h"
 
 int _tms_set_rcfunction_ptr(char *expr, tms_math_expr *M, int s_i)
 {

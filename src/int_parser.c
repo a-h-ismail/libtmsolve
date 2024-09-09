@@ -39,7 +39,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define MAX_PRIORITY 5
 #define dup_mexpr tms_dup_int_expr
 
-#include "common.h"
+#include "parser_common.h"
 
 int _tms_read_int_operand(tms_int_expr *M, int start, int64_t *result)
 {
