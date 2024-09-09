@@ -173,6 +173,12 @@ int tms_parenthesis_check(char *expr);
 void tms_print_value(double complex value);
 
 /**
+ * @brief Generates the string representation of the specified complex value
+ * @return A malloc'd string with the value.
+ */
+char *tms_complex_to_str(double complex value);
+
+/**
  * @brief Combines adjacent add/subtract symbols into one (ex: ++++ becomes + and +-+ becomes -).
  * @param expr The expression to process.
  * @param a Start of the block to process.

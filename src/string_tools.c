@@ -1244,6 +1244,25 @@ int tms_name_bounds(char *expr, int i, bool is_at_start)
     }
 }
 
+char *tms_complex_to_str(double complex value)
+{
+    // 50 should be enough for 2 values with 15 digit precision (with a few extra bytes)
+    // 1 value needs at most 1 sign + 1 dot + 15 precision + 1 exponent + 1 esign + 3 eprecision = 22
+    char buffer[50];
+    double real = creal(value), imag = cimag(value);
+    int seeker = 0;
+    if (real != 0)
+        seeker = sprintf(buffer, "%.15g", real);
+    if (imag != 0)
+    {
+        // Necessary + sign between real and imaginary part
+        if (imag > 0 && seeker != 0)
+            buffer[seeker++] = '+';
+        sprintf(buffer + seeker, "%.15gi", imag);
+    }
+    return strdup(buffer);
+}
+
 char *tms_get_name(char *expr, int i, bool is_at_start)
 {
     if (is_at_start)
