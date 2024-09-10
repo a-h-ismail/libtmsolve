@@ -973,15 +973,17 @@ char **tms_smode_autocompletion_helper(const char *name)
     // User functions
     size_t count;
     tms_ufunc *ufuncs = hashmap_to_array(ufunc_hmap, &count, true);
-    for (i = 0; i < count; ++i)
-        if (_tms_string_is_prefix(ufuncs[i].name, name))
-            matches[next++] = tms_strcat_dup(ufuncs[i].name, "(");
+    if (ufuncs != NULL)
+        for (i = 0; i < count; ++i)
+            if (_tms_string_is_prefix(ufuncs[i].name, name))
+                matches[next++] = tms_strcat_dup(ufuncs[i].name, "(");
 
     // Variables
     tms_var *vars = hashmap_to_array(var_hmap, &count, true);
-    for (i = 0; i < count; ++i)
-        if (_tms_string_is_prefix(vars[i].name, name))
-            matches[next++] = strdup(vars[i].name);
+    if (vars != NULL)
+        for (i = 0; i < count; ++i)
+            if (_tms_string_is_prefix(vars[i].name, name))
+                matches[next++] = strdup(vars[i].name);
 
     // Readline needs a NULL to know the end of the array
     matches[next++] = NULL;
@@ -1012,15 +1014,17 @@ char **tms_imode_autocompletion_helper(const char *name)
     // User functions
     size_t count;
     tms_ufunc *int_ufuncs = hashmap_to_array(int_ufunc_hmap, &count, true);
-    for (i = 0; i < count; ++i)
-        if (_tms_string_is_prefix(int_ufuncs[i].name, name))
-            matches[next++] = tms_strcat_dup(int_ufuncs[i].name, "(");
+    if (int_ufuncs != NULL)
+        for (i = 0; i < count; ++i)
+            if (_tms_string_is_prefix(int_ufuncs[i].name, name))
+                matches[next++] = tms_strcat_dup(int_ufuncs[i].name, "(");
 
     // Variables
     tms_var *int_vars = hashmap_to_array(int_var_hmap, &count, true);
-    for (i = 0; i < count; ++i)
-        if (_tms_string_is_prefix(int_vars[i].name, name))
-            matches[next++] = strdup(int_vars[i].name);
+    if (int_vars != NULL)
+        for (i = 0; i < count; ++i)
+            if (_tms_string_is_prefix(int_vars[i].name, name))
+                matches[next++] = strdup(int_vars[i].name);
 
     // Readline needs a NULL to know the end of the array
     matches[next++] = NULL;
