@@ -18,8 +18,12 @@ typedef struct tms_arg_list
 {
     /// The number of arguments.
     int count;
-    // Array of C strings, stores the arguments.
+    /// Array of C strings, stores the arguments.
     char **arguments;
+    /// Any extra payload, assumed to be malloc'd with no other malloc'd members.
+    void *payload;
+    /// Size of payload in bytes.
+    size_t payload_size;
 } tms_arg_list;
 
 /// @brief Simple structure to wrap around C's complex type (used for bindings)
@@ -93,10 +97,10 @@ typedef struct tms_op_node
     struct tms_op_node *next;
 } tms_op_node;
 
-#define UNK_LEFT 0b1
-#define UNK_RIGHT 0b10
-#define UNK_LNEG 0b100
-#define UNK_RNEG 0b1000
+#define LABEL_LEFT 0b1
+#define LABEL_RIGHT 0b10
+#define LABEL_LNEG 0b100
+#define LABEL_RNEG 0b1000
 #define SET_LEFT_ID(target, value) target |= (value & 63) << 4
 #define SET_RIGHT_ID(target, value) target |= (value & 63) << 10
 #define GET_LEFT_ID(source) ((source >> 4) & 63)

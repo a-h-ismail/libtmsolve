@@ -539,17 +539,17 @@ static int _tms_set_labels(math_expr *M, int start, op_node *x_node, char rl)
 
     if (rl == 'l')
     {
-        x_node->labels |= UNK_LEFT;
+        x_node->labels |= LABEL_LEFT;
         SET_LEFT_ID(x_node->labels, id);
         if (is_negative)
-            x_node->labels |= UNK_LNEG;
+            x_node->labels |= LABEL_LNEG;
     }
     else if (rl == 'r')
     {
-        x_node->labels |= UNK_RIGHT;
+        x_node->labels |= LABEL_RIGHT;
         SET_RIGHT_ID(x_node->labels, id);
         if (is_negative)
-            x_node->labels |= UNK_RNEG;
+            x_node->labels |= LABEL_RNEG;
     }
     else
     {
@@ -787,18 +787,18 @@ static void _tms_generate_labels_refs(math_expr *M)
                 x_data = realloc(x_data, buffer_size * sizeof(tms_labeled_operand));
             }
             // Case of label left operand
-            if (i_node->labels & UNK_LEFT)
+            if (i_node->labels & LABEL_LEFT)
             {
-                x_data[i].is_negative = i_node->labels & UNK_LNEG;
+                x_data[i].is_negative = i_node->labels & LABEL_LNEG;
                 x_data[i].ptr = &(i_node->left_operand);
                 x_data[i].id = GET_LEFT_ID(i_node->labels);
                 i_node->left_operand = 0;
                 ++i;
             }
             // Case of label right operand
-            if (i_node->labels & UNK_RIGHT)
+            if (i_node->labels & LABEL_RIGHT)
             {
-                x_data[i].is_negative = i_node->labels & UNK_RNEG;
+                x_data[i].is_negative = i_node->labels & LABEL_RNEG;
                 x_data[i].ptr = &(i_node->right_operand);
                 x_data[i].id = GET_RIGHT_ID(i_node->labels);
                 i_node->right_operand = 0;

@@ -867,6 +867,8 @@ tms_arg_list *tms_get_args(char *string)
 {
     tms_arg_list *A = malloc(sizeof(tms_arg_list));
     A->count = 0;
+    A->payload = NULL;
+    A->payload_size = 0;
 
     int length = strlen(string), max_args = 10;
     // The start/end of each argument.
@@ -945,6 +947,16 @@ tms_arg_list *tms_dup_arg_list(tms_arg_list *L)
 
     tms_arg_list *new = malloc(sizeof(tms_arg_list));
     new->count = L->count;
+
+    if (L->payload_size > 0)
+    {
+        new->payload = malloc(L->payload_size);
+        memcpy(new->payload, L->payload, L->payload_size);
+    }
+    else
+        new->payload = NULL;
+    new->payload_size = L->payload_size;
+
     new->arguments = malloc(new->count * sizeof(char *));
     for (int i = 0; i < new->count; ++i)
         new->arguments[i] = strdup(L->arguments[i]);
