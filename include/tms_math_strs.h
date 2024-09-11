@@ -7,6 +7,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <complex.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 /**
  * @file
