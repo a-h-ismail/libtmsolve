@@ -198,7 +198,7 @@ double complex tms_derivative(tms_arg_list *L)
     }
     // Compile the expression to the desired structure
     tms_arg_list *tmp = tms_get_args("x");
-    M = _tms_parse_expr_unsafe(L->arguments[0], ENABLE_LABELS, tmp);
+    M = _tms_parse_expr_unsafe(L->arguments[0], 0, tmp);
 
     if (M == NULL)
     {
@@ -272,7 +272,7 @@ double complex tms_integrate(tms_arg_list *L)
 
     // Compile the expression to the desired structure
     tms_arg_list *tmp = tms_get_args("x");
-    M = _tms_parse_expr_unsafe(L->arguments[2], ENABLE_LABELS, tmp);
+    M = _tms_parse_expr_unsafe(L->arguments[2], 0, tmp);
 
     if (M == NULL)
         return NAN;

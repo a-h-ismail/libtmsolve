@@ -161,7 +161,8 @@ int _tms_set_int_function_ptr(char *expr, tms_int_expr *M, int s_i)
 
 tms_int_expr *tms_parse_int_expr(char *expr, int options, tms_arg_list *labels)
 {
-    tms_lock_parser(TMS_INT_PARSER);
+    if (options & NO_LOCK != 0)
+        tms_lock_parser(TMS_INT_PARSER);
 
     if (tms_get_error_count(TMS_INT_PARSER, EH_ALL_ERRORS) != 0)
     {
@@ -173,7 +174,8 @@ tms_int_expr *tms_parse_int_expr(char *expr, int options, tms_arg_list *labels)
     if (M == NULL)
         tms_print_errors(TMS_INT_PARSER);
 
-    tms_unlock_parser(TMS_INT_PARSER);
+    if (options & NO_LOCK != 0)
+        tms_unlock_parser(TMS_INT_PARSER);
     return M;
 }
 
@@ -184,7 +186,7 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
     // Current subexpression index
     int s_i;
 
-    bool enable_labels = (options & ENABLE_LABELS) && 1;
+    bool enable_labels = (labels != NULL);
 
     // Check for empty input
     if (expr[0] == '\0')

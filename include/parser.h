@@ -34,9 +34,6 @@ int _tms_set_rcfunction_ptr(char *expr, tms_math_expr *M, int s_index);
  */
 void tms_convert_real_to_complex(tms_math_expr *M);
 
-#define ENABLE_LABELS 1
-#define ENABLE_CMPLX 2
-
 /**
  * @brief Parses a math expression into a structure.
  * @note This function automatically prints errors to stderr if any.

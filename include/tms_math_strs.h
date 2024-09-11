@@ -165,6 +165,11 @@ enum tms_variable_types
     TMS_V_INT64
 };
 
+// Parser options.
+#define NO_LOCK 1
+#define ENABLE_CMPLX 2
+#define NO_PRINT 4
+
 /// @brief Holds the metadata of a subexpression.
 typedef struct tms_math_subexpr
 {

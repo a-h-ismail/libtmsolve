@@ -128,7 +128,8 @@ int _tms_get_operand_value(tms_math_expr *M, int start, double complex *out)
 
 tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *labels)
 {
-    tms_lock_parser(TMS_PARSER);
+    if (options & NO_LOCK != 0)
+        tms_lock_parser(TMS_PARSER);
 
     if (tms_get_error_count(TMS_PARSER, EH_ALL_ERRORS) != 0)
     {
@@ -140,7 +141,8 @@ tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *labels)
     if (M == NULL)
         tms_print_errors(TMS_PARSER);
 
-    tms_unlock_parser(TMS_PARSER);
+    if (options & NO_LOCK != 0)
+        tms_unlock_parser(TMS_PARSER);
     return M;
 }
 
@@ -151,7 +153,7 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *lab
     // Used for indexing of subexpressions
     int s_i;
 
-    bool enable_labels = (options & ENABLE_LABELS) && 1;
+    bool enable_labels = (labels != NULL);
     bool enable_complex = (options & ENABLE_CMPLX) && 1;
 
     if (strlen(expr) > __INT_MAX__)
@@ -259,7 +261,12 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *lab
 
     // Set labels metadata
     if (enable_labels)
+    {
         _tms_generate_labels_refs(M);
+        // Set the values for labeled operands if available
+        if (M->label_names->payload != NULL)
+            tms_set_labels_values(M, M->label_names->payload);
+    }
 
     return M;
 }

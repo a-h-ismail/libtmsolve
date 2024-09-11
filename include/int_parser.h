@@ -11,8 +11,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "tms_math_strs.h"
 #endif
 
-#define ENABLE_LABELS 1
-
 int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op_start, int s_index, char operand);
 
 /**
