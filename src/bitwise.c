@@ -121,7 +121,7 @@ int _tms_rotate_circular(tms_arg_list *args, char direction, int64_t *result)
     }
 }
 
-int tms_int_rand(tms_arg_list *args, int64_t *result)
+int tms_int_rand(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     if (_tms_validate_args_count_range(args->count, 0, 2, TMS_INT_EVALUATOR) == false)
         return -1;
@@ -162,17 +162,17 @@ int tms_int_rand(tms_arg_list *args, int64_t *result)
     return -1;
 }
 
-int tms_rr(tms_arg_list *args, int64_t *result)
+int tms_rr(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     return _tms_rotate_circular(args, 'r', result);
 }
 
-int tms_rl(tms_arg_list *args, int64_t *result)
+int tms_rl(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     return _tms_rotate_circular(args, 'l', result);
 }
 
-int tms_sr(tms_arg_list *args, int64_t *result)
+int tms_sr(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     int64_t value, shift;
     if (get_two_operands(args, &value, &shift) == -1)
@@ -196,7 +196,7 @@ int tms_sr(tms_arg_list *args, int64_t *result)
     }
 }
 
-int tms_sra(tms_arg_list *args, int64_t *result)
+int tms_sra(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     int64_t value, shift;
     if (get_two_operands(args, &value, &shift) == -1)
@@ -220,7 +220,7 @@ int tms_sra(tms_arg_list *args, int64_t *result)
     }
 }
 
-int tms_sl(tms_arg_list *args, int64_t *result)
+int tms_sl(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     int64_t value, shift;
     if (get_two_operands(args, &value, &shift) == -1)
@@ -243,7 +243,7 @@ int tms_sl(tms_arg_list *args, int64_t *result)
     }
 }
 
-int tms_nor(tms_arg_list *args, int64_t *result)
+int tms_nor(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     int64_t op1, op2;
     if (get_two_operands(args, &op1, &op2) == -1)
@@ -255,7 +255,7 @@ int tms_nor(tms_arg_list *args, int64_t *result)
     }
 }
 
-int tms_xor(tms_arg_list *args, int64_t *result)
+int tms_xor(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     int64_t op1, op2;
     if (get_two_operands(args, &op1, &op2) == -1)
@@ -267,7 +267,7 @@ int tms_xor(tms_arg_list *args, int64_t *result)
     }
 }
 
-int tms_nand(tms_arg_list *args, int64_t *result)
+int tms_nand(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     int64_t op1, op2;
     if (get_two_operands(args, &op1, &op2) == -1)
@@ -279,7 +279,7 @@ int tms_nand(tms_arg_list *args, int64_t *result)
     }
 }
 
-int tms_and(tms_arg_list *args, int64_t *result)
+int tms_and(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     int64_t op1, op2;
     if (get_two_operands(args, &op1, &op2) == -1)
@@ -291,7 +291,7 @@ int tms_and(tms_arg_list *args, int64_t *result)
     }
 }
 
-int tms_or(tms_arg_list *args, int64_t *result)
+int tms_or(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     int64_t op1, op2;
     if (get_two_operands(args, &op1, &op2) == -1)
@@ -332,7 +332,7 @@ int _tms_calculate_dot_decimal(tms_arg_list *L, int64_t *result)
     return 0;
 }
 
-int tms_dotted(tms_arg_list *args, int64_t *result)
+int tms_dotted(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     if (_tms_validate_args_count(1, args->count, TMS_INT_EVALUATOR) == false)
         return -1;
@@ -353,7 +353,7 @@ int tms_dotted(tms_arg_list *args, int64_t *result)
     return status;
 }
 
-int tms_mask_range(tms_arg_list *args, int64_t *result)
+int tms_mask_range(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     if (_tms_validate_args_count(2, args->count, TMS_INT_EVALUATOR) == false)
         return -1;
@@ -394,7 +394,7 @@ int tms_mask_range(tms_arg_list *args, int64_t *result)
     return 0;
 }
 
-int tms_ipv4(tms_arg_list *args, int64_t *result)
+int tms_ipv4(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     if (_tms_validate_args_count(1, args->count, TMS_INT_EVALUATOR) == false)
         return -1;

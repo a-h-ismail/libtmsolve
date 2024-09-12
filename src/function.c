@@ -17,28 +17,29 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <string.h>
 #include <time.h>
 
-double complex tms_avg(tms_arg_list *args)
+int tms_avg(tms_arg_list *args, tms_arg_list *labels, double complex *result)
 {
     if (_tms_validate_args_count_range(args->count, 1, -1, TMS_EVALUATOR) == false)
-        return NAN;
+        return -1;
 
     double complex tmp, total = 0;
     for (int i = 0; i < args->count; ++i)
     {
         tmp = _tms_solve_e_unsafe(args->arguments[i], true);
         if (isnan(creal(tmp)))
-            return NAN;
+            return -1;
 
         total += tmp;
     }
 
-    return total / args->count;
+    *result = total / args->count;
+    return 0;
 }
 
-double complex tms_min(tms_arg_list *args)
+int tms_min(tms_arg_list *args, tms_arg_list *labels, double complex *result)
 {
     if (_tms_validate_args_count_range(args->count, 1, -1, TMS_EVALUATOR) == false)
-        return NAN;
+        return -1;
 
     // Set min to the largest possible value so it would always be overwritten in the first iteration
     double complex min = INFINITY, tmp;
@@ -47,25 +48,26 @@ double complex tms_min(tms_arg_list *args)
     {
         tmp = _tms_solve_e_unsafe(args->arguments[i], true);
         if (isnan(creal(tmp)))
-            return NAN;
+            return -1;
 
         if (cimag(tmp) != 0)
         {
             tms_save_error(TMS_EVALUATOR, ILLEGAL_COMPLEX_OP, EH_FATAL, NULL, 0);
-            return NAN;
+            return -1;
         }
 
         if (creal(min) > creal(tmp))
             min = tmp;
     }
 
-    return min;
+    *result = min;
+    return 0;
 }
 
-double complex tms_max(tms_arg_list *args)
+int tms_max(tms_arg_list *args, tms_arg_list *labels, double complex *result)
 {
     if (_tms_validate_args_count_range(args->count, 1, -1, TMS_EVALUATOR) == false)
-        return NAN;
+        return -1;
 
     // Set max to the smallest possible value so it would always be overwritten in the first iteration
     double complex max = -INFINITY, tmp;
@@ -74,53 +76,55 @@ double complex tms_max(tms_arg_list *args)
     {
         tmp = _tms_solve_e_unsafe(args->arguments[i], true);
         if (isnan(creal(tmp)))
-            return NAN;
+            return -1;
 
         if (cimag(tmp) != 0)
         {
             tms_save_error(TMS_EVALUATOR, ILLEGAL_COMPLEX_OP, EH_FATAL, NULL, 0);
-            return NAN;
+            return -1;
         }
 
         if (creal(max) < creal(tmp))
             max = tmp;
     }
 
-    return max;
+    *result = max;
+    return 0;
 }
 
-double complex tms_logn(tms_arg_list *args)
+int tms_logn(tms_arg_list *args, tms_arg_list *labels, double complex *result)
 {
     if (_tms_validate_args_count(2, args->count, TMS_EVALUATOR) == false)
-        return NAN;
+        return -1;
     double complex value = _tms_solve_e_unsafe(args->arguments[0], true);
     if (isnan(creal(value)))
-        return NAN;
+        return -1;
 
     double complex base = _tms_solve_e_unsafe(args->arguments[1], true);
     if (isnan(creal(base)))
-        return NAN;
+        return -1;
     if (!tms_is_real(base))
     {
         tms_save_error(TMS_EVALUATOR, NO_COMPLEX_LOG_BASE, EH_FATAL, NULL, 0);
-        return NAN;
+        return -1;
     }
     else
-        return tms_cln(value) / log(base);
+        *result = tms_cln(value) / log(base);
+    return 0;
 }
 
-double complex tms_int(tms_arg_list *args)
+int tms_int(tms_arg_list *args, tms_arg_list *labels, double complex *result)
 {
     double real, imag;
-    double complex result;
+    double complex tmp;
 
     if (_tms_validate_args_count(1, args->count, TMS_EVALUATOR) == false)
-        return NAN;
-    result = _tms_solve_e_unsafe(args->arguments[0], true);
-    real = creal(result);
-    imag = cimag(result);
+        return -1;
+    tmp = _tms_solve_e_unsafe(args->arguments[0], true);
+    real = creal(tmp);
+    imag = cimag(tmp);
     if (isnan(real))
-        return NAN;
+        return -1;
 
     if (real > 0)
         real = floor(real);
@@ -132,21 +136,23 @@ double complex tms_int(tms_arg_list *args)
     else
         imag = ceil(imag);
 
-    return real + I * imag;
+    *result = real + I * imag;
+    return 0;
 }
 
-double complex tms_rand(tms_arg_list *args)
+int tms_rand(tms_arg_list *args, tms_arg_list *labels, double complex *result)
 {
     if (_tms_validate_args_count(0, args->count, TMS_EVALUATOR) == false)
-        return NAN;
+        return -1;
 
-    return tms_random_weight();
+    *result = tms_random_weight();
+    return 0;
 }
 
-double complex tms_base_n(tms_arg_list *args, int8_t base)
+int tms_base_n(tms_arg_list *args, int8_t base, double complex *result)
 {
     if (_tms_validate_args_count(1, args->count, TMS_EVALUATOR) == false)
-        return NAN;
+        return -1;
 
     double complex value;
     bool is_complex = false;
@@ -159,32 +165,33 @@ double complex tms_base_n(tms_arg_list *args, int8_t base)
     value = _tms_read_value_simple(args->arguments[0], base);
     if (is_complex)
         value *= I;
-    return value;
+    *result = value;
+    return 0;
 }
 
-double complex tms_hex(tms_arg_list *L)
+int tms_hex(tms_arg_list *L, tms_arg_list *labels, double complex *result)
 {
-    return tms_base_n(L, 16);
+    return tms_base_n(L, 16, result);
 }
 
-double complex tms_oct(tms_arg_list *L)
+int tms_oct(tms_arg_list *L, tms_arg_list *labels, double complex *result)
 {
-    return tms_base_n(L, 8);
+    return tms_base_n(L, 8, result);
 }
 
-double complex tms_bin(tms_arg_list *L)
+int tms_bin(tms_arg_list *L, tms_arg_list *labels, double complex *result)
 {
-    return tms_base_n(L, 2);
+    return tms_base_n(L, 2, result);
 }
 
 // Function that calculates the derivative of f(x) for a specific value of x
-double complex tms_derivative(tms_arg_list *L)
+int tms_derivative(tms_arg_list *L, tms_arg_list *labels, double complex *result)
 {
     tms_math_expr *M;
     double epsilon = 1e-9;
 
     if (_tms_validate_args_count(2, L->count, TMS_EVALUATOR) == false)
-        return NAN;
+        return -1;
 
     double complex x, fx1, fx2;
     double f_prime;
@@ -194,7 +201,7 @@ double complex tms_derivative(tms_arg_list *L)
     {
         tms_clear_errors(TMS_PARSER);
         tms_clear_errors(TMS_EVALUATOR);
-        return NAN;
+        return -1;
     }
     // Compile the expression to the desired structure
     tms_arg_list *tmp = tms_get_args("x");
@@ -203,14 +210,14 @@ double complex tms_derivative(tms_arg_list *L)
     if (M == NULL)
     {
         tms_clear_errors(TMS_PARSER);
-        return NAN;
+        return -1;
     }
 
     if (!tms_is_deterministic(M))
     {
         tms_save_error(TMS_EVALUATOR, EXPR_NOT_DETERMINISTIC, EH_FATAL, NULL, 0);
         tms_delete_math_expr(M);
-        return NAN;
+        return -1;
     }
 
     // Scale epsilon with the dimensions of the required value.
@@ -232,20 +239,21 @@ double complex tms_derivative(tms_arg_list *L)
         tms_save_error(TMS_EVALUATOR, NOT_DERIVABLE, EH_FATAL, NULL, 0);
 
     tms_delete_math_expr(M);
-    return f_prime;
+    *result = f_prime;
+    return 0;
 }
 
-double complex tms_integrate(tms_arg_list *L)
+int tms_integrate(tms_arg_list *L, tms_arg_list *labels, double complex *result)
 {
     tms_math_expr *M;
 
     if (_tms_validate_args_count(3, L->count, TMS_EVALUATOR) == false)
-        return NAN;
+        return -1;
 
     int n;
     bool flip_result = false;
     double complex lower_bound, upper_bound, an;
-    double result, rounds, delta, fn;
+    double integration_ans, rounds, delta, fn;
 
     lower_bound = _tms_solve_e_unsafe(L->arguments[0], false);
     upper_bound = _tms_solve_e_unsafe(L->arguments[1], false);
@@ -253,11 +261,14 @@ double complex tms_integrate(tms_arg_list *L)
     {
         tms_clear_errors(TMS_PARSER);
         tms_clear_errors(TMS_EVALUATOR);
-        return NAN;
+        return -1;
     }
 
     if (lower_bound == upper_bound)
+    {
+        *result = 0;
         return 0;
+    }
 
     delta = upper_bound - lower_bound;
     // If delta is negative, flip lower and upper bounds then multiply the final answer by -1
@@ -275,13 +286,13 @@ double complex tms_integrate(tms_arg_list *L)
     M = _tms_parse_expr_unsafe(L->arguments[2], 0, tmp);
 
     if (M == NULL)
-        return NAN;
+        return -1;
 
     if (!tms_is_deterministic(M))
     {
         tms_save_error(TMS_EVALUATOR, EXPR_NOT_DETERMINISTIC, EH_FATAL, NULL, 0);
         tms_delete_math_expr(M);
-        return NAN;
+        return -1;
     }
 
     // Calculating the number of rounds
@@ -293,18 +304,18 @@ double complex tms_integrate(tms_arg_list *L)
     // 3h/8[(y0 + yn) + 3(y1 + y2 + y4 + y5 + … + yn-1) + 2(y3 + y6 + y9 + … + yn-3)]
     // First step: y0 + yn
     tms_set_labels_values(M, &lower_bound);
-    result = _tms_evaluate_unsafe(M);
+    integration_ans = _tms_evaluate_unsafe(M);
     lower_bound += delta;
     tms_set_labels_values(M, &lower_bound);
     lower_bound -= delta;
-    result += _tms_evaluate_unsafe(M);
+    integration_ans += _tms_evaluate_unsafe(M);
     // Clear errors collected from the previous evaluator calls
     tms_clear_errors(TMS_EVALUATOR);
-    if (isnan(result))
+    if (isnan(integration_ans))
     {
         tms_save_error(TMS_EVALUATOR, INTEGRAl_UNDEFINED, EH_FATAL, NULL, 0);
         tms_delete_math_expr(M);
-        return NAN;
+        return -1;
     }
 
     double part1 = 0, part2 = 0;
@@ -322,7 +333,7 @@ double complex tms_integrate(tms_arg_list *L)
             {
                 tms_save_error(TMS_EVALUATOR, INTEGRAl_UNDEFINED, EH_FATAL, NULL, 0);
                 tms_delete_math_expr(M);
-                return NAN;
+                return -1;
             }
             part2 += fn;
             i = 1;
@@ -336,18 +347,19 @@ double complex tms_integrate(tms_arg_list *L)
             {
                 tms_save_error(TMS_EVALUATOR, INTEGRAl_UNDEFINED, EH_FATAL, NULL, 0);
                 tms_delete_math_expr(M);
-                return NAN;
+                return -1;
             }
             part1 += fn;
             ++i;
         }
     }
-    result += 3 * part1 + 2 * part2;
+    integration_ans += 3 * part1 + 2 * part2;
 
-    result *= 0.375 * (delta / rounds);
+    integration_ans *= 0.375 * (delta / rounds);
     tms_delete_math_expr(M);
     if (flip_result)
-        result = -result;
+        integration_ans = -integration_ans;
 
-    return result;
+    *result = integration_ans;
+    return 0;
 }

@@ -44,7 +44,7 @@ typedef struct tms_rc_func
 typedef struct tms_extf
 {
     char *name;
-    double complex (*ptr)(tms_arg_list *);
+    int (*ptr)(tms_arg_list *, tms_arg_list *, double complex *);
 } tms_extf;
 
 typedef struct tms_int_func
@@ -56,7 +56,7 @@ typedef struct tms_int_func
 typedef struct tms_int_extf
 {
     char *name;
-    int (*ptr)(tms_arg_list *, int64_t *);
+    int (*ptr)(tms_arg_list *, tms_arg_list *, int64_t *);
 } tms_int_extf;
 
 /// @brief Runtime variable metadata of tmsolve.
@@ -136,14 +136,14 @@ typedef struct tms_int_ufunc
 typedef union tms_mfunc_ptrs {
     double (*real)(double);
     double complex (*cmplx)(double complex);
-    double complex (*extended)(tms_arg_list *);
+    int (*extended)(tms_arg_list *, tms_arg_list *, double complex *result);
     char *user;
 } fptr;
 
 /// @brief Union to store int function pointers
 typedef union tms_int_functions {
     int (*simple)(int64_t, int64_t *);
-    int (*extended)(tms_arg_list *, int64_t *);
+    int (*extended)(tms_arg_list *, tms_arg_list *, int64_t *);
     char *user;
 } int_fptr;
 
