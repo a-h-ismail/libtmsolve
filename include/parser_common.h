@@ -55,7 +55,7 @@ math_expr *init_math_expr(char *expr)
 
     M->labeled_operands_count = 0;
     M->all_labeled_ops = NULL;
-    M->label_names = NULL;
+    M->labels = NULL;
     M->S = NULL;
     M->subexpr_count = 0;
     M->expr = expr;
@@ -521,7 +521,7 @@ static int _tms_set_labels(math_expr *M, int start, op_node *x_node, char rl)
 
     char *name = tms_get_name(expr, start, true);
 
-    int id = tms_find_str_in_array(name, M->label_names->arguments, M->label_names->count, TMS_NOFUNC);
+    int id = tms_find_str_in_array(name, M->labels->arguments, M->labels->count, TMS_NOFUNC);
     free(name);
     if (id == -1)
         return -1;
@@ -693,7 +693,7 @@ math_expr *dup_mexpr(math_expr *M)
     // Copy the math expression
     *NM = *M;
     NM->expr = strdup(M->expr);
-    NM->label_names = tms_dup_arg_list(M->label_names);
+    NM->labels = tms_dup_arg_list(M->labels);
     NM->S = malloc(NM->subexpr_count * sizeof(math_subexpr));
     // Copy subexpressions
     memcpy(NM->S, M->S, M->subexpr_count * sizeof(math_subexpr));
@@ -726,6 +726,8 @@ math_expr *dup_mexpr(math_expr *M)
             // An extended/user function subexpr
             NS->result = malloc(sizeof(operand_type *));
             NS->L = tms_dup_arg_list(S->L);
+            if (S->func_type == F_USER)
+                NS->func.user = strdup(S->func.user);
         }
     }
 
@@ -840,7 +842,7 @@ void delete_math_expr_members(math_expr *M)
     free(S);
     free(M->all_labeled_ops);
     free(M->expr);
-    tms_free_arg_list(M->label_names);
+    tms_free_arg_list(M->labels);
 }
 
 void delete_math_expr(math_expr *M)
