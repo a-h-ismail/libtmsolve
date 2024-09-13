@@ -278,7 +278,7 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                 _tms_debug = false;
 
                 // Call the extended function using its pointer
-                int status = (*(S[i].func.extended))(S[i].L, M->labels->payload, *(S[i].result));
+                int status = (*(S[i].func.extended))(S[i].L, M->labels, *(S[i].result));
 
                 _tms_debug = _debug_state;
 
@@ -316,11 +316,11 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                 }
                 tms_int_expr *F = tms_dup_int_expr(userf->F);
                 F->labels->payload = arguments;
+                F->labels->payload_size = S[i].L->count * sizeof(int64_t);
                 // Set the label values (passed as arguments earlier)
                 tms_set_int_labels_values(F, arguments);
                 _tms_int_evaluate_unsafe(F, *(S[i].result));
                 tms_delete_int_expr(F);
-                free(arguments);
             }
             **(S[i].result) &= tms_int_mask;
         }
@@ -422,7 +422,8 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
 
 int tms_int_evaluate(tms_int_expr *M, int64_t *result, int options)
 {
-    tms_lock_evaluator(TMS_INT_EVALUATOR);
+    if ((options & NO_LOCK) != 1)
+        tms_lock_evaluator(TMS_INT_EVALUATOR);
 
     if (tms_get_error_count(TMS_INT_EVALUATOR | TMS_INT_PARSER, EH_ALL_ERRORS) != 0)
     {
@@ -431,10 +432,11 @@ int tms_int_evaluate(tms_int_expr *M, int64_t *result, int options)
     }
 
     int exit_status = _tms_int_evaluate_unsafe(M, result);
-    if (exit_status != 0)
+    if (exit_status != 0 && (options & NO_PRINT) == 0)
         tms_print_errors(TMS_INT_EVALUATOR | TMS_INT_PARSER);
 
-    tms_unlock_evaluator(TMS_INT_EVALUATOR);
+    if ((options & NO_LOCK) != 1)
+        tms_unlock_evaluator(TMS_INT_EVALUATOR);
     return exit_status;
 }
 
