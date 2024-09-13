@@ -133,6 +133,11 @@ int main(int argc, char **argv)
         exit(1);
     }
 
+    tms_set_ufunction("f", "x,y,z", "(x^y)%z");
+    tms_set_ufunction("g", "p", "f(p,2*p,10)+max(10,p)");
+    tms_set_int_ufunction("f", "x,y,z", "(x^y)&z");
+    tms_set_int_ufunction("g", "n", "f(n,2*n,1+3*n)+18/7");
+
     // I won't make lines longer than that to test
     char buffer[1000];
 
