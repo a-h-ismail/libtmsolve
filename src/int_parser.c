@@ -161,7 +161,7 @@ int _tms_set_int_function_ptr(char *expr, tms_int_expr *M, int s_i)
 
 tms_int_expr *tms_parse_int_expr(char *expr, int options, tms_arg_list *labels)
 {
-    if (options & NO_LOCK != 0)
+    if ((options & NO_LOCK) != 1)
         tms_lock_parser(TMS_INT_PARSER);
 
     if (tms_get_error_count(TMS_INT_PARSER, EH_ALL_ERRORS) != 0)
@@ -174,7 +174,7 @@ tms_int_expr *tms_parse_int_expr(char *expr, int options, tms_arg_list *labels)
     if (M == NULL)
         tms_print_errors(TMS_INT_PARSER);
 
-    if (options & NO_LOCK != 0)
+    if ((options & NO_LOCK) != 1)
         tms_unlock_parser(TMS_INT_PARSER);
     return M;
 }
@@ -213,7 +213,7 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
         return NULL;
 
     // Add the labels to the math expression if necessary
-    M->label_names = (enable_labels ? labels : NULL);
+    M->labels = (enable_labels ? labels : NULL);
 
     tms_int_subexpr *S = M->S;
     s_count = M->subexpr_count;
@@ -287,9 +287,13 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
         _tms_set_result_pointers(M, s_i);
     }
 
-    // Set labels metadata
     if (enable_labels)
+    {
         _tms_generate_labels_refs(M);
+        // If we have values, set them
+        if (M->labels->payload != NULL)
+            tms_set_int_labels_values(M, M->labels->payload);
+    }
 
     return M;
 }

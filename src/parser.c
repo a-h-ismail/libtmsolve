@@ -128,7 +128,7 @@ int _tms_get_operand_value(tms_math_expr *M, int start, double complex *out)
 
 tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *labels)
 {
-    if (options & NO_LOCK != 0)
+    if ((options & NO_LOCK) != 1)
         tms_lock_parser(TMS_PARSER);
 
     if (tms_get_error_count(TMS_PARSER, EH_ALL_ERRORS) != 0)
@@ -141,7 +141,7 @@ tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *labels)
     if (M == NULL)
         tms_print_errors(TMS_PARSER);
 
-    if (options & NO_LOCK != 0)
+    if ((options & NO_LOCK) != 1)
         tms_unlock_parser(TMS_PARSER);
     return M;
 }
@@ -182,7 +182,7 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *lab
         M->enable_complex = enable_complex;
 
     // Add the labels to the math expression if necessary
-    M->label_names = (enable_labels ? labels : NULL);
+    M->labels = (enable_labels ? labels : NULL);
 
     // After calling expression initializer, no need to manually free the "expr" string
     // It is now a part of the math_expr struct and will be freed with it
@@ -264,8 +264,8 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *lab
     {
         _tms_generate_labels_refs(M);
         // Set the values for labeled operands if available
-        if (M->label_names->payload != NULL)
-            tms_set_labels_values(M, M->label_names->payload);
+        if (M->labels->payload != NULL)
+            tms_set_labels_values(M, M->labels->payload);
     }
 
     return M;
