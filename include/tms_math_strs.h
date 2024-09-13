@@ -229,8 +229,8 @@ typedef struct tms_math_expr
     /// Array of labeled operands metadata.
     tms_labeled_operand *all_labeled_ops;
 
-    /// List of label names
-    tms_arg_list *label_names;
+    /// List of labels (and optional values)
+    tms_arg_list *labels;
 
     /// Answer of the expression.
     double complex answer;
@@ -321,7 +321,8 @@ typedef struct tms_int_expr
     /// Array of labeled operands metadata.
     tms_labeled_operand *all_labeled_ops;
 
-    tms_arg_list *label_names;
+    /// List of labels (and optional values)
+    tms_arg_list *labels;
 
     /// Answer of the expression.
     int64_t answer;
