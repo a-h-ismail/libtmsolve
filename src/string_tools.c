@@ -970,6 +970,7 @@ void tms_free_arg_list(tms_arg_list *list)
         return;
     for (int i = 0; i < list->count; ++i)
         free(list->arguments[i]);
+    free(list->payload);
     free(list->arguments);
     free(list);
 }
