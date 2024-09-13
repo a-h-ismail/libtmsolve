@@ -29,11 +29,11 @@ int get_two_operands(tms_arg_list *args, int64_t *op1, int64_t *op2)
         return -1;
 
     int status;
-    status = _tms_int_solve_unsafe(args->arguments[0], op1);
+    status = tms_int_solve_e(args->arguments[0], op1, NO_LOCK, NULL);
     if (status != 0)
         return -1;
 
-    status = _tms_int_solve_unsafe(args->arguments[1], op2);
+    status = tms_int_solve_e(args->arguments[1], op2, NO_LOCK, NULL);
     if (status != 0)
         return -1;
     else
@@ -144,8 +144,8 @@ int tms_int_rand(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
     else if (args->count == 2)
     {
         int64_t min, max;
-        if (_tms_int_solve_unsafe(args->arguments[0], &min) != 0 ||
-            _tms_int_solve_unsafe(args->arguments[1], &max) != 0)
+        if (tms_int_solve_e(args->arguments[0], &min, NO_LOCK, labels) != 0 ||
+            tms_int_solve_e(args->arguments[1], &max, NO_LOCK, labels) != 0)
             return -1;
 
         min = tms_sign_extend(min);
@@ -360,13 +360,13 @@ int tms_mask_range(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 
     int64_t start, end;
     int status;
-    status = _tms_int_solve_unsafe(args->arguments[0], &start);
+    status = tms_int_solve_e(args->arguments[0], &start, NO_LOCK, labels);
     if (status == -1)
     {
         tms_clear_errors(TMS_INT_EVALUATOR | TMS_INT_PARSER);
         return -1;
     }
-    status = _tms_int_solve_unsafe(args->arguments[1], &end);
+    status = tms_int_solve_e(args->arguments[1], &end, NO_LOCK, labels);
     if (status == -1)
     {
         tms_clear_errors(TMS_INT_EVALUATOR | TMS_INT_PARSER);

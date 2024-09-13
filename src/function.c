@@ -25,7 +25,7 @@ int tms_avg(tms_arg_list *args, tms_arg_list *labels, double complex *result)
     double complex tmp, total = 0;
     for (int i = 0; i < args->count; ++i)
     {
-        tmp = _tms_solve_e_unsafe(args->arguments[i], true);
+        tmp = tms_solve_e(args->arguments[i], NO_LOCK | ENABLE_CMPLX, labels);
         if (isnan(creal(tmp)))
             return -1;
 
@@ -46,7 +46,7 @@ int tms_min(tms_arg_list *args, tms_arg_list *labels, double complex *result)
 
     for (int i = 0; i < args->count; ++i)
     {
-        tmp = _tms_solve_e_unsafe(args->arguments[i], true);
+        tmp = tms_solve_e(args->arguments[i], NO_LOCK | ENABLE_CMPLX, labels);
         if (isnan(creal(tmp)))
             return -1;
 
@@ -74,7 +74,7 @@ int tms_max(tms_arg_list *args, tms_arg_list *labels, double complex *result)
 
     for (int i = 0; i < args->count; ++i)
     {
-        tmp = _tms_solve_e_unsafe(args->arguments[i], true);
+        tmp = tms_solve_e(args->arguments[i], NO_LOCK | ENABLE_CMPLX, labels);
         if (isnan(creal(tmp)))
             return -1;
 
@@ -96,11 +96,11 @@ int tms_logn(tms_arg_list *args, tms_arg_list *labels, double complex *result)
 {
     if (_tms_validate_args_count(2, args->count, TMS_EVALUATOR) == false)
         return -1;
-    double complex value = _tms_solve_e_unsafe(args->arguments[0], true);
+    double complex value = tms_solve_e(args->arguments[0], NO_LOCK | ENABLE_CMPLX, labels);
     if (isnan(creal(value)))
         return -1;
 
-    double complex base = _tms_solve_e_unsafe(args->arguments[1], true);
+    double complex base = tms_solve_e(args->arguments[1], NO_LOCK | ENABLE_CMPLX, labels);
     if (isnan(creal(base)))
         return -1;
     if (!tms_is_real(base))
@@ -120,7 +120,7 @@ int tms_int(tms_arg_list *args, tms_arg_list *labels, double complex *result)
 
     if (_tms_validate_args_count(1, args->count, TMS_EVALUATOR) == false)
         return -1;
-    tmp = _tms_solve_e_unsafe(args->arguments[0], true);
+    tmp = tms_solve_e(args->arguments[0], NO_LOCK | ENABLE_CMPLX, labels);
     real = creal(tmp);
     imag = cimag(tmp);
     if (isnan(real))
@@ -196,7 +196,7 @@ int tms_derivative(tms_arg_list *L, tms_arg_list *labels, double complex *result
     double complex x, fx1, fx2;
     double f_prime;
 
-    x = _tms_solve_e_unsafe(L->arguments[1], false);
+    x = tms_solve_e(L->arguments[1], NO_LOCK | ENABLE_CMPLX, labels);
     if (isnan(creal(x)))
     {
         tms_clear_errors(TMS_PARSER);
@@ -226,11 +226,11 @@ int tms_derivative(tms_arg_list *L, tms_arg_list *labels, double complex *result
     // Solve for x - epsilon
     x -= epsilon;
     tms_set_labels_values(M, &x);
-    fx1 = _tms_evaluate_unsafe(M);
+    fx1 = tms_evaluate(M, NO_LOCK);
     // Solve for x + epsilon
     x += 2 * epsilon;
     tms_set_labels_values(M, &x);
-    fx2 = _tms_evaluate_unsafe(M);
+    fx2 = tms_evaluate(M, NO_LOCK);
     tms_clear_errors(TMS_EVALUATOR);
 
     // get the derivative
@@ -255,8 +255,8 @@ int tms_integrate(tms_arg_list *L, tms_arg_list *labels, double complex *result)
     double complex lower_bound, upper_bound, an;
     double integration_ans, rounds, delta, fn;
 
-    lower_bound = _tms_solve_e_unsafe(L->arguments[0], false);
-    upper_bound = _tms_solve_e_unsafe(L->arguments[1], false);
+    lower_bound = tms_solve_e(L->arguments[0], NO_LOCK | ENABLE_CMPLX, labels);
+    upper_bound = tms_solve_e(L->arguments[1], NO_LOCK | ENABLE_CMPLX, labels);
     if (isnan(creal(lower_bound)) || isnan(creal(upper_bound)))
     {
         tms_clear_errors(TMS_PARSER);
@@ -304,11 +304,11 @@ int tms_integrate(tms_arg_list *L, tms_arg_list *labels, double complex *result)
     // 3h/8[(y0 + yn) + 3(y1 + y2 + y4 + y5 + … + yn-1) + 2(y3 + y6 + y9 + … + yn-3)]
     // First step: y0 + yn
     tms_set_labels_values(M, &lower_bound);
-    integration_ans = _tms_evaluate_unsafe(M);
+    integration_ans = tms_evaluate(M, NO_LOCK);
     lower_bound += delta;
     tms_set_labels_values(M, &lower_bound);
     lower_bound -= delta;
-    integration_ans += _tms_evaluate_unsafe(M);
+    integration_ans += tms_evaluate(M, NO_LOCK);
     // Clear errors collected from the previous evaluator calls
     tms_clear_errors(TMS_EVALUATOR);
     if (isnan(integration_ans))
@@ -328,7 +328,7 @@ int tms_integrate(tms_arg_list *L, tms_arg_list *labels, double complex *result)
         {
             an = lower_bound + delta * n / rounds;
             tms_set_labels_values(M, &an);
-            fn = _tms_evaluate_unsafe(M);
+            fn = tms_evaluate(M, NO_LOCK);
             if (isnan(fn) == true)
             {
                 tms_save_error(TMS_EVALUATOR, INTEGRAl_UNDEFINED, EH_FATAL, NULL, 0);
@@ -342,7 +342,7 @@ int tms_integrate(tms_arg_list *L, tms_arg_list *labels, double complex *result)
         {
             an = lower_bound + delta * n / rounds;
             tms_set_labels_values(M, &an);
-            fn = _tms_evaluate_unsafe(M);
+            fn = tms_evaluate(M, NO_LOCK);
             if (isnan(fn) == true)
             {
                 tms_save_error(TMS_EVALUATOR, INTEGRAl_UNDEFINED, EH_FATAL, NULL, 0);
