@@ -27,10 +27,10 @@ void test_scientific(char *buffer)
     expr[field_separator] = '\0';
     puts(expr);
 
-    real_only = tms_solve_e(expr, false);
+    real_only = tms_solve_e(expr, 0, NULL);
     if (isnan(creal(real_only)))
         puts("Calculation failure in real domain.");
-    with_complex = tms_solve_e(expr, true);
+    with_complex = tms_solve_e(expr, ENABLE_CMPLX, NULL);
     if (isnan(creal(with_complex)))
     {
         puts("Fatal: Calculation failure in complex domain.");
