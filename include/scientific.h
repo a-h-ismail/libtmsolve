@@ -9,9 +9,10 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @brief Declares all scientific related macros, structures, globals and functions.
  */
 
+#include "tms_math_strs.h"
 #include <complex.h>
-#include <stdbool.h>
 #include <inttypes.h>
+#include <stdbool.h>
 
 /// Holds the data of a factor, for use with factorization related features.
 typedef struct tms_int_factor
@@ -50,12 +51,7 @@ int64_t tms_int_abs(int64_t v);
  * @param enable_complex Enables complex number calculation, set to false if you don't need complex values.
  * @return The answer of the math expression, or NaN in case of failure.
  */
-double complex tms_solve_e(char *expr, bool enable_complex);
-
-/**
- * @brief The non thread safe version of tms_solve_e
- */
-double complex _tms_solve_e_unsafe(char *expr, bool enable_complex);
+double complex tms_solve_e(char *expr, int options, tms_arg_list *labels);
 
 /**
  * @brief Calculates a mathematical expression and returns the answer, automatically handles complex numbers.
@@ -72,7 +68,7 @@ double complex tms_solve(char *expr);
  */
 int tms_int_solve(char *expr, int64_t *result);
 
-int _tms_int_solve_unsafe(char *expr, int64_t *result);
+int tms_int_solve_e(char *expr, int64_t *result, int options, tms_arg_list *labels);
 
 /**
  * @brief Calculates the factorial.

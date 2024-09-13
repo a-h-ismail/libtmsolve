@@ -16,9 +16,12 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <stdlib.h>
 #include <string.h>
 
-double complex tms_evaluate(tms_math_expr *M)
+double complex _tms_evaluate_unsafe(tms_math_expr *M);
+
+double complex tms_evaluate(tms_math_expr *M, int options)
 {
-    tms_lock_evaluator(TMS_EVALUATOR);
+    if ((options & NO_LOCK) != 1)
+        tms_lock_evaluator(TMS_EVALUATOR);
 
     if (tms_get_error_count(TMS_EVALUATOR | TMS_PARSER, EH_ALL_ERRORS) != 0)
     {
@@ -28,14 +31,15 @@ double complex tms_evaluate(tms_math_expr *M)
 
     double complex result = _tms_evaluate_unsafe(M);
 
-    if (isnan(creal(result)))
+    if (isnan(creal(result)) && (options & NO_PRINT) == 0)
         tms_print_errors(TMS_EVALUATOR | TMS_PARSER);
 
-    tms_unlock_evaluator(TMS_EVALUATOR);
+    if ((options & NO_LOCK) != 1)
+        tms_unlock_evaluator(TMS_EVALUATOR);
     return result;
 }
 
-double complex *tms_solve_list(tms_arg_list *expr_list, bool enable_complex)
+double complex *tms_solve_list(tms_arg_list *expr_list, int options, tms_arg_list *labels)
 {
     if (expr_list->count < 1)
         return NULL;
@@ -43,7 +47,7 @@ double complex *tms_solve_list(tms_arg_list *expr_list, bool enable_complex)
 
     for (int i = 0; i < expr_list->count; ++i)
     {
-        answer_list[i] = _tms_solve_e_unsafe(expr_list->arguments[i], enable_complex);
+        answer_list[i] = tms_solve_e(expr_list->arguments[i], options, labels);
         if (isnan(creal(answer_list[i])))
         {
             free(answer_list);
@@ -55,7 +59,7 @@ double complex *tms_solve_list(tms_arg_list *expr_list, bool enable_complex)
     return answer_list;
 }
 
-int64_t *tms_int_solve_list(tms_arg_list *expr_list)
+int64_t *tms_int_solve_list(tms_arg_list *expr_list, tms_arg_list *labels)
 {
     if (expr_list->count < 1)
         return NULL;
@@ -63,7 +67,7 @@ int64_t *tms_int_solve_list(tms_arg_list *expr_list)
     int status;
     for (int i = 0; i < expr_list->count; ++i)
     {
-        status = _tms_int_solve_unsafe(expr_list->arguments[i], answer_list + i);
+        status = tms_int_solve_e(expr_list->arguments[i], answer_list + i, NO_LOCK, labels);
         if (status != 0)
         {
             free(answer_list);
@@ -96,11 +100,11 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                 _tms_debug = false;
 
                 // Call the extended function using its pointer
-                **(S[i].result) = (*(S[i].func.extended))(S[i].L);
+                int status = (*(S[i].func.extended))(S[i].L, M->labels, *(S[i].result));
 
                 _tms_debug = _debug_state;
 
-                if (isnan(creal(**(S[i].result))))
+                if (status != 0)
                 {
                     // If the function didn't generate an error itself, provide a generic one
                     if (tms_get_error_count(TMS_EVALUATOR | TMS_PARSER, EH_ALL_ERRORS) == 0)
@@ -126,22 +130,23 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                     tms_save_error(TMS_EVALUATOR, USER_FUNCTION_NOT_FOUND, EH_FATAL, M->expr, M->S[i].subexpr_start);
                     return NAN;
                 }
-                if (!_tms_validate_args_count(userf->F->label_names->count, S[i].L->count, TMS_EVALUATOR))
+                if (!_tms_validate_args_count(userf->F->labels->count, S[i].L->count, TMS_EVALUATOR))
                 {
                     tms_modify_last_error(TMS_EVALUATOR, M->expr, M->S[i].subexpr_start, NULL);
                     return NAN;
                 }
-                double complex *arguments = tms_solve_list(S[i].L, M->enable_complex);
+                double complex *arguments = tms_solve_list(S[i].L, NO_LOCK, M->labels);
                 if (arguments == NULL)
                 {
                     return NAN;
                 }
                 tms_math_expr *F = tms_dup_mexpr(userf->F);
+                F->labels->payload = arguments;
+                F->labels->payload_size = S[i].L->count * sizeof(double complex);
                 // Set the label values (passed as arguments earlier)
                 tms_set_labels_values(F, arguments);
                 **(S[i].result) = _tms_evaluate_unsafe(F);
                 tms_delete_math_expr(F);
-                free(arguments);
             }
         }
         else
@@ -250,24 +255,6 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
     return M->answer;
 }
 
-int tms_int_evaluate(tms_int_expr *M, int64_t *result)
-{
-    tms_lock_evaluator(TMS_INT_EVALUATOR);
-
-    if (tms_get_error_count(TMS_INT_EVALUATOR | TMS_INT_PARSER, EH_ALL_ERRORS) != 0)
-    {
-        fputs(ERROR_DB_NOT_EMPTY, stderr);
-        tms_clear_errors(TMS_INT_EVALUATOR | TMS_INT_PARSER);
-    }
-
-    int exit_status = _tms_int_evaluate_unsafe(M, result);
-    if (exit_status != 0)
-        tms_print_errors(TMS_INT_EVALUATOR | TMS_INT_PARSER);
-
-    tms_unlock_evaluator(TMS_INT_EVALUATOR);
-    return exit_status;
-}
-
 int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
 {
     // No NULL pointer dereference allowed.
@@ -291,7 +278,7 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                 _tms_debug = false;
 
                 // Call the extended function using its pointer
-                int status = (*(S[i].func.extended))(S[i].L, *(S[i].result));
+                int status = (*(S[i].func.extended))(S[i].L, M->labels->payload, *(S[i].result));
 
                 _tms_debug = _debug_state;
 
@@ -317,17 +304,18 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                                    M->S[i].subexpr_start);
                     return -1;
                 }
-                if (!_tms_validate_args_count(userf->F->label_names->count, S[i].L->count, TMS_INT_EVALUATOR))
+                if (!_tms_validate_args_count(userf->F->labels->count, S[i].L->count, TMS_INT_EVALUATOR))
                 {
                     tms_modify_last_error(TMS_INT_EVALUATOR, M->expr, M->S[i].subexpr_start, NULL);
                     return -1;
                 }
-                int64_t *arguments = tms_int_solve_list(S[i].L);
+                int64_t *arguments = tms_int_solve_list(S[i].L, M->labels);
                 if (arguments == NULL)
                 {
                     return -1;
                 }
                 tms_int_expr *F = tms_dup_int_expr(userf->F);
+                F->labels->payload = arguments;
                 // Set the label values (passed as arguments earlier)
                 tms_set_int_labels_values(F, arguments);
                 _tms_int_evaluate_unsafe(F, *(S[i].result));
@@ -430,6 +418,24 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
 
     *result = M->answer;
     return 0;
+}
+
+int tms_int_evaluate(tms_int_expr *M, int64_t *result, int options)
+{
+    tms_lock_evaluator(TMS_INT_EVALUATOR);
+
+    if (tms_get_error_count(TMS_INT_EVALUATOR | TMS_INT_PARSER, EH_ALL_ERRORS) != 0)
+    {
+        fputs(ERROR_DB_NOT_EMPTY, stderr);
+        tms_clear_errors(TMS_INT_EVALUATOR | TMS_INT_PARSER);
+    }
+
+    int exit_status = _tms_int_evaluate_unsafe(M, result);
+    if (exit_status != 0)
+        tms_print_errors(TMS_INT_EVALUATOR | TMS_INT_PARSER);
+
+    tms_unlock_evaluator(TMS_INT_EVALUATOR);
+    return exit_status;
 }
 
 void tms_set_labels_values(tms_math_expr *M, double complex *values_list)

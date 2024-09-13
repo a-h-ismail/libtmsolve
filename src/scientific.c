@@ -98,28 +98,17 @@ double tms_sign(double value)
         return -1;
 }
 
-double complex tms_solve_e(char *expr, bool enable_complex)
+double complex tms_solve_e(char *expr, int options, tms_arg_list *labels)
 {
     double complex result;
     tms_math_expr *M;
 
-    M = tms_parse_expr(expr, (enable_complex == true ? ENABLE_CMPLX : 0), NULL);
+    M = tms_parse_expr(expr, options, labels);
     if (M == NULL)
         return NAN;
-    result = tms_evaluate(M);
-    tms_delete_math_expr(M);
-    return result;
-}
-
-double complex _tms_solve_e_unsafe(char *expr, bool enable_complex)
-{
-    double complex result;
-    tms_math_expr *M;
-
-    M = _tms_parse_expr_unsafe(expr, (enable_complex == true ? ENABLE_CMPLX : 0), NULL);
-    if (M == NULL)
-        return NAN;
-    result = _tms_evaluate_unsafe(M);
+    result = tms_evaluate(M, options);
+    // Do not free the labels as they were allocated elsewhere not here
+    M->labels = NULL;
     tms_delete_math_expr(M);
     return result;
 }
@@ -176,7 +165,7 @@ double complex tms_solve(char *expr)
     case 0:
 
         M = tms_parse_expr(expr, false, false);
-        result = tms_evaluate(M);
+        result = tms_evaluate(M, 0);
         tms_delete_math_expr(M);
         return result;
 
@@ -218,14 +207,14 @@ double complex tms_solve(char *expr)
         // At this point we have no problems with the parser
         if (M->enable_complex)
         {
-            result = tms_evaluate(M);
+            result = tms_evaluate(M, 0);
             tms_delete_math_expr(M);
             return result;
         }
         else
         {
             tms_lock_evaluator(TMS_EVALUATOR);
-            result = _tms_evaluate_unsafe(M);
+            result = tms_evaluate(M, NO_LOCK);
 
             if (isnan(creal(result)))
             {
@@ -241,7 +230,7 @@ double complex tms_solve(char *expr)
                     }
                     // Conversion succeeded, clear previous errors
                     tms_clear_errors(TMS_EVALUATOR | TMS_PARSER);
-                    result = _tms_evaluate_unsafe(M);
+                    result = tms_evaluate(M, NO_LOCK);
                     if (isnan(creal(result)))
                         tms_print_errors(TMS_EVALUATOR | TMS_PARSER);
                 }
@@ -256,7 +245,7 @@ double complex tms_solve(char *expr)
 
     case 2:
         M = tms_parse_expr(expr, ENABLE_CMPLX, NULL);
-        result = tms_evaluate(M);
+        result = tms_evaluate(M, 0);
         tms_delete_math_expr(M);
         return result;
     }
@@ -269,16 +258,16 @@ int tms_int_solve(char *expr, int64_t *result)
 {
     tms_int_expr *M;
     M = tms_parse_int_expr(expr, 0, NULL);
-    int state = tms_int_evaluate(M, result);
+    int state = tms_int_evaluate(M, result, 0);
     tms_delete_int_expr(M);
     return state;
 }
 
-int _tms_int_solve_unsafe(char *expr, int64_t *result)
+int tms_int_solve_e(char *expr, int64_t *result, int options, tms_arg_list *labels)
 {
     tms_int_expr *M;
-    M = _tms_parse_int_expr_unsafe(expr, 0, NULL);
-    int state = _tms_int_evaluate_unsafe(M, result);
+    M = tms_parse_int_expr(expr, NO_LOCK, labels);
+    int state = tms_int_evaluate(M, result, options);
     tms_delete_int_expr(M);
     return state;
 }

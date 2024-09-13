@@ -17,18 +17,9 @@ SPDX-License-Identifier: LGPL-2.1-only
 /**
  * @brief Evaluates a math_expr structure and calculates the result.
  * @note Uses spinlocks to assure thread safety.
- * @param M The math structure to evaluate.
  * @return The answer of the math expression, or NaN in case of failure.
  */
-double complex tms_evaluate(tms_math_expr *M);
-
-/**
- * @brief The non thread safe version of the evaluator
- * @note This function is useful to allow calls to the evaluator from within the thread safe evaluator.
- * @param M The math structure to evaluate.
- * @return 
- */
-double complex _tms_evaluate_unsafe(tms_math_expr *M);
+double complex tms_evaluate(tms_math_expr *M, int options);
 
 /**
  * @brief Calculates the answer for an int expression.
@@ -37,28 +28,19 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M);
  * @param result Pointer to a variable where the result will be stored.
  * @return 0 on success, -1 on failure.
  */
-int tms_int_evaluate(tms_int_expr *M, int64_t *result);
+int tms_int_evaluate(tms_int_expr *M, int64_t *result, int options);
 
 /**
- * @brief The non thread safe version of the int evaluator.
- * @note This function is useful to allow calls to the evaluator from within the thread safe evaluator.
- * @param M 
- * @param result 
- * @return 0 on success, -1 on failure.
- */
-int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result);
-
-/**
- * @brief Sets the values of unknown operands.
- * @param M The math expression with unknown operands.
- * @param values_list A list of all unknowns values, should be indexed by the unknown ID.
+ * @brief Sets the values of label operands.
+ * @param M The math expression with label operands.
+ * @param values_list A list of all labels values, should be indexed by the label ID.
  */
 void tms_set_labels_values(tms_math_expr *M, double complex *values_list);
 
 /**
- * @brief Sets the values of unknown operands.
- * @param M The int expression with unknown operands.
- * @param values_list A list of all unknowns values, should be indexed by the unknown ID.
+ * @brief Sets the values of label operands.
+ * @param M The int expression with label operands.
+ * @param values_list A list of all labels values, should be indexed by the label ID.
  */
 void tms_set_int_labels_values(tms_int_expr *M, int64_t *values_list);
 
