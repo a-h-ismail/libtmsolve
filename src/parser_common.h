@@ -110,7 +110,7 @@ math_expr *init_math_expr(char *expr)
                     S[s_i].start_node = -1;
                     // Generate the argument list at parsing time instead of during evaluation for better performance
                     char *arguments = tms_strndup(expr + i + 1, S[s_i].solve_end - i);
-                    S[s_i].L = tms_get_args(arguments);
+                    S[s_i].f_args = tms_get_args(arguments);
                     free(arguments);
                     // Set "i" at the end of the subexpression to avoid iterating within the extended/user function
                     i = S[s_i].solve_end;
@@ -138,7 +138,7 @@ math_expr *init_math_expr(char *expr)
             {
                 // Not an extended function, either no function at all or a single variable function
                 S[s_i].func.extended = NULL;
-                S[s_i].L = NULL;
+                S[s_i].f_args = NULL;
                 S[s_i].func_type = TMS_NOFUNC;
                 S[s_i].exec_extf = false;
                 S[s_i].solve_start = i + 1;
@@ -725,7 +725,7 @@ math_expr *dup_mexpr(math_expr *M)
         {
             // An extended/user function subexpr
             NS->result = malloc(sizeof(operand_type *));
-            NS->L = tms_dup_arg_list(S->L);
+            NS->f_args = tms_dup_arg_list(S->f_args);
             if (S->func_type == F_USER)
                 NS->func.user = strdup(S->func.user);
         }
@@ -831,7 +831,7 @@ void delete_math_expr_members(math_expr *M)
         if (S[i].func_type == F_EXTENDED || S[i].func_type == F_USER)
         {
             free(S[i].result);
-            tms_free_arg_list(S[i].L);
+            tms_free_arg_list(S[i].f_args);
         }
         else
             free(S[i].nodes);
