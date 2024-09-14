@@ -114,3 +114,11 @@ double complex tms_ctan(double complex z)
     else
         return tms_round_to_axis(ctan(z));
 }
+
+int tms_iscnan(double complex z)
+{
+    if (isnan(creal(z)) || isnan(cimag(z)))
+        return 1;
+    else
+        return 0;
+}
