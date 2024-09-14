@@ -51,11 +51,18 @@ extern const int tms_g_illegal_names_count;
 /// @brief Mask used after every operation of int parser
 extern uint64_t tms_int_mask;
 
+/// @brief Mask width in bits.
 extern int8_t tms_int_mask_size;
 
 /// @brief Initializes the variables required for the proper operation of the calculator.
 void tmsolve_init() __attribute__((constructor));
 
+/**
+ * @brief Searches for a variable using its name.
+ * @return Pointer to the variable in the internal hashmap, or NULL if no match is found.
+ * @warning This function is not thread safe, and there is no guarantees that the pointer will remain valid on any hashmap modification.
+ * @note This description applies to all `get_by_name` functions.
+ */
 const tms_var *tms_get_var_by_name(char *name);
 
 const tms_int_var *tms_get_int_var_by_name(char *name);
@@ -72,6 +79,10 @@ const tms_ufunc *tms_get_ufunc_by_name(char *name);
 
 const tms_int_ufunc *tms_get_int_ufunc_by_name(char *name);
 
+/**
+ * @brief Returns a malloc'd array with all of the currently defined variables .
+ * @note This description applies to all `get_all_...` functions.
+ */
 tms_var *tms_get_all_vars(size_t *count, bool sort);
 
 tms_int_var *tms_get_all_int_vars(size_t *count, bool sort);
@@ -88,16 +99,44 @@ tms_int_extf *tms_get_all_int_extf(size_t *count, bool sort);
 
 tms_int_ufunc *tms_get_all_int_ufunc(size_t *count, bool sort);
 
+/**
+ * @brief Removes a runtime variable by its name.
+ * @retval 0 on success.
+ * @retval -1 on failure.
+ * @retval 1 on variable found, but not removable.
+ */
 int tms_remove_var(char *name);
 
+/**
+ * @brief Removes a runtime integer variable by its name.
+ * @retval 0 on success.
+ * @retval -1 on failure.
+ * @retval 1 on variable found, but not removable.
+ */
 int tms_remove_int_var(char *name);
 
+/**
+ * @brief Removes a user function by its name.
+ * @retval 0 on success.
+ * @retval -1 on failure.
+ */
 int tms_remove_ufunc(char *name);
 
+/**
+ * @brief Removes a user integer function by its name.
+ * @retval 0 on success.
+ * @retval -1 on failure.
+ */
 int tms_remove_int_ufunc(char *name);
 
+/**
+ * @brief Checks if a function with the specified name already exists.
+ */
 bool tms_function_exists(char *name);
 
+/**
+ * @brief Checks if a integer function with the specified name already exists.
+ */
 bool tms_int_function_exists(char *name);
 
 /**
@@ -133,35 +172,63 @@ void tms_unlock_evaluator(int variant);
  */
 void tms_set_int_mask(int size);
 
+/**
+ * @brief Add/Update a user variable.
+ * @param name Variable name.
+ * @param value Variable value.
+ * @param is_constant When set, the variable is treated read-only (can't be modified or removed).
+ * @return 0 on success, -1 on failure.
+ */
 int tms_set_var(char *name, double complex value, bool is_constant);
 
+/**
+ * @brief Add/Update an integer user variable.
+ * @param name Variable name.
+ * @param value Variable value.
+ * @param is_constant When set, the variable is treated read-only (can't be modified or removed).
+ * @return 0 on success, -1 on failure.
+ */
 int tms_set_int_var(char *name, int64_t value, bool is_constant);
-
-int tms_new_int_var(char *name);
 
 /**
  * @brief Add/Update a runtime function.
  * @param fname Function name.
- * @param unknowns_list A comma separated string of unknowns names.
- * @param function The expression with the unknowns.
+ * @param function_args A comma separated string of labels names.
+ * @param function Expression of the function in terms of its labels.
  * @return 0 on success, -1 on failure.
  */
-int tms_set_ufunction(char *fname, char *unknowns_list, char *function);
+int tms_set_ufunction(char *fname, char *function_args, char *function);
 
-int tms_set_int_ufunction(char *fname, char *unknowns_list, char *function);
+/**
+ * @brief Add/Update a runtime integer function.
+ * @param fname Function name.
+ * @param labels_list A comma separated string of labels names.
+ * @param function Expression of the function in terms of its labels.
+ * @return 0 on success, -1 on failure.
+ */
+int tms_set_int_ufunction(char *fname, char *function_args, char *function);
 
 bool _tms_validate_args_count(int expected, int actual, int facility_id);
 
 bool _tms_validate_args_count_range(int actual, int min, int max, int facility_id);
 
+/**
+ * @brief Helper function for name autocompletion in interactive usage for "scientific" mode.
+ * @param name Partial name to match.
+ * @return An array of strings with all possible matches.
+ * @note Matches are from functions and variable names.
+ */
 char **tms_smode_autocompletion_helper(const char *name);
 
+/**
+ * @brief Helper function for name autocompletion in interactive usage for "integer" mode.
+ * @param name Partial name to match.
+ * @return An array of strings with all possible matches.
+ * @note Matches are from functions and variable names.
+ */
 char **tms_imode_autocompletion_helper(const char *name);
 
-/**
- * @brief Simple function to find the minimum of 2 integers.
- * @return The minimum among the integers.
- */
+/// @brief It does what you think it does.
 int find_min(int a, int b);
 
 /// @brief Comparator function for use with qsort(), use to sort in increasing order.

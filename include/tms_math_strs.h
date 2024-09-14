@@ -17,13 +17,13 @@ SPDX-License-Identifier: LGPL-2.1-only
 /// @brief Stores metadata related to extended functions arguments.
 typedef struct tms_arg_list
 {
-    /// The number of arguments.
+    ///@brief The number of arguments.
     int count;
-    /// Array of C strings, stores the arguments.
+    ///@brief Array of C strings, stores the arguments.
     char **arguments;
-    /// Any extra payload, assumed to be malloc'd with no other malloc'd members.
+    ///@brief Any extra payload, assumed to be malloc'd with no other malloc'd members.
     void *payload;
-    /// Size of payload in bytes.
+    ///@brief Size of payload in bytes.
     size_t payload_size;
 } tms_arg_list;
 
@@ -78,13 +78,13 @@ typedef struct tms_int_var
 /// @brief Operator node, stores the required metadata for an operator and its operands.
 typedef struct tms_op_node
 {
-    /// The operator of this op_node.
+    ///@brief The operator of this op_node.
     char operator;
-    /// Index of the operator in the expression.
+    ///@brief Index of the operator in the expression.
     int operator_index;
-    /// Index of the op_node in the op_node array.
+    ///@brief Index of the op_node in the op_node array.
     int node_index;
-    /// Node operator priority.
+    ///@brief Node operator priority.
     uint8_t priority;
     /**
      * Labels are the mechanism used to implement user defined functions in the parser.
@@ -94,7 +94,7 @@ typedef struct tms_op_node
     uint16_t labels;
 
     double complex left_operand, right_operand, *result;
-    /// Points to the next op_node in evaluation order.
+    ///@brief Points to the next op_node in evaluation order.
     struct tms_op_node *next;
 } tms_op_node;
 
@@ -165,10 +165,12 @@ enum tms_variable_types
     TMS_V_INT64
 };
 
-// Parser options.
+/// Disables locking of parser/evaluator.
 #define NO_LOCK 1
+/// Enables complex numbers support.
 #define ENABLE_CMPLX 2
-#define NO_PRINT 4
+/// Allows errors to be printed immediately
+#define PRINT_ERRORS 4
 
 /// @brief Holds the metadata of a subexpression.
 typedef struct tms_math_subexpr
@@ -190,67 +192,70 @@ typedef struct tms_math_subexpr
     /// @brief The end index of the subexpression, just before the close parenthesis.
     int solve_end;
 
-    /// Index of the op_node at which the subexpression parsing starts.
+    /// @brief Index of the op_node at which the subexpression parsing starts.
     int start_node;
 
-    /// The array of op_nodes composing this subexpression.
+    ///@brief The array of op_nodes composing this subexpression.
     struct tms_op_node *nodes;
 
     /// @brief Set to one of the op_nodes result pointer, indicating that the answer of that node is the answer of this subexpression.
     double complex **result;
 
-    tms_arg_list *L;
+    /// @brief Arguments for user and extended functions.
+    tms_arg_list *f_args;
 
-    /// Stores the pointer of the function to execute
+    ///@brief Stores the pointer of the function to execute
     fptr func;
 
-    /// Stores the type of the function to execute
+    ///@brief Stores the type of the function to execute
     uint8_t func_type;
 
-    /// Enables execution of extended function, used to optimize nested extended functions like integration.
+    ///@brief Enables execution of extended function, used to optimize nested extended functions like integration.
     bool exec_extf;
 } tms_math_subexpr;
 
 /// @brief The standalone structure to hold all of an expression's metadata.
 typedef struct tms_math_expr
 {
-    /// The full expression string, after removing whitespaces and compacting +/- operators
+    ///@brief The full expression string, after removing whitespaces and compacting +/- operators
     char *expr;
 
-    /// The subexpression array created by parsing the math expression.
+    ///@brief The subexpression array created by parsing the math expression.
     tms_math_subexpr *S;
 
-    /// Number of subexpression in this math expression.
+    ///@brief Number of subexpression in this math expression.
     int subexpr_count;
 
-    /// Number of labeled operands.
+    ///@brief Number of labeled operands.
     int labeled_operands_count;
 
-    /// Array of labeled operands metadata.
+    ///@brief Array of labeled operands metadata.
     tms_labeled_operand *all_labeled_ops;
 
-    /// List of labels (and optional values)
+    ///@brief List of labels (and optional values)
     tms_arg_list *labels;
 
-    /// Answer of the expression.
+    ///@brief Answer of the expression.
     double complex answer;
 
-    /// Toggles complex support.
+    ///@brief Toggles complex support.
     bool enable_complex;
 } tms_math_expr;
 
 /// @brief Operator node, stores the required metadata for an operator and its operands.
 typedef struct tms_int_op_node
 {
-    /// The operator of this op_node.
+    /// @brief The operator of this op_node.
     char operator;
-    /// Index of the operator in the expression.
+    /// @brief Index of the operator in the expression.
     int operator_index;
-    /// Index of the op_node in the op_node array.
+    ///@brief Index of the op_node in the op_node array.
     int node_index;
-    /// Node operator priority.
+    ///@brief Node operator priority.
     uint8_t priority;
     /**
+     * @brief Operators labels.
+     * @details
      * Labels are the mechanism used to implement user defined functions in the parser.
      * A label allows the value of an operand to be changed after the parse step.
      * @note Labels are unique to the parsed expression, unlike global variables that are copied during parsing.
@@ -258,7 +263,8 @@ typedef struct tms_int_op_node
     uint16_t labels;
 
     int64_t left_operand, right_operand, *result;
-    /// Points to the next op_node in evaluation order.
+
+    ///@brief Points to the next op_node in evaluation order.
     struct tms_int_op_node *next;
 } tms_int_op_node;
 
@@ -282,49 +288,50 @@ typedef struct tms_int_subexpr
     /// @brief The end index of the subexpression, just before the close parenthesis.
     int solve_end;
 
-    /// Index of the op_node at which the subexpression parsing starts.
+    /// @brief Index of the op_node at which the subexpression parsing starts.
     int start_node;
 
-    /// The array of int_op_nodes composing this subexpression.
+    /// @brief The array of int_op_nodes composing this subexpression.
     struct tms_int_op_node *nodes;
 
-    tms_arg_list *L;
+    /// @brief Arguments for user and extended functions.
+    tms_arg_list *f_args;
 
     /// @brief Set to one of the op_nodes result pointer, indicating that the answer of that node is the answer of this subexpression.
     int64_t **result;
 
-    /// Stores the pointer of the function to execute
+    /// @brief the pointer of the function to execute
     int_fptr func;
 
-    /// Stores the type of the function to execute
+    /// @brief the type of the function to execute
     uint8_t func_type;
 
-    /// Enables execution of extended function
+    /// @brief Enables execution of extended function
     bool exec_extf;
 } tms_int_subexpr;
 
 /// @brief The standalone structure to hold all of an integer expression's metadata.
 typedef struct tms_int_expr
 {
-    /// The full expression string, after removing whitespaces and compacting +/- operators
+    /// @brief The full expression string, after removing whitespaces and compacting +/- operators
     char *expr;
 
-    /// The subexpression array created by parsing the expression.
+    /// @brief The subexpression array created by parsing the expression.
     tms_int_subexpr *S;
 
-    /// Number of subexpression in this math expression.
+    /// @brief Number of subexpression in this math expression.
     int subexpr_count;
 
-    /// Number of labeled operands.
+    /// @brief Number of labeled operands.
     int labeled_operands_count;
 
-    /// Array of labeled operands metadata.
+    /// @brief Array of labeled operands metadata.
     tms_labeled_operand *all_labeled_ops;
 
-    /// List of labels (and optional values)
+    /// @brief List of labels (and optional values)
     tms_arg_list *labels;
 
-    /// Answer of the expression.
+    /// @brief Answer of the expression.
     int64_t answer;
 } tms_int_expr;
 

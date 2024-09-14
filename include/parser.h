@@ -36,17 +36,12 @@ void tms_convert_real_to_complex(tms_math_expr *M);
 
 /**
  * @brief Parses a math expression into a structure.
- * @note This function automatically prints errors to stderr if any.
  * @param expr The string containing the math expression.
- * @param options Provides the parser with options (currently: ENABLE_LABELS, ENABLE_CMPLX). A 0 here means defaults.
+ * @param options Provides the parser with options (currently: ENABLE_LABELS, ENABLE_CMPLX, NO_LOCK, PRINT_ERRORS)
  * @param labels If the option to enable labels is set, provide them here.
  * @return A (malloc'd) pointer to the generated math structure.
  */
 tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *labels);
-
-/// @brief The actual parser logic is here, but it isn't thread safe and doesn't automatically print errors.
-/// @warning Usage is not recommended unless you know what you're doing.
-tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *labels);
 
 int _tms_get_operand_value(tms_math_expr *M, int start, double complex *out);
 

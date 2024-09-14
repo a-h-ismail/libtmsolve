@@ -47,7 +47,7 @@ int64_t tms_int_abs(int64_t v);
 
 /**
  * @brief Calculates a mathematical expression and returns the answer.
- * @param expr The string containing the math expression.
+ * @param expr The string form of the math expression.
  * @param enable_complex Enables complex number calculation, set to false if you don't need complex values.
  * @return The answer of the math expression, or NaN in case of failure.
  */
@@ -57,17 +57,25 @@ double complex tms_solve_e(char *expr, int options, tms_arg_list *labels);
  * @brief Calculates a mathematical expression and returns the answer, automatically handles complex numbers.
  * @param expr The string containing the math expression.
  * @return The answer of the math expression, or NaN in case of failure.
+ * @note Prints errors to stderr (if any).
  */
 double complex tms_solve(char *expr);
 
 /**
  * @brief Calculates an integer expression
- * @param expr
- * @param result
+ * @param expr The string form of the integer expression.
+ * @param result Pointer to variable where answer will be stored.
  * @return 0 on success, -1 on failure.
+ * @note Prints errors to stderr (if any).
  */
 int tms_int_solve(char *expr, int64_t *result);
 
+/**
+ * @brief Calculates an integer expression
+ * @param expr The string form of the integer expression.
+ * @param result Pointer to variable where answer will be stored.
+ * @return 0 on success, -1 on failure.
+ */
 int tms_int_solve_e(char *expr, int64_t *result, int options, tms_arg_list *labels);
 
 /**

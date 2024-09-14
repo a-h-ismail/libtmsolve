@@ -12,9 +12,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 #include <stdbool.h>
 
-/**
- * @brief Error metadata structure.
- */
+/// @brief Error metadata structure.
 typedef struct tms_error_data
 {
     char *message, bad_snippet[50];
@@ -32,9 +30,10 @@ typedef struct tms_error_database
     int non_fatal_count;
 } tms_error_database;
 
-/// @brief Maximum number of errors in tms_error_handler
+/// @brief Maximum number of errors in tms_error_handler.
 #define EH_MAX_ERRORS 10
 
+/// @brief All libtmsolve facilities, used in error handling and to lock parser/evaluator.
 enum tms_facilities
 {
     TMS_GENERAL = 1,
@@ -54,7 +53,7 @@ enum tms_facilities
  * @brief Saves an error in the global error database.
  * @param facilities Facilities where the error originated (ex: TMS_PARSER).
  * @param error_msg The error message.
- * @param severity Indicates the seriousness of the error (fatal or not fatal).
+ * @param severity Indicates the seriousness of the error (fatal or not fatal) (see EH_FATAL, EH_NONFATAL macros).
  * @param expr The expression string where the error occured
  * @param error_position Index where the error is in the expression string.
  * @return 0 on success, 1 on success with warnings, -1 on failure.
