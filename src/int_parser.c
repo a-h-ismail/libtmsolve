@@ -159,6 +159,8 @@ int _tms_set_int_function_ptr(char *expr, tms_int_expr *M, int s_i)
     return 0;
 }
 
+tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *labels);
+
 tms_int_expr *tms_parse_int_expr(char *expr, int options, tms_arg_list *labels)
 {
     if ((options & NO_LOCK) != 1)

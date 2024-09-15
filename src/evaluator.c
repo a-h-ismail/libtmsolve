@@ -31,7 +31,7 @@ double complex tms_evaluate(tms_math_expr *M, int options)
 
     double complex result = _tms_evaluate_unsafe(M);
 
-    if (isnan(creal(result)) && (options & NO_PRINT) == 0)
+    if (isnan(creal(result)) && (options & PRINT_ERRORS) != 0)
         tms_print_errors(TMS_EVALUATOR | TMS_PARSER);
 
     if ((options & NO_LOCK) != 1)
@@ -100,7 +100,7 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                 _tms_debug = false;
 
                 // Call the extended function using its pointer
-                int status = (*(S[i].func.extended))(S[i].L, M->labels, *(S[i].result));
+                int status = (*(S[i].func.extended))(S[i].f_args, M->labels, *(S[i].result));
 
                 _tms_debug = _debug_state;
 
@@ -130,19 +130,19 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                     tms_save_error(TMS_EVALUATOR, USER_FUNCTION_NOT_FOUND, EH_FATAL, M->expr, M->S[i].subexpr_start);
                     return NAN;
                 }
-                if (!_tms_validate_args_count(userf->F->labels->count, S[i].L->count, TMS_EVALUATOR))
+                if (!_tms_validate_args_count(userf->F->labels->count, S[i].f_args->count, TMS_EVALUATOR))
                 {
                     tms_modify_last_error(TMS_EVALUATOR, M->expr, M->S[i].subexpr_start, NULL);
                     return NAN;
                 }
-                double complex *arguments = tms_solve_list(S[i].L, NO_LOCK, M->labels);
+                double complex *arguments = tms_solve_list(S[i].f_args, NO_LOCK, M->labels);
                 if (arguments == NULL)
                 {
                     return NAN;
                 }
                 tms_math_expr *F = tms_dup_mexpr(userf->F);
                 F->labels->payload = arguments;
-                F->labels->payload_size = S[i].L->count * sizeof(double complex);
+                F->labels->payload_size = S[i].f_args->count * sizeof(double complex);
                 // Set the label values (passed as arguments earlier)
                 tms_set_labels_values(F, arguments);
                 **(S[i].result) = _tms_evaluate_unsafe(F);
@@ -278,7 +278,7 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                 _tms_debug = false;
 
                 // Call the extended function using its pointer
-                int status = (*(S[i].func.extended))(S[i].L, M->labels, *(S[i].result));
+                int status = (*(S[i].func.extended))(S[i].f_args, M->labels, *(S[i].result));
 
                 _tms_debug = _debug_state;
 
@@ -304,19 +304,19 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                                    M->S[i].subexpr_start);
                     return -1;
                 }
-                if (!_tms_validate_args_count(userf->F->labels->count, S[i].L->count, TMS_INT_EVALUATOR))
+                if (!_tms_validate_args_count(userf->F->labels->count, S[i].f_args->count, TMS_INT_EVALUATOR))
                 {
                     tms_modify_last_error(TMS_INT_EVALUATOR, M->expr, M->S[i].subexpr_start, NULL);
                     return -1;
                 }
-                int64_t *arguments = tms_int_solve_list(S[i].L, M->labels);
+                int64_t *arguments = tms_int_solve_list(S[i].f_args, M->labels);
                 if (arguments == NULL)
                 {
                     return -1;
                 }
                 tms_int_expr *F = tms_dup_int_expr(userf->F);
                 F->labels->payload = arguments;
-                F->labels->payload_size = S[i].L->count * sizeof(int64_t);
+                F->labels->payload_size = S[i].f_args->count * sizeof(int64_t);
                 // Set the label values (passed as arguments earlier)
                 tms_set_int_labels_values(F, arguments);
                 _tms_int_evaluate_unsafe(F, *(S[i].result));
@@ -432,7 +432,7 @@ int tms_int_evaluate(tms_int_expr *M, int64_t *result, int options)
     }
 
     int exit_status = _tms_int_evaluate_unsafe(M, result);
-    if (exit_status != 0 && (options & NO_PRINT) == 0)
+    if (exit_status != 0 && (options & PRINT_ERRORS) != 0)
         tms_print_errors(TMS_INT_EVALUATOR | TMS_INT_PARSER);
 
     if ((options & NO_LOCK) != 1)

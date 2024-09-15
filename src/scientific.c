@@ -115,8 +115,6 @@ double complex tms_solve_e(char *expr, int options, tms_arg_list *labels)
 
 double complex tms_solve(char *expr)
 {
-    // Offset if the expression has an assignment operator
-    char *local_expr = expr;
     int i, j;
     // 0: can't be complex due to real exclusive operations like modulo.
     // 1: can be complex, mostly 2n roots of negative numbers.
@@ -124,11 +122,11 @@ double complex tms_solve(char *expr)
     uint8_t likely_complex = 1;
 
     // Skip assignment operator
-    while ((i = tms_f_search(local_expr, "=", 0, false)) != -1)
-        local_expr += i + 1;
+    while ((i = tms_f_search(expr, "=", 0, false)) != -1)
+        expr += i + 1;
 
     // We have some hope that this is a complex expression
-    i = tms_f_search(local_expr, "i", 0, true);
+    i = tms_f_search(expr, "i", 0, true);
     if (i != -1)
         likely_complex = 2;
 
@@ -139,7 +137,7 @@ double complex tms_solve(char *expr)
     {
         if (!tms_is_real(all_vars[i].value))
         {
-            j = tms_f_search(local_expr, all_vars[i].name, 0, true);
+            j = tms_f_search(expr, all_vars[i].name, 0, true);
             if (j != -1)
             {
                 likely_complex = 2;
@@ -152,7 +150,7 @@ double complex tms_solve(char *expr)
     // Special case of ans
     if (!tms_is_real(tms_g_ans))
     {
-        j = tms_f_search(local_expr, "ans", 0, true);
+        j = tms_f_search(expr, "ans", 0, true);
         if (j != -1)
             likely_complex = 2;
     }
@@ -173,7 +171,7 @@ double complex tms_solve(char *expr)
         // We don't want errors to be printed automatically (to keep the error database from being cleared)
         // And we want to keep the parser locked until we get the correct answer and print errors if any
         tms_lock_parser(TMS_PARSER);
-        M = _tms_parse_expr_unsafe(expr, 0, NULL);
+        M = tms_parse_expr(expr, NO_LOCK, NULL);
 
         if (M == NULL)
         {
@@ -188,7 +186,7 @@ double complex tms_solve(char *expr)
             {
                 // Clear previous errors and try again with complex enabled
                 tms_clear_errors(TMS_PARSER);
-                M = _tms_parse_expr_unsafe(expr, ENABLE_CMPLX, NULL);
+                M = tms_parse_expr(expr, NO_LOCK | ENABLE_CMPLX, NULL);
 
                 // Failed again somehow with complex enabled, so abort
                 if (M == NULL)
@@ -244,8 +242,8 @@ double complex tms_solve(char *expr)
         }
 
     case 2:
-        M = tms_parse_expr(expr, ENABLE_CMPLX, NULL);
-        result = tms_evaluate(M, 0);
+        M = tms_parse_expr(expr, ENABLE_CMPLX | PRINT_ERRORS, NULL);
+        result = tms_evaluate(M, PRINT_ERRORS);
         tms_delete_math_expr(M);
         return result;
     }
@@ -257,8 +255,8 @@ double complex tms_solve(char *expr)
 int tms_int_solve(char *expr, int64_t *result)
 {
     tms_int_expr *M;
-    M = tms_parse_int_expr(expr, 0, NULL);
-    int state = tms_int_evaluate(M, result, 0);
+    M = tms_parse_int_expr(expr, PRINT_ERRORS, NULL);
+    int state = tms_int_evaluate(M, result, PRINT_ERRORS);
     tms_delete_int_expr(M);
     return state;
 }

@@ -126,6 +126,8 @@ int _tms_get_operand_value(tms_math_expr *M, int start, double complex *out)
     return 0;
 }
 
+tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *labels);
+
 tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *labels)
 {
     if ((options & NO_LOCK) != 1)
