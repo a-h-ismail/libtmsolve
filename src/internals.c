@@ -684,12 +684,19 @@ int tms_set_int_var(char *name, int64_t value, bool is_constant)
     return status;
 }
 
-bool is_ufunc_referenced_by(tms_math_expr *M, char *fname)
+bool is_ufunc_referenced_by(char *referrer, char *target)
 {
-    tms_math_subexpr *S = M->S;
+    const tms_ufunc *tmp = tms_get_ufunc_by_name(referrer);
+
+    // The user could delete a ufunc but it still have its name around, in this case ignore it
+    if (tmp == NULL || tmp->F == NULL)
+        return false;
+
+    tms_math_expr *M = tmp->F;
+
     for (int i = 0; i < M->subexpr_count; ++i)
     {
-        if (S[i].func_type == TMS_F_USER && strcmp(fname, S[i].func.user) == 0)
+        if (M->S[i].func_type == TMS_F_USER && strcmp(target, M->S[i].func.user) == 0)
             return true;
     }
     return false;
@@ -713,7 +720,7 @@ bool _tms_ufunc_has_bad_refs(char *fname)
                 tms_save_error(TMS_PARSER, NO_FSELF_REFERENCE, EH_FATAL, NULL, 0);
                 return true;
             }
-            else if (is_ufunc_referenced_by(M, fname))
+            else if (is_ufunc_referenced_by(S[i].func.user, fname))
             {
                 tms_save_error(TMS_PARSER, NO_FCIRCULAR_REFERENCE, EH_FATAL, NULL, 0);
                 return true;
@@ -818,12 +825,19 @@ int tms_set_ufunction(char *fname, char *function_args, char *function)
     return -1;
 }
 
-bool is_int_ufunc_referenced_by(tms_int_expr *M, char *fname)
+bool is_int_ufunc_referenced_by(char *referrer, char *target)
 {
-    tms_int_subexpr *S = M->S;
+    const tms_int_ufunc *tmp = tms_get_int_ufunc_by_name(referrer);
+
+    // The user could delete a ufunc but it still have its name around, in this case ignore it
+    if (tmp == NULL || tmp->F == NULL)
+        return false;
+
+    tms_int_expr *M = tmp->F;
+
     for (int i = 0; i < M->subexpr_count; ++i)
     {
-        if (S[i].func_type == TMS_F_INT_USER && strcmp(fname, S[i].func.user) == 0)
+        if (M->S[i].func_type == TMS_F_INT_USER && strcmp(target, M->S[i].func.user) == 0)
             return true;
     }
     return false;
@@ -847,7 +861,7 @@ bool _tms_int_ufunc_has_bad_refs(char *fname)
                 tms_save_error(TMS_INT_PARSER, NO_FSELF_REFERENCE, EH_FATAL, NULL, 0);
                 return true;
             }
-            else if (is_int_ufunc_referenced_by(M, fname))
+            else if (is_int_ufunc_referenced_by(S[i].func.user, fname))
             {
                 tms_save_error(TMS_INT_PARSER, NO_FCIRCULAR_REFERENCE, EH_FATAL, NULL, 0);
                 return true;
