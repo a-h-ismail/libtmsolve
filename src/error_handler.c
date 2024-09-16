@@ -272,8 +272,6 @@ int tms_modify_last_error(int facilities, char *expr, int error_position, char *
         return -1;
     }
 
-    error_table[i].expr_len = strlen(expr);
-
     if (prefix != NULL)
     {
         char *tmp = error_table[i].message;
@@ -281,7 +279,17 @@ int tms_modify_last_error(int facilities, char *expr, int error_position, char *
         free(tmp);
     }
 
-    int status = tms_save_expr_with_error(expr, error_position, error_table + i);
+    // Error position of -1 means no change
+    if (error_position == -1)
+        error_position = error_table[i].expr_len;
+
+    int status = 0;
+    // If expr is NULL, no change is requested to the expression
+    if (expr != NULL)
+    {
+        error_table[i].expr_len = strlen(expr);
+        status = tms_save_expr_with_error(expr, error_position, error_table + i);
+    }
     _unlock_error_database();
     return status;
 }
