@@ -38,6 +38,11 @@ const char *hashset_get(hashset *set, char *item)
     return hashmap_get(set, &item);
 }
 
+size_t hashset_count(hashset *set)
+{
+    return hashmap_count(set);
+}
+
 char **hashset_to_array(hashset *set, size_t *len, bool sort)
 {
     return hashmap_to_array(set, len, sort);

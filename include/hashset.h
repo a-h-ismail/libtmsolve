@@ -12,6 +12,7 @@ hashset *hashset_new();
 const char *hashset_set(hashset *set, char *item);
 const char *hashset_remove(hashset *set, char *item);
 const char *hashset_get(hashset *set, char *item);
+size_t hashset_count(hashset *set);
 char **hashset_to_array(hashset *set, size_t *len, bool sort);
 void hashset_free(hashset *set);
 
