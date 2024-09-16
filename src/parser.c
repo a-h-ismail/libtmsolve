@@ -140,7 +140,7 @@ tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *labels)
     }
 
     tms_math_expr *M = _tms_parse_expr_unsafe(expr, options, labels);
-    if (M == NULL)
+    if (M == NULL && (options & PRINT_ERRORS) != 0)
         tms_print_errors(TMS_PARSER);
 
     if ((options & NO_LOCK) != 1)

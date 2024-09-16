@@ -173,7 +173,7 @@ tms_int_expr *tms_parse_int_expr(char *expr, int options, tms_arg_list *labels)
     }
 
     tms_int_expr *M = _tms_parse_int_expr_unsafe(expr, options, labels);
-    if (M == NULL)
+    if (M == NULL && (options & PRINT_ERRORS) != 0)
         tms_print_errors(TMS_INT_PARSER);
 
     if ((options & NO_LOCK) != 1)
