@@ -3,6 +3,7 @@ Copyright (C) 2022-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "hashmap.h"
+#include "hashset.h"
 #include "libtmsolve.h"
 #include "m_errors.h"
 #include <math.h>
@@ -402,7 +403,7 @@ void tms_lock_parser(int variant)
 
     default:
         fputs("libtmsolve: Error while locking parsers: invalid ID...", stderr);
-        exit(1);
+        abort();
     }
 }
 
@@ -423,7 +424,7 @@ void tms_unlock_parser(int variant)
 
     default:
         fputs("libtmsolve: Error while unlocking parsers: invalid ID...", stderr);
-        exit(1);
+        abort();
     }
 }
 
@@ -445,7 +446,7 @@ void tms_lock_evaluator(int variant)
 
     default:
         fputs("libtmsolve: Error while locking evaluator: invalid ID...", stderr);
-        exit(1);
+        abort();
     }
 }
 
@@ -464,7 +465,7 @@ void tms_unlock_evaluator(int variant)
 
     default:
         fputs("libtmsolve: Error while unlocking evaluator: invalid ID...", stderr);
-        exit(1);
+        abort();
     }
 }
 
@@ -483,7 +484,7 @@ void tms_lock_vars(int variant)
 
     default:
         fputs("libtmsolve: Error while locking variables: invalid ID...", stderr);
-        exit(1);
+        abort();
     }
 }
 
@@ -500,7 +501,7 @@ void tms_unlock_vars(int variant)
 
     default:
         fputs("libtmsolve: Error while unlocking variables: invalid ID...", stderr);
-        exit(1);
+        abort();
     }
 }
 
@@ -519,7 +520,7 @@ void tms_lock_ufuncs(int variant)
 
     default:
         fputs("libtmsolve: Error while locking user functions: invalid ID...", stderr);
-        exit(1);
+        abort();
     }
 }
 
@@ -536,7 +537,7 @@ void tms_unlock_ufuncs(int variant)
 
     default:
         fputs("libtmsolve: Error while unlocking user functions: invalid ID...", stderr);
-        exit(1);
+        abort();
     }
 }
 
@@ -684,49 +685,104 @@ int tms_set_int_var(char *name, int64_t value, bool is_constant)
     return status;
 }
 
+// Get all user defined functions
+hashset *get_all_ufunc_references(char *fname)
+{
+    const tms_ufunc *F = tms_get_ufunc_by_name(fname);
+    if (F == NULL)
+        return NULL;
+
+    hashset *all_refs = hashset_new();
+    // If hashset init failed, we have some serious issues
+    if (all_refs == NULL)
+    {
+        fputs(INTERNAL_ERROR "\n", stderr);
+        abort();
+    }
+
+    tms_math_expr *M = F->F;
+    tms_math_subexpr *S = M->S;
+
+    // Get a set of all user functions referenced
+    for (int i = 0; i < M->subexpr_count; ++i)
+        if (S[i].func_type == TMS_F_USER)
+            hashset_set(all_refs, S[i].func.user);
+
+    if (hashset_count(all_refs) == 0)
+    {
+        hashset_free(all_refs);
+        return NULL;
+    }
+    else
+        return all_refs;
+}
+
 bool is_ufunc_referenced_by(char *referrer, char *target)
 {
-    const tms_ufunc *tmp = tms_get_ufunc_by_name(referrer);
+    hashset *all_refs = get_all_ufunc_references(referrer);
 
-    // The user could delete a ufunc but it still have its name around, in this case ignore it
-    if (tmp == NULL || tmp->F == NULL)
+    if (all_refs == NULL)
         return false;
 
-    tms_math_expr *M = tmp->F;
-
-    for (int i = 0; i < M->subexpr_count; ++i)
+    // Direct reference
+    if (hashset_get(all_refs, target) != NULL)
     {
-        if (M->S[i].func_type == TMS_F_USER && strcmp(target, M->S[i].func.user) == 0)
-            return true;
+        hashset_free(all_refs);
+        return true;
     }
+
+    // Indirect reference
+    size_t len;
+    char **refs_names = hashset_to_array(all_refs, &len, false);
+    hashset_free(all_refs);
+    for (size_t i = 0; i < len; ++i)
+        if (is_ufunc_referenced_by(refs_names[i], target))
+        {
+            free(refs_names);
+            return true;
+        }
+
+    free(refs_names);
     return false;
 }
 
 bool _tms_ufunc_has_bad_refs(char *fname)
 {
-    int i;
-    const tms_ufunc *F = tms_get_ufunc_by_name(fname);
-    if (F == NULL)
-        return false;
-    tms_math_expr *M = F->F;
-    tms_math_subexpr *S = M->S;
+    hashset *all_refs = get_all_ufunc_references(fname);
 
-    for (i = 0; i < M->subexpr_count; ++i)
+    if (all_refs == NULL)
+        return false;
+
+    // Quick self reference check
+    if (hashset_get(all_refs, fname) != NULL)
     {
-        if (S[i].func_type == TMS_F_USER)
+        tms_save_error(TMS_PARSER, NO_FSELF_REFERENCE, EH_FATAL, NULL, 0);
+        hashset_free(all_refs);
+        return true;
+    }
+
+    // Now check if this is referenced elsewhere
+    size_t len;
+    char **refs_names = hashset_to_array(all_refs, &len, false);
+    if (refs_names == NULL)
+    {
+        fputs(INTERNAL_ERROR "\n", stderr);
+        abort();
+    }
+
+    // Check for every referenced function if it refers to this function
+    for (size_t i = 0; i < len; ++i)
+    {
+        if (is_ufunc_referenced_by(refs_names[i], fname))
         {
-            if (strcmp(S[i].func.user, fname) == 0)
-            {
-                tms_save_error(TMS_PARSER, NO_FSELF_REFERENCE, EH_FATAL, NULL, 0);
-                return true;
-            }
-            else if (is_ufunc_referenced_by(S[i].func.user, fname))
-            {
-                tms_save_error(TMS_PARSER, NO_FCIRCULAR_REFERENCE, EH_FATAL, NULL, 0);
-                return true;
-            }
+            tms_save_error(TMS_PARSER, NO_FCIRCULAR_REFERENCE, EH_FATAL, NULL, 0);
+            free(refs_names);
+            hashset_free(all_refs);
+            return true;
         }
     }
+    free(refs_names);
+    hashset_free(all_refs);
     return false;
 }
 
@@ -734,32 +790,36 @@ int tms_set_ufunction(char *fname, char *function_args, char *function)
 {
     const tms_ufunc *old = tms_get_ufunc_by_name(fname);
 
-    // Check if the name has illegal characters
-    if (tms_valid_name(fname) == false)
+    // Skip name related verification if it already exists
+    if (old == NULL)
     {
-        tms_save_error(TMS_PARSER, INVALID_NAME, EH_FATAL, NULL, 0);
-        return -1;
-    }
+        // Check if the name has illegal characters
+        if (tms_valid_name(fname) == false)
+        {
+            tms_save_error(TMS_PARSER, INVALID_NAME, EH_FATAL, NULL, 0);
+            return -1;
+        }
 
-    // Check if the function name is allowed
-    if (!tms_legal_name(fname))
-    {
-        tms_save_error(TMS_PARSER, ILLEGAL_NAME, EH_FATAL, NULL, 0);
-        return -1;
-    }
+        // Check if the function name is allowed
+        if (!tms_legal_name(fname))
+        {
+            tms_save_error(TMS_PARSER, ILLEGAL_NAME, EH_FATAL, NULL, 0);
+            return -1;
+        }
 
-    // Check if the name was already used by builtin functions
-    if (tms_builtin_function_exists(fname))
-    {
-        tms_save_error(TMS_PARSER, NO_FUNCTION_SHADOWING, EH_FATAL, NULL, 0);
-        return -1;
-    }
+        // Check if the name was already used by builtin functions
+        if (tms_builtin_function_exists(fname))
+        {
+            tms_save_error(TMS_PARSER, NO_FUNCTION_SHADOWING, EH_FATAL, NULL, 0);
+            return -1;
+        }
 
-    // Check if the name is used by a variable
-    if (tms_get_var_by_name(fname) != NULL)
-    {
-        tms_save_error(TMS_PARSER, FUNCTION_NAME_MATCHES_VAR, EH_FATAL, NULL, 0);
-        return -1;
+        // Check if the name is used by a variable
+        if (tms_get_var_by_name(fname) != NULL)
+        {
+            tms_save_error(TMS_PARSER, FUNCTION_NAME_MATCHES_VAR, EH_FATAL, NULL, 0);
+            return -1;
+        }
     }
 
     // The received args are in a comma separated string, we convert them to an argument list
@@ -791,6 +851,14 @@ int tms_set_ufunction(char *fname, char *function_args, char *function)
         }
     }
     tms_math_expr *new = tms_parse_expr(function, ENABLE_CMPLX, arg_list);
+
+    if (new == NULL)
+    {
+        tms_modify_last_error(TMS_PARSER, NULL, -1, "In user function: ");
+        tms_print_errors(TMS_PARSER);
+        return -1;
+    }
+
     // Function already exists
     if (old != NULL)
     {
@@ -825,49 +893,104 @@ int tms_set_ufunction(char *fname, char *function_args, char *function)
     return -1;
 }
 
+// Get all user defined functions
+hashset *get_all_int_ufunc_references(char *fname)
+{
+    const tms_int_ufunc *F = tms_get_int_ufunc_by_name(fname);
+    if (F == NULL)
+        return NULL;
+
+    hashset *all_refs = hashset_new();
+    // If hashset init failed, we have some serious issues
+    if (all_refs == NULL)
+    {
+        fputs(INTERNAL_ERROR "\n", stderr);
+        abort();
+    }
+
+    tms_int_expr *M = F->F;
+    tms_int_subexpr *S = M->S;
+
+    // Get a set of all user functions referenced
+    for (int i = 0; i < M->subexpr_count; ++i)
+        if (S[i].func_type == TMS_F_INT_USER)
+            hashset_set(all_refs, S[i].func.user);
+
+    if (hashset_count(all_refs) == 0)
+    {
+        hashset_free(all_refs);
+        return NULL;
+    }
+    else
+        return all_refs;
+}
+
 bool is_int_ufunc_referenced_by(char *referrer, char *target)
 {
-    const tms_int_ufunc *tmp = tms_get_int_ufunc_by_name(referrer);
+    hashset *all_refs = get_all_int_ufunc_references(referrer);
 
-    // The user could delete a ufunc but it still have its name around, in this case ignore it
-    if (tmp == NULL || tmp->F == NULL)
+    if (all_refs == NULL)
         return false;
 
-    tms_int_expr *M = tmp->F;
-
-    for (int i = 0; i < M->subexpr_count; ++i)
+    // Direct reference
+    if (hashset_get(all_refs, target) != NULL)
     {
-        if (M->S[i].func_type == TMS_F_INT_USER && strcmp(target, M->S[i].func.user) == 0)
-            return true;
+        hashset_free(all_refs);
+        return true;
     }
+
+    // Indirect reference
+    size_t len;
+    char **refs_names = hashset_to_array(all_refs, &len, false);
+    hashset_free(all_refs);
+    for (size_t i = 0; i < len; ++i)
+        if (is_int_ufunc_referenced_by(refs_names[i], target))
+        {
+            free(refs_names);
+            return true;
+        }
+
+    free(refs_names);
     return false;
 }
 
 bool _tms_int_ufunc_has_bad_refs(char *fname)
 {
-    int i;
-    const tms_int_ufunc *F = tms_get_int_ufunc_by_name(fname);
-    if (F == NULL)
+    hashset *all_refs = get_all_int_ufunc_references(fname);
+    // No refs to begin with
+    if (all_refs == NULL)
         return false;
-    tms_int_expr *M = F->F;
-    tms_int_subexpr *S = M->S;
 
-    for (i = 0; i < M->subexpr_count; ++i)
+    // Quick self reference check
+    if (hashset_get(all_refs, fname) != NULL)
     {
-        if (S[i].func_type == TMS_F_INT_USER)
+        tms_save_error(TMS_INT_PARSER, NO_FSELF_REFERENCE, EH_FATAL, NULL, 0);
+        hashset_free(all_refs);
+        return true;
+    }
+
+    // Now check if this is referenced elsewhere
+    size_t len;
+    char **refs_names = hashset_to_array(all_refs, &len, false);
+    if (refs_names == NULL)
+    {
+        fputs(INTERNAL_ERROR "\n", stderr);
+        abort();
+    }
+
+    // Check for every referenced function if it refers to this function
+    for (size_t i = 0; i < len; ++i)
+    {
+        if (is_int_ufunc_referenced_by(refs_names[i], fname))
         {
-            if (strcmp(S[i].func.user, fname) == 0)
-            {
-                tms_save_error(TMS_INT_PARSER, NO_FSELF_REFERENCE, EH_FATAL, NULL, 0);
-                return true;
-            }
-            else if (is_int_ufunc_referenced_by(S[i].func.user, fname))
-            {
-                tms_save_error(TMS_INT_PARSER, NO_FCIRCULAR_REFERENCE, EH_FATAL, NULL, 0);
-                return true;
-            }
+            tms_save_error(TMS_INT_PARSER, NO_FCIRCULAR_REFERENCE, EH_FATAL, NULL, 0);
+            free(refs_names);
+            hashset_free(all_refs);
+            return true;
         }
     }
+    free(refs_names);
+    hashset_free(all_refs);
     return false;
 }
 
@@ -875,32 +998,35 @@ int tms_set_int_ufunction(char *fname, char *function_args, char *function)
 {
     const tms_int_ufunc *old = tms_get_int_ufunc_by_name(fname);
 
-    // Check if the name has illegal characters
-    if (tms_valid_name(fname) == false)
+    if (old == NULL)
     {
-        tms_save_error(TMS_INT_PARSER, INVALID_NAME, EH_FATAL, NULL, 0);
-        return -1;
-    }
+        // Check if the name has illegal characters
+        if (tms_valid_name(fname) == false)
+        {
+            tms_save_error(TMS_INT_PARSER, INVALID_NAME, EH_FATAL, NULL, 0);
+            return -1;
+        }
 
-    // Check if the function name is allowed
-    if (!tms_legal_name(fname))
-    {
-        tms_save_error(TMS_INT_PARSER, ILLEGAL_NAME, EH_FATAL, NULL, 0);
-        return -1;
-    }
+        // Check if the function name is allowed
+        if (!tms_legal_name(fname))
+        {
+            tms_save_error(TMS_INT_PARSER, ILLEGAL_NAME, EH_FATAL, NULL, 0);
+            return -1;
+        }
 
-    // Check if the name was already used by builtin functions
-    if (tms_builtin_int_function_exists(fname))
-    {
-        tms_save_error(TMS_INT_PARSER, NO_FUNCTION_SHADOWING, EH_FATAL, NULL, 0);
-        return -1;
-    }
+        // Check if the name was already used by builtin functions
+        if (tms_builtin_int_function_exists(fname))
+        {
+            tms_save_error(TMS_INT_PARSER, NO_FUNCTION_SHADOWING, EH_FATAL, NULL, 0);
+            return -1;
+        }
 
-    // Check if the name is used by a variable
-    if (tms_get_int_var_by_name(fname) != NULL)
-    {
-        tms_save_error(TMS_INT_PARSER, FUNCTION_NAME_MATCHES_VAR, EH_FATAL, NULL, 0);
-        return -1;
+        // Check if the name is used by a variable
+        if (tms_get_int_var_by_name(fname) != NULL)
+        {
+            tms_save_error(TMS_INT_PARSER, FUNCTION_NAME_MATCHES_VAR, EH_FATAL, NULL, 0);
+            return -1;
+        }
     }
 
     // The received args are in a comma separated string, we convert them to an argument list
@@ -932,6 +1058,13 @@ int tms_set_int_ufunction(char *fname, char *function_args, char *function)
         }
     }
     tms_int_expr *new = tms_parse_int_expr(function, 0, arg_list);
+
+    if (new == NULL)
+    {
+        tms_modify_last_error(TMS_INT_PARSER, NULL, -1, "In user function: ");
+        tms_print_errors(TMS_INT_PARSER);
+        return -1;
+    }
     // Function already exists
     if (old != NULL)
     {
