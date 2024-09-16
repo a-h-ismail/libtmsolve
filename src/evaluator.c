@@ -110,8 +110,7 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                     if (tms_get_error_count(TMS_EVALUATOR | TMS_PARSER, EH_ALL_ERRORS) == 0)
                         tms_save_error(TMS_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->expr, S[i].subexpr_start);
                     else
-                        tms_modify_last_error(TMS_EVALUATOR | TMS_PARSER, M->expr, S[i].subexpr_start,
-                                              "In function args: ");
+                        tms_modify_last_error(TMS_EVALUATOR | TMS_PARSER, M->expr, S[i].subexpr_start, "In function: ");
 
                     return NAN;
                 }
@@ -147,6 +146,15 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                 tms_set_labels_values(F, arguments);
                 **(S[i].result) = _tms_evaluate_unsafe(F);
                 tms_delete_math_expr(F);
+                if (tms_iscnan(**(S[i].result)))
+                {
+                    // If the function didn't generate an error itself, provide a generic one
+                    if (tms_get_error_count(TMS_EVALUATOR | TMS_PARSER, EH_ALL_ERRORS) == 0)
+                        tms_save_error(TMS_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->expr, S[i].subexpr_start);
+                    else
+                        tms_modify_last_error(TMS_EVALUATOR | TMS_PARSER, M->expr, S[i].subexpr_start, "In function: ");
+                    return NAN;
+                }
             }
         }
         else
@@ -289,7 +297,7 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                         tms_save_error(TMS_INT_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->expr, S[i].subexpr_start);
                     else
                         tms_modify_last_error(TMS_INT_EVALUATOR | TMS_INT_PARSER, M->expr, S[i].subexpr_start,
-                                              "In function args: ");
+                                              "In function: ");
 
                     return -1;
                 }
@@ -319,8 +327,18 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                 F->labels->payload_size = S[i].f_args->count * sizeof(int64_t);
                 // Set the label values (passed as arguments earlier)
                 tms_set_int_labels_values(F, arguments);
-                _tms_int_evaluate_unsafe(F, *(S[i].result));
+                int status = _tms_int_evaluate_unsafe(F, *(S[i].result));
                 tms_delete_int_expr(F);
+                if (status != 0)
+                {
+                    // If the function didn't generate an error itself, provide a generic one
+                    if (tms_get_error_count(TMS_INT_EVALUATOR | TMS_INT_PARSER, EH_ALL_ERRORS) == 0)
+                        tms_save_error(TMS_INT_EVALUATOR, EXTF_FAILURE, EH_FATAL, M->expr, S[i].subexpr_start);
+                    else
+                        tms_modify_last_error(TMS_INT_EVALUATOR | TMS_INT_PARSER, M->expr, S[i].subexpr_start,
+                                              "In function: ");
+                    return -1;
+                }
             }
             **(S[i].result) &= tms_int_mask;
         }
