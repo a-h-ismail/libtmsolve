@@ -193,6 +193,12 @@ int tms_derivative(tms_arg_list *L, tms_arg_list *labels, double complex *result
     if (_tms_validate_args_count(2, L->count, TMS_EVALUATOR) == false)
         return -1;
 
+    if (labels != NULL && tms_find_str_in_array("x", labels->arguments, labels->count, TMS_NOFUNC) != -1)
+    {
+        tms_save_error(TMS_EVALUATOR, X_NOT_ALLOWED, EH_FATAL, NULL, -1);
+        return -1;
+    }
+
     double complex x, fx1, fx2;
     double f_prime;
 
@@ -249,6 +255,11 @@ int tms_integrate(tms_arg_list *L, tms_arg_list *labels, double complex *result)
 
     if (_tms_validate_args_count(3, L->count, TMS_EVALUATOR) == false)
         return -1;
+    if (labels != NULL && tms_find_str_in_array("x", labels->arguments, labels->count, TMS_NOFUNC) != -1)
+    {
+        tms_save_error(TMS_EVALUATOR, X_NOT_ALLOWED, EH_FATAL, NULL, -1);
+        return -1;
+    }
 
     int n;
     bool flip_result = false;
@@ -259,8 +270,7 @@ int tms_integrate(tms_arg_list *L, tms_arg_list *labels, double complex *result)
     upper_bound = tms_solve_e(L->arguments[1], NO_LOCK | ENABLE_CMPLX, labels);
     if (isnan(creal(lower_bound)) || isnan(creal(upper_bound)))
     {
-        tms_clear_errors(TMS_PARSER);
-        tms_clear_errors(TMS_EVALUATOR);
+        tms_clear_errors(TMS_PARSER | TMS_EVALUATOR);
         return -1;
     }
 

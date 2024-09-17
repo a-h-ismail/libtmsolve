@@ -62,4 +62,5 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define TOO_MANY_LABELS "User functions support up to 64 arguments"
 #define LABELS_NOT_UNIQUE "Provided argument names must be unique"
 #define USER_FUNCTION_NOT_FOUND "This user function is no longer defined, redefine it and try again"
+#define X_NOT_ALLOWED "Using x as label name is not allowed here."
 #endif
