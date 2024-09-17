@@ -708,9 +708,10 @@ math_expr *dup_mexpr(math_expr *M)
         // New variables to keep lines from becoming too long
         NS = NM->S + s;
         S = M->S + s;
-        if (M->S[s].nodes != NULL)
+        *NS = *S;
+        if (S->nodes != NULL)
         {
-            op_count = M->S[s].op_count;
+            op_count = S->op_count;
             node_count = (op_count > 0 ? op_count : 1);
             NS->nodes = malloc(node_count * sizeof(op_node));
             // Copy nodes
