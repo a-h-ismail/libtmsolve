@@ -87,7 +87,7 @@ int _tms_get_operand_value(tms_math_expr *M, int start, double complex *out)
     value = tms_read_value(expr, start);
 
     // Failed to read value normally, it is probably a variable
-    if (isnan(creal(value)))
+    if (tms_iscnan(value))
     {
         char *name = tms_get_name(expr, start, true);
         if (name == NULL)

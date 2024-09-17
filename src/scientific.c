@@ -10,6 +10,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "internals.h"
 #include "parser.h"
 #include "string_tools.h"
+#include "tms_complex.h"
 #include "tms_math_strs.h"
 
 #include <math.h>
@@ -68,7 +69,7 @@ int64_t tms_int_abs(int64_t v)
 
 void tms_set_ans(double complex result)
 {
-    if (!isnan(creal(result)) && !isnan(cimag(result)))
+    if (!tms_iscnan(result))
         tms_g_ans = result;
 }
 
@@ -214,7 +215,7 @@ double complex tms_solve(char *expr)
             tms_lock_evaluator(TMS_EVALUATOR);
             result = tms_evaluate(M, NO_LOCK);
 
-            if (isnan(creal(result)))
+            if (tms_iscnan(result))
             {
                 // Not a fatal error, convert to complex and try again
                 if (tms_get_error_count(TMS_EVALUATOR | TMS_PARSER, EH_FATAL) == 0)
@@ -229,7 +230,7 @@ double complex tms_solve(char *expr)
                     // Conversion succeeded, clear previous errors
                     tms_clear_errors(TMS_EVALUATOR | TMS_PARSER);
                     result = tms_evaluate(M, NO_LOCK);
-                    if (isnan(creal(result)))
+                    if (tms_iscnan(result))
                         tms_print_errors(TMS_EVALUATOR | TMS_PARSER);
                 }
                 else

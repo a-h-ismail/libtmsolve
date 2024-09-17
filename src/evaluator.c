@@ -31,7 +31,7 @@ double complex tms_evaluate(tms_math_expr *M, int options)
 
     double complex result = _tms_evaluate_unsafe(M);
 
-    if (isnan(creal(result)) && (options & PRINT_ERRORS) != 0)
+    if (tms_iscnan(result) && (options & PRINT_ERRORS) != 0)
         tms_print_errors(TMS_EVALUATOR | TMS_PARSER);
 
     if ((options & NO_LOCK) != 1)
@@ -48,7 +48,7 @@ double complex *tms_solve_list(tms_arg_list *expr_list, int options, tms_arg_lis
     for (int i = 0; i < expr_list->count; ++i)
     {
         answer_list[i] = tms_solve_e(expr_list->arguments[i], options, labels);
-        if (isnan(creal(answer_list[i])))
+        if (tms_iscnan(answer_list[i]))
         {
             free(answer_list);
             answer_list = NULL;
@@ -212,7 +212,7 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                         else
                         {
                             *(i_node->result) = fmod(i_node->left_operand, i_node->right_operand);
-                            if (isnan(creal(*(i_node->result))))
+                            if (tms_iscnan(*(i_node->result)))
                             {
                                 tms_save_error(TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->expr, i_node->operator_index);
                                 return NAN;
@@ -225,7 +225,7 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                         if (M->enable_complex == false)
                         {
                             *(i_node->result) = pow(i_node->left_operand, i_node->right_operand);
-                            if (isnan(creal(*(i_node->result))))
+                            if (tms_iscnan(*(i_node->result)))
                             {
                                 tms_save_error(TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->expr, i_node->operator_index);
                                 return NAN;
@@ -249,7 +249,7 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                 break;
             }
 
-            if (isnan((double)**(S[i].result)))
+            if (tms_iscnan(**(S[i].result)))
             {
                 tms_save_error(TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->expr, S[i].subexpr_start);
                 return NAN;
