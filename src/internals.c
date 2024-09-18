@@ -717,9 +717,47 @@ hashset *get_all_ufunc_references(char *fname)
         return all_refs;
 }
 
+bool _ufunc_is_within_arglist(char *referrer, char *fname_wparenthesis)
+{
+    const tms_ufunc *tmp = tms_get_ufunc_by_name(referrer);
+    tms_math_expr *M = tmp->F;
+    // For every subexpression, check if it is a user or extended function
+    // If so, search the argument strings for any reference of the target function
+    for (int i = 0; i < M->subexpr_count; ++i)
+    {
+        if (M->S[i].f_args != NULL)
+        {
+            tms_arg_list *L = M->S[i].f_args;
+            for (int j = 0; j < L->count; ++j)
+                if (tms_f_search(L->arguments[j], fname_wparenthesis, 0, false) != -1)
+                    return true;
+        }
+    }
+    return false;
+}
+
 bool is_ufunc_referenced_by(char *referrer, char *target)
 {
+    char target_wparenthesis[strlen(target) + 2];
+    // Add a ( to the function name so forward search would find an actual reference
+    strcpy(target_wparenthesis, target);
+    strcat(target_wparenthesis, "(");
     hashset *all_refs = get_all_ufunc_references(referrer);
+
+    if (strcmp(referrer, target) == 0)
+    {
+        if (all_refs != NULL && hashset_get(all_refs, target) != NULL)
+        {
+            hashset_free(all_refs);
+            return true;
+        }
+        else
+        // Self reference within my subexpressions arglist
+        {
+            hashset_free(all_refs);
+            return _ufunc_is_within_arglist(target, target_wparenthesis);
+        }
+    }
 
     if (all_refs == NULL)
         return false;
@@ -734,32 +772,48 @@ bool is_ufunc_referenced_by(char *referrer, char *target)
     // Indirect reference
     size_t len;
     char **refs_names = hashset_to_array(all_refs, &len, false);
+
     hashset_free(all_refs);
+    const tms_ufunc *tmp;
+
+    // Iterating over all user functions referred to by the referrer
     for (size_t i = 0; i < len; ++i)
-        if (is_ufunc_referenced_by(refs_names[i], target))
+    {
+        tmp = tms_get_ufunc_by_name(refs_names[i]);
+        // The function is not found, skip
+        if (tmp == NULL)
+            continue;
+
+        else if (_ufunc_is_within_arglist(refs_names[i], target_wparenthesis))
         {
             free(refs_names);
             return true;
         }
 
+        // Recursive search in referred functions
+        if (is_ufunc_referenced_by(refs_names[i], target))
+        {
+            free(refs_names);
+            return true;
+        }
+    }
     free(refs_names);
     return false;
 }
 
 bool _tms_ufunc_has_bad_refs(char *fname)
 {
+    // Self reference check
+    if (is_ufunc_referenced_by(fname, fname))
+    {
+        tms_save_error(TMS_PARSER, NO_FSELF_REFERENCE, EH_FATAL, NULL, 0);
+        return true;
+    }
+
     hashset *all_refs = get_all_ufunc_references(fname);
 
     if (all_refs == NULL)
         return false;
-
-    // Quick self reference check
-    if (hashset_get(all_refs, fname) != NULL)
-    {
-        tms_save_error(TMS_PARSER, NO_FSELF_REFERENCE, EH_FATAL, NULL, 0);
-        hashset_free(all_refs);
-        return true;
-    }
 
     // Now check if this is referenced elsewhere
     size_t len;
@@ -925,9 +979,47 @@ hashset *get_all_int_ufunc_references(char *fname)
         return all_refs;
 }
 
+bool _int_ufunc_is_within_arglist(char *referrer, char *fname_wparenthesis)
+{
+    const tms_int_ufunc *tmp = tms_get_int_ufunc_by_name(referrer);
+    tms_int_expr *M = tmp->F;
+    // For every subexpression, check if it is a user or extended function
+    // If so, search the argument strings for any reference of the target function
+    for (int i = 0; i < M->subexpr_count; ++i)
+    {
+        if (M->S[i].f_args != NULL)
+        {
+            tms_arg_list *L = M->S[i].f_args;
+            for (int j = 0; j < L->count; ++j)
+                if (tms_f_search(L->arguments[j], fname_wparenthesis, 0, false) != -1)
+                    return true;
+        }
+    }
+    return false;
+}
+
 bool is_int_ufunc_referenced_by(char *referrer, char *target)
 {
+    char target_wparenthesis[strlen(target) + 2];
+    // Add a ( to the function name so forward search would find an actual reference
+    strcpy(target_wparenthesis, target);
+    strcat(target_wparenthesis, "(");
     hashset *all_refs = get_all_int_ufunc_references(referrer);
+
+    if (strcmp(referrer, target) == 0)
+    {
+        if (all_refs != NULL && hashset_get(all_refs, target) != NULL)
+        {
+            hashset_free(all_refs);
+            return true;
+        }
+        else
+        // Self reference within my subexpressions arglist
+        {
+            hashset_free(all_refs);
+            return _int_ufunc_is_within_arglist(target, target_wparenthesis);
+        }
+    }
 
     if (all_refs == NULL)
         return false;
@@ -942,32 +1034,48 @@ bool is_int_ufunc_referenced_by(char *referrer, char *target)
     // Indirect reference
     size_t len;
     char **refs_names = hashset_to_array(all_refs, &len, false);
+
     hashset_free(all_refs);
+    const tms_int_ufunc *tmp;
+
+    // Iterating over all user functions referred to by the referrer
     for (size_t i = 0; i < len; ++i)
-        if (is_int_ufunc_referenced_by(refs_names[i], target))
+    {
+        tmp = tms_get_int_ufunc_by_name(refs_names[i]);
+        // The function is not found, skip
+        if (tmp == NULL)
+            continue;
+
+        else if (_int_ufunc_is_within_arglist(refs_names[i], target_wparenthesis))
         {
             free(refs_names);
             return true;
         }
 
+        // Recursive search in referred functions
+        if (is_int_ufunc_referenced_by(refs_names[i], target))
+        {
+            free(refs_names);
+            return true;
+        }
+    }
     free(refs_names);
     return false;
 }
 
 bool _tms_int_ufunc_has_bad_refs(char *fname)
 {
-    hashset *all_refs = get_all_int_ufunc_references(fname);
-    // No refs to begin with
-    if (all_refs == NULL)
-        return false;
-
-    // Quick self reference check
-    if (hashset_get(all_refs, fname) != NULL)
+    // Self reference check
+    if (is_int_ufunc_referenced_by(fname, fname))
     {
         tms_save_error(TMS_INT_PARSER, NO_FSELF_REFERENCE, EH_FATAL, NULL, 0);
-        hashset_free(all_refs);
         return true;
     }
+
+    hashset *all_refs = get_all_int_ufunc_references(fname);
+
+    if (all_refs == NULL)
+        return false;
 
     // Now check if this is referenced elsewhere
     size_t len;
