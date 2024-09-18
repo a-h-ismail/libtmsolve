@@ -142,6 +142,7 @@ math_expr *init_math_expr(char *expr)
                 S[s_i].func_type = TMS_NOFUNC;
                 S[s_i].exec_extf = false;
                 S[s_i].solve_start = i + 1;
+                S[s_i].op_count = 0;
 
                 // The expression start is the parenthesis, may change if a function is found
                 S[s_i].subexpr_start = i;
@@ -208,6 +209,7 @@ math_expr *init_math_expr(char *expr)
     S[s_i].nodes = NULL;
     S[s_i].func_type = TMS_NOFUNC;
     S[s_i].exec_extf = true;
+    S[s_i].f_args = NULL;
 
     // Sort by depth (high to low)
     qsort(S, s_count, sizeof(math_subexpr), compare_subexpr_depth);
@@ -742,6 +744,9 @@ math_expr *dup_mexpr(math_expr *M)
         tmp = *(operand_type **)result;
         for (int i = 0; i < M->subexpr_count; ++i)
         {
+            if (M->S[i].nodes == NULL)
+                continue;
+
             op_count = M->S[i].op_count;
             node_count = (op_count > 0 ? op_count : 1);
             start = M->S[i].nodes;

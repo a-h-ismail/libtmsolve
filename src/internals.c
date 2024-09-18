@@ -1106,6 +1106,7 @@ int tms_set_int_ufunction(char *fname, char *function_args, char *function)
 {
     const tms_int_ufunc *old = tms_get_int_ufunc_by_name(fname);
 
+    // Skip name related verification if it already exists
     if (old == NULL)
     {
         // Check if the name has illegal characters
@@ -1180,7 +1181,7 @@ int tms_set_int_ufunction(char *fname, char *function_args, char *function)
         tms_int_ufunc old_F;
         old_F = *old;
 
-        tms_int_ufunc tmp = {.F = new, .name = fname};
+        tms_int_ufunc tmp = {.F = new, .name = old->name};
 
         // We need to update the hashmap because the function checks will lookup the name in the hashmap
         // otherwise we will get the old function checked instead
@@ -1206,7 +1207,6 @@ int tms_set_int_ufunction(char *fname, char *function_args, char *function)
     }
     return -1;
 }
-
 char **tms_smode_autocompletion_helper(const char *name)
 {
     size_t max_count =

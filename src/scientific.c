@@ -257,6 +257,9 @@ int tms_int_solve(char *expr, int64_t *result)
 {
     tms_int_expr *M;
     M = tms_parse_int_expr(expr, PRINT_ERRORS, NULL);
+    if (M == NULL)
+        return -1;
+
     int state = tms_int_evaluate(M, result, PRINT_ERRORS);
     tms_delete_int_expr(M);
     return state;
@@ -266,6 +269,9 @@ int tms_int_solve_e(char *expr, int64_t *result, int options, tms_arg_list *labe
 {
     tms_int_expr *M;
     M = tms_parse_int_expr(expr, NO_LOCK, labels);
+    if (M == NULL)
+        return -1;
+
     int state = tms_int_evaluate(M, result, options);
     // Labels were not allocated here so remove them to avoid being freed next
     M->labels = NULL;
