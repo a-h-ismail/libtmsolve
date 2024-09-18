@@ -15,7 +15,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 /// @brief Error metadata structure.
 typedef struct tms_error_data
 {
-    char *message, bad_snippet[50];
+    char *message, bad_snippet[50], *prefix;
     bool fatal;
     int relative_index;
     int real_index;

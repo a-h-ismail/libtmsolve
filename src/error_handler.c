@@ -59,6 +59,8 @@ void tms_print_error(tms_error_data E)
     // Print the snippet where the error occured
     if (E.real_index != -1)
     {
+        if (E.prefix != NULL)
+            fprintf(stderr, "%s", E.prefix);
         fprintf(stderr, "%s\nAt col %d: \n", E.message, E.real_index);
         if (E.real_index > 24)
         {
@@ -180,6 +182,7 @@ int tms_clear_errors(int facilities)
         {
             free(error_table[i].message);
             error_table[i].message = NULL;
+            error_table[i].prefix = NULL;
             if (error_table[i].fatal)
                 --fatal;
             else
@@ -199,6 +202,7 @@ int tms_clear_errors(int facilities)
                 error_table[i] = error_table[j];
                 // Move the hole forward
                 error_table[j].message = NULL;
+                error_table[i].prefix = NULL;
             }
         }
     }
@@ -274,9 +278,7 @@ int tms_modify_last_error(int facilities, char *expr, int error_position, char *
 
     if (prefix != NULL)
     {
-        char *tmp = error_table[i].message;
-        error_table[i].message = tms_strcat_dup(prefix, error_table[i].message);
-        free(tmp);
+        error_table[i].prefix = prefix;
     }
 
     // Error position of -1 means no change
