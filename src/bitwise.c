@@ -23,17 +23,17 @@ int64_t tms_sign_extend(int64_t value)
         return value;
 }
 
-int get_two_operands(tms_arg_list *args, int64_t *op1, int64_t *op2)
+int get_two_operands(tms_arg_list *args, int64_t *op1, int64_t *op2, tms_arg_list *labels)
 {
     if (_tms_validate_args_count(2, args->count, TMS_INT_EVALUATOR) == false)
         return -1;
 
     int status;
-    status = tms_int_solve_e(args->arguments[0], op1, NO_LOCK, NULL);
+    status = tms_int_solve_e(args->arguments[0], op1, NO_LOCK, labels);
     if (status != 0)
         return -1;
 
-    status = tms_int_solve_e(args->arguments[1], op2, NO_LOCK, NULL);
+    status = tms_int_solve_e(args->arguments[1], op2, NO_LOCK, labels);
     if (status != 0)
         return -1;
     else
@@ -88,13 +88,13 @@ int tms_inv_mask(int64_t bits, int64_t *result)
     }
 }
 
-int _tms_rotate_circular(tms_arg_list *args, char direction, int64_t *result)
+int _tms_rotate_circular(tms_arg_list *args, char direction, int64_t *result, tms_arg_list *labels)
 {
     if (_tms_validate_args_count(2, args->count, TMS_INT_EVALUATOR) == false)
         return -1;
 
     int64_t value, shift;
-    if (get_two_operands(args, &value, &shift) == -1)
+    if (get_two_operands(args, &value, &shift, labels) == -1)
         return -1;
 
     shift = tms_sign_extend(shift);
@@ -164,18 +164,18 @@ int tms_int_rand(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 
 int tms_rr(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
-    return _tms_rotate_circular(args, 'r', result);
+    return _tms_rotate_circular(args, 'r', result, labels);
 }
 
 int tms_rl(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
-    return _tms_rotate_circular(args, 'l', result);
+    return _tms_rotate_circular(args, 'l', result, labels);
 }
 
 int tms_sr(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     int64_t value, shift;
-    if (get_two_operands(args, &value, &shift) == -1)
+    if (get_two_operands(args, &value, &shift, labels) == -1)
         return -1;
     else
     {
@@ -199,7 +199,7 @@ int tms_sr(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 int tms_sra(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     int64_t value, shift;
-    if (get_two_operands(args, &value, &shift) == -1)
+    if (get_two_operands(args, &value, &shift, labels) == -1)
         return -1;
     else
     {
@@ -223,7 +223,7 @@ int tms_sra(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 int tms_sl(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     int64_t value, shift;
-    if (get_two_operands(args, &value, &shift) == -1)
+    if (get_two_operands(args, &value, &shift, labels) == -1)
         return -1;
     else
     {
@@ -246,7 +246,7 @@ int tms_sl(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 int tms_nor(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     int64_t op1, op2;
-    if (get_two_operands(args, &op1, &op2) == -1)
+    if (get_two_operands(args, &op1, &op2, labels) == -1)
         return -1;
     else
     {
@@ -258,7 +258,7 @@ int tms_nor(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 int tms_xor(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     int64_t op1, op2;
-    if (get_two_operands(args, &op1, &op2) == -1)
+    if (get_two_operands(args, &op1, &op2, labels) == -1)
         return -1;
     else
     {
@@ -270,7 +270,7 @@ int tms_xor(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 int tms_nand(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     int64_t op1, op2;
-    if (get_two_operands(args, &op1, &op2) == -1)
+    if (get_two_operands(args, &op1, &op2, labels) == -1)
         return -1;
     else
     {
@@ -282,7 +282,7 @@ int tms_nand(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 int tms_and(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     int64_t op1, op2;
-    if (get_two_operands(args, &op1, &op2) == -1)
+    if (get_two_operands(args, &op1, &op2, labels) == -1)
         return -1;
     else
     {
@@ -294,7 +294,7 @@ int tms_and(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 int tms_or(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
     int64_t op1, op2;
-    if (get_two_operands(args, &op1, &op2) == -1)
+    if (get_two_operands(args, &op1, &op2, labels) == -1)
         return -1;
     else
     {
