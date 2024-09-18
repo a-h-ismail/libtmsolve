@@ -456,7 +456,7 @@ int tms_int_evaluate(tms_int_expr *M, int64_t *result, int options)
     ++stack_depth;
     if (stack_depth > 32)
     {
-        tms_save_error(TMS_EVALUATOR, STACK_DEPTH_EXCEEDED, EH_FATAL, NULL, -1);
+        tms_save_error(TMS_INT_EVALUATOR, STACK_DEPTH_EXCEEDED, EH_FATAL, NULL, -1);
         --stack_depth;
         return -1;
     }
