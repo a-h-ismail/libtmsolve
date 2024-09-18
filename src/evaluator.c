@@ -20,6 +20,15 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M);
 
 double complex tms_evaluate(tms_math_expr *M, int options)
 {
+    static int stack_depth;
+    ++stack_depth;
+    if (stack_depth > 32)
+    {
+        tms_save_error(TMS_EVALUATOR, STACK_DEPTH_EXCEEDED, EH_FATAL, NULL, -1);
+        --stack_depth;
+        return NAN;
+    }
+
     if ((options & NO_LOCK) != 1)
         tms_lock_evaluator(TMS_EVALUATOR);
 
@@ -36,6 +45,7 @@ double complex tms_evaluate(tms_math_expr *M, int options)
 
     if ((options & NO_LOCK) != 1)
         tms_unlock_evaluator(TMS_EVALUATOR);
+    --stack_depth;
     return result;
 }
 
@@ -144,7 +154,7 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                 F->labels->payload_size = S[i].f_args->count * sizeof(double complex);
                 // Set the label values (passed as arguments earlier)
                 tms_set_labels_values(F, arguments);
-                **(S[i].result) = _tms_evaluate_unsafe(F);
+                **(S[i].result) = tms_evaluate(F, NO_LOCK);
                 tms_delete_math_expr(F);
                 if (tms_iscnan(**(S[i].result)))
                 {
@@ -263,6 +273,8 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
     return M->answer;
 }
 
+int tms_int_evaluate(tms_int_expr *M, int64_t *result, int options);
+
 int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
 {
     // No NULL pointer dereference allowed.
@@ -327,7 +339,7 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                 F->labels->payload_size = S[i].f_args->count * sizeof(int64_t);
                 // Set the label values (passed as arguments earlier)
                 tms_set_int_labels_values(F, arguments);
-                int status = _tms_int_evaluate_unsafe(F, *(S[i].result));
+                int status = tms_int_evaluate(F, *(S[i].result), NO_LOCK);
                 tms_delete_int_expr(F);
                 if (status != 0)
                 {
@@ -440,6 +452,15 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
 
 int tms_int_evaluate(tms_int_expr *M, int64_t *result, int options)
 {
+    static int stack_depth;
+    ++stack_depth;
+    if (stack_depth > 32)
+    {
+        tms_save_error(TMS_EVALUATOR, STACK_DEPTH_EXCEEDED, EH_FATAL, NULL, -1);
+        --stack_depth;
+        return -1;
+    }
+
     if ((options & NO_LOCK) != 1)
         tms_lock_evaluator(TMS_INT_EVALUATOR);
 
@@ -455,6 +476,8 @@ int tms_int_evaluate(tms_int_expr *M, int64_t *result, int options)
 
     if ((options & NO_LOCK) != 1)
         tms_unlock_evaluator(TMS_INT_EVALUATOR);
+
+    --stack_depth;
     return exit_status;
 }
 

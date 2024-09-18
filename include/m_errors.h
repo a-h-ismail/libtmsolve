@@ -63,4 +63,5 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define LABELS_NOT_UNIQUE "Provided argument names must be unique"
 #define USER_FUNCTION_NOT_FOUND "This user function is no longer defined, redefine it and try again"
 #define X_NOT_ALLOWED "Using x as label name is not allowed here."
+#define STACK_DEPTH_EXCEEDED "Stack depth was exceeded, aborting..."
 #endif
