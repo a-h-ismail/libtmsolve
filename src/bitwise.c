@@ -469,3 +469,67 @@ int tms_ones(int64_t value, int64_t *result)
     *result = ones_count;
     return 0;
 }
+
+int tms_parity(int64_t value, int64_t *result)
+{
+    tms_ones(value, result);
+    *result %= 2;
+    return 0;
+}
+
+int tms_int_abs(int64_t value, int64_t *result)
+{
+    if (value > 0)
+        *result = value;
+    else
+        *result = -value;
+    return 0;
+}
+
+int tms_int_min(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
+{
+    if (_tms_validate_args_count_range(args->count, 1, -1, TMS_INT_EVALUATOR) == false)
+        return -1;
+
+    // Set min to the largest possible value so it would always be overwritten in the first iteration
+    int64_t min = INT64_MAX, tmp;
+    int status;
+
+    for (int i = 0; i < args->count; ++i)
+    {
+        status = tms_int_solve_e(args->arguments[i], &tmp, NO_LOCK, labels);
+        if (status == -1)
+            return -1;
+        tmp = tms_sign_extend(tmp);
+
+        if (tmp < min)
+            min = tmp;
+    }
+
+    *result = min;
+    return 0;
+}
+
+int tms_int_max(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
+{
+    if (_tms_validate_args_count_range(args->count, 1, -1, TMS_INT_EVALUATOR) == false)
+        return -1;
+
+    // Set min to the smallest possible value so it would always be overwritten in the first iteration
+    int64_t max = INT64_MIN, tmp;
+    int status;
+
+    for (int i = 0; i < args->count; ++i)
+    {
+        status = tms_int_solve_e(args->arguments[i], &tmp, NO_LOCK, labels);
+        if (status == -1)
+            return -1;
+        tmp = tms_sign_extend(tmp);
+
+        if (tmp > max)
+            max = tmp;
+    }
+
+    *result = max;
+    return 0;
+}

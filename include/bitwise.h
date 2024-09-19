@@ -79,4 +79,16 @@ int tms_zeros(int64_t value, int64_t *result);
 
 /// @brief Returns the number of binary ones in its argument
 int tms_ones(int64_t value, int64_t *result);
+
+/// @brief Calculate the parity bit
+int tms_parity(int64_t value, int64_t *result);
+
+/// @brief Finds the absolute value
+int tms_int_abs(int64_t value, int64_t *result);
+
+/// @brief Finds the minimum of its arguments
+int tms_int_min(tms_arg_list *args, tms_arg_list *labels, int64_t *result);
+
+/// @brief Finds the maximum of its arguments
+int tms_int_max(tms_arg_list *args, tms_arg_list *labels, int64_t *result);
 #endif

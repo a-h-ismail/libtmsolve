@@ -46,7 +46,9 @@ const tms_int_func tms_g_int_func[] = {{"not", tms_not},
                                        {"inv_mask", tms_inv_mask},
                                        {"ipv4_prefix", tms_ipv4_prefix},
                                        {"zeros", tms_zeros},
-                                       {"ones", tms_ones}};
+                                       {"ones", tms_ones},
+                                       {"abs", tms_int_abs},
+                                       {"parity", tms_parity}};
 
 const tms_int_extf tms_g_int_extf[] = {{"rand", tms_int_rand}, {"rr", tms_rr},
                                        {"rl", tms_rl},         {"sr", tms_sr},
@@ -54,7 +56,8 @@ const tms_int_extf tms_g_int_extf[] = {{"rand", tms_int_rand}, {"rr", tms_rr},
                                        {"nand", tms_nand},     {"and", tms_and},
                                        {"xor", tms_xor},       {"nor", tms_nor},
                                        {"or", tms_or},         {"ipv4", tms_ipv4},
-                                       {"dotted", tms_dotted}, {"mask_range", tms_mask_range}};
+                                       {"dotted", tms_dotted}, {"mask_range", tms_mask_range},
+                                       {"min", tms_int_min},   {"max", tms_int_max}};
 
 bool _tms_do_init = true;
 bool _tms_debug = false;
