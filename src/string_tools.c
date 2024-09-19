@@ -1065,10 +1065,16 @@ void tms_print_oct(int64_t value)
         if (digit == 0)
         {
             if (!leading_zero)
+            {
+                if (i > 0 && i % 3 == 0)
+                    putchar(' ');
                 putchar('0');
+            }
         }
         else
         {
+            if (!leading_zero && i > 0 && i % 3 == 0)
+                putchar(' ');
             putchar('0' + digit);
             leading_zero = false;
         }
