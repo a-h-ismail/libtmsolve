@@ -176,6 +176,56 @@ uint64_t _tms_int_extf_hash(const void *item, uint64_t seed0, uint64_t seed1)
     return hashmap_xxhash3(v->name, strlen(v->name), seed0, seed1);
 }
 
+void _tms_free_rcfunc(void *item)
+{
+    tms_rc_func *a = item;
+    free(a->name);
+}
+
+void _tms_free_extf(void *item)
+{
+    tms_extf *a = item;
+    free(a->name);
+}
+
+void _tms_free_ufunc(void *item)
+{
+    tms_ufunc *a = item;
+    free(a->name);
+    tms_delete_math_expr(a->F);
+}
+
+void _tms_free_var(void *item)
+{
+    tms_var *a = item;
+    free(a->name);
+}
+
+void _tms_free_int_func(void *item)
+{
+    tms_int_func *a = item;
+    free(a->name);
+}
+
+void _tms_free_int_extf(void *item)
+{
+    tms_int_extf *a = item;
+    free(a->name);
+}
+
+void _tms_free_int_ufunc(void *item)
+{
+    tms_int_ufunc *a = item;
+    free(a->name);
+    tms_delete_int_expr(a->F);
+}
+
+void _tms_free_int_var(void *item)
+{
+    tms_int_var *a = item;
+    free(a->name);
+}
+
 const tms_var *tms_get_var_by_name(char *name)
 {
     tms_var tmp = {.name = name};
@@ -344,26 +394,29 @@ void tmsolve_init()
         srand(time(NULL));
 
         // Prepare hashmaps
-        var_hmap = hashmap_new(sizeof(tms_var), 0, rand(), rand(), _tms_var_hash, _tms_var_compare, NULL, NULL);
+        var_hmap =
+            hashmap_new(sizeof(tms_var), 0, rand(), rand(), _tms_var_hash, _tms_var_compare, _tms_free_var, NULL);
 
-        int_var_hmap =
-            hashmap_new(sizeof(tms_int_var), 0, rand(), rand(), _tms_int_var_hash, _tms_int_var_compare, NULL, NULL);
+        int_var_hmap = hashmap_new(sizeof(tms_int_var), 0, rand(), rand(), _tms_int_var_hash, _tms_int_var_compare,
+                                   _tms_free_int_var, NULL);
 
-        ufunc_hmap = hashmap_new(sizeof(tms_ufunc), 0, rand(), rand(), _tms_ufunc_hash, _tms_ufunc_compare, NULL, NULL);
+        ufunc_hmap = hashmap_new(sizeof(tms_ufunc), 0, rand(), rand(), _tms_ufunc_hash, _tms_ufunc_compare,
+                                 _tms_free_ufunc, NULL);
 
         int_ufunc_hmap = hashmap_new(sizeof(tms_int_ufunc), 0, rand(), rand(), _tms_int_ufunc_hash,
-                                     _tms_int_ufunc_compare, NULL, NULL);
+                                     _tms_int_ufunc_compare, _tms_free_int_ufunc, NULL);
 
-        rc_func_hmap =
-            hashmap_new(sizeof(tms_rc_func), 0, rand(), rand(), _tms_rc_func_hash, _tms_rc_func_compare, NULL, NULL);
+        rc_func_hmap = hashmap_new(sizeof(tms_rc_func), 0, rand(), rand(), _tms_rc_func_hash, _tms_rc_func_compare,
+                                   _tms_free_rcfunc, NULL);
 
-        extf_hmap = hashmap_new(sizeof(tms_extf), 0, rand(), rand(), _tms_extf_hash, _tms_extf_compare, NULL, NULL);
+        extf_hmap =
+            hashmap_new(sizeof(tms_extf), 0, rand(), rand(), _tms_extf_hash, _tms_extf_compare, _tms_free_extf, NULL);
 
-        int_func_hmap =
-            hashmap_new(sizeof(tms_int_func), 0, rand(), rand(), _tms_int_func_hash, _tms_int_func_compare, NULL, NULL);
+        int_func_hmap = hashmap_new(sizeof(tms_int_func), 0, rand(), rand(), _tms_int_func_hash, _tms_int_func_compare,
+                                    _tms_free_int_func, NULL);
 
-        int_extf_hmap =
-            hashmap_new(sizeof(tms_int_extf), 0, rand(), rand(), _tms_int_extf_hash, _tms_int_extf_compare, NULL, NULL);
+        int_extf_hmap = hashmap_new(sizeof(tms_int_extf), 0, rand(), rand(), _tms_int_extf_hash, _tms_int_extf_compare,
+                                    _tms_free_int_extf, NULL);
         int i;
         for (i = 0; i < array_length(tms_g_builtin_vars); ++i)
             hashmap_set(var_hmap, tms_g_builtin_vars + i);
