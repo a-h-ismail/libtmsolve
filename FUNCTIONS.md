@@ -47,29 +47,4 @@ Trigonometric functions lose precision with larger values. I recommend staying i
 
 ## Runtime Functions
 
-Runtime functions are created by the user during runtime. For `libtmsolve`, you have to call `tms_set_ufunction(char *name, char *function)` to add your runtime function. Please note that these are meant for interactive use only.
-
-## Guidelines for Adding new Extended Functions
-
-- Function declaration should be: `double complex tms_<name>(tms_arg_list *args)`
-- The extended function shouldn't free the argument list, it will be freed by the evaluator.
-- Validate the argument count you get:
-
-```C
-double complex tms_foo(tms_arg_list *args)
-{
-    if (_validate_args_count(EXPECTED_ARGS, args->count, TMS_EVALUATOR) == false)
-        return NAN;
-    
-    // <...>
-}
-```
-
-- If you are expecting a value, read it using `_tms_solve_e_unsafe()` (not the locking `tms_solve()` or it will result in a deadlock) and handle errors properly (mainly check if the solver returns `NAN`, clear the error handler if necessary).
-- Add the function declaration to `function.h`, and the function name and pointer to `parser.c`.
-
-Check the functions in `function.c` to see some implemented extended functions.
-
-## Note
-
-The names used by the parser are different from the actual names of the functions in the code. Refer to `parser.c` and `function.h` to see the actual C functions.
+Runtime functions are created by the user during runtime. Call `tms_set_ufunction()` to add your runtime function.

@@ -4,6 +4,7 @@ Similar to double precision scientific mode, integer mode has functions: simple 
 
 ## Simple Functions
 
+- `abs(value)`: Returns the absolute value.
 - `not(value)`: Flips all bits of `value`.
 - `mask(n)`: Creates an n bit wide mask.
 - `mask_bit(n)`: Creates a mask for the nth bit (LSB is considered `b0`).
@@ -11,6 +12,7 @@ Similar to double precision scientific mode, integer mode has functions: simple 
 - `ipv4_prefix(length)`: Generates the mask corresponding to the specified prefix length.
 - `zeros(value)`: Returns the number of binary zeros in `value`.
 - `ones(value)`: Returns the number of binary ones in `value`.
+- `parity(value)`: Calculates the parity bit of `value`.
 
 ## Extended Functions
 
@@ -24,3 +26,9 @@ Similar to double precision scientific mode, integer mode has functions: simple 
 - `dotted(a.b...)`: Reads a dot decimal notation of any width.
 - `mask_range(start, end)`: Generates a mask for bits in range [start, end] (LSB is considered `b0`).
 - `rand(min, max)`: Returns a random value in range `[min, max]`. If arguments are omitted, default is `[0,max]`.
+- `max(...)`: Finds the maximum of its arguments.
+- `min(...)`: Finds the minimum of its arguments.
+
+## Runtime Functions
+
+Runtime functions are created by the user during runtime. Call `tms_set_int_ufunction()` to add your runtime function.
