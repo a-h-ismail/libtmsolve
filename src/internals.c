@@ -599,10 +599,43 @@ void tms_unlock_ufuncs(int variant)
     }
 }
 
+void tmsolve_reset()
+{
+    size_t len;
+    tms_lock_vars(TMS_V_DOUBLE);
+    tms_var *all_vars = tms_get_all_vars(&len, false);
+    // Delete all user variables (not the constants set during initialization)
+    if (all_vars != NULL)
+        for (size_t i = 0; i < len; ++i)
+            if (!all_vars[i].is_constant)
+                hashmap_delete(var_hmap, all_vars + i);
+    tms_g_ans = 0;
+    free(all_vars);
+    tms_unlock_vars(TMS_V_DOUBLE);
+
+    tms_set_int_mask(32);
+    tms_lock_vars(TMS_V_INT64);
+    tms_int_var *all_int_vars = tms_get_all_int_vars(&len, false);
+    // Same as above
+    if (all_int_vars != NULL)
+        for (size_t i = 0; i < len; ++i)
+            if (!all_int_vars[i].is_constant)
+                hashmap_delete(int_var_hmap, all_int_vars + i);
+    tms_g_int_ans = 0;
+    tms_unlock_vars(TMS_V_INT64);
+
+    tms_lock_ufuncs(TMS_V_DOUBLE);
+    hashmap_clear(ufunc_hmap, true);
+    tms_unlock_ufuncs(TMS_V_DOUBLE);
+
+    tms_lock_ufuncs(TMS_V_INT64);
+    hashmap_clear(int_ufunc_hmap, true);
+    tms_unlock_ufuncs(TMS_V_INT64);
+}
+
 void tms_set_int_mask(int size)
 {
     tms_lock_parser(TMS_INT_PARSER);
-    tms_lock_evaluator(TMS_INT_EVALUATOR);
     double power = log2(size);
 
     // The int mask size should be a power of 2
@@ -627,7 +660,6 @@ void tms_set_int_mask(int size)
         tms_int_mask_size = size;
     }
     tms_unlock_parser(TMS_INT_PARSER);
-    tms_unlock_evaluator(TMS_INT_EVALUATOR);
 }
 
 bool _tms_validate_args_count(int expected, int actual, int facility_id)

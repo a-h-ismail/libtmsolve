@@ -57,6 +57,9 @@ extern int8_t tms_int_mask_size;
 /// @brief Initializes the variables required for the proper operation of the calculator.
 void tmsolve_init() __attribute__((constructor));
 
+/// @brief Clears all user defined variables, functions and answers.
+void tmsolve_reset();
+
 /**
  * @brief Searches for a variable using its name.
  * @return Pointer to the variable in the internal hashmap, or NULL if no match is found.
