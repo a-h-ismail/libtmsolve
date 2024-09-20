@@ -622,6 +622,7 @@ void tmsolve_reset()
             if (!all_int_vars[i].is_constant)
                 hashmap_delete(int_var_hmap, all_int_vars + i);
     tms_g_int_ans = 0;
+    free(all_int_vars);
     tms_unlock_vars(TMS_V_INT64);
 
     tms_lock_ufuncs(TMS_V_DOUBLE);
