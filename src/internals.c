@@ -7,7 +7,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "libtmsolve.h"
 #include "m_errors.h"
 #include <math.h>
-#include <stdatomic.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,10 +62,10 @@ const tms_int_extf tms_g_int_extf[] = {{"rand", tms_int_rand}, {"rr", tms_rr},
 bool _tms_do_init = true;
 bool _tms_debug = false;
 
-atomic_bool _parser_lock = false, _int_parser_lock = false;
-atomic_bool _ufunc_lock = false, _int_ufunc_lock = false;
-atomic_bool _variables_lock = false, _int_variables_lock = false;
-atomic_bool _evaluator_lock = false, _int_evaluator_lock = false;
+pthread_mutex_t _parser_lock, _int_parser_lock;
+pthread_mutex_t _ufunc_lock, _int_ufunc_lock;
+pthread_mutex_t _variables_lock, _int_variables_lock;
+pthread_mutex_t _evaluator_lock, _int_evaluator_lock;
 
 char *tms_g_illegal_names[] = {"ans"};
 const int tms_g_illegal_names_count = array_length(tms_g_illegal_names);
@@ -390,6 +390,16 @@ void tmsolve_init()
 {
     if (_tms_do_init)
     {
+        // Initialize mutexes
+        pthread_mutex_init(&_parser_lock, NULL);
+        pthread_mutex_init(&_int_parser_lock, NULL);
+        pthread_mutex_init(&_evaluator_lock, NULL);
+        pthread_mutex_init(&_int_evaluator_lock, NULL);
+        pthread_mutex_init(&_ufunc_lock, NULL);
+        pthread_mutex_init(&_int_ufunc_lock, NULL);
+        pthread_mutex_init(&_variables_lock, NULL);
+        pthread_mutex_init(&_int_variables_lock, NULL);
+
         // Seed the random number generator
         srand(time(NULL));
 
@@ -442,19 +452,15 @@ void tms_lock_parser(int variant)
     switch (variant)
     {
     case TMS_PARSER:
-        while (atomic_flag_test_and_set(&_parser_lock))
-            ;
-        while (atomic_flag_test_and_set(&_variables_lock))
-            ;
-        while (atomic_flag_test_and_set(&_ufunc_lock))
-            ;
+        pthread_mutex_lock(&_parser_lock);
+        pthread_mutex_lock(&_variables_lock);
+        pthread_mutex_lock(&_ufunc_lock);
         return;
 
     case TMS_INT_PARSER:
-        while (atomic_flag_test_and_set(&_int_parser_lock))
-            ;
-        while (atomic_flag_test_and_set(&_int_variables_lock))
-            ;
+        pthread_mutex_lock(&_int_parser_lock);
+        pthread_mutex_lock(&_int_variables_lock);
+        pthread_mutex_lock(&_int_ufunc_lock);
         return;
 
     default:
@@ -468,14 +474,15 @@ void tms_unlock_parser(int variant)
     switch (variant)
     {
     case TMS_PARSER:
-        atomic_flag_clear(&_parser_lock);
-        atomic_flag_clear(&_variables_lock);
-        atomic_flag_clear(&_ufunc_lock);
+        pthread_mutex_unlock(&_parser_lock);
+        pthread_mutex_unlock(&_variables_lock);
+        pthread_mutex_unlock(&_ufunc_lock);
         return;
 
     case TMS_INT_PARSER:
-        atomic_flag_clear(&_int_parser_lock);
-        atomic_flag_clear(&_int_variables_lock);
+        pthread_mutex_unlock(&_int_parser_lock);
+        pthread_mutex_unlock(&_int_variables_lock);
+        pthread_mutex_unlock(&_int_ufunc_lock);
         return;
 
     default:
@@ -489,15 +496,13 @@ void tms_lock_evaluator(int variant)
     switch (variant)
     {
     case TMS_EVALUATOR:
-        while (atomic_flag_test_and_set(&_evaluator_lock))
-            ;
-        while (atomic_flag_test_and_set(&_ufunc_lock))
-            ;
+        pthread_mutex_lock(&_evaluator_lock);
+        pthread_mutex_lock(&_ufunc_lock);
         return;
 
     case TMS_INT_EVALUATOR:
-        while (atomic_flag_test_and_set(&_int_evaluator_lock))
-            ;
+        pthread_mutex_lock(&_int_evaluator_lock);
+        pthread_mutex_lock(&_int_ufunc_lock);
         return;
 
     default:
@@ -511,12 +516,13 @@ void tms_unlock_evaluator(int variant)
     switch (variant)
     {
     case TMS_EVALUATOR:
-        atomic_flag_clear(&_evaluator_lock);
-        atomic_flag_clear(&_ufunc_lock);
+        pthread_mutex_unlock(&_evaluator_lock);
+        pthread_mutex_unlock(&_ufunc_lock);
         return;
 
     case TMS_INT_EVALUATOR:
-        atomic_flag_clear(&_int_evaluator_lock);
+        pthread_mutex_unlock(&_int_evaluator_lock);
+        pthread_mutex_unlock(&_int_ufunc_lock);
         return;
 
     default:
@@ -530,12 +536,10 @@ void tms_lock_vars(int variant)
     switch (variant)
     {
     case TMS_V_DOUBLE:
-        while (atomic_flag_test_and_set(&_variables_lock))
-            ;
+        pthread_mutex_lock(&_variables_lock);
         return;
     case TMS_V_INT64:
-        while (atomic_flag_test_and_set(&_int_variables_lock))
-            ;
+        pthread_mutex_lock(&_int_variables_lock);
         return;
 
     default:
@@ -549,10 +553,10 @@ void tms_unlock_vars(int variant)
     switch (variant)
     {
     case TMS_V_DOUBLE:
-        atomic_flag_clear(&_variables_lock);
+        pthread_mutex_unlock(&_variables_lock);
         return;
     case TMS_V_INT64:
-        atomic_flag_clear(&_int_variables_lock);
+        pthread_mutex_unlock(&_int_variables_lock);
         return;
 
     default:
@@ -566,12 +570,10 @@ void tms_lock_ufuncs(int variant)
     switch (variant)
     {
     case TMS_V_DOUBLE:
-        while (atomic_flag_test_and_set(&_ufunc_lock))
-            ;
+        pthread_mutex_lock(&_ufunc_lock);
         return;
     case TMS_V_INT64:
-        while (atomic_flag_test_and_set(&_int_ufunc_lock))
-            ;
+        pthread_mutex_lock(&_int_ufunc_lock);
         return;
 
     default:
@@ -585,10 +587,10 @@ void tms_unlock_ufuncs(int variant)
     switch (variant)
     {
     case TMS_V_DOUBLE:
-        atomic_flag_clear(&_ufunc_lock);
+        pthread_mutex_unlock(&_ufunc_lock);
         return;
     case TMS_V_INT64:
-        atomic_flag_clear(&_int_ufunc_lock);
+        pthread_mutex_unlock(&_int_ufunc_lock);
         return;
 
     default:
@@ -691,10 +693,9 @@ int _tms_set_var_unsafe(char *name, double complex value, bool is_constant)
 
 int tms_set_var(char *name, double complex value, bool is_constant)
 {
-    while (atomic_flag_test_and_set(&_variables_lock))
-        ;
+    pthread_mutex_lock(&_variables_lock);
     int status = _tms_set_var_unsafe(name, value, is_constant);
-    atomic_flag_clear(&_variables_lock);
+    pthread_mutex_unlock(&_variables_lock);
     return status;
 }
 
@@ -734,10 +735,9 @@ int _tms_set_int_var_unsafe(char *name, int64_t value, bool is_constant)
 
 int tms_set_int_var(char *name, int64_t value, bool is_constant)
 {
-    while (atomic_flag_test_and_set(&_int_variables_lock))
-        ;
+    pthread_mutex_lock(&_int_variables_lock);
     int status = _tms_set_int_var_unsafe(name, value, is_constant);
-    atomic_flag_clear(&_int_variables_lock);
+    pthread_mutex_unlock(&_int_variables_lock);
     return status;
 }
 
