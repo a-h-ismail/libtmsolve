@@ -1,8 +1,50 @@
 # Changelog
 
+## 3.0.0 - 2024-09-20
+
+This is a major, API breaking release.
+
+### Added
+
+- Both parsers now support labels, used to implement multi-argument user functions.
+- User defined functions for integer based expressions.
+- Helper functions to generate autocompletion matches for scientific and integer modes.
+- Ability to remove user defined variables and functions.
+- Function to check if an array of string is made of unique strings.
+- Some extra helper functions in `string_tools.h`.
+- Ability to reset library state using `tmsolve_reset()`.
+- Call depth limit (32) for both evaluators to avoid infinite recursion.
+- Options `NO_LOCK`, `ENABLE_COMPLEX`, `PRINT_ERRORS` applicable to parsers and evaluators.
+- Integer functions `min()`, `max()`, `abs()`, `parity()`.
+
+### Changed
+
+- Refactor the error handler, it now has its own header and six separate functions instead of one.
+- Massive code redundancy cleanup in both parsers, relying on macros and `parser_common.h`
+- Variables and functions now use a hashmap instead of linear arrays.
+- Parsers and evaluators now accept options as flags.
+- Support for multiple arguments (up to 64) in user defined functions.
+- User functions are stored by name instead of pointer.
+- The parser is no longer responsible for runtime variables.
+- "unknowns" are now known as "labels" and no longer restricted to "x" only.
+- The "prefix" string in saved errors is now stored separately instead of being concatenated with the error message.
+- Locking implementation now uses `pthread` mutexes instead of `stdatomic.h` spinlocks.
+- `tms_arg_list` can now carry an additional payload.
+- Some other refactoring.
+
+### Removed
+
+- A lot of linear arrays containing variables and functions.
+- The old `tms_error_handler()`.
+
+### Fixed
+
+- Some cases where the circular and self reference checks can be bypassed, leading to infinite recursion.
+- Possible out of bound access while creating an argument list if an open parenthesis is not closed.
+
 ## 2.3.0 - 2024-05-10
 
-## Changed
+### Changed
 
 - Add `rand()` to integer mode.
 - Add `log2()` function.
@@ -10,7 +52,7 @@
 - `rand()` now returns a weight `[0,1]` instead of a random number in range `[0,INT_MAX]`.
 - Improve clarity of extended functions errors.
 
-## Fixed
+### Fixed
 
 - Parsers no longer ignore syntax errors delimited by a closing parenthesis and an operand.
 - Parsing error generated in recursive calls from evaluating extended functions are no longer ignored.
@@ -22,12 +64,12 @@
 
 ## 2.2.0 - 2024-03-02
 
-## Added
+### Added
 
 - Int functions `mask_bit()` and `mask_range()`.
 - `tms_delete_math_expr_members()` to free memory of a math expression members without freeing the math_expr itself.
 
-## Fixed
+### Fixed
 
 - When runtime defined functions are updated, the pointer to the math_struct is now conserved. This should avoid dangling pointers in other math expressions referring to the old version.
 
