@@ -525,6 +525,11 @@ static int _tms_set_labels(math_expr *M, int start, op_node *x_node, char rl)
     bool is_negative = false;
 
     char *name = tms_get_name(expr, start, true);
+    if (name == NULL)
+    {
+        tms_save_error(PARSER, SYNTAX_ERROR, EH_FATAL, M->expr, start);
+        return -1;
+    }
 
     int id = tms_find_str_in_array(name, M->labels->arguments, M->labels->count, TMS_NOFUNC);
     free(name);
@@ -558,7 +563,7 @@ static int _tms_set_labels(math_expr *M, int start, op_node *x_node, char rl)
     }
     else
     {
-        tms_save_error(PARSER, INTERNAL_ERROR, EH_FATAL, NULL, 0);
+        tms_save_error(PARSER, INTERNAL_ERROR, EH_FATAL, M->expr, start);
         return -1;
     }
 
