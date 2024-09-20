@@ -20,7 +20,6 @@ int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op
 
 /**
  * @brief The integer version of libtmsolve's parser.
- * @note This function automatically prints errors to stderr if any.
  * @param expr The expression to parse.
  * @param options Supported: NO_LOCK, PRINT_ERRORS.
  * @param labels List of named labels and optionally a values array to initialize labeled operands.
