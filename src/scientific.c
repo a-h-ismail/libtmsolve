@@ -155,7 +155,7 @@ double complex tms_solve(char *expr)
         // No longer used, kept for legacy.
     case 0:
 
-        M = tms_parse_expr(expr, false, false);
+        M = tms_parse_expr(expr, 0, NULL);
         result = tms_evaluate(M, 0);
         tms_delete_math_expr(M);
         return result;
