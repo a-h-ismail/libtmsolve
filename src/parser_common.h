@@ -107,29 +107,32 @@ math_expr *init_math_expr(char *expr)
                     S[s_i].subexpr_start = i - strlen(name);
                     S[s_i].solve_start = i + 1;
                     S[s_i].solve_end = tms_find_closing_parenthesis(expr, i) - 1;
-                    S[s_i].start_node = -1;
-                    // Generate the argument list at parsing time instead of during evaluation for better performance
-                    char *arguments = tms_strndup(expr + i + 1, S[s_i].solve_end - i);
-                    S[s_i].f_args = tms_get_args(arguments);
-                    free(arguments);
-                    // Set "i" at the end of the subexpression to avoid iterating within the extended/user function
-                    i = S[s_i].solve_end;
+                    if (S[s_i].solve_end != -2)
+                    {
+                        S[s_i].start_node = -1;
+                        // Generate the argument list at parsing time instead of during evaluation for better performance
+                        char *arguments = tms_strndup(expr + i + 1, S[s_i].solve_end - i);
+                        S[s_i].f_args = tms_get_args(arguments);
+                        free(arguments);
+                        // Set "i" at the end of the subexpression to avoid iterating within the extended/user function
+                        i = S[s_i].solve_end;
 
-                    // Specific to extended functions
-                    if (extf_i != NULL)
-                    {
-                        S[s_i].func.extended = extf_i->ptr;
-                        S[s_i].func_type = F_EXTENDED;
-                        S[s_i].exec_extf = true;
-                    }
-                    // Specific to user functions
-                    else
-                    {
-                        // Duplicate the function name to avoid breaking an expression if this user function is removed
-                        // Remember that the mallocd name is removed when a user function is removed
-                        // So this provides independence from the original ufunc (at the expense of more mallocs)
-                        S[s_i].func.user = strdup(ufunc_i->name);
-                        S[s_i].func_type = F_USER;
+                        // Specific to extended functions
+                        if (extf_i != NULL)
+                        {
+                            S[s_i].func.extended = extf_i->ptr;
+                            S[s_i].func_type = F_EXTENDED;
+                            S[s_i].exec_extf = true;
+                        }
+                        // Specific to user functions
+                        else
+                        {
+                            // Duplicate the function name to avoid breaking an expression if this user function is removed
+                            // Remember that the mallocd name is removed when a user function is removed
+                            // So this provides independence from the original ufunc (at the expense of more mallocs)
+                            S[s_i].func.user = strdup(ufunc_i->name);
+                            S[s_i].func_type = F_USER;
+                        }
                     }
                 }
                 free(name);
