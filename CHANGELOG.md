@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.0.0 - 2024-09-20
+## 3.0.0 - 2024-09-21
 
 This is a major, API breaking release.
 
@@ -30,6 +30,7 @@ This is a major, API breaking release.
 - The "prefix" string in saved errors is now stored separately instead of being concatenated with the error message.
 - Locking implementation now uses `pthread` mutexes instead of `stdatomic.h` spinlocks.
 - `tms_arg_list` can now carry an additional payload.
+- Octal printing now adds a space every 3 digits.
 - Some other refactoring.
 
 ### Removed
