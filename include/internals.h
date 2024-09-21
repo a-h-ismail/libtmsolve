@@ -144,7 +144,6 @@ bool tms_int_function_exists(char *name);
 
 /**
  * @brief Locks one of the parsers.
- * @details This function uses spinlocks to wait for a lock to be released.
  * @param variant Either TMS_PARSER or TMS_INT_PARSER
  */
 void tms_lock_parser(int variant);
@@ -157,7 +156,6 @@ void tms_unlock_parser(int variant);
 
 /**
  * @brief Locks one of the evaluator
- * @details This function uses spinlocks to wait for a lock to be released.
  * @param variant Either TMS_EVALUATOR or TMS_INT_EVALUATOR
  */
 void tms_lock_evaluator(int variant);
