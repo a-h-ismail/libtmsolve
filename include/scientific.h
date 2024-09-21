@@ -111,9 +111,9 @@ void tms_reduce_fraction(tms_fraction *fraction_r);
 /**
  * @brief Converts a decimal value into its equivalent fraction if possible.
  * @param value The decimal value to convert.
- * @param inverse_process Tells the function that the value it received is the inverse of the actual value.
- * For the first call, set it to false.
+ * @param precision Number of useful decimal places in value, set to 0 for default.
+ * @param inverse_process Tells the function that the value it received is the inverse of the actual value, set it to false.
  * @return The fraction form of the value.
  */
-tms_fraction tms_decimal_to_fraction(double value, bool inverse_process);
+tms_fraction tms_decimal_to_fraction(double value, int precision, bool inverse_process);
 #endif

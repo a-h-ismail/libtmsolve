@@ -371,7 +371,7 @@ void tms_reduce_fraction(tms_fraction *fraction_str)
     free(denom_factor);
 }
 // Converts a floating point value to decimal representation a*b/c
-tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
+tms_fraction tms_decimal_to_fraction(double value, int precision, bool inverse_process)
 {
     int dec_point = 1, patt_start, patt_end, frac_length;
     bool success = false;
@@ -397,10 +397,11 @@ tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
 
     // Reduce the number of decimal places to print as much as the complete value has non decimal places
     // This avoids obtaining junk values (remember a double has ~15 digits of precision)
+    // Precision can be overriden by the caller if not set to zero
     if (result.a != 0)
-        sprintf(printed_value, "%.*lf", 14 - (int)log10(abs(result.a)), value);
+        sprintf(printed_value, "%.*lf", (precision > 0 ? precision : 14 - (int)log10(abs(result.a))), value);
     else
-        sprintf(printed_value, "%.14lf", value);
+        sprintf(printed_value, "%.*lf", (precision > 0 ? precision : 14), value);
 
     // Removing trailing zeros
     for (int i = strlen(printed_value) - 1; i > dec_point; --i)
@@ -511,18 +512,14 @@ tms_fraction tms_decimal_to_fraction(double value, bool inverse_process)
         // Other cases like 3/17 (non periodic but the inverse is periodic)
         else
         {
-            // In this case restore the integer part (a)
-            // Otherwise, the inverse process may get garbage decimal places
-            inverse_value = 1 / (value + result.a);
-            tms_fraction inverted = tms_decimal_to_fraction(inverse_value, true);
+            // Given that we are sending an inverted value that originated from a decimal only value
+            // And given that the decimal value had an integer value that drops its precision
+            // We need to inform the recursive call of the precision loss
+            tms_fraction inverted = tms_decimal_to_fraction(inverse_value, 14 - log10(abs(result.a)), true);
             if (inverted.c != 0)
             {
-                // inverse of a + b / c is c / ( a * c + b )
                 result.b = inverted.c;
                 result.c = inverted.b + inverted.a * inverted.c;
-                // Because the inverse is of form d / c, with d = (a * c + b)
-                // Subtract from d (stored in b earlier) a * c
-                result.b -= result.c * result.a;
                 return result;
             }
         }
