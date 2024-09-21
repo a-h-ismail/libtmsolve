@@ -48,7 +48,7 @@ int64_t result;
 status = tms_int_solve(int_expression, &result);
 
 // Similarly to the double variant, you can use the more advanced tms_int_solve_e
-status = tms_int_solve(int_expression, &result, 0, NULL);
+status = tms_int_solve_e(int_expression, &result, 0, NULL);
 ```
 
 Check the relevant documentation for more details.
@@ -60,6 +60,7 @@ To build your binary and link to this library:
 
 ## Tips
 
+- Runtime variables and functions manipulation is defined in `internals.h`.
 - Documentation about the parser, evaluator, and some useful features like factorization can be found in `parser.h`, `evaluator.h` and `scientific.h`.
 - Extended functions (like integration) are defined in `function.h`.
 - Integer variant of the parser is in `int_parser.h`, its extended functions are in `bitwise.h`.
