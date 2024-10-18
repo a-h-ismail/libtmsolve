@@ -996,11 +996,7 @@ int tms_set_ufunction(char *fname, char *function_args, char *function)
     tms_math_expr *new = tms_parse_expr(function, ENABLE_CMPLX, arg_list);
 
     if (new == NULL)
-    {
-        tms_modify_last_error(TMS_PARSER, NULL, -1, "In user function: ");
-        tms_print_errors(TMS_PARSER);
         return -1;
-    }
 
     // Function already exists
     if (old != NULL)
@@ -1258,11 +1254,8 @@ int tms_set_int_ufunction(char *fname, char *function_args, char *function)
     tms_int_expr *new = tms_parse_int_expr(function, 0, arg_list);
 
     if (new == NULL)
-    {
-        tms_modify_last_error(TMS_INT_PARSER, NULL, -1, "In user function: ");
-        tms_print_errors(TMS_INT_PARSER);
         return -1;
-    }
+
     // Function already exists
     if (old != NULL)
     {
