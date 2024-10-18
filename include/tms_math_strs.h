@@ -223,7 +223,7 @@ typedef struct tms_math_expr
     ///@brief The subexpression array created by parsing the math expression.
     tms_math_subexpr *S;
 
-    ///@brief Number of subexpression in this math expression.
+    ///@brief Number of subexpressions in this math expression.
     int subexpr_count;
 
     ///@brief Number of labeled operands.
@@ -319,7 +319,7 @@ typedef struct tms_int_expr
     /// @brief The subexpression array created by parsing the expression.
     tms_int_subexpr *S;
 
-    /// @brief Number of subexpression in this math expression.
+    /// @brief Number of subexpressions in this math expression.
     int subexpr_count;
 
     /// @brief Number of labeled operands.

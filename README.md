@@ -33,7 +33,7 @@ answer = tms_solve(light_speed);
 
 // This variant provides more control using options (NO_LOCK, ENABLE_COMPLEX, PRINT_ERRORS)
 // 0 means defaults (use locks, no error printing, no complex)
-answer = tms_solve_e(light_speed, 0,NULL);
+answer = tms_solve_e(light_speed, 0, NULL);
 ```
 
 With integer variables:
