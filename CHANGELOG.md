@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.1 - 2024-10-23
+
+- Improve consistency and quality of error messages while setting user functions.
+
 ## 3.0.0 - 2024-09-21
 
 This is a major, API breaking release.
