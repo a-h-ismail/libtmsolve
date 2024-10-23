@@ -939,28 +939,28 @@ int tms_set_ufunction(char *fname, char *function_args, char *function)
         // Check if the name has illegal characters
         if (tms_valid_name(fname) == false)
         {
-            tms_save_error(TMS_PARSER, INVALID_NAME, EH_FATAL, NULL, 0);
+            tms_save_error(TMS_PARSER, INVALID_NAME, EH_FATAL, function, 0);
             return -1;
         }
 
         // Check if the function name is allowed
         if (!tms_legal_name(fname))
         {
-            tms_save_error(TMS_PARSER, ILLEGAL_NAME, EH_FATAL, NULL, 0);
+            tms_save_error(TMS_PARSER, ILLEGAL_NAME, EH_FATAL, function, 0);
             return -1;
         }
 
         // Check if the name was already used by builtin functions
         if (tms_builtin_function_exists(fname))
         {
-            tms_save_error(TMS_PARSER, NO_FUNCTION_SHADOWING, EH_FATAL, NULL, 0);
+            tms_save_error(TMS_PARSER, NO_FUNCTION_SHADOWING, EH_FATAL, function, 0);
             return -1;
         }
 
         // Check if the name is used by a variable
         if (tms_get_var_by_name(fname) != NULL)
         {
-            tms_save_error(TMS_PARSER, FUNCTION_NAME_MATCHES_VAR, EH_FATAL, NULL, 0);
+            tms_save_error(TMS_PARSER, FUNCTION_NAME_MATCHES_VAR, EH_FATAL, function, 0);
             return -1;
         }
     }
@@ -970,7 +970,7 @@ int tms_set_ufunction(char *fname, char *function_args, char *function)
 
     if (arg_list->count > 64)
     {
-        tms_save_error(TMS_PARSER, TOO_MANY_LABELS, EH_FATAL, NULL, 0);
+        tms_save_error(TMS_PARSER, TOO_MANY_LABELS, EH_FATAL, function, 0);
         tms_free_arg_list(arg_list);
         return -1;
     }
@@ -978,7 +978,7 @@ int tms_set_ufunction(char *fname, char *function_args, char *function)
     // Check that names are unique
     if (!tms_is_unique_string_array(arg_list->arguments, arg_list->count))
     {
-        tms_save_error(TMS_PARSER, LABELS_NOT_UNIQUE, EH_FATAL, NULL, 0);
+        tms_save_error(TMS_PARSER, LABELS_NOT_UNIQUE, EH_FATAL, function, 0);
         tms_free_arg_list(arg_list);
         return -1;
     }
@@ -988,7 +988,9 @@ int tms_set_ufunction(char *fname, char *function_args, char *function)
     {
         if (!tms_valid_name(arg_list->arguments[j]))
         {
-            tms_save_error(TMS_PARSER, "In user function args: " INVALID_NAME, EH_FATAL, NULL, 0);
+            // Find the index of this argument in the argument list
+            tms_save_error(TMS_PARSER, INVALID_NAME, EH_FATAL, function_args,
+                           tms_f_search(function_args, arg_list->arguments[j], 0, true));
             tms_free_arg_list(arg_list);
             return -1;
         }
@@ -1197,28 +1199,28 @@ int tms_set_int_ufunction(char *fname, char *function_args, char *function)
         // Check if the name has illegal characters
         if (tms_valid_name(fname) == false)
         {
-            tms_save_error(TMS_INT_PARSER, INVALID_NAME, EH_FATAL, NULL, 0);
+            tms_save_error(TMS_INT_PARSER, INVALID_NAME, EH_FATAL, function, 0);
             return -1;
         }
 
         // Check if the function name is allowed
         if (!tms_legal_name(fname))
         {
-            tms_save_error(TMS_INT_PARSER, ILLEGAL_NAME, EH_FATAL, NULL, 0);
+            tms_save_error(TMS_INT_PARSER, ILLEGAL_NAME, EH_FATAL, function, 0);
             return -1;
         }
 
         // Check if the name was already used by builtin functions
         if (tms_builtin_int_function_exists(fname))
         {
-            tms_save_error(TMS_INT_PARSER, NO_FUNCTION_SHADOWING, EH_FATAL, NULL, 0);
+            tms_save_error(TMS_INT_PARSER, NO_FUNCTION_SHADOWING, EH_FATAL, function, 0);
             return -1;
         }
 
         // Check if the name is used by a variable
         if (tms_get_int_var_by_name(fname) != NULL)
         {
-            tms_save_error(TMS_INT_PARSER, FUNCTION_NAME_MATCHES_VAR, EH_FATAL, NULL, 0);
+            tms_save_error(TMS_INT_PARSER, FUNCTION_NAME_MATCHES_VAR, EH_FATAL, function, 0);
             return -1;
         }
     }
@@ -1228,7 +1230,7 @@ int tms_set_int_ufunction(char *fname, char *function_args, char *function)
 
     if (arg_list->count > 64)
     {
-        tms_save_error(TMS_INT_PARSER, TOO_MANY_LABELS, EH_FATAL, NULL, 0);
+        tms_save_error(TMS_INT_PARSER, TOO_MANY_LABELS, EH_FATAL, function, 0);
         tms_free_arg_list(arg_list);
         return -1;
     }
@@ -1236,7 +1238,7 @@ int tms_set_int_ufunction(char *fname, char *function_args, char *function)
     // Check that names are unique
     if (!tms_is_unique_string_array(arg_list->arguments, arg_list->count))
     {
-        tms_save_error(TMS_INT_PARSER, LABELS_NOT_UNIQUE, EH_FATAL, NULL, 0);
+        tms_save_error(TMS_INT_PARSER, LABELS_NOT_UNIQUE, EH_FATAL, function, 0);
         tms_free_arg_list(arg_list);
         return -1;
     }
@@ -1246,7 +1248,8 @@ int tms_set_int_ufunction(char *fname, char *function_args, char *function)
     {
         if (!tms_valid_name(arg_list->arguments[j]))
         {
-            tms_save_error(TMS_INT_PARSER, "In user function args: " INVALID_NAME, EH_FATAL, NULL, 0);
+            tms_save_error(TMS_INT_PARSER, INVALID_NAME, EH_FATAL, function_args,
+                           tms_f_search(function_args, arg_list->arguments[j], 0, true));
             tms_free_arg_list(arg_list);
             return -1;
         }
