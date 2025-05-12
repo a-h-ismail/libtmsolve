@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2022-2024 Ahmad Ismail
+Copyright (C) 2022-2025 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "hashmap.h"
@@ -1396,6 +1396,5 @@ int compare_ints_reverse(const void *a, const void *b)
 
 double tms_random_weight()
 {
-    // Averaging 2 rands should give higher quality weights, especially for systems where int is 16 bits
-    return (((double)rand() / RAND_MAX) + ((double)rand() / RAND_MAX)) / 2;
+    return (double)rand() / RAND_MAX;
 }
