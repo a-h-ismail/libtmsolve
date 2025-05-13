@@ -734,6 +734,7 @@ int tms_set_var(char *name, double complex value, bool is_constant)
 
 int _tms_set_int_var_unsafe(char *name, int64_t value, bool is_constant)
 {
+    value = tms_sign_extend(value);
     // Check if the name has illegal characters
     if (tms_valid_name(name) == false)
     {

@@ -23,11 +23,11 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define array_length(z) (sizeof(z) / sizeof(*z))
 
 // Simple macro to ease dynamic resizing
-#define DYNAMIC_RESIZE(ptr, current, max, type)         \
-    if (current == max)                                 \
-    {                                                   \
-        max *= 2;                                       \
-        ptr = (type *)realloc(ptr, max * sizeof(type)); \
+#define DYNAMIC_RESIZE(ptr, current, max, type)                                                                        \
+    if (current == max)                                                                                                \
+    {                                                                                                                  \
+        max *= 2;                                                                                                      \
+        ptr = (type *)realloc(ptr, max * sizeof(type));                                                                \
     }
 
 /// @brief Stores the answer of the last calculation.
@@ -187,6 +187,7 @@ int tms_set_var(char *name, double complex value, bool is_constant);
  * @param name Variable name.
  * @param value Variable value.
  * @param is_constant When set, the variable is treated read-only (can't be modified or removed).
+ * @note The value is sign extended before being stored
  * @return 0 on success, -1 on failure.
  */
 int tms_set_int_var(char *name, int64_t value, bool is_constant);
