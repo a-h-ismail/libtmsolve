@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2021-2024 Ahmad Ismail
+Copyright (C) 2021-2025 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "scientific.h"
@@ -113,10 +113,6 @@ double complex tms_solve(char *expr)
     // 1: can be complex, mostly 2n roots of negative numbers.
     // 2: Is complex, imaginary number appears in the expression, or complex exclusive operations like arg().
     uint8_t likely_complex = 1;
-
-    // Skip assignment operator
-    while ((i = tms_f_search(expr, "=", 0, false)) != -1)
-        expr += i + 1;
 
     // We have some hope that this is a complex expression
     i = tms_f_search(expr, "i", 0, true);
@@ -241,7 +237,7 @@ double complex tms_solve(char *expr)
         return result;
     }
     // Unlikely to fall out of the switch.
-    tms_save_error(TMS_GENERAL, INTERNAL_ERROR, EH_FATAL, NULL,0);
+    tms_save_error(TMS_GENERAL, INTERNAL_ERROR, EH_FATAL, NULL, 0);
     return NAN;
 }
 
