@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2022-2024 Ahmad Ismail
+Copyright (C) 2022-2025 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #ifndef _TMS_STRING_TOOLS_H
@@ -17,8 +17,10 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 #include <stddef.h>
 
+/**
+ * @brief Acts exactly like strndup(), exists solely to handle some compilers not implementing strndup themselves
+ */
 char *tms_strndup(const char *source, size_t n);
-
 
 /**
  * @brief Finds the closing parenthesis that corresponds to an open parenthesis.
