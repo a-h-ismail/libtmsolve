@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.2 - 2025-06-15
+
+### Fixes
+
+- Always sign extend integer variables before storing them
+- Do not handle = in tms_solve
+- Memory leaks in all hashmaps during deletion and in runtime variable update
+
 ## 3.0.1 - 2024-10-23
 
 - Improve consistency and quality of error messages while setting user functions.
