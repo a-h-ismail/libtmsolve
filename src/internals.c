@@ -358,7 +358,7 @@ int tms_remove_var(char *name)
     if (check->is_constant)
         return 1;
     else
-        return (hashmap_delete(var_hmap, &t) == NULL ? -1 : 0);
+        return hashmap_delete_and_free(var_hmap, &t);
 }
 
 int tms_remove_int_var(char *name)
@@ -371,19 +371,19 @@ int tms_remove_int_var(char *name)
     if (check->is_constant)
         return 1;
     else
-        return (hashmap_delete(int_var_hmap, &t) == NULL ? -1 : 0);
+        return hashmap_delete_and_free(int_var_hmap, &t);
 }
 
 int tms_remove_ufunc(char *name)
 {
     tms_ufunc t = {.name = name};
-    return (hashmap_delete(ufunc_hmap, &t) == NULL ? -1 : 0);
+    return hashmap_delete_and_free(ufunc_hmap, &t);
 }
 
 int tms_remove_int_ufunc(char *name)
 {
     tms_int_ufunc t = {.name = name};
-    return (hashmap_delete(int_ufunc_hmap, &t) == NULL ? -1 : 0);
+    return hashmap_delete_and_free(int_ufunc_hmap, &t);
 }
 
 void tmsolve_init()
@@ -712,14 +712,23 @@ int _tms_set_var_unsafe(char *name, double complex value, bool is_constant)
         return -1;
     }
 
-    const tms_var *tmp = tms_get_var_by_name(name);
-    if (tmp != NULL && tmp->is_constant)
+    const tms_var *existing_var = tms_get_var_by_name(name);
+    char *tmp_name;
+    // Var already exists
+    if (existing_var != NULL)
     {
-        tms_save_error(TMS_PARSER, OVERWRITE_CONST_VARIABLE, EH_FATAL, NULL, 0);
-        return -1;
+        if (existing_var->is_constant)
+        {
+            tms_save_error(TMS_PARSER, OVERWRITE_CONST_VARIABLE, EH_FATAL, NULL, 0);
+            return -1;
+        }
+        // Reuse the already allocated name
+        tmp_name = existing_var->name;
     }
+    else
+        tmp_name = strdup(name);
 
-    tms_var v = {.name = strdup(name), .value = value, .is_constant = is_constant};
+    tms_var v = {.name = tmp_name, .value = value, .is_constant = is_constant};
     hashmap_set(var_hmap, &v);
     return 0;
 }
@@ -755,14 +764,22 @@ int _tms_set_int_var_unsafe(char *name, int64_t value, bool is_constant)
         return -1;
     }
 
-    const tms_int_var *tmp = tms_get_int_var_by_name(name);
-    if (tmp != NULL && tmp->is_constant)
+    const tms_int_var *existing_var = tms_get_int_var_by_name(name);
+    char *tmp_name;
+    // Var already exists
+    if (existing_var != NULL)
     {
-        tms_save_error(TMS_INT_PARSER, OVERWRITE_CONST_VARIABLE, EH_FATAL, NULL, 0);
-        return -1;
+        tmp_name = existing_var->name;
+        if (existing_var->is_constant)
+        {
+            tms_save_error(TMS_INT_PARSER, OVERWRITE_CONST_VARIABLE, EH_FATAL, NULL, 0);
+            return -1;
+        }
     }
+    else
+        tmp_name = strdup(name);
 
-    tms_int_var v = {.name = strdup(name), .value = value, .is_constant = is_constant};
+    tms_int_var v = {.name = tmp_name, .value = value, .is_constant = is_constant};
     hashmap_set(int_var_hmap, &v);
     return 0;
 }
