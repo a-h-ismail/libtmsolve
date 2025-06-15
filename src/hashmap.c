@@ -410,6 +410,21 @@ const void *hashmap_delete(struct hashmap *map, const void *key) {
     return hashmap_delete_with_hash(map, key, get_hash(map, key));
 }
 
+// Wraps around hashmap_delete to automatically execute elfree on deleted item instead of returning it
+// Returns 0 on success, -1 if the item is not found.
+int hashmap_delete_and_free(struct hashmap *map, const void *key)
+{
+    const void *item = hashmap_delete(map, key);
+    if (item == NULL)
+        return -1;
+    else
+    {
+        if (map->elfree != NULL)
+            map->elfree(item);
+        return 0;
+    }
+}
+
 // hashmap_count returns the number of items in the hash map.
 size_t hashmap_count(struct hashmap *map) {
     return map->count;

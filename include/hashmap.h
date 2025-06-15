@@ -35,6 +35,7 @@ extern "C"
     const void *hashmap_get(struct hashmap *map, const void *item);
     const void *hashmap_set(struct hashmap *map, const void *item);
     const void *hashmap_delete(struct hashmap *map, const void *item);
+    int hashmap_delete_and_free(struct hashmap *map, const void *key);
     const void *hashmap_probe(struct hashmap *map, uint64_t position);
     bool hashmap_scan(struct hashmap *map, bool (*iter)(const void *item, void *udata), void *udata);
     bool hashmap_iter(struct hashmap *map, size_t *i, void **item);
