@@ -1,14 +1,14 @@
 /*
-Copyright (C) 2023-2024 Ahmad Ismail
+Copyright (C) 2023-2025 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 
-#include <stdio.h>
-#include <stdbool.h>
+#include "libtmsolve.h"
 #include <math.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "libtmsolve.h"
 
 void test_scientific(char *buffer)
 {
@@ -29,7 +29,10 @@ void test_scientific(char *buffer)
 
     real_only = tms_solve_e(expr, 0, NULL);
     if (isnan(creal(real_only)))
+    {
         puts("Calculation failure in real domain.");
+        tms_clear_errors(TMS_PARSER | TMS_EVALUATOR);
+    }
     with_complex = tms_solve_e(expr, ENABLE_CMPLX, NULL);
     if (isnan(creal(with_complex)))
     {
