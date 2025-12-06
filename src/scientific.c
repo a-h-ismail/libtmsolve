@@ -256,7 +256,7 @@ int tms_int_solve(char *expr, int64_t *result)
 int tms_int_solve_e(char *expr, int64_t *result, int options, tms_arg_list *labels)
 {
     tms_int_expr *M;
-    M = tms_parse_int_expr(expr, NO_LOCK, labels);
+    M = tms_parse_int_expr(expr, options, labels);
     if (M == NULL)
         return -1;
 
