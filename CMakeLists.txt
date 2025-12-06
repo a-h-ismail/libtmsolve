@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.27)
 
 project(tmsolve)
 
@@ -12,9 +12,6 @@ file(GLOB SOURCES src/*.c)
 
 # Include header files
 include_directories(include)
-
-# Enable optimizations
-add_compile_options(-O2)
 
 # Create shared library
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
