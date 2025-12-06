@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2022-2023 Ahmad Ismail
+Copyright (C) 2022-2023,2025 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #ifndef _TMS_SCIENTIFIC_H
@@ -45,7 +45,8 @@ bool tms_is_real(double complex z);
 /**
  * @brief Calculates a mathematical expression and returns the answer.
  * @param expr The string form of the math expression.
- * @param enable_complex Enables complex number calculation, set to false if you don't need complex values.
+ * @param options Modifies the behavior of the solving operation using flags (NO_LOCK, ENABLE_COMPLEX, PRINT_ERRORS)
+ * @param labels The variable names to be passed to the parser, set to NULL if you don't need them.
  * @return The answer of the math expression, or NaN in case of failure.
  */
 double complex tms_solve_e(char *expr, int options, tms_arg_list *labels);
@@ -71,6 +72,8 @@ int tms_int_solve(char *expr, int64_t *result);
  * @brief Calculates an integer expression
  * @param expr The string form of the integer expression.
  * @param result Pointer to variable where answer will be stored.
+ * @param options Modifies the behavior of the solving operation using flags (NO_LOCK, PRINT_ERRORS)
+ * @param labels The variable names to be passed to the parser, set to NULL if you don't need them.
  * @return 0 on success, -1 on failure.
  */
 int tms_int_solve_e(char *expr, int64_t *result, int options, tms_arg_list *labels);
