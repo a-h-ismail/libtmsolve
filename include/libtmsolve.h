@@ -8,6 +8,11 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @file
  * @brief The main header of libtmsolve, includes all other headers for ease of use.
  */
+#ifdef __cplusplus
+#define complex _Complex
+extern "C"
+{
+#endif
 
 #ifndef LOCAL_BUILD
 #include <tmsolve/bitwise.h>
@@ -37,6 +42,11 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "tms_complex.h"
 #include "tms_math_strs.h"
 #include "version.h"
+#endif
+
+#ifdef __cplusplus
+}
+#undef complex
 #endif
 
 #endif

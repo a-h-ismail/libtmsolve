@@ -5,6 +5,10 @@ SPDX-License-Identifier: LGPL-2.1-only
 #ifndef _TMS_FUNCTION_H
 #define _TMS_FUNCTION_H
 
+#ifdef __cplusplus
+#define complex _Complex
+#endif
+
 #ifndef LOCAL_BUILD
 #include <tmsolve/tms_math_strs.h>
 #else

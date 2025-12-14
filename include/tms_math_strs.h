@@ -4,10 +4,15 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #ifndef _TMS_STRUCTS_H
 #define _TMS_STRUCTS_H
-#include <complex.h>
 #include <inttypes.h>
-#include <stdbool.h>
 #include <stddef.h>
+
+#ifdef __cplusplus
+#define complex _Complex
+#else
+#include <complex.h>
+#include <stdbool.h>
+#endif
 
 /**
  * @file
@@ -78,13 +83,13 @@ typedef struct tms_int_var
 /// @brief Operator node, stores the required metadata for an operator and its operands.
 typedef struct tms_op_node
 {
-    ///@brief The operator of this op_node.
-    char operator;
-    ///@brief Index of the operator in the expression.
+    /// @brief The operator of this op_node.
+    char op;
+    /// @brief Index of the operator in the expression.
     int operator_index;
-    ///@brief Index of the op_node in the op_node array.
+    /// @brief Index of the op_node in the op_node array.
     int node_index;
-    ///@brief Node operator priority.
+    /// @brief Node operator priority.
     uint8_t priority;
     /**
      * Labels are the mechanism used to implement user defined functions in the parser.
@@ -246,7 +251,7 @@ typedef struct tms_math_expr
 typedef struct tms_int_op_node
 {
     /// @brief The operator of this op_node.
-    char operator;
+    char op;
     /// @brief Index of the operator in the expression.
     int operator_index;
     ///@brief Index of the op_node in the op_node array.

@@ -14,6 +14,10 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <inttypes.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+#define complex _Complex
+#endif
+
 /// Holds the data of a factor, for use with factorization related features.
 typedef struct tms_int_factor
 {

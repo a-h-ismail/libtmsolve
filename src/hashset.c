@@ -8,13 +8,13 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 int _str_compare(const void *a, const void *b, void *udata)
 {
-    char **va = a, **vb = b;
+    const char **va = a, **vb = b;
     return strcmp(*va, *vb);
 }
 
 uint64_t _str_hash(const void *item, uint64_t seed0, uint64_t seed1)
 {
-    char **v = item;
+    const char **v = item;
     return hashmap_xxhash3(*v, strlen(*v), seed0, seed1);
 }
 

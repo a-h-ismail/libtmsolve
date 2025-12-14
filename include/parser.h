@@ -18,6 +18,10 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <stdbool.h>
 #include <inttypes.h>
 
+#ifdef __cplusplus
+#define complex _Complex
+#endif
+
 /**
  * @brief Duplicates a math expression, returning an identical malloc'd one.
  * @return The new math expression or NULL on failure.

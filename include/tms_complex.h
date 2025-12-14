@@ -15,6 +15,11 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @brief Nullifies the real part if it is too small relative to the imaginary parts and vice versa.
  * @return The received value after approximation.
  */
+
+#ifdef __cplusplus
+#define complex _Complex
+#endif
+
 double complex tms_round_to_axis(double complex z);
 
 double complex tms_cexp(double complex z);

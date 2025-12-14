@@ -22,6 +22,10 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 #define array_length(z) (sizeof(z) / sizeof(*z))
 
+#ifdef __cplusplus
+#define complex _Complex
+#endif
+
 // Simple macro to ease dynamic resizing
 #define DYNAMIC_RESIZE(ptr, current, max, type)                                                                        \
     if (current == max)                                                                                                \

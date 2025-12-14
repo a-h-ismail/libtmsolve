@@ -184,7 +184,7 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                         tms_save_error(TMS_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL, 0);
                         return NAN;
                     }
-                    switch (i_node->operator)
+                    switch (i_node->op)
                     {
                     case '+':
                         *(i_node->result) = i_node->left_operand + i_node->right_operand;
@@ -371,7 +371,7 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                         tms_save_error(TMS_INT_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL, 0);
                         return -1;
                     }
-                    switch (i_node->operator)
+                    switch (i_node->op)
                     {
                     case '&':
                         *(i_node->result) = i_node->left_operand & i_node->right_operand;
@@ -607,7 +607,7 @@ void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
                 // No one wants to see uninitialized values (skip nodes used to hold one number)
                 if (S[s_i].op_count != 0)
                 {
-                    printf(" %c ", tmp_node->operator);
+                    printf(" %c ", tmp_node->op);
                     printf("( ");
 
                     if (_print_operand_source(S, &(tmp_node->right_operand), s_i, was_evaluated) == false)
@@ -752,7 +752,7 @@ void tms_dump_int_expr(tms_int_expr *M, bool was_evaluated)
                 // No one wants to see uninitialized values (skip nodes used to hold one number)
                 if (S[s_i].op_count != 0)
                 {
-                    printf(" %c ", tmp_node->operator);
+                    printf(" %c ", tmp_node->op);
                     printf("( ");
 
                     if (_print_int_operand_source(S, &(tmp_node->right_operand), s_i, was_evaluated) == false)

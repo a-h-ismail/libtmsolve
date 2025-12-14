@@ -441,7 +441,7 @@ static int _tms_set_all_operands(math_expr *M, int s_i, bool enable_labels)
     // Treat +x and -x as 0-x and 0+x
     if (NB[0].operator_index == S[s_i].solve_start)
     {
-        if (NB[0].operator== '+' || NB[0].operator== '-')
+        if (NB[0].op == '+' || NB[0].op == '-')
             NB[0].left_operand = 0;
         else
         {
@@ -663,7 +663,7 @@ static int _tms_init_nodes(math_expr *M, int s_i, int *operator_index, bool enab
         for (i = 0; i < op_count; ++i)
         {
             NB[i].operator_index = operator_index[i];
-            NB[i].operator= expr[operator_index[i]];
+            NB[i].op = expr[operator_index[i]];
         }
 
         // Set each op_node's operator priority data
@@ -674,7 +674,7 @@ static int _tms_init_nodes(math_expr *M, int s_i, int *operator_index, bool enab
             NB[i].node_index = i;
             NB[i].labels = 0;
             NB[i].operator_index = operator_index[i];
-            NB[i].operator= expr[operator_index[i]];
+            NB[i].op = expr[operator_index[i]];
         }
         // Check if the expression is terminated with an operator
         if (operator_index[op_count - 1] == solve_end)
@@ -686,7 +686,7 @@ static int _tms_init_nodes(math_expr *M, int s_i, int *operator_index, bool enab
     // No operands at all
     else
     {
-        NB->operator= '\0';
+        NB->op = '\0';
         NB->labels = 0;
         NB->operator_index = -1;
         NB->priority = -1;
