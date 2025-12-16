@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2023-2024 Ahmad Ismail
+Copyright (C) 2023-2025 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "evaluator.h"
@@ -199,12 +199,15 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                         break;
 
                     case '/':
+                    case 'd':
                         if (i_node->right_operand == 0)
                         {
                             tms_save_error(TMS_EVALUATOR, DIVISION_BY_ZERO, EH_FATAL, M->expr, i_node->operator_index);
                             return NAN;
                         }
                         *(i_node->result) = i_node->left_operand / i_node->right_operand;
+                        if (i_node->op == 'd')
+                            *(i_node->result) = floor(*(i_node->result));
                         break;
 
                     case '%':
@@ -231,6 +234,7 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                         break;
 
                     case '^':
+                    case 'p':
                         // Use non complex power function if the operands are real
                         if (M->enable_complex == false)
                         {
@@ -283,6 +287,7 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
 
     tms_int_op_node *i_node;
     int state;
+    bool modify_error;
     // Subexpression pointer to access the subexpression array.
     tms_int_subexpr *S = M->S;
     for (int i = 0; i < M->subexpr_count; ++i)
@@ -365,6 +370,7 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
             else
                 while (i_node != NULL)
                 {
+                    modify_error = false;
                     // Probably a parsing bug
                     if (i_node->result == NULL)
                     {
@@ -416,6 +422,33 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                         else
                             *(i_node->result) = i_node->left_operand % i_node->right_operand;
                         break;
+                    case 'r':
+                        if (_tms_rotate_circular_i(i_node->left_operand, i_node->right_operand, 'r', i_node->result) != 0)
+                            modify_error = true;
+                        break;
+                    case 'l':
+                        if (_tms_rotate_circular_i(i_node->left_operand, i_node->right_operand, 'l', i_node->result) != 0)
+                            modify_error = true;
+                        break;
+                    case '>':
+                        if (_tms_arithmetic_shift(i_node->left_operand, i_node->right_operand, 'r', i_node->result) != 0)
+                            modify_error = true;
+                        break;
+                    case '<':
+                        if (_tms_arithmetic_shift(i_node->left_operand, i_node->right_operand, 'l', i_node->result) != 0)
+                            modify_error = true;
+                        break;
+                    case 'p':
+                        *(i_node->result) = 1;
+                        for (int64_t i = 0; i < i_node->right_operand; ++i)
+                            *(i_node->result) *= i_node->left_operand;
+                        break;
+                    }
+                    // Defer error return to add an error, configurable by setting the modify_error flag in the switch above
+                    if (modify_error)
+                    {
+                        tms_modify_last_error(TMS_INT_EVALUATOR, M->expr, i_node->operator_index, NULL);
+                        return -1;
                     }
                     *(i_node->result) = *(i_node->result) & tms_int_mask;
                     i_node = i_node->next;

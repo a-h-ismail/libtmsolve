@@ -79,6 +79,27 @@ bool tms_is_op(char c)
     return false;
 }
 
+int tms_is_long_op(char *expr)
+{
+    char *ops[] = {"//", "**"};
+    for (int i = 0; i < array_length(ops); ++i)
+        if (strncmp(ops[i], expr, strlen(ops[i])) == 0)
+            return strlen(ops[i]);
+
+    return 0;
+}
+
+char tms_long_op_to_char(char *expr)
+{
+    char *ops[] = {"//", "**"};
+    char code[] = {'d', 'p'};
+    for (int i = 0; i < array_length(ops); ++i)
+        if (strncmp(ops[i], expr, strlen(ops[i])) == 0)
+            return code[i];
+
+    return '\0';
+}
+
 bool tms_is_int_op(char c)
 {
     char ops[] = {'+', '-', '*', '/', '^', '|', '&', '%', '='};
@@ -87,6 +108,28 @@ bool tms_is_int_op(char c)
             return true;
 
     return false;
+}
+
+int tms_is_int_long_op(char *expr)
+{
+    char *ops[] = {"<<<", ">>>", "<<", ">>", "**"};
+    for (int i = 0; i < array_length(ops); ++i)
+        if (strncmp(ops[i], expr, strlen(ops[i])) == 0)
+            return strlen(ops[i]);
+
+    return 0;
+}
+
+char tms_int_long_op_to_char(char *expr)
+{
+    char *ops[] = {"<<<", ">>>", "<<", ">>", "**"};
+    char code[] = {'l', 'r', '<', '>', 'p'};
+
+    for (int i = 0; i < array_length(ops); ++i)
+        if (strncmp(ops[i], expr, strlen(ops[i])) == 0)
+            return code[i];
+
+    return '\0';
 }
 
 bool tms_is_valid_number_start(char c)
@@ -297,7 +340,7 @@ double complex tms_read_value(char *_s, int start)
     if (end == -1)
         return NAN;
 
-    if (!tms_is_valid_number_end(_s[end + 1]))
+    if (!tms_is_valid_number_end(_s[end + 1]) && tms_is_int_long_op(_s + end + 1) == 0)
         return NAN;
 
     base = tms_detect_base(_s);
@@ -456,7 +499,7 @@ int tms_read_int_value(char *_s, int start, int64_t *result)
     if (end == -1)
         return -1;
 
-    if (!tms_is_valid_int_number_end(_s[end + 1]))
+    if (!tms_is_valid_int_number_end(_s[end + 1]) && tms_is_int_long_op(_s + end + 1) == 0)
         return -1;
 
     base = tms_detect_base(_s);
@@ -648,7 +691,8 @@ int tms_find_endofnumber(char *number, int start)
             break;
     }
 
-    if (number[end] == '\0' || tms_is_op(number[end]) || number[end] == ')' || number[end] == ',')
+    if (number[end] == '\0' || tms_is_op(number[end]) || tms_is_long_op(number + end) || number[end] == ')' ||
+        number[end] == ',')
         return end - 1;
     else
         return -1;
@@ -674,7 +718,8 @@ int tms_find_int_endofnumber(char *number, int start)
             break;
     }
 
-    if (number[end] == '\0' || tms_is_int_op(number[end]) || number[end] == ')' || number[end] == ',')
+    if (number[end] == '\0' || tms_is_int_op(number[end]) || tms_is_int_long_op(number + end) || number[end] == ')' ||
+        number[end] == ',')
         return end - 1;
     else
         return -1;
@@ -1155,12 +1200,11 @@ void tms_print_dot_decimal(int64_t value)
 }
 
 // To avoid code duplication in the function below
-#define LOOKUP_STRING_IN_STRUCT(key, type, member_name, array)                                                         \
-    for (int i = 0; i < arr_len; ++i)                                                                                  \
-    {                                                                                                                  \
-        if (((const type *)array)[i].member_name[0] == key[0] &&                                                       \
-            strcmp(key, ((const type *)array)[i].member_name) == 0)                                                    \
-            return i;                                                                                                  \
+#define LOOKUP_STRING_IN_STRUCT(key, type, member_name, array)                                                              \
+    for (int i = 0; i < arr_len; ++i)                                                                                       \
+    {                                                                                                                       \
+        if (((const type *)array)[i].member_name[0] == key[0] && strcmp(key, ((const type *)array)[i].member_name) == 0)    \
+            return i;                                                                                                       \
     }
 
 int tms_find_str_in_array(char *key, const void *array, int arr_len, uint8_t type)

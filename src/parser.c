@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2022-2024 Ahmad Ismail
+Copyright (C) 2022-2025 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 
@@ -68,13 +68,6 @@ int _tms_get_operand_value(tms_math_expr *M, int start, double complex *out)
     // Avoid negative offsets
     if (start < 0)
         return -1;
-
-    // Catch incorrect start like )5 (no implied multiplication allowed)
-    if (start > 0 && !tms_is_valid_number_start(expr[start - 1]))
-    {
-        tms_save_error(TMS_PARSER, SYNTAX_ERROR, EH_FATAL, expr, start - 1);
-        return -1;
-    }
 
     if (expr[start] == '-')
     {
@@ -314,8 +307,8 @@ void tms_convert_real_to_complex(tms_math_expr *M)
 
 void _tms_set_priority(tms_op_node *list, int op_count)
 {
-    char operators[6] = {'^', '*', '/', '%', '+', '-'};
-    uint8_t priority[6] = {3, 2, 2, 2, 1, 1};
+    char operators[] = {'^', 'p', '*', 'd', '/', '%', '+', '-'};
+    uint8_t priority[] = {3, 3, 2, 2, 2, 2, 1, 1};
     int i, j;
     for (i = 0; i < op_count; ++i)
     {

@@ -45,7 +45,15 @@ int tms_find_opening_parenthesis(char *expr, int p);
  */
 bool tms_is_op(char c);
 
+int tms_is_long_op(char *expr);
+
+char tms_long_op_to_char(char *expr);
+
 bool tms_is_int_op(char c);
+
+int tms_is_int_long_op(char *expr);
+
+char tms_int_long_op_to_char(char *expr);
 
 /**
  * @brief Checks if the character is a correct start delimiter for operators.

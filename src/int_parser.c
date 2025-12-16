@@ -35,8 +35,10 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define operand_type int64_t
 #define get_operand_value _tms_read_int_operand
 #define is_op tms_is_int_op
+#define is_long_op tms_is_int_long_op
+#define long_op_to_char tms_int_long_op_to_char
 #define set_priority _tms_set_priority_int
-#define MAX_PRIORITY 5
+#define MAX_PRIORITY 7
 #define dup_mexpr tms_dup_int_expr
 
 #include "parser_common.h"
@@ -51,13 +53,6 @@ int _tms_read_int_operand(tms_int_expr *M, int start, int64_t *result)
     // Avoid negative offsets
     if (start < 0)
         return -1;
-
-    // Catch incorrect start like )5 (no implied multiplication allowed)
-    if (start > 0 && !tms_is_valid_int_number_start(expr[start - 1]))
-    {
-        tms_save_error(TMS_INT_PARSER, SYNTAX_ERROR, EH_FATAL, expr, start - 1);
-        return -1;
-    }
 
     if (expr[start] == '-')
     {
@@ -302,8 +297,8 @@ tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *
 
 void _tms_set_priority_int(tms_int_op_node *list, int op_count)
 {
-    char operators[] = {'*', '/', '%', '+', '-', '&', '^', '|'};
-    uint8_t priority[] = {5, 5, 5, 4, 4, 3, 2, 1};
+    char operators[] = {'p', '*', '/', '%', '+', '-', '<', '>', 'l', 'r', '&', '^', '|'};
+    uint8_t priority[] = {7, 6, 6, 6, 5, 5, 4, 4, 4, 4, 3, 2, 1};
     int i, j;
     for (i = 0; i < op_count; ++i)
     {

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2022-2024 Ahmad Ismail
+Copyright (C) 2022-2025 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "tms_math_strs.h"
@@ -20,6 +20,8 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define get_ufunc_by_name tms_get_ufunc_by_name
 #define get_extf_by_name tms_get_extf_by_name
 #define is_op tms_is_op
+#define is_long_op tms_is_long_op
+#define long_op_to_char tms_long_op_to_char
 #define get_operand_value _tms_get_operand_value
 #define set_priority _tms_set_priority
 #define MAX_PRIORITY 3
@@ -185,7 +187,7 @@ math_expr *init_math_expr(char *expr)
                 --depth;
 
             // Make sure a ')' is followed by an operator, ')' or \0
-            if (!(is_op(expr[i + 1]) || expr[i + 1] == ')' || expr[i + 1] == '\0'))
+            if (!(is_op(expr[i + 1]) || is_long_op(expr + i + 1) || expr[i + 1] == ')' || expr[i + 1] == '\0'))
             {
                 tms_save_error(PARSER, SYNTAX_ERROR, EH_FATAL, expr, i + 1);
                 free(S);
@@ -226,6 +228,7 @@ static int *_tms_get_operator_indexes(char *expr, math_subexpr *S, int s_i)
     int solve_end = S[s_i].solve_end;
     int buffer_size = 16;
     int op_count = 0;
+    int long_op_len;
 
     if (solve_start > solve_end)
     {
@@ -245,9 +248,24 @@ static int *_tms_get_operator_indexes(char *expr, math_subexpr *S, int s_i)
             if (previous_subexp != -1)
                 i = S[previous_subexp].solve_end + 1;
         }
-        else if (tms_legal_char_in_name(expr[i]) || expr[i] == '.')
+        else if (tms_legal_char_in_name(expr[i]) || expr[i] == '.') // Skip variables and regular numbers
             continue;
+        // Long operators are like >>, <<, <<<, >>>, //
+        else if ((long_op_len = is_long_op(expr + i)))
+        {
+            // Varying the array size on demand
+            DYNAMIC_RESIZE(operator_index, op_count, buffer_size, int)
 
+            operator_index[op_count] = i;
+            // Reach the end of the long operator
+            i += long_op_len - 1;
+
+            // Skip a + or - located just after an operator
+            if (expr[i + 1] == '-' || expr[i + 1] == '+')
+                ++i;
+
+            ++op_count;
+        }
         else if (is_op(expr[i]))
         {
             // Skip a + or - used in scientific notation (like 1e+5)
@@ -272,6 +290,7 @@ static int *_tms_get_operator_indexes(char *expr, math_subexpr *S, int s_i)
         }
         else
         {
+            // Not a subexpr, nor a number or an operand, so it is a syntax error
             tms_save_error(PARSER, SYNTAX_ERROR, EH_FATAL, expr, i);
             free(operator_index);
             return NULL;
@@ -456,29 +475,42 @@ static int _tms_set_all_operands(math_expr *M, int s_i, bool enable_labels)
             return -1;
     }
     // Intermediate nodes, read number to the appropriate op_node operand
-    for (i = 0; i < op_count - 1; ++i)
+    for (i = 0; i < op_count; ++i)
     {
-        // x^y+z : y is set in the node containing x (node i) as the right operand
-        // same in case of x-y+z
-        if (NB[i].priority >= NB[i + 1].priority)
+        int operand_start, op_len;
+        op_len = is_long_op(expr + NB[i].operator_index);
+        if (op_len > 0)
+            operand_start = NB[i].operator_index + op_len;
+        else
+            operand_start = NB[i].operator_index + 1;
+
+        if (i == op_count - 1)
         {
-            status = _tms_set_operand(M, NB + i, NB[i].operator_index + 1, s_i, 'r', enable_labels);
+            // Set the last operand as the right operand of the last node
+            status = _tms_set_operand(M, NB + i, operand_start, s_i, 'r', enable_labels);
             if (status == -1)
                 return -1;
         }
-
-        // x+y^z : y is set in the node containing z (node i+1) as the left operand
         else
         {
-            status = _tms_set_operand(M, NB + i + 1, NB[i].operator_index + 1, s_i, 'l', enable_labels);
-            if (status == -1)
-                return -1;
+            // x^y+z : y is set in the node containing x (node i) as the right operand
+            // same in case of x-y+z
+            if (NB[i].priority >= NB[i + 1].priority)
+            {
+                status = _tms_set_operand(M, NB + i, operand_start, s_i, 'r', enable_labels);
+                if (status == -1)
+                    return -1;
+            }
+
+            // x+y^z : y is set in the node containing z (node i+1) as the left operand
+            else
+            {
+                status = _tms_set_operand(M, NB + i + 1, operand_start, s_i, 'l', enable_labels);
+                if (status == -1)
+                    return -1;
+            }
         }
     }
-    // Set the last operand as the right operand of the last node
-    status = _tms_set_operand(M, NB + op_count - 1, NB[op_count - 1].operator_index + 1, s_i, 'r', enable_labels);
-    if (status == -1)
-        return -1;
     return 0;
 }
 
@@ -598,6 +630,7 @@ static int _tms_set_operand(math_expr *M, op_node *N, int op_start, int s_i, cha
     {
         int status = get_operand_value(M, op_start, operand_ptr);
 
+        // Failed to read a number or variable, it could be a label
         if (status != 0)
         {
             // Set labels to the specified operand
@@ -660,23 +693,24 @@ static int _tms_init_nodes(math_expr *M, int s_i, int *operator_index, bool enab
             return -1;
         }
 
+        // Fill operator details, the node index and initialize the label
         for (i = 0; i < op_count; ++i)
         {
             NB[i].operator_index = operator_index[i];
-            NB[i].op = expr[operator_index[i]];
+            // Could be a long operator
+            NB[i].op = long_op_to_char(expr + operator_index[i]);
+            // Or a single char one
+            if (NB[i].op == '\0')
+                NB[i].op = expr[operator_index[i]];
+
+            NB[i].node_index = i;
+            NB[i].labels = 0;
         }
 
         // Set each op_node's operator priority data
         set_priority(NB, op_count);
 
-        for (i = 0; i < op_count; ++i)
-        {
-            NB[i].node_index = i;
-            NB[i].labels = 0;
-            NB[i].operator_index = operator_index[i];
-            NB[i].op = expr[operator_index[i]];
-        }
-        // Check if the expression is terminated with an operator
+        // Check if the expression is terminated by an operator
         if (operator_index[op_count - 1] == solve_end)
         {
             tms_save_error(PARSER, RIGHT_OP_MISSING, EH_FATAL, expr, operator_index[op_count - 1]);
