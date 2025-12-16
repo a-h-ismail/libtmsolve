@@ -88,15 +88,8 @@ int tms_inv_mask(int64_t bits, int64_t *result)
     }
 }
 
-int _tms_rotate_circular(tms_arg_list *args, char direction, int64_t *result, tms_arg_list *labels)
+int _tms_rotate_circular_i(int64_t value, int64_t shift, char direction, int64_t *result)
 {
-    if (_tms_validate_args_count(2, args->count, TMS_INT_EVALUATOR) == false)
-        return -1;
-
-    int64_t value, shift;
-    if (get_two_operands(args, &value, &shift, labels) == -1)
-        return -1;
-
     shift = tms_sign_extend(shift);
     if (shift < 0)
     {
@@ -119,6 +112,18 @@ int _tms_rotate_circular(tms_arg_list *args, char direction, int64_t *result, tm
         tms_save_error(TMS_INT_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL, 0);
         return -1;
     }
+}
+
+int _tms_rotate_circular(tms_arg_list *args, char direction, int64_t *result, tms_arg_list *labels)
+{
+    if (_tms_validate_args_count(2, args->count, TMS_INT_EVALUATOR) == false)
+        return -1;
+
+    int64_t value, shift;
+    if (get_two_operands(args, &value, &shift, labels) == -1)
+        return -1;
+
+    return _tms_rotate_circular_i(value, shift, direction, result);
 }
 
 int tms_int_rand(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
@@ -190,10 +195,37 @@ int tms_sr(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
             tms_save_error(TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL, 0);
             return -1;
         }
-        // The cast to unsigned is necessary to avoid right shift sign extending
+        // The cast to unsigned is necessary to avoid right shift sign extending (not an arithmetic shift)
         *result = (uint64_t)value >> shift;
         return 0;
     }
+}
+
+int _tms_arithmetic_shift(int64_t value, int64_t shift, char direction, int64_t *result)
+{
+    shift = tms_sign_extend(shift);
+    if (shift < 0)
+    {
+        tms_save_error(TMS_INT_EVALUATOR, SHIFT_AMOUNT_NEGATIVE, EH_FATAL, NULL, 0);
+        return -1;
+    }
+    if (shift >= tms_int_mask_size)
+    {
+        tms_save_error(TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL, 0);
+        return -1;
+    }
+    switch (direction)
+    {
+    case 'l':
+        *result = value << shift;
+        break;
+    case 'r':
+        *result = value >> shift;
+    default:
+        break;
+    }
+
+    return 0;
 }
 
 int tms_sra(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
@@ -202,22 +234,7 @@ int tms_sra(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
     if (get_two_operands(args, &value, &shift, labels) == -1)
         return -1;
     else
-    {
-        shift = tms_sign_extend(shift);
-        if (shift < 0)
-        {
-            tms_save_error(TMS_INT_EVALUATOR, SHIFT_AMOUNT_NEGATIVE, EH_FATAL, NULL, 0);
-            return -1;
-        }
-        else if (shift >= tms_int_mask_size)
-        {
-            tms_save_error(TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL, 0);
-            return -1;
-        }
-        value = tms_sign_extend(value);
-        *result = value >> shift;
-        return 0;
-    }
+        return _tms_arithmetic_shift(value, shift, 'r', result);
 }
 
 int tms_sl(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
@@ -226,21 +243,7 @@ int tms_sl(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
     if (get_two_operands(args, &value, &shift, labels) == -1)
         return -1;
     else
-    {
-        shift = tms_sign_extend(shift);
-        if (shift < 0)
-        {
-            tms_save_error(TMS_INT_EVALUATOR, SHIFT_AMOUNT_NEGATIVE, EH_FATAL, NULL, 0);
-            return -1;
-        }
-        if (shift >= tms_int_mask_size)
-        {
-            tms_save_error(TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL, 0);
-            return -1;
-        }
-        *result = (uint64_t)value << shift;
-        return 0;
-    }
+        return _tms_arithmetic_shift(value, shift, 'l', result);
 }
 
 int tms_nor(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
