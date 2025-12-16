@@ -214,6 +214,7 @@ int _tms_arithmetic_shift(int64_t value, int64_t shift, char direction, int64_t 
         tms_save_error(TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL, 0);
         return -1;
     }
+    value = tms_sign_extend(value);
     switch (direction)
     {
     case 'l':
