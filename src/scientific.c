@@ -91,7 +91,7 @@ double tms_sign(double value)
         return -1;
 }
 
-double complex tms_solve_e(char *expr, int options, tms_arg_list *labels)
+double complex tms_solve_e(const char *expr, int options, tms_arg_list *labels)
 {
     double complex result;
     tms_math_expr *M;
@@ -106,7 +106,7 @@ double complex tms_solve_e(char *expr, int options, tms_arg_list *labels)
     return result;
 }
 
-double complex tms_solve(char *expr)
+double complex tms_solve(const char *expr)
 {
     int i, j;
     // 0: can't be complex due to real exclusive operations like modulo.

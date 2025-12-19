@@ -9,22 +9,19 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @brief Declares general purpose functionality like library initialization, useful macros, runtime variables and functions.
  */
 
-#include <complex.h>
 #include <stdbool.h>
 #include <stddef.h>
 #ifndef LOCAL_BUILD
+#include <tmsolve/c_complex_to_cpp.h>
 #include <tmsolve/m_errors.h>
 #include <tmsolve/tms_math_strs.h>
 #else
+#include "c_complex_to_cpp.h"
 #include "m_errors.h"
 #include "tms_math_strs.h"
 #endif
 
 #define array_length(z) (sizeof(z) / sizeof(*z))
-
-#ifdef __cplusplus
-#define complex _Complex
-#endif
 
 // Simple macro to ease dynamic resizing
 #define DYNAMIC_RESIZE(ptr, current, max, type)                                                                        \
@@ -35,7 +32,7 @@ SPDX-License-Identifier: LGPL-2.1-only
     }
 
 /// @brief Stores the answer of the last calculation.
-extern double complex tms_g_ans;
+extern cdouble tms_g_ans;
 
 /// @brief Int64 variant of ans.
 extern int64_t tms_g_int_ans;
@@ -184,7 +181,7 @@ void tms_set_int_mask(int size);
  * @param is_constant When set, the variable is treated read-only (can't be modified or removed).
  * @return 0 on success, -1 on failure.
  */
-int tms_set_var(char *name, double complex value, bool is_constant);
+int tms_set_var(char *name, cdouble value, bool is_constant);
 
 /**
  * @brief Add/Update an integer user variable.

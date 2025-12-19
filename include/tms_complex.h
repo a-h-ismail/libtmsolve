@@ -1,14 +1,17 @@
 /*
-Copyright (C) 2023 Ahmad Ismail
+Copyright (C) 2023,2025 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #ifndef _TMS_COMPLEX_H
 #define _TMS_COMPLEX_H
-#include <complex.h>
+#ifndef LOCAL_BUILD
+#include <tmsolve/c_complex_to_cpp.h>
+#else
+#include "c_complex_to_cpp.h"
+#endif
 
 /**
- * @file Contains wrappers and missing complex functions from standard library
- * @brief
+ * @file Contains wrappers and complex functions not included in the standard library
  */
 
 /**
@@ -16,43 +19,39 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @return The received value after approximation.
  */
 
-#ifdef __cplusplus
-#define complex _Complex
-#endif
+cdouble tms_round_to_axis(cdouble z);
 
-double complex tms_round_to_axis(double complex z);
+cdouble tms_cexp(cdouble z);
 
-double complex tms_cexp(double complex z);
+cdouble tms_cpow(cdouble x, cdouble y);
 
-double complex tms_cpow(double complex x, double complex y);
+cdouble cabs_z(cdouble z);
 
-double complex cabs_z(double complex z);
+cdouble carg_z(cdouble z);
 
-double complex carg_z(double complex z);
+cdouble tms_ccbrt(cdouble z);
 
-double complex tms_ccbrt(double complex z);
+cdouble tms_cceil(cdouble z);
 
-double complex tms_cceil(double complex z);
+cdouble tms_cfloor(cdouble z);
 
-double complex tms_cfloor(double complex z);
+cdouble tms_cround(cdouble z);
 
-double complex tms_cround(double complex z);
+cdouble tms_cfact(cdouble z);
 
-double complex tms_cfact(double complex z);
+cdouble tms_csign(cdouble z);
 
-double complex tms_csign(double complex z);
+cdouble tms_cln(cdouble z);
 
-double complex tms_cln(double complex z);
+cdouble tms_clog2(cdouble z);
 
-double complex tms_clog2(double complex z);
+cdouble tms_clog10(cdouble z);
 
-double complex tms_clog10(double complex z);
+cdouble tms_ccos(cdouble z);
 
-double complex tms_ccos(double complex z);
+cdouble tms_csin(cdouble z);
 
-double complex tms_csin(double complex z);
+cdouble tms_ctan(cdouble z);
 
-double complex tms_ctan(double complex z);
-
-int tms_iscnan(double complex z);
+int tms_iscnan(cdouble z);
 #endif

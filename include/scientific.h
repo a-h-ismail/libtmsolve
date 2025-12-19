@@ -9,14 +9,16 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @brief Declares all scientific related macros, structures, globals and functions.
  */
 
+#ifndef LOCAL_BUILD
+#include <tmsolve/c_complex_to_cpp.h>
+#include <tmsolve/tms_math_strs.h>
+#else
+#include "c_complex_to_cpp.h"
 #include "tms_math_strs.h"
-#include <complex.h>
+#endif
+
 #include <inttypes.h>
 #include <stdbool.h>
-
-#ifdef __cplusplus
-#define complex _Complex
-#endif
 
 /// Holds the data of a factor, for use with factorization related features.
 typedef struct tms_int_factor
@@ -34,7 +36,7 @@ typedef struct tms_fraction
 /**
  * @brief Sets the answer global variable if the provided result is not NaN
  */
-void tms_set_ans(double complex result);
+void tms_set_ans(cdouble result);
 
 /**
  * @brief Checks if the value is an integer.
@@ -44,7 +46,7 @@ bool tms_is_integer(double value);
 /**
  * @brief Checks if a complex variable is real only.
  */
-bool tms_is_real(double complex z);
+bool tms_is_real(cdouble z);
 
 /**
  * @brief Calculates a mathematical expression and returns the answer.
@@ -53,7 +55,7 @@ bool tms_is_real(double complex z);
  * @param labels The variable names to be passed to the parser, set to NULL if you don't need them.
  * @return The answer of the math expression, or NaN in case of failure.
  */
-double complex tms_solve_e(char *expr, int options, tms_arg_list *labels);
+cdouble tms_solve_e(const char *expr, int options, tms_arg_list *labels);
 
 /**
  * @brief Calculates a mathematical expression and returns the answer, automatically handles complex numbers.
@@ -61,7 +63,7 @@ double complex tms_solve_e(char *expr, int options, tms_arg_list *labels);
  * @return The answer of the math expression, or NaN in case of failure.
  * @note Prints errors to stderr (if any).
  */
-double complex tms_solve(char *expr);
+cdouble tms_solve(const char *expr);
 
 /**
  * @brief Calculates an integer expression

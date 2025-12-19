@@ -10,8 +10,10 @@ SPDX-License-Identifier: LGPL-2.1-only
  */
 
 #ifndef LOCAL_BUILD
+#include <tmsolve/c_complex_to_cpp.h>
 #include <tmsolve/tms_math_strs.h>
 #else
+#include "c_complex_to_cpp.h"
 #include "tms_math_strs.h"
 #endif
 
@@ -150,7 +152,7 @@ double _tms_read_value_simple(char *number, int8_t base);
  * @param _s Start of the value to read
  * @return The result or NaN in case of failure.
  */
-double complex tms_read_value(char *_s, int start);
+cdouble tms_read_value(char *_s, int start);
 
 /**
  * @brief Reads an 64 bit int value
@@ -180,13 +182,13 @@ int tms_parenthesis_check(char *expr);
 
 /// @brief Prints a value to standard output in a clean way.
 /// @param value
-void tms_print_value(double complex value);
+void tms_print_value(cdouble value);
 
 /**
  * @brief Generates the string representation of the specified complex value
  * @return A malloc'd string with the value.
  */
-char *tms_complex_to_str(double complex value);
+char *tms_complex_to_str(cdouble value);
 
 /**
  * @brief Combines adjacent add/subtract symbols into one (ex: ++++ becomes + and +-+ becomes -).

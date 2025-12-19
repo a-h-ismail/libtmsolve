@@ -11,16 +11,14 @@ SPDX-License-Identifier: LGPL-2.1-only
  */
 
 #ifndef LOCAL_BUILD
+#include <tmsolve/c_complex_to_cpp.h>
 #include <tmsolve/tms_math_strs.h>
 #else
+#include "c_complex_to_cpp.h"
 #include "tms_math_strs.h"
 #endif
 #include <stdbool.h>
 #include <inttypes.h>
-
-#ifdef __cplusplus
-#define complex _Complex
-#endif
 
 /**
  * @brief Duplicates a math expression, returning an identical malloc'd one.
@@ -47,7 +45,7 @@ void tms_convert_real_to_complex(tms_math_expr *M);
  */
 tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *labels);
 
-int _tms_get_operand_value(tms_math_expr *M, int start, double complex *out);
+int _tms_get_operand_value(tms_math_expr *M, int start, cdouble *out);
 
 /**
  * @brief Frees the memory used by the members of a math_expr.

@@ -9,8 +9,10 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @brief Includes functions related to expression evaluation.
  */
 #ifndef LOCAL_BUILD
+#include <tmsolve/c_complex_to_cpp.h>
 #include <tmsolve/tms_math_strs.h>
 #else
+#include "c_complex_to_cpp.h"
 #include "tms_math_strs.h"
 #endif
 
@@ -21,7 +23,7 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @note Thread safe, unless NO_LOCK is used.
  * @return The answer of the math expression, or NaN in case of failure.
  */
-double complex tms_evaluate(tms_math_expr *M, int options);
+cdouble tms_evaluate(tms_math_expr *M, int options);
 
 /**
  * @brief Calculates the answer for an int expression.
@@ -38,7 +40,7 @@ int tms_int_evaluate(tms_int_expr *M, int64_t *result, int options);
  * @param M The math expression with label operands.
  * @param values_list A list of all labels values, should be indexed by the label ID.
  */
-void tms_set_labels_values(tms_math_expr *M, double complex *values_list);
+void tms_set_labels_values(tms_math_expr *M, cdouble *values_list);
 
 /**
  * @brief Sets the values of label operands.

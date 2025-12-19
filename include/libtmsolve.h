@@ -9,7 +9,6 @@ SPDX-License-Identifier: LGPL-2.1-only
  * @brief The main header of libtmsolve, includes all other headers for ease of use.
  */
 #ifdef __cplusplus
-#define complex _Complex
 extern "C"
 {
 #endif
@@ -46,7 +45,6 @@ extern "C"
 
 #ifdef __cplusplus
 }
-#undef complex
 #endif
 
 #endif

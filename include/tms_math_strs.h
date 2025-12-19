@@ -5,13 +5,13 @@ SPDX-License-Identifier: LGPL-2.1-only
 #ifndef _TMS_STRUCTS_H
 #define _TMS_STRUCTS_H
 #include <inttypes.h>
+#include <stdbool.h>
 #include <stddef.h>
 
-#ifdef __cplusplus
-#define complex _Complex
+#ifndef LOCAL_BUILD
+#include <tmsolve/c_complex_to_cpp.h>
 #else
-#include <complex.h>
-#include <stdbool.h>
+#include "c_complex_to_cpp.h"
 #endif
 
 /**
@@ -43,13 +43,13 @@ typedef struct tms_rc_func
 {
     char *name;
     double (*real)(double);
-    double complex (*cmplx)(double complex);
+    cdouble (*cmplx)(cdouble);
 } tms_rc_func;
 
 typedef struct tms_extf
 {
     char *name;
-    int (*ptr)(tms_arg_list *, tms_arg_list *, double complex *);
+    int (*ptr)(tms_arg_list *, tms_arg_list *, cdouble *);
 } tms_extf;
 
 typedef struct tms_int_func
@@ -68,7 +68,7 @@ typedef struct tms_int_extf
 typedef struct tms_var
 {
     char *name;
-    double complex value;
+    cdouble value;
     bool is_constant;
 } tms_var;
 
@@ -98,7 +98,7 @@ typedef struct tms_op_node
      */
     uint16_t labels;
 
-    double complex left_operand, right_operand, *result;
+    cdouble left_operand, right_operand, *result;
     ///@brief Points to the next op_node in evaluation order.
     struct tms_op_node *next;
 } tms_op_node;
@@ -140,8 +140,8 @@ typedef struct tms_int_ufunc
 /// @brief Union to store function pointers
 typedef union tms_mfunc_ptrs {
     double (*real)(double);
-    double complex (*cmplx)(double complex);
-    int (*extended)(tms_arg_list *, tms_arg_list *, double complex *result);
+    cdouble (*cmplx)(cdouble);
+    int (*extended)(tms_arg_list *, tms_arg_list *, cdouble *result);
     char *user;
 } fptr;
 
@@ -204,7 +204,7 @@ typedef struct tms_math_subexpr
     struct tms_op_node *nodes;
 
     /// @brief Set to one of the op_nodes result pointer, indicating that the answer of that node is the answer of this subexpression.
-    double complex **result;
+    cdouble **result;
 
     /// @brief Arguments for user and extended functions.
     tms_arg_list *f_args;
@@ -241,7 +241,7 @@ typedef struct tms_math_expr
     tms_arg_list *labels;
 
     ///@brief Answer of the expression.
-    double complex answer;
+    cdouble answer;
 
     ///@brief Toggles complex support.
     bool enable_complex;
