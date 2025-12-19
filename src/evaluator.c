@@ -439,6 +439,15 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                             modify_error = true;
                         break;
                     case 'p':
+                        i_node->right_operand = tms_sign_extend(i_node->right_operand);
+                        i_node->left_operand = tms_sign_extend(i_node->left_operand);
+
+                        if (i_node->right_operand < 0)
+                        {
+                            tms_save_error(TMS_INT_EVALUATOR, "Negative exponent not allowed in integer mode.", EH_FATAL,
+                                           M->expr, i_node->operator_index + 2);
+                            return -1;
+                        }
                         *(i_node->result) = 1;
                         for (int64_t i = 0; i < i_node->right_operand; ++i)
                             *(i_node->result) *= i_node->left_operand;
