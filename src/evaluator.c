@@ -207,7 +207,7 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                         }
                         *(i_node->result) = i_node->left_operand / i_node->right_operand;
                         if (i_node->op == 'd')
-                            *(i_node->result) = floor(*(i_node->result));
+                            *(i_node->result) = tms_cfloor(*(i_node->result));
                         break;
 
                     case '%':
