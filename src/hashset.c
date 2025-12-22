@@ -23,17 +23,17 @@ hashset *hashset_new()
     return hashmap_new(sizeof(char **), 0, rand(), rand(), _str_hash, _str_compare, NULL, NULL);
 }
 
-const char *hashset_set(hashset *set, char *item)
+const char *hashset_set(hashset *set, const char *item)
 {
     return hashmap_set(set, &item);
 }
 
-const char *hashset_remove(hashset *set, char *item)
+const char *hashset_remove(hashset *set, const char *item)
 {
     return hashmap_delete(set, &item);
 }
 
-const char *hashset_get(hashset *set, char *item)
+const char *hashset_get(hashset *set, const char *item)
 {
     return hashmap_get(set, &item);
 }

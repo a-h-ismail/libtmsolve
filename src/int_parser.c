@@ -125,7 +125,7 @@ int _tms_compare_int_subexpr_depth(const void *a, const void *b)
         return 0;
 }
 
-int _tms_set_int_function_ptr(char *expr, tms_int_expr *M, int s_i)
+int _tms_set_int_function_ptr(const char *expr, tms_int_expr *M, int s_i)
 {
     tms_int_subexpr *S = &(M->S[s_i]);
     int solve_start = S->solve_start;
@@ -154,9 +154,9 @@ int _tms_set_int_function_ptr(char *expr, tms_int_expr *M, int s_i)
     return 0;
 }
 
-tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *labels);
+tms_int_expr *_tms_parse_int_expr_unsafe(const char *expr, int options, tms_arg_list *labels);
 
-tms_int_expr *tms_parse_int_expr(char *expr, int options, tms_arg_list *labels)
+tms_int_expr *tms_parse_int_expr(const char *expr, int options, tms_arg_list *labels)
 {
     if ((options & NO_LOCK) != 1)
         tms_lock_parser(TMS_INT_PARSER);
@@ -176,7 +176,7 @@ tms_int_expr *tms_parse_int_expr(char *expr, int options, tms_arg_list *labels)
     return M;
 }
 
-tms_int_expr *_tms_parse_int_expr_unsafe(char *expr, int options, tms_arg_list *labels)
+tms_int_expr *_tms_parse_int_expr_unsafe(const char *expr, int options, tms_arg_list *labels)
 {
     // Number of subexpressions
     int s_count;

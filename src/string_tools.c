@@ -21,7 +21,7 @@ char *tms_strndup(const char *source, size_t n)
     return new;
 }
 
-int tms_find_closing_parenthesis(char *expr, int i)
+int tms_find_closing_parenthesis(const char *expr, int i)
 {
     // Initializing pcount to 1 because the function receives the index of an open parenthesis
     int pcount = 1;
@@ -40,7 +40,7 @@ int tms_find_closing_parenthesis(char *expr, int i)
     else
         return i;
 }
-int tms_find_opening_parenthesis(char *expr, int p)
+int tms_find_opening_parenthesis(const char *expr, int p)
 {
     // initializing pcount to 1 because the function receives the index of a closed parenthesis
     int pcount = 1;
@@ -79,9 +79,9 @@ bool tms_is_op(char c)
     return false;
 }
 
-int tms_is_long_op(char *expr)
+int tms_is_long_op(const char *expr)
 {
-    char *ops[] = {"//", "**"};
+    const char *ops[] = {"//", "**"};
     for (int i = 0; i < array_length(ops); ++i)
         if (strncmp(ops[i], expr, strlen(ops[i])) == 0)
             return strlen(ops[i]);
@@ -89,9 +89,9 @@ int tms_is_long_op(char *expr)
     return 0;
 }
 
-char tms_long_op_to_char(char *expr)
+char tms_long_op_to_char(const char *expr)
 {
-    char *ops[] = {"//", "**"};
+    const char *ops[] = {"//", "**"};
     char code[] = {'d', 'p'};
     for (int i = 0; i < array_length(ops); ++i)
         if (strncmp(ops[i], expr, strlen(ops[i])) == 0)
@@ -110,9 +110,9 @@ bool tms_is_int_op(char c)
     return false;
 }
 
-int tms_is_int_long_op(char *expr)
+int tms_is_int_long_op(const char *expr)
 {
-    char *ops[] = {"<<<", ">>>", "<<", ">>", "**"};
+    const char *ops[] = {"<<<", ">>>", "<<", ">>", "**"};
     for (int i = 0; i < array_length(ops); ++i)
         if (strncmp(ops[i], expr, strlen(ops[i])) == 0)
             return strlen(ops[i]);
@@ -120,9 +120,9 @@ int tms_is_int_long_op(char *expr)
     return 0;
 }
 
-char tms_int_long_op_to_char(char *expr)
+char tms_int_long_op_to_char(const char *expr)
 {
-    char *ops[] = {"<<<", ">>>", "<<", ">>", "**"};
+    const char *ops[] = {"<<<", ">>>", "<<", ">>", "**"};
     char code[] = {'l', 'r', '<', '>', 'p'};
 
     for (int i = 0; i < array_length(ops); ++i)
@@ -233,7 +233,7 @@ int8_t tms_hex_to_int(char c)
     return -1;
 }
 
-int8_t tms_detect_base(char *_s)
+int8_t tms_detect_base(const char *_s)
 {
     if (_s[0] == '+' || _s[0] == '-')
         ++_s;
@@ -254,7 +254,7 @@ int8_t tms_detect_base(char *_s)
     // Assume the base is 10 if no prefix is found
     return 10;
 }
-double _tms_read_value_simple(char *number, int8_t base)
+double _tms_read_value_simple(const char *number, int8_t base)
 {
     double value = 0, power = 1;
     int i, dot = -1, start, length;
@@ -330,7 +330,7 @@ double _tms_read_value_simple(char *number, int8_t base)
     return value;
 }
 
-double complex tms_read_value(char *_s, int start)
+double complex tms_read_value(const char *_s, int start)
 {
     double value;
     int end, sci_notation = -1, base;
@@ -397,7 +397,7 @@ double complex tms_read_value(char *_s, int start)
     }
 }
 
-int _tms_read_int_helper(char *number, int8_t base, int64_t *result)
+int _tms_read_int_helper(const char *number, int8_t base, int64_t *result)
 {
     // using unsigned ints is intentional (to avoid tripping signed overflow detection in some cases)
     uint64_t value = 0, power = 1;
@@ -490,7 +490,7 @@ int _tms_read_int_helper(char *number, int8_t base, int64_t *result)
     return 0;
 }
 
-int tms_read_int_value(char *_s, int start, int64_t *result)
+int tms_read_int_value(const char *_s, int start, int64_t *result)
 {
     int end, base;
 
@@ -521,7 +521,7 @@ int tms_read_int_value(char *_s, int start, int64_t *result)
 }
 
 // Function that seeks for the next occurence of a + or - sign starting from i
-int tms_find_add_subtract(char *expr, int i)
+int tms_find_add_subtract(const char *expr, int i)
 {
     while (expr[i] != '\0')
     {
@@ -534,7 +534,7 @@ int tms_find_add_subtract(char *expr, int i)
 }
 // Function that returns the index of the next operator starting from i
 // if no operators are found, returns -1.
-int tms_next_op(char *expr, int i)
+int tms_next_op(const char *expr, int i)
 {
     while (*(expr + i) != '\0')
     {
@@ -634,7 +634,7 @@ bool tms_valid_digit_for_base(char digit, int8_t base)
 }
 // [\+-]?\d+(\.\d+)?([eE]?[\+-]*\d)?+i? (May use it one day to detect numbers)
 
-int tms_find_endofnumber(char *number, int start)
+int tms_find_endofnumber(const char *number, int start)
 {
     int end = start, remaining_dots = 1, base = 10;
     bool is_scientific = false, is_complex = false;
@@ -698,7 +698,7 @@ int tms_find_endofnumber(char *number, int start)
         return -1;
 }
 
-int tms_find_int_endofnumber(char *number, int start)
+int tms_find_int_endofnumber(const char *number, int start)
 {
     int end = start, base = 10;
 
@@ -725,7 +725,7 @@ int tms_find_int_endofnumber(char *number, int start)
         return -1;
 }
 
-int tms_find_startofnumber(char *expr, int end)
+int tms_find_startofnumber(const char *expr, int end)
 {
     int start = end;
     /*
@@ -770,9 +770,9 @@ int tms_find_startofnumber(char *expr, int end)
     return start;
 }
 
-int tms_f_search(char *str, char *keyword, int index, bool match_word)
+int tms_f_search(const char *str, const char *keyword, int index, bool match_word)
 {
-    char *match;
+    const char *match;
     // Search for the needle in the haystack
     match = strstr(str + index, keyword);
     if (match == NULL)
@@ -802,7 +802,7 @@ int tms_f_search(char *str, char *keyword, int index, bool match_word)
 
 // Reverse search function, returns the index of the first match of keyword, or -1 if none is found
 // adjacent_search stops the search if the index is not inside the keyword
-int tms_r_search(char *str, char *keyword, int index, bool adjacent_search)
+int tms_r_search(const char *str, const char *keyword, int index, bool adjacent_search)
 {
     int length = strlen(keyword), i = index;
     while (i > -1)
@@ -822,7 +822,7 @@ int tms_r_search(char *str, char *keyword, int index, bool adjacent_search)
     return -1;
 }
 
-bool tms_match_word(char *str, int i, char *keyword, bool match_from_start)
+bool tms_match_word(const char *str, int i, const char *keyword, bool match_from_start)
 {
     int keylen = strlen(keyword);
     if (!match_from_start)
@@ -908,7 +908,7 @@ int tms_compare_priority(char operator1, char operator2)
     return op1_p - op2_p;
 }
 
-tms_arg_list *tms_get_args(char *string)
+tms_arg_list *tms_get_args(const char *string)
 {
     tms_arg_list *A = malloc(sizeof(tms_arg_list));
     A->count = 0;
@@ -1032,7 +1032,7 @@ bool tms_legal_char_in_name(char c)
         return false;
 }
 
-bool tms_valid_name(char *name)
+bool tms_valid_name(const char *name)
 {
     bool only_digits = true;
 
@@ -1207,7 +1207,7 @@ void tms_print_dot_decimal(int64_t value)
             return i;                                                                                                       \
     }
 
-int tms_find_str_in_array(char *key, const void *array, int arr_len, uint8_t type)
+int tms_find_str_in_array(const char *key, const void *array, int arr_len, uint8_t type)
 {
     int i;
     char **c_array;
@@ -1267,7 +1267,7 @@ int tms_find_str_in_array(char *key, const void *array, int arr_len, uint8_t typ
     return -1;
 }
 
-int tms_name_bounds(char *expr, int i, bool is_at_start)
+int tms_name_bounds(const char *expr, int i, bool is_at_start)
 {
     if (is_at_start)
     {
@@ -1330,7 +1330,7 @@ char *tms_complex_to_str(double complex value)
     return strdup(buffer);
 }
 
-char *tms_get_name(char *expr, int i, bool is_at_start)
+char *tms_get_name(const char *expr, int i, bool is_at_start)
 {
     if (is_at_start)
     {
@@ -1352,7 +1352,7 @@ char *tms_get_name(char *expr, int i, bool is_at_start)
     }
 }
 
-bool tms_legal_name(char *name)
+bool tms_legal_name(const char *name)
 {
     for (int i = 0; i < tms_g_illegal_names_count; ++i)
         if (strcmp(name, tms_g_illegal_names[i]) == 0)
@@ -1361,7 +1361,7 @@ bool tms_legal_name(char *name)
     return true;
 }
 
-char *tms_strcat_dup(char *s1, char *s2)
+char *tms_strcat_dup(const char *s1, const char *s2)
 {
     char *concatenated_string = malloc((strlen(s1) + strlen(s2) + 1) * sizeof(char));
 

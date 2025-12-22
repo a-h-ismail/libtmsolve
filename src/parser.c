@@ -22,7 +22,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 
 #include "parser_common.h"
 
-int _tms_set_rcfunction_ptr(char *expr, tms_math_expr *M, int s_i)
+int _tms_set_rcfunction_ptr(const char *expr, tms_math_expr *M, int s_i)
 {
     tms_math_subexpr *S = &(M->S[s_i]);
     int solve_start = S->solve_start;
@@ -121,7 +121,7 @@ int _tms_get_operand_value(tms_math_expr *M, int start, double complex *out)
 
 tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *labels);
 
-tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *labels)
+tms_math_expr *tms_parse_expr(const char *expr, int options, tms_arg_list *labels)
 {
     if ((options & NO_LOCK) != 1)
         tms_lock_parser(TMS_PARSER);
@@ -131,8 +131,10 @@ tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *labels)
         fputs(ERROR_DB_NOT_EMPTY, stderr);
         tms_clear_errors(TMS_PARSER);
     }
-
-    tms_math_expr *M = _tms_parse_expr_unsafe(expr, options, labels);
+    // expr is constant, but we need to do some modifications (remove whitespaces, combine some symbols...)
+    // We need a writable copy
+    char *dup_expr = strdup(expr);
+    tms_math_expr *M = _tms_parse_expr_unsafe(dup_expr, options, labels);
     if (M == NULL && (options & PRINT_ERRORS) != 0)
         tms_print_errors(TMS_PARSER);
 
@@ -154,10 +156,9 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *lab
     if (strlen(expr) > __INT_MAX__)
     {
         tms_save_error(TMS_PARSER, EXPRESSION_TOO_LONG, EH_FATAL, NULL, 0);
+        free(expr);
         return NULL;
     }
-    // Duplicate the expression sent to the parser, it may be constant
-    expr = strdup(expr);
 
     // Check for empty input
     if (expr[0] == '\0')

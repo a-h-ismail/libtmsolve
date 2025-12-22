@@ -30,7 +30,7 @@ char *tms_strndup(const char *source, size_t n);
  * @param i The index of the open parenthesis.
  * @return The index of the closing parenthesis, or -1 if an error occured.
  */
-int tms_find_closing_parenthesis(char *expr, int i);
+int tms_find_closing_parenthesis(const char *expr, int i);
 
 /**
  * @brief Finds the open parenthesis that corresponds to a closing parenthesis.
@@ -38,7 +38,7 @@ int tms_find_closing_parenthesis(char *expr, int i);
  * @param p The index of the closing parenthesis.
  * @return The index of the open parenthesis, or -1 if an error occured.
  */
-int tms_find_opening_parenthesis(char *expr, int p);
+int tms_find_opening_parenthesis(const char *expr, int p);
 
 /**
  * @brief Checks if the character is an arithmetic operator.
@@ -47,15 +47,15 @@ int tms_find_opening_parenthesis(char *expr, int p);
  */
 bool tms_is_op(char c);
 
-int tms_is_long_op(char *expr);
+int tms_is_long_op(const char *expr);
 
-char tms_long_op_to_char(char *expr);
+char tms_long_op_to_char(const char *expr);
 
 bool tms_is_int_op(char c);
 
-int tms_is_int_long_op(char *expr);
+int tms_is_int_long_op(const char *expr);
 
-char tms_int_long_op_to_char(char *expr);
+char tms_int_long_op_to_char(const char *expr);
 
 /**
  * @brief Checks if the character is a correct start delimiter for operators.
@@ -75,7 +75,7 @@ int8_t tms_oct_to_int(char c);
 
 int8_t tms_hex_to_int(char c);
 
-int8_t tms_detect_base(char *_s);
+int8_t tms_detect_base(const char *_s);
 
 /**
  * @brief Finds the next occurence of an operator in the string.
@@ -83,7 +83,7 @@ int8_t tms_detect_base(char *_s);
  * @param i The index to begin searching from.
  * @return The index of the next operator in the string, or -1 if none is found.
  */
-int tms_next_op(char *expr, int i);
+int tms_next_op(const char *expr, int i);
 
 /**
  * @brief Deletes whitespaces from a string.
@@ -106,9 +106,9 @@ void tms_resize_zone(char *str, int old_end, int new_end);
  * @param start The start index of the number.
  * @return The index of the number's end, or -1 in case of failure.
  */
-int tms_find_endofnumber(char *expr, int start);
+int tms_find_endofnumber(const char *expr, int start);
 
-int tms_find_int_endofnumber(char *number, int start);
+int tms_find_int_endofnumber(const char *number, int start);
 
 bool tms_is_valid_int_number_start(char c);
 
@@ -118,7 +118,7 @@ bool tms_is_valid_int_number_start(char c);
  * @param end The end index of the number.
  * @return The index of the number's start, or -1 in case of failure.
  */
-int tms_find_startofnumber(char *expr, int end);
+int tms_find_startofnumber(const char *expr, int end);
 
 /**
  * @brief Forward search for a specified keyword.
@@ -127,7 +127,7 @@ int tms_find_startofnumber(char *expr, int end);
  * @param index The index from which the search will start.
  * @return The index of the first match of keyword in str, or -1 if no match is found.
  */
-int tms_f_search(char *str, char *keyword, int index, bool match_word);
+int tms_f_search(const char *str, const char *keyword, int index, bool match_word);
 
 /**
  * @brief Reverse search for a specified keyword.
@@ -137,14 +137,14 @@ int tms_f_search(char *str, char *keyword, int index, bool match_word);
  * @param adjacent_search If set to true, the search will stop after going back strlen(keyword)-1 characters. Otherwise proceed normally.
  * @return The index of the first match of keyword in str, or -1 if no match is found.
  */
-int tms_r_search(char *str, char *keyword, int index, bool adjacent_search);
+int tms_r_search(const char *str, const char *keyword, int index, bool adjacent_search);
 
 /**
  * @brief Reads the value according to the rules of the specified base.
  * @param base Supported values: 2, 8, 10, 16
  * @return The value on success, or NaN on failure.
  */
-double _tms_read_value_simple(char *number, int8_t base);
+double _tms_read_value_simple(const char *number, int8_t base);
 
 /**
  * @brief Emulates the behavior of sscanf with format specifier "%lf".
@@ -152,7 +152,7 @@ double _tms_read_value_simple(char *number, int8_t base);
  * @param _s Start of the value to read
  * @return The result or NaN in case of failure.
  */
-cdouble tms_read_value(char *_s, int start);
+cdouble tms_read_value(const char *_s, int start);
 
 /**
  * @brief Reads an 64 bit int value
@@ -161,9 +161,9 @@ cdouble tms_read_value(char *_s, int start);
  * @param result
  * @return 0 on success, -1 on failure.
  */
-int tms_read_int_value(char *_s, int start, int64_t *result);
+int tms_read_int_value(const char *_s, int start, int64_t *result);
 
-int _tms_read_int_helper(char *number, int8_t base, int64_t *result);
+int _tms_read_int_helper(const char *number, int8_t base, int64_t *result);
 
 /**
  * @brief Finds the next occurence of add or subtract sign.
@@ -171,14 +171,14 @@ int _tms_read_int_helper(char *number, int8_t base, int64_t *result);
  * @param i The index from which the search starts.
  * @return The index of the occurence, -1 if none is found.
  */
-int tms_find_add_subtract(char *expr, int i);
+int tms_find_add_subtract(const char *expr, int i);
 
 /**
  * @brief Checks that each open parenthesis has a closing parenthesis and that no empty parenthesis pair exists.
  * @param expr The expression to check.
  * @return
  */
-int tms_parenthesis_check(char *expr);
+int tms_parenthesis_check(const char *expr);
 
 /// @brief Prints a value to standard output in a clean way.
 /// @param value
@@ -209,7 +209,7 @@ int tms_compare_priority(char operator1, char operator2);
  * @param string The string containing the arguments.
  * @return A structure containing the arguments stored in separate strings.
  */
-tms_arg_list *tms_get_args(char *string);
+tms_arg_list *tms_get_args(const char *string);
 
 /**
  * @brief Converts an argument list back into its string form.
@@ -236,13 +236,13 @@ bool tms_legal_char_in_name(char c);
  * @param match_from_start true if i is at the start of the keyword, false if at the end.
  * @return
  */
-bool tms_match_word(char *str, int i, char *keyword, bool match_from_start);
+bool tms_match_word(const char *str, int i, const char *keyword, bool match_from_start);
 
 /**
  * @brief Checks if the name conforms to variable name rules.
  * @return true if the name is valid, false otherwise.
  */
-bool tms_valid_name(char *name);
+bool tms_valid_name(const char *name);
 
 /**
  * @brief Frees an argument list created with tms_get_args()
@@ -257,7 +257,7 @@ void tms_print_hex(int64_t value);
 
 void tms_print_dot_decimal(int64_t value);
 
-int tms_name_bounds(char *expr, int i, bool is_at_start);
+int tms_name_bounds(const char *expr, int i, bool is_at_start);
 
 /**
  * @brief Finds the name of the function/variable that starts/ends at "i"
@@ -266,9 +266,9 @@ int tms_name_bounds(char *expr, int i, bool is_at_start);
  * @param is_at_start
  * @return The name if found (allocated with malloc), or NULL if the name isn't valid.
  */
-char *tms_get_name(char *expr, int i, bool is_at_start);
+char *tms_get_name(const char *expr, int i, bool is_at_start);
 
-bool tms_legal_name(char *name);
+bool tms_legal_name(const char *name);
 
 /**
  * @brief Finds the index of a string within an array of strings
@@ -278,7 +278,7 @@ bool tms_legal_name(char *name);
  * @param type Type of the elements in the array (_TMS_F_REAL...)
  * @return The index of the first match, or -1 if no match is found.
  */
-int tms_find_str_in_array(char *key, const void *array, int arr_len, uint8_t type);
+int tms_find_str_in_array(const char *key, const void *array, int arr_len, uint8_t type);
 
 bool _tms_string_is_prefix(const char *target, const char *prefix);
 
@@ -288,7 +288,7 @@ bool _tms_string_is_prefix(const char *target, const char *prefix);
  * @param s2 The second string
  * @return A new string, s1 + s2
  */
-char *tms_strcat_dup(char *s1, char *s2);
+char *tms_strcat_dup(const char *s1, const char *s2);
 
 /**
  * @brief Verifies if the provided array of strings is made of unique strings.

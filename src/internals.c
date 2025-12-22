@@ -226,49 +226,49 @@ void _tms_free_int_var(void *item)
     free(a->name);
 }
 
-const tms_var *tms_get_var_by_name(char *name)
+const tms_var *tms_get_var_by_name(const char *name)
 {
     tms_var tmp = {.name = name};
     return hashmap_get(var_hmap, &tmp);
 }
 
-const tms_int_var *tms_get_int_var_by_name(char *name)
+const tms_int_var *tms_get_int_var_by_name(const char *name)
 {
     tms_int_var tmp = {.name = name};
     return hashmap_get(int_var_hmap, &tmp);
 }
 
-const tms_rc_func *tms_get_rc_func_by_name(char *name)
+const tms_rc_func *tms_get_rc_func_by_name(const char *name)
 {
     tms_rc_func tmp = {.name = name};
     return hashmap_get(rc_func_hmap, &tmp);
 }
 
-const tms_extf *tms_get_extf_by_name(char *name)
+const tms_extf *tms_get_extf_by_name(const char *name)
 {
     tms_extf tmp = {.name = name};
     return hashmap_get(extf_hmap, &tmp);
 }
 
-const tms_int_func *tms_get_int_func_by_name(char *name)
+const tms_int_func *tms_get_int_func_by_name(const char *name)
 {
     tms_int_func tmp = {.name = name};
     return hashmap_get(int_func_hmap, &tmp);
 }
 
-const tms_int_extf *tms_get_int_extf_by_name(char *name)
+const tms_int_extf *tms_get_int_extf_by_name(const char *name)
 {
     tms_int_extf tmp = {.name = name};
     return hashmap_get(int_extf_hmap, &tmp);
 }
 
-const tms_ufunc *tms_get_ufunc_by_name(char *name)
+const tms_ufunc *tms_get_ufunc_by_name(const char *name)
 {
     tms_ufunc tmp = {.name = name};
     return hashmap_get(ufunc_hmap, &tmp);
 }
 
-const tms_int_ufunc *tms_get_int_ufunc_by_name(char *name)
+const tms_int_ufunc *tms_get_int_ufunc_by_name(const char *name)
 {
     tms_int_ufunc tmp = {.name = name};
     return hashmap_get(int_ufunc_hmap, &tmp);
@@ -314,7 +314,7 @@ tms_int_ufunc *tms_get_all_int_ufunc(size_t *count, bool sort)
     return hashmap_to_array(int_ufunc_hmap, count, sort);
 }
 
-bool tms_function_exists(char *name)
+bool tms_function_exists(const char *name)
 {
     if (tms_get_rc_func_by_name(name) != NULL || tms_get_extf_by_name(name) != NULL ||
         tms_get_ufunc_by_name(name) != NULL)
@@ -323,7 +323,7 @@ bool tms_function_exists(char *name)
         return false;
 }
 
-bool tms_int_function_exists(char *name)
+bool tms_int_function_exists(const char *name)
 {
     if (tms_get_int_func_by_name(name) != NULL || tms_get_int_extf_by_name(name) != NULL ||
         tms_get_int_ufunc_by_name(name) != NULL)
@@ -332,7 +332,7 @@ bool tms_int_function_exists(char *name)
         return false;
 }
 
-bool tms_builtin_function_exists(char *name)
+bool tms_builtin_function_exists(const char *name)
 {
     if (tms_get_rc_func_by_name(name) != NULL || tms_get_extf_by_name(name) != NULL)
         return true;
@@ -340,7 +340,7 @@ bool tms_builtin_function_exists(char *name)
         return false;
 }
 
-bool tms_builtin_int_function_exists(char *name)
+bool tms_builtin_int_function_exists(const char *name)
 {
     if (tms_get_int_func_by_name(name) != NULL || tms_get_int_extf_by_name(name) != NULL)
         return true;
@@ -348,7 +348,7 @@ bool tms_builtin_int_function_exists(char *name)
         return false;
 }
 
-int tms_remove_var(char *name)
+int tms_remove_var(const char *name)
 {
     const tms_var t = {.name = name}, *check;
     check = hashmap_get(var_hmap, &t);
@@ -361,7 +361,7 @@ int tms_remove_var(char *name)
         return hashmap_delete_and_free(var_hmap, &t);
 }
 
-int tms_remove_int_var(char *name)
+int tms_remove_int_var(const char *name)
 {
     const tms_int_var t = {.name = name}, *check;
     check = hashmap_get(int_var_hmap, &t);
@@ -374,13 +374,13 @@ int tms_remove_int_var(char *name)
         return hashmap_delete_and_free(int_var_hmap, &t);
 }
 
-int tms_remove_ufunc(char *name)
+int tms_remove_ufunc(const char *name)
 {
     tms_ufunc t = {.name = name};
     return hashmap_delete_and_free(ufunc_hmap, &t);
 }
 
-int tms_remove_int_ufunc(char *name)
+int tms_remove_int_ufunc(const char *name)
 {
     tms_int_ufunc t = {.name = name};
     return hashmap_delete_and_free(int_ufunc_hmap, &t);
@@ -687,7 +687,7 @@ bool _tms_validate_args_count_range(int actual, int min, int max, int facility_i
     return false;
 }
 
-int _tms_set_var_unsafe(char *name, double complex value, bool is_constant)
+int _tms_set_var_unsafe(const char *name, double complex value, bool is_constant)
 {
     if (isnan(creal(value)) || isnan(cimag(value)))
         return -1;
@@ -733,7 +733,7 @@ int _tms_set_var_unsafe(char *name, double complex value, bool is_constant)
     return 0;
 }
 
-int tms_set_var(char *name, double complex value, bool is_constant)
+int tms_set_var(const char *name, double complex value, bool is_constant)
 {
     pthread_mutex_lock(&_variables_lock);
     int status = _tms_set_var_unsafe(name, value, is_constant);
@@ -741,7 +741,7 @@ int tms_set_var(char *name, double complex value, bool is_constant)
     return status;
 }
 
-int _tms_set_int_var_unsafe(char *name, int64_t value, bool is_constant)
+int _tms_set_int_var_unsafe(const char *name, int64_t value, bool is_constant)
 {
     value = tms_sign_extend(value);
     // Check if the name has illegal characters
@@ -784,7 +784,7 @@ int _tms_set_int_var_unsafe(char *name, int64_t value, bool is_constant)
     return 0;
 }
 
-int tms_set_int_var(char *name, int64_t value, bool is_constant)
+int tms_set_int_var(const char *name, int64_t value, bool is_constant)
 {
     pthread_mutex_lock(&_int_variables_lock);
     int status = _tms_set_int_var_unsafe(name, value, is_constant);
@@ -793,7 +793,7 @@ int tms_set_int_var(char *name, int64_t value, bool is_constant)
 }
 
 // Get all user defined functions
-hashset *get_all_ufunc_references(char *fname)
+hashset *get_all_ufunc_references(const char *fname)
 {
     const tms_ufunc *F = tms_get_ufunc_by_name(fname);
     if (F == NULL)
@@ -824,7 +824,7 @@ hashset *get_all_ufunc_references(char *fname)
         return all_refs;
 }
 
-bool _ufunc_is_within_arglist(char *referrer, char *fname_wparenthesis)
+bool _ufunc_is_within_arglist(const char *referrer, const char *fname_wparenthesis)
 {
     const tms_ufunc *tmp = tms_get_ufunc_by_name(referrer);
     tms_math_expr *M = tmp->F;
@@ -843,7 +843,7 @@ bool _ufunc_is_within_arglist(char *referrer, char *fname_wparenthesis)
     return false;
 }
 
-bool is_ufunc_referenced_by(char *referrer, char *target)
+bool is_ufunc_referenced_by(const char *referrer, const char *target)
 {
     char target_wparenthesis[strlen(target) + 2];
     // Add a ( to the function name so forward search would find an actual reference
@@ -908,7 +908,7 @@ bool is_ufunc_referenced_by(char *referrer, char *target)
     return false;
 }
 
-bool _tms_ufunc_has_bad_refs(char *fname)
+bool _tms_ufunc_has_bad_refs(const char *fname)
 {
     // Self reference check
     if (is_ufunc_referenced_by(fname, fname))
@@ -947,7 +947,7 @@ bool _tms_ufunc_has_bad_refs(char *fname)
     return false;
 }
 
-int tms_set_ufunction(char *fname, char *function_args, char *function)
+int tms_set_ufunction(const char *fname, const char *function_args, const char *function)
 {
     const tms_ufunc *old = tms_get_ufunc_by_name(fname);
 
@@ -1053,7 +1053,7 @@ int tms_set_ufunction(char *fname, char *function_args, char *function)
 }
 
 // Get all user defined functions
-hashset *get_all_int_ufunc_references(char *fname)
+hashset *get_all_int_ufunc_references(const char *fname)
 {
     const tms_int_ufunc *F = tms_get_int_ufunc_by_name(fname);
     if (F == NULL)
@@ -1084,7 +1084,7 @@ hashset *get_all_int_ufunc_references(char *fname)
         return all_refs;
 }
 
-bool _int_ufunc_is_within_arglist(char *referrer, char *fname_wparenthesis)
+bool _int_ufunc_is_within_arglist(const char *referrer, const char *fname_wparenthesis)
 {
     const tms_int_ufunc *tmp = tms_get_int_ufunc_by_name(referrer);
     tms_int_expr *M = tmp->F;
@@ -1103,7 +1103,7 @@ bool _int_ufunc_is_within_arglist(char *referrer, char *fname_wparenthesis)
     return false;
 }
 
-bool is_int_ufunc_referenced_by(char *referrer, char *target)
+bool is_int_ufunc_referenced_by(const char *referrer, const char *target)
 {
     char target_wparenthesis[strlen(target) + 2];
     // Add a ( to the function name so forward search would find an actual reference
@@ -1168,7 +1168,7 @@ bool is_int_ufunc_referenced_by(char *referrer, char *target)
     return false;
 }
 
-bool _tms_int_ufunc_has_bad_refs(char *fname)
+bool _tms_int_ufunc_has_bad_refs(const char *fname)
 {
     // Self reference check
     if (is_int_ufunc_referenced_by(fname, fname))
@@ -1207,7 +1207,7 @@ bool _tms_int_ufunc_has_bad_refs(char *fname)
     return false;
 }
 
-int tms_set_int_ufunction(char *fname, char *function_args, char *function)
+int tms_set_int_ufunction(const char *fname, const char *function_args, const char *function)
 {
     const tms_int_ufunc *old = tms_get_int_ufunc_by_name(fname);
 

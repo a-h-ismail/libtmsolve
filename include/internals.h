@@ -67,21 +67,21 @@ void tmsolve_reset();
  * @warning This function is not thread safe, and there is no guarantees that the pointer will remain valid on any hashmap modification.
  * @note This description applies to all `get_by_name` functions.
  */
-const tms_var *tms_get_var_by_name(char *name);
+const tms_var *tms_get_var_by_name(const char *name);
 
-const tms_int_var *tms_get_int_var_by_name(char *name);
+const tms_int_var *tms_get_int_var_by_name(const char *name);
 
-const tms_rc_func *tms_get_rc_func_by_name(char *name);
+const tms_rc_func *tms_get_rc_func_by_name(const char *name);
 
-const tms_extf *tms_get_extf_by_name(char *name);
+const tms_extf *tms_get_extf_by_name(const char *name);
 
-const tms_int_func *tms_get_int_func_by_name(char *name);
+const tms_int_func *tms_get_int_func_by_name(const char *name);
 
-const tms_int_extf *tms_get_int_extf_by_name(char *name);
+const tms_int_extf *tms_get_int_extf_by_name(const char *name);
 
-const tms_ufunc *tms_get_ufunc_by_name(char *name);
+const tms_ufunc *tms_get_ufunc_by_name(const char *name);
 
-const tms_int_ufunc *tms_get_int_ufunc_by_name(char *name);
+const tms_int_ufunc *tms_get_int_ufunc_by_name(const char *name);
 
 /**
  * @brief Returns a malloc'd array with all of the currently defined variables .
@@ -109,7 +109,7 @@ tms_int_ufunc *tms_get_all_int_ufunc(size_t *count, bool sort);
  * @retval -1 on failure.
  * @retval 1 on variable found, but not removable.
  */
-int tms_remove_var(char *name);
+int tms_remove_var(const char *name);
 
 /**
  * @brief Removes a runtime integer variable by its name.
@@ -117,31 +117,31 @@ int tms_remove_var(char *name);
  * @retval -1 on failure.
  * @retval 1 on variable found, but not removable.
  */
-int tms_remove_int_var(char *name);
+int tms_remove_int_var(const char *name);
 
 /**
  * @brief Removes a user function by its name.
  * @retval 0 on success.
  * @retval -1 on failure.
  */
-int tms_remove_ufunc(char *name);
+int tms_remove_ufunc(const char *name);
 
 /**
  * @brief Removes a user integer function by its name.
  * @retval 0 on success.
  * @retval -1 on failure.
  */
-int tms_remove_int_ufunc(char *name);
+int tms_remove_int_ufunc(const char *name);
 
 /**
  * @brief Checks if a function with the specified name already exists.
  */
-bool tms_function_exists(char *name);
+bool tms_function_exists(const char *name);
 
 /**
  * @brief Checks if a integer function with the specified name already exists.
  */
-bool tms_int_function_exists(char *name);
+bool tms_int_function_exists(const char *name);
 
 /**
  * @brief Locks one of the parsers.
@@ -181,7 +181,7 @@ void tms_set_int_mask(int size);
  * @param is_constant When set, the variable is treated read-only (can't be modified or removed).
  * @return 0 on success, -1 on failure.
  */
-int tms_set_var(char *name, cdouble value, bool is_constant);
+int tms_set_var(const char *name, cdouble value, bool is_constant);
 
 /**
  * @brief Add/Update an integer user variable.
@@ -191,7 +191,7 @@ int tms_set_var(char *name, cdouble value, bool is_constant);
  * @note The value is sign extended before being stored
  * @return 0 on success, -1 on failure.
  */
-int tms_set_int_var(char *name, int64_t value, bool is_constant);
+int tms_set_int_var(const char *name, int64_t value, bool is_constant);
 
 /**
  * @brief Add/Update a runtime function.
@@ -200,7 +200,7 @@ int tms_set_int_var(char *name, int64_t value, bool is_constant);
  * @param function Expression of the function in terms of its labels.
  * @return 0 on success, -1 on failure.
  */
-int tms_set_ufunction(char *fname, char *function_args, char *function);
+int tms_set_ufunction(const char *fname, const char *function_args, const char *function);
 
 /**
  * @brief Add/Update a runtime integer function.
@@ -209,7 +209,7 @@ int tms_set_ufunction(char *fname, char *function_args, char *function);
  * @param function Expression of the function in terms of its labels.
  * @return 0 on success, -1 on failure.
  */
-int tms_set_int_ufunction(char *fname, char *function_args, char *function);
+int tms_set_int_ufunction(const char *fname, const char *function_args, const char *function);
 
 bool _tms_validate_args_count(int expected, int actual, int facility_id);
 

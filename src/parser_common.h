@@ -45,7 +45,7 @@ static int compare_subexpr_depth(const void *a, const void *b)
         return 0;
 }
 
-math_expr *init_math_expr(char *expr)
+math_expr *init_math_expr(const char *expr)
 {
     int s_max = 8, i, s_i, length = strlen(expr), s_count;
 
@@ -221,7 +221,7 @@ math_expr *init_math_expr(char *expr)
     return M;
 }
 
-static int *_tms_get_operator_indexes(char *expr, math_subexpr *S, int s_i)
+static int *_tms_get_operator_indexes(const char *expr, math_subexpr *S, int s_i)
 {
     // For simplicity
     int solve_start = S[s_i].solve_start;

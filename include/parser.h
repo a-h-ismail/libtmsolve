@@ -26,7 +26,7 @@ SPDX-License-Identifier: LGPL-2.1-only
  */
 tms_math_expr *tms_dup_mexpr(tms_math_expr *M);
 
-int _tms_set_rcfunction_ptr(char *expr, tms_math_expr *M, int s_index);
+int _tms_set_rcfunction_ptr(const char *expr, tms_math_expr *M, int s_index);
 
 /**
  * @brief Coverts a math_expr parsed with complex disabled into a complex enabled one.
@@ -43,7 +43,7 @@ void tms_convert_real_to_complex(tms_math_expr *M);
  * @param labels If the option to enable labels is set, provide them here.
  * @return A (malloc'd) pointer to the generated math structure.
  */
-tms_math_expr *tms_parse_expr(char *expr, int options, tms_arg_list *labels);
+tms_math_expr *tms_parse_expr(const char *expr, int options, tms_arg_list *labels);
 
 int _tms_get_operand_value(tms_math_expr *M, int start, cdouble *out);
 

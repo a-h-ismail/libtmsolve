@@ -25,7 +25,7 @@ int _tms_set_int_operand(char *expr, tms_int_expr *M, tms_int_op_node *N, int op
  * @param labels List of named labels and optionally a values array to initialize labeled operands.
  * @return A (malloc'd) pointer to the generated int expression structure.
  */
-tms_int_expr *tms_parse_int_expr(char *expr, int options, tms_arg_list *labels);
+tms_int_expr *tms_parse_int_expr(const char *expr, int options, tms_arg_list *labels);
 
 /**
  * @brief Deletes an int expression.
