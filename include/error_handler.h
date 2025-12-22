@@ -58,7 +58,7 @@ enum tms_facilities
  * @param error_position Index where the error is in the expression string.
  * @return 0 on success, 1 on success with warnings, -1 on failure.
  */
-int tms_save_error(int facilities, char *error_msg, int severity, char *expr, int error_position);
+int tms_save_error(int facilities, const char *error_msg, int severity, const char *expr, int error_position);
 
 /**
  * @brief Print all errors for the specified facilities.
@@ -79,7 +79,15 @@ int tms_clear_errors(int facilities);
  * @param error_msg The exact error message to find.
  * @return The index of the error in the database, or -1 if no match is found.
  */
-int tms_find_error(int facilities, char *error_msg);
+int tms_find_error(int facilities, const char *error_msg);
+
+/**  
+ * @brief Finds the last error matching the specified facilities.
+ * @param facilities Facilities to match (include more than one using logical OR)
+ * @return Pointer to the last error in the database with matching facilities
+ * @warning The pointer may be invalidated by subsequent modifications of the database (not a deep copy).
+*/
+tms_error_data *tms_get_last_error(int facilities);
 
 /**
  * @brief Get the number of errors per facilities and specified type.
@@ -95,6 +103,6 @@ int tms_get_error_count(int facilities, int error_type);
  * @param prefix A string to add to as prefix to the existing error message if necessary.
  * @return 0 on success, 1 on success with warnings, -1 on failure.
  */
-int tms_modify_last_error(int facilities, char *expr, int error_position, char *prefix);
+int tms_modify_last_error(int facilities, const char *expr, int error_position, const char *prefix);
 
 #endif

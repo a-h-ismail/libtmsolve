@@ -29,7 +29,7 @@ void _unlock_error_database()
 void tms_print_error(tms_error_data E)
 {
     int i;
-    char *facility_name;
+    const char *facility_name;
 
     switch (E.facilities)
     {
@@ -81,7 +81,7 @@ void tms_print_error(tms_error_data E)
         fprintf(stderr, "%s\n\n", E.message);
 }
 
-int tms_save_expr_with_error(char *expr, int error_position, tms_error_data *E)
+int tms_save_expr_with_error(const char *expr, int error_position, tms_error_data *E)
 {
     if (expr != NULL)
     {
@@ -119,7 +119,7 @@ int tms_save_expr_with_error(char *expr, int error_position, tms_error_data *E)
     return 0;
 }
 
-int tms_save_error(int facilities, char *error_msg, int severity, char *expr, int error_position)
+int tms_save_error(int facilities, const char *error_msg, int severity, const char *expr, int error_position)
 {
     _lock_error_database();
 
@@ -213,7 +213,7 @@ int tms_clear_errors(int facilities)
     return deleted_count;
 }
 
-int tms_find_error(int facilities, char *error_msg)
+int tms_find_error(int facilities, const char *error_msg)
 {
     _lock_error_database();
     for (int i = 0; i < last_error; ++i)
@@ -224,6 +224,21 @@ int tms_find_error(int facilities, char *error_msg)
         }
     _unlock_error_database();
     return -1;
+}
+
+tms_error_data *tms_get_last_error(int facilities)
+{
+    _lock_error_database();
+    int last_match = -1;
+    for (int i = 0; i < last_error; ++i)
+        if ((facilities & error_table[i].facilities) != 0)
+            last_match = i;
+
+    _unlock_error_database();
+    if (last_match >= 0)
+        return error_table + last_match;
+    else
+        return NULL;
 }
 
 int tms_get_error_count(int facilities, int error_type)
@@ -260,7 +275,7 @@ int tms_get_error_count(int facilities, int error_type)
     return -1;
 }
 
-int tms_modify_last_error(int facilities, char *expr, int error_position, char *prefix)
+int tms_modify_last_error(int facilities, const char *expr, int error_position, const char *prefix)
 {
     _lock_error_database();
     int i;
