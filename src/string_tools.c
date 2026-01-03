@@ -71,7 +71,7 @@ int find_min(int a, int b)
 
 bool tms_is_op(char c)
 {
-    char ops[] = {'+', '-', '*', '/', '^', '%', '='};
+    char ops[] = {'+', '-', '*', '/', '^', '%'};
     for (int i = 0; i < array_length(ops); ++i)
         if (c == ops[i])
             return true;
@@ -102,7 +102,7 @@ char tms_long_op_to_char(const char *expr)
 
 bool tms_is_int_op(char c)
 {
-    char ops[] = {'+', '-', '*', '/', '^', '|', '&', '%', '='};
+    char ops[] = {'+', '-', '*', '/', '^', '|', '&', '%'};
     for (int i = 0; i < array_length(ops); ++i)
         if (c == ops[i])
             return true;
