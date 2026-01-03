@@ -257,6 +257,13 @@ void tms_print_hex(int64_t value);
 
 void tms_print_dot_decimal(int64_t value);
 
+/**
+ * @brief Finds the begin or end index of the specified variable name
+ * @param expr The current expr (without offset)
+ * @param i start/end index
+ * @param is_at_start Determines if "i" points to the start or end of the name
+ * @return The name's end if is_at_start is true, otherwise it returns the name's start
+ */
 int tms_name_bounds(const char *expr, int i, bool is_at_start);
 
 /**
@@ -268,6 +275,7 @@ int tms_name_bounds(const char *expr, int i, bool is_at_start);
  */
 char *tms_get_name(const char *expr, int i, bool is_at_start);
 
+/// @brief Checks if the provided name is valid
 bool tms_legal_name(const char *name);
 
 /**
