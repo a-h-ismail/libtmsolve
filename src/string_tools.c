@@ -967,7 +967,7 @@ char *tms_args_to_string(tms_arg_list *args)
     for (i = 0; i < args->count; ++i)
         total_size += strlen(args->arguments[i]);
 
-    // We need need a comma and a space between every two arguments and 1 extra for the null
+    // We need a comma and a space between every two arguments and 1 extra for the null
     total_size += 2 * (args->count - 1) + 1;
     char *argstring = malloc(total_size * sizeof(char));
 
