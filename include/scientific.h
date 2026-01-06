@@ -82,7 +82,7 @@ int tms_int_solve(char *expr, int64_t *result);
  * @param labels The variable names to be passed to the parser, set to NULL if you don't need them.
  * @return 0 on success, -1 on failure.
  */
-int tms_int_solve_e(char *expr, int64_t *result, int options, tms_arg_list *labels);
+int tms_int_solve_e(const char *expr, int64_t *result, int options, tms_arg_list *labels);
 
 /**
  * @brief Calculates the factorial.

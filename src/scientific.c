@@ -253,7 +253,7 @@ int tms_int_solve(char *expr, int64_t *result)
     return state;
 }
 
-int tms_int_solve_e(char *expr, int64_t *result, int options, tms_arg_list *labels)
+int tms_int_solve_e(const char *expr, int64_t *result, int options, tms_arg_list *labels)
 {
     tms_int_expr *M;
     M = tms_parse_int_expr(expr, options, labels);
