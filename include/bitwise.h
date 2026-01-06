@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2023-2024 Ahmad Ismail
+Copyright (C) 2023-2026 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 
@@ -95,4 +95,8 @@ int tms_int_min(tms_arg_list *args, tms_arg_list *labels, int64_t *result);
 
 /// @brief Finds the maximum of its arguments
 int tms_int_max(tms_arg_list *args, tms_arg_list *labels, int64_t *result);
+
+/// @brief Converts a floating point value/expression to its binary representation.
+/// @note Supports only 32 and 64 bit floats and chooses between them according to int mask size.
+int tms_from_float(tms_arg_list *args, tms_arg_list *labels, int64_t *result);
 #endif

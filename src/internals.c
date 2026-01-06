@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2022-2025 Ahmad Ismail
+Copyright (C) 2022-2026 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "hashmap.h"
@@ -50,14 +50,15 @@ const tms_int_func tms_g_int_func[] = {{"not", tms_not},
                                        {"abs", tms_int_abs},
                                        {"parity", tms_parity}};
 
-const tms_int_extf tms_g_int_extf[] = {{"rand", tms_int_rand}, {"rr", tms_rr},
-                                       {"rl", tms_rl},         {"sr", tms_sr},
-                                       {"sra", tms_sra},       {"sl", tms_sl},
-                                       {"nand", tms_nand},     {"and", tms_and},
-                                       {"xor", tms_xor},       {"nor", tms_nor},
-                                       {"or", tms_or},         {"ipv4", tms_ipv4},
-                                       {"dotted", tms_dotted}, {"mask_range", tms_mask_range},
-                                       {"min", tms_int_min},   {"max", tms_int_max}};
+const tms_int_extf tms_g_int_extf[] = {{"rand", tms_int_rand},   {"rr", tms_rr},
+                                       {"rl", tms_rl},           {"sr", tms_sr},
+                                       {"sra", tms_sra},         {"sl", tms_sl},
+                                       {"nand", tms_nand},       {"and", tms_and},
+                                       {"xor", tms_xor},         {"nor", tms_nor},
+                                       {"or", tms_or},           {"ipv4", tms_ipv4},
+                                       {"dotted", tms_dotted},   {"mask_range", tms_mask_range},
+                                       {"min", tms_int_min},     {"max", tms_int_max},
+                                       {"float", tms_from_float}};
 
 bool _tms_do_init = true;
 bool _tms_debug = false;

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2023-2024 Ahmad Ismail
+Copyright (C) 2023-2026 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 
@@ -9,6 +9,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "scientific.h"
 #include "string_tools.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -91,6 +92,7 @@ int tms_inv_mask(int64_t bits, int64_t *result)
 int _tms_rotate_circular_i(int64_t value, int64_t shift, char direction, int64_t *result)
 {
     shift = tms_sign_extend(shift);
+    value &= tms_int_mask;
     if (shift < 0)
     {
         tms_save_error(TMS_INT_EVALUATOR, ROTATION_AMOUNT_NEGATIVE, EH_FATAL, NULL, 0);
@@ -203,7 +205,6 @@ int tms_sr(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 
 int _tms_arithmetic_shift(int64_t value, int64_t shift, char direction, int64_t *result)
 {
-    shift = tms_sign_extend(shift);
     if (shift < 0)
     {
         tms_save_error(TMS_INT_EVALUATOR, SHIFT_AMOUNT_NEGATIVE, EH_FATAL, NULL, 0);
@@ -535,5 +536,54 @@ int tms_int_max(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
     }
 
     *result = max;
+    return 0;
+}
+
+int tms_from_float(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
+{
+    if (_tms_validate_args_count_range(args->count, 1, -1, TMS_INT_EVALUATOR) == false)
+        return -1;
+
+    if (tms_int_mask_size != 32 && tms_int_mask_size != 64)
+    {
+        tms_save_error(TMS_INT_EVALUATOR, NOT_A_FLOAT_OR_DOUBLE, EH_FATAL, NULL, -1);
+        return -1;
+    }
+
+    double tmp = tms_solve_e(args->arguments[0], 0, NULL);
+    if (isnan(tmp))
+    {
+        tms_error_data *last_error = tms_get_last_error(TMS_PARSER | TMS_EVALUATOR);
+        char *err_msg = last_error->message;
+        tms_save_error(TMS_INT_EVALUATOR, err_msg, EH_FATAL, NULL, -1);
+        tms_clear_errors(TMS_PARSER | TMS_EVALUATOR);
+        return -1;
+    }
+    else
+    {
+        switch (tms_int_mask_size)
+        {
+        case 32: {
+            // Use a union to reinterpret a float as unsigned int32
+            const union {
+                float f;
+                uint32_t i;
+            } u = {tmp};
+            *result = u.i;
+            break;
+        }
+        case 64: {
+            // Use a union to reinterpret a double as unsigned int64
+            const union {
+                double f;
+                uint64_t i;
+            } u = {tmp};
+            *result = u.i;
+            break;
+        }
+        default:
+            break;
+        }
+    }
     return 0;
 }
