@@ -91,7 +91,6 @@ int tms_inv_mask(int64_t bits, int64_t *result)
 
 int _tms_rotate_circular_i(int64_t value, int64_t shift, char direction, int64_t *result)
 {
-    shift = tms_sign_extend(shift);
     value &= tms_int_mask;
     if (shift < 0)
     {
@@ -104,16 +103,20 @@ int _tms_rotate_circular_i(int64_t value, int64_t shift, char direction, int64_t
     {
     case 'r':
         *result = ((uint64_t)value >> shift | (uint64_t)value << (tms_int_mask_size - shift));
-        return 0;
+        break;
 
     case 'l':
         *result = ((uint64_t)value << shift | (uint64_t)value >> (tms_int_mask_size - shift));
-        return 0;
+        break;
 
     default:
         tms_save_error(TMS_INT_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL, 0);
         return -1;
     }
+    // Mask away any additional bits to the left due to shifting, then sign extend
+    *result &= tms_int_mask;
+    *result = tms_sign_extend(*result);
+    return 0;
 }
 
 int _tms_rotate_circular(tms_arg_list *args, char direction, int64_t *result, tms_arg_list *labels)
@@ -155,8 +158,6 @@ int tms_int_rand(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
             tms_int_solve_e(args->arguments[1], &max, NO_LOCK, labels) != 0)
             return -1;
 
-        min = tms_sign_extend(min);
-        max = tms_sign_extend(max);
         if (min >= max)
         {
             tms_save_error(TMS_INT_EVALUATOR, INVALID_RANGE, EH_FATAL, NULL, 0);
@@ -186,7 +187,8 @@ int tms_sr(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
         return -1;
     else
     {
-        shift = tms_sign_extend(shift);
+        // Mask needed so that right shifting works properly
+        value &= tms_int_mask;
         if (shift < 0)
         {
             tms_save_error(TMS_INT_EVALUATOR, SHIFT_AMOUNT_NEGATIVE, EH_FATAL, NULL, 0);
@@ -215,7 +217,6 @@ int _tms_arithmetic_shift(int64_t value, int64_t shift, char direction, int64_t 
         tms_save_error(TMS_INT_EVALUATOR, SHIFT_TOO_LARGE, EH_FATAL, NULL, 0);
         return -1;
     }
-    value = tms_sign_extend(value);
     switch (direction)
     {
     case 'l':
@@ -334,6 +335,7 @@ int _tms_calculate_dot_decimal(tms_arg_list *L, int64_t *result)
             // Dotted decimal here is read left to right, thus the right shift
             *result = *result | (tmp << (8 * (L->count - 1 - i)));
     }
+    *result = tms_sign_extend(*result);
     return 0;
 }
 
@@ -505,7 +507,6 @@ int tms_int_min(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
         status = tms_int_solve_e(args->arguments[i], &tmp, NO_LOCK, labels);
         if (status == -1)
             return -1;
-        tmp = tms_sign_extend(tmp);
 
         if (tmp < min)
             min = tmp;
@@ -529,7 +530,6 @@ int tms_int_max(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
         status = tms_int_solve_e(args->arguments[i], &tmp, NO_LOCK, labels);
         if (status == -1)
             return -1;
-        tmp = tms_sign_extend(tmp);
 
         if (tmp > max)
             max = tmp;

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2023-2024 Ahmad Ismail
+Copyright (C) 2023-2026 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "int_parser.h"
@@ -111,7 +111,7 @@ int _tms_read_int_operand(tms_int_expr *M, int start, int64_t *result)
     if (is_negative)
         value = -value;
 
-    *result = value & tms_int_mask;
+    *result = value;
     return 0;
 }
 
@@ -176,7 +176,7 @@ tms_int_expr *tms_parse_int_expr(const char *expr, int options, tms_arg_list *la
     return M;
 }
 
-tms_int_expr *_tms_parse_int_expr_unsafe(const char *expr, int options, tms_arg_list *labels)
+tms_int_expr *_tms_parse_int_expr_unsafe(const char *expr_const, int options, tms_arg_list *labels)
 {
     // Number of subexpressions
     int s_count;
@@ -186,20 +186,20 @@ tms_int_expr *_tms_parse_int_expr_unsafe(const char *expr, int options, tms_arg_
     bool enable_labels = (labels != NULL);
 
     // Check for empty input
-    if (expr[0] == '\0')
+    if (expr_const[0] == '\0')
     {
         tms_save_error(TMS_INT_PARSER, NO_INPUT, EH_FATAL, NULL, 0);
         return NULL;
     }
 
-    if (strlen(expr) > __INT_MAX__)
+    if (strlen(expr_const) > __INT_MAX__)
     {
         tms_save_error(TMS_INT_PARSER, EXPRESSION_TOO_LONG, EH_FATAL, NULL, 0);
         return NULL;
     }
 
     // Duplicate the expression sent to the parser, it may be constant
-    expr = strdup(expr);
+    char *expr = strdup(expr_const);
 
     tms_remove_whitespace(expr);
     // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)

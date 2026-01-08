@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2021-2024 Ahmad Ismail
+Copyright (C) 2021-2026 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "string_tools.h"
@@ -480,8 +480,12 @@ int _tms_read_int_helper(const char *number, int8_t base, int64_t *result)
     if (base == 10 && tms_sign_extend(value & tms_int_mask) != value)
         return -3;
     // For hex, oct, bin: the input is considered to be unsigned to manipulate bits directly
+    // Larger than mask = overflow
     else if ((value & tms_int_mask) != value)
         return -3;
+
+    // Sign extend to 64 bit to be able to do arithmetic with negative values properly
+    tms_sign_extend(value);
 
     if (is_negative)
         *result = -value;
@@ -632,7 +636,6 @@ bool tms_valid_digit_for_base(char digit, int8_t base)
     }
     return false;
 }
-// [\+-]?\d+(\.\d+)?([eE]?[\+-]*\d)?+i? (May use it one day to detect numbers)
 
 int tms_find_endofnumber(const char *number, int start)
 {

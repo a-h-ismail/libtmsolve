@@ -357,7 +357,6 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                     return -1;
                 }
             }
-            **(S[i].result) &= tms_int_mask;
         }
         else
         {
@@ -459,7 +458,6 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
                         tms_modify_last_error(TMS_INT_EVALUATOR, M->expr, i_node->operator_index, NULL);
                         return -1;
                     }
-                    *(i_node->result) = *(i_node->result) & tms_int_mask;
                     i_node = i_node->next;
                 }
 
@@ -467,8 +465,7 @@ int _tms_int_evaluate_unsafe(tms_int_expr *M, int64_t *result)
             switch (S[i].func_type)
             {
             case TMS_F_INT64:
-                state = (*(S[i].func.simple))(tms_sign_extend(**(S[i].result)), *(S[i].result));
-                **(S[i].result) &= tms_int_mask;
+                state = (*(S[i].func.simple))(**(S[i].result), *(S[i].result));
                 if (state == -1)
                 {
                     // If the function didn't generate an error itself, provide a generic one

@@ -94,7 +94,6 @@ void test_integer(char *buffer)
         tms_print_errors(TMS_ALL_FACILITIES);
         exit(1);
     }
-    expected_ans = tms_sign_extend(expected_ans);
 
     strncpy(expr, buffer, field_separator);
     expr[field_separator] = '\0';
@@ -105,7 +104,6 @@ void test_integer(char *buffer)
         tms_print_errors(TMS_ALL_FACILITIES);
         exit(1);
     }
-    tms_g_int_ans = tms_sign_extend(tms_g_int_ans);
 
     if (tms_g_int_ans == expected_ans)
         puts("Passed\n--------------------\n");

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2022-2025 Ahmad Ismail
+Copyright (C) 2022-2026 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "tms_math_strs.h"
@@ -45,7 +45,7 @@ static int compare_subexpr_depth(const void *a, const void *b)
         return 0;
 }
 
-math_expr *init_math_expr(const char *expr)
+math_expr *init_math_expr(char *expr)
 {
     int s_max = 8, i, s_i, length = strlen(expr), s_count;
 
