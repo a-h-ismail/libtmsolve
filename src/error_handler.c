@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2022-2024 Ahmad Ismail
+Copyright (C) 2022-2026 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "error_handler.h"
@@ -181,6 +181,7 @@ int tms_clear_errors(int facilities)
         if ((error_table[i].facilities & facilities) != 0)
         {
             free(error_table[i].message);
+            free(error_table[i].prefix);
             error_table[i].message = NULL;
             error_table[i].prefix = NULL;
             if (error_table[i].fatal)
@@ -293,7 +294,7 @@ int tms_modify_last_error(int facilities, const char *expr, int error_position, 
 
     if (prefix != NULL)
     {
-        error_table[i].prefix = prefix;
+        error_table[i].prefix = strdup(prefix);
     }
 
     // Error position of -1 means no change
