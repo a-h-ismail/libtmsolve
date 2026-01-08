@@ -93,6 +93,65 @@ int64_t get_int_var(std::string name)
 
     return var->value;
 }
+
+void set_ufunction(std::string fname, std::string function_args, std::string function)
+{
+    int status = tms_set_ufunction(fname.c_str(), function_args.c_str(), function.c_str());
+    if (status == -1)
+        throw std::runtime_error(std::format("Failed to set function \"{}\"", fname));
+}
+
+void set_int_ufunction(std::string fname, std::string function_args, std::string function)
+{
+    int status = tms_set_int_ufunction(fname.c_str(), function_args.c_str(), function.c_str());
+    if (status == -1)
+        throw std::runtime_error(std::format("Failed to set function \"{}\"", fname));
+}
+
+void remove_var(std::string fname)
+{
+    int status = tms_remove_var(fname.c_str());
+    if (status == -1)
+        throw std::runtime_error(std::format("Can't delete variable \"{}\" since it doesn't exist", fname));
+    if (status == 1)
+        throw std::runtime_error(std::format("Can't delete the read-only variable \"{}\"", fname));
+}
+
+void remove_int_var(std::string fname)
+{
+    int status = tms_remove_int_var(fname.c_str());
+    if (status == -1)
+        throw std::runtime_error(std::format("Can't delete variable \"{}\" since it doesn't exist", fname));
+    if (status == 1)
+        throw std::runtime_error(std::format("Can't delete the read-only variable \"{}\"", fname));
+}
+
+void remove_ufunc(std::string fname)
+{
+    int status = tms_remove_ufunc(fname.c_str());
+    if (status == -1)
+        throw std::runtime_error(std::format("Can't delete function \"{}\" since it doesn't exist", fname));
+}
+
+void remove_int_ufunc(std::string fname)
+{
+    int status = tms_remove_int_ufunc(fname.c_str());
+    if (status == -1)
+        throw std::runtime_error(std::format("Can't delete function \"{}\" since it doesn't exist", fname));
+}
+
+void set_int_mask(int size_in_bits)
+{
+    if (size_in_bits < 0 || size_in_bits > 64)
+        throw std::runtime_error(std::format("Integer mask size \"{}\" is not in range [1;64]", size_in_bits));
+
+    // Exploit the fact that a value of (2^n)-1 doesn't have any intersection with 2^n in binary
+    // So when AND ing the answer will be zero
+    if (!((size_in_bits != 0) && ((size_in_bits & (size_in_bits - 1)) == 0)))
+        throw std::runtime_error(std::format("Integer mask \"{}\" is not a power of two", size_in_bits));
+    tms_set_int_mask(size_in_bits);
+}
+
 } // namespace tmsolve
 
 #ifdef PYTHON_BINDINGS_BUILD
@@ -110,5 +169,12 @@ NB_MODULE(tmsolve, m)
     m.def("get_var", &get_var, "name"_a);
     m.def("set_int_var", &set_int_var, "name"_a, "value"_a, "is_constant"_a = false);
     m.def("get_int_var", &get_int_var, "name"_a);
+    m.def("set_ufunction", &set_ufunction, "fname"_a, "function_args"_a, "function"_a);
+    m.def("set_int_ufunction", &set_int_ufunction, "fname"_a, "function_args"_a, "function"_a);
+    m.def("remove_var", &remove_var, "name"_a);
+    m.def("remove_int_var", &remove_int_var, "name"_a);
+    m.def("remove_ufunc", &remove_ufunc, "fname"_a);
+    m.def("remove_int_ufunc", &remove_int_ufunc, "fname"_a);
+    m.def("set_int_mask", &set_int_mask, "size_in_bits"_a);
 }
 #endif
