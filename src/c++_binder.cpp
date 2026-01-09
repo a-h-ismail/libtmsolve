@@ -142,14 +142,14 @@ void remove_int_ufunc(std::string fname)
 
 void set_int_mask(int size_in_bits)
 {
-    if (size_in_bits < 0 || size_in_bits > 64)
+    int status = tms_set_int_mask(size_in_bits);
+    switch (status)
+    {
+    case 1:
         throw std::runtime_error(std::format("Integer mask size \"{}\" is not in range [1;64]", size_in_bits));
-
-    // Exploit the fact that a value of (2^n)-1 doesn't have any intersection with 2^n in binary
-    // So when AND ing the answer will be zero
-    if (!((size_in_bits != 0) && ((size_in_bits & (size_in_bits - 1)) == 0)))
+    case 2:
         throw std::runtime_error(std::format("Integer mask \"{}\" is not a power of two", size_in_bits));
-    tms_set_int_mask(size_in_bits);
+    }
 }
 
 } // namespace tmsolve
