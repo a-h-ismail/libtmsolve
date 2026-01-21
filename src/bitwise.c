@@ -9,6 +9,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "m_errors.h"
 #include "scientific.h"
 #include "string_tools.h"
+#include "tms_math_strs.h"
 
 #include <limits.h>
 #include <math.h>
@@ -43,6 +44,22 @@ int get_two_operands(tms_arg_list *args, int64_t *op1, int64_t *op2, tms_arg_lis
         return -1;
     else
         return 0;
+}
+
+int get_all_arguments(tms_arg_list *args, int64_t **numerical_args, tms_arg_list *labels)
+{
+    *numerical_args = malloc(args->count * sizeof(int64_t));
+    int status;
+    for (int i = 0; i < args->count; ++i)
+    {
+        status = tms_int_solve_e(args->arguments[i], *numerical_args + i, NO_LOCK, labels);
+        if (status != 0)
+        {
+            free(*numerical_args);
+            return -1;
+        }
+    }
+    return 0;
 }
 
 int tms_not(int64_t value, int64_t *result)
@@ -610,39 +627,67 @@ int tms_hamming_distance(tms_arg_list *args, tms_arg_list *labels, int64_t *resu
 
 int _tms_gcd(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
-    int64_t op1, op2;
-    if (get_two_operands(args, &op1, &op2, labels) == -1)
+    if (!_tms_validate_args_count_range(args->count, 2, -1, TMS_INT_EVALUATOR))
         return -1;
-    // This means an overflow because the GCD function uses absolute values, and abs(INT_MIN) = INT_MAX + 1
-    if (op1 == INT64_MIN || op2 == INT64_MIN)
+
+    int64_t *operands;
+    if (get_all_arguments(args, &operands, labels) == -1)
+        return -1;
+    // Check if all values are within permitted range
+    for (int i = 0; i < args->count; ++i)
     {
-        tms_save_error(TMS_INT_EVALUATOR, INTEGER_OVERFLOW, EH_FATAL, NULL, -1);
-        return -1;
+        if (operands[i] == INT64_MIN)
+        {
+            // Overflow because abs(INT64_MIN) = INT64_MAX + 1
+            tms_save_error(TMS_INT_EVALUATOR, INTEGER_OVERFLOW, EH_FATAL, NULL, -1);
+            free(operands);
+            return -1;
+        }
     }
-    *result = tms_gcd(op1, op2);
+
+    int64_t tmp = operands[0];
+    for (int i = 1; i < args->count; ++i)
+        tmp = tms_gcd(tmp, operands[i]);
+
+    *result = tmp;
+    free(operands);
     return 0;
 }
 
 int _tms_lcm(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
 {
-    int64_t op1, op2;
-    if (get_two_operands(args, &op1, &op2, labels) == -1)
+    if (!_tms_validate_args_count_range(args->count, 2, -1, TMS_INT_EVALUATOR))
         return -1;
-    // Similar to the GCD function, abs(INT_MIN) = INT_MAX + 1
-    if (op1 == INT64_MIN || op2 == INT64_MIN)
+
+    int64_t *operands;
+    if (get_all_arguments(args, &operands, labels) == -1)
+        return -1;
+    // Check if all values are within permitted range
+    for (int i = 0; i < args->count; ++i)
     {
-        tms_save_error(TMS_INT_EVALUATOR, INTEGER_OVERFLOW, EH_FATAL, NULL, -1);
-        return -1;
+        if (operands[i] == INT64_MIN)
+        {
+            // Overflow because abs(INT64_MIN) = INT64_MAX + 1
+            tms_save_error(TMS_INT_EVALUATOR, INTEGER_OVERFLOW, EH_FATAL, NULL, -1);
+            free(operands);
+            return -1;
+        }
     }
 
-    int64_t tmp;
-    tmp = op1 / tms_gcd(op1, op2);
-    bool overflow = __builtin_mul_overflow(tmp, op2, result);
-    if (overflow || tms_sign_extend(*result & tms_int_mask) != *result)
+    int64_t lcm = operands[0], tmp;
+    for (int i = 1; i < args->count; ++i)
     {
-        tms_save_error(TMS_INT_EVALUATOR, INTEGER_OVERFLOW, EH_FATAL, NULL, -1);
-        return -1;
+        tmp = lcm / tms_gcd(lcm, operands[i]);
+        bool overflow = __builtin_mul_overflow(tmp, operands[i], &lcm);
+        if (overflow || tms_sign_extend(lcm & tms_int_mask) != lcm)
+        {
+            tms_save_error(TMS_INT_EVALUATOR, INTEGER_OVERFLOW, EH_FATAL, NULL, -1);
+            free(operands);
+            return -1;
+        }
     }
+    *result = lcm;
+    free(operands);
     return 0;
 }
 
