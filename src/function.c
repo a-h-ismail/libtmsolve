@@ -17,7 +17,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include <string.h>
 #include <time.h>
 
-int tms_avg(tms_arg_list *args, tms_arg_list *labels, double complex *result)
+int _tms_avg(tms_arg_list *args, tms_arg_list *labels, double complex *result)
 {
     if (_tms_validate_args_count_range(args->count, 1, -1, TMS_EVALUATOR) == false)
         return -1;
@@ -36,7 +36,7 @@ int tms_avg(tms_arg_list *args, tms_arg_list *labels, double complex *result)
     return 0;
 }
 
-int tms_min(tms_arg_list *args, tms_arg_list *labels, double complex *result)
+int _tms_min(tms_arg_list *args, tms_arg_list *labels, double complex *result)
 {
     if (_tms_validate_args_count_range(args->count, 1, -1, TMS_EVALUATOR) == false)
         return -1;
@@ -64,7 +64,7 @@ int tms_min(tms_arg_list *args, tms_arg_list *labels, double complex *result)
     return 0;
 }
 
-int tms_max(tms_arg_list *args, tms_arg_list *labels, double complex *result)
+int _tms_max(tms_arg_list *args, tms_arg_list *labels, double complex *result)
 {
     if (_tms_validate_args_count_range(args->count, 1, -1, TMS_EVALUATOR) == false)
         return -1;
@@ -92,7 +92,7 @@ int tms_max(tms_arg_list *args, tms_arg_list *labels, double complex *result)
     return 0;
 }
 
-int tms_logn(tms_arg_list *args, tms_arg_list *labels, double complex *result)
+int _tms_logn(tms_arg_list *args, tms_arg_list *labels, double complex *result)
 {
     if (_tms_validate_args_count(2, args->count, TMS_EVALUATOR) == false)
         return -1;
@@ -113,7 +113,7 @@ int tms_logn(tms_arg_list *args, tms_arg_list *labels, double complex *result)
     return 0;
 }
 
-int tms_int(tms_arg_list *args, tms_arg_list *labels, double complex *result)
+int _tms_int(tms_arg_list *args, tms_arg_list *labels, double complex *result)
 {
     double real, imag;
     double complex tmp;
@@ -140,7 +140,7 @@ int tms_int(tms_arg_list *args, tms_arg_list *labels, double complex *result)
     return 0;
 }
 
-int tms_rand(tms_arg_list *args, tms_arg_list *labels, double complex *result)
+int _tms_rand(tms_arg_list *args, tms_arg_list *labels, double complex *result)
 {
     if (_tms_validate_args_count(0, args->count, TMS_EVALUATOR) == false)
         return -1;
@@ -169,23 +169,23 @@ int tms_base_n(tms_arg_list *args, int8_t base, double complex *result)
     return 0;
 }
 
-int tms_hex(tms_arg_list *L, tms_arg_list *labels, double complex *result)
+int _tms_hex(tms_arg_list *L, tms_arg_list *labels, double complex *result)
 {
     return tms_base_n(L, 16, result);
 }
 
-int tms_oct(tms_arg_list *L, tms_arg_list *labels, double complex *result)
+int _tms_oct(tms_arg_list *L, tms_arg_list *labels, double complex *result)
 {
     return tms_base_n(L, 8, result);
 }
 
-int tms_bin(tms_arg_list *L, tms_arg_list *labels, double complex *result)
+int _tms_bin(tms_arg_list *L, tms_arg_list *labels, double complex *result)
 {
     return tms_base_n(L, 2, result);
 }
 
 // Function that calculates the derivative of f(x) for a specific value of x
-int tms_derivative(tms_arg_list *L, tms_arg_list *labels, double complex *result)
+int _tms_derivative(tms_arg_list *L, tms_arg_list *labels, double complex *result)
 {
     tms_math_expr *M;
     double epsilon = 1e-9;
@@ -249,7 +249,7 @@ int tms_derivative(tms_arg_list *L, tms_arg_list *labels, double complex *result
     return 0;
 }
 
-int tms_integrate(tms_arg_list *L, tms_arg_list *labels, double complex *result)
+int _tms_integrate(tms_arg_list *L, tms_arg_list *labels, double complex *result)
 {
     tms_math_expr *M;
 

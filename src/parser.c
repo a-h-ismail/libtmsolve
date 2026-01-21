@@ -326,7 +326,7 @@ bool tms_is_deterministic(tms_math_expr *M)
 {
     for (int i = 0; i < M->subexpr_count; ++i)
     {
-        if (M->S[i].func.extended == tms_rand)
+        if (M->S[i].func.extended == _tms_rand)
             return false;
     }
     return true;
