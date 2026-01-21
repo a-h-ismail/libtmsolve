@@ -4,7 +4,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "matrix.h"
 #include "error_handler.h"
-#include "internals.h"
 #include "m_errors.h"
 #include <math.h>
 #include <stdio.h>

@@ -3,7 +3,6 @@ Copyright (C) 2022-2025 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 
-#include <ctype.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +13,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "function.h"
 #include "internals.h"
 #include "parser.h"
-#include "scientific.h"
 #include "string_tools.h"
 #include "tms_complex.h"
 

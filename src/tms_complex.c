@@ -3,8 +3,6 @@ Copyright (C) 2023 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "tms_complex.h"
-#include "internals.h"
-#include "m_errors.h"
 #include "scientific.h"
 #include <math.h>
 

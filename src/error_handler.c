@@ -3,7 +3,6 @@ Copyright (C) 2022-2026 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "error_handler.h"
-#include "string_tools.h"
 #include <stdarg.h>
 #include <stdatomic.h>
 #include <stdio.h>

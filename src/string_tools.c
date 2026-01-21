@@ -6,7 +6,6 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "bitwise.h"
 #include "error_handler.h"
 #include "internals.h"
-#include "scientific.h"
 #include <ctype.h>
 #include <math.h>
 #include <stdio.h>

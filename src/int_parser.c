@@ -3,17 +3,12 @@ Copyright (C) 2023-2026 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "int_parser.h"
-#include "bitwise.h"
 #include "error_handler.h"
 #include "evaluator.h"
-#include "function.h"
 #include "internals.h"
-#include "scientific.h"
 #include "string_tools.h"
-#include "tms_complex.h"
 #include "tms_math_strs.h"
 
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
