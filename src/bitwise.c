@@ -6,10 +6,14 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "bitwise.h"
 #include "error_handler.h"
 #include "internals.h"
+#include "m_errors.h"
 #include "scientific.h"
 #include "string_tools.h"
 
+#include <limits.h>
 #include <math.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -140,6 +144,9 @@ int tms_int_rand(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
     // Generate an 64 bit random number
     for (int i = 0; i < 8 / sizeof(int); ++i)
         random_64 |= (int64_t)rand() << (i * 8 * sizeof(int));
+
+    // Mask then sign extend to ensure that it fits the current size
+    random_64 = tms_sign_extend(tms_int_mask & random_64);
 
     if (args->count == 0)
     {
@@ -586,4 +593,161 @@ int tms_from_float(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
         }
     }
     return 0;
+}
+
+int tms_hamming_distance(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
+{
+    int64_t op1, op2;
+    if (get_two_operands(args, &op1, &op2, labels) == -1)
+        return -1;
+    else
+    {
+        // XOR leaves ones where the values are different, count them and you get the hamming distance
+        int64_t tmp = op1 ^ op2;
+        return tms_ones(tmp, result);
+    }
+}
+
+int _tms_gcd(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
+{
+    int64_t op1, op2;
+    if (get_two_operands(args, &op1, &op2, labels) == -1)
+        return -1;
+    // This means an overflow because the GCD function uses absolute values, and abs(INT_MIN) = INT_MAX + 1
+    if (op1 == INT64_MIN || op2 == INT64_MIN)
+    {
+        tms_save_error(TMS_INT_EVALUATOR, INTEGER_OVERFLOW, EH_FATAL, NULL, -1);
+        return -1;
+    }
+    *result = tms_gcd(op1, op2);
+    return 0;
+}
+
+int _tms_lcm(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
+{
+    int64_t op1, op2;
+    if (get_two_operands(args, &op1, &op2, labels) == -1)
+        return -1;
+    // Similar to the GCD function, abs(INT_MIN) = INT_MAX + 1
+    if (op1 == INT64_MIN || op2 == INT64_MIN)
+    {
+        tms_save_error(TMS_INT_EVALUATOR, INTEGER_OVERFLOW, EH_FATAL, NULL, -1);
+        return -1;
+    }
+
+    int64_t tmp;
+    tmp = op1 / tms_gcd(op1, op2);
+    bool overflow = __builtin_mul_overflow(tmp, op2, result);
+    if (overflow || tms_sign_extend(*result & tms_int_mask) != *result)
+    {
+        tms_save_error(TMS_INT_EVALUATOR, INTEGER_OVERFLOW, EH_FATAL, NULL, -1);
+        return -1;
+    }
+    return 0;
+}
+
+int tms_multinv(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
+{
+    int64_t op1, op2;
+    if (get_two_operands(args, &op1, &op2, labels) == -1)
+        return -1;
+    else
+    {
+        bool op1_negative;
+        if (op1 < 0)
+        {
+            op1_negative = true;
+            op1 = -op1;
+        }
+        else
+            op1_negative = false;
+
+        if (op1 > INT32_MAX || op2 > INT32_MAX)
+        {
+            tms_save_error(TMS_INT_EVALUATOR, VALUE_OUT_OF_RANGE_FOR_MULINV, EH_FATAL, NULL, -1);
+            return -1;
+        }
+        if (op2 < 0)
+        {
+            tms_save_error(TMS_INT_EVALUATOR, MULTINV_NO_NEGATIVE_MODULUS, EH_FATAL, NULL, -1);
+            return -1;
+        }
+
+        if (tms_gcd(op1, op2) != 1)
+        {
+            tms_save_error(TMS_INT_EVALUATOR, MULINV_NEEDS_COPRIMES, EH_FATAL, NULL, -1);
+            return -1;
+        }
+
+        // Applying the extended Euclidian algorithm
+        int q, r1, r2, r, s1, s2, s, t1, t2, t;
+        // Initialization
+        if (op1 > op2)
+        {
+            r1 = op1;
+            r2 = op2;
+        }
+        else
+        {
+            r1 = op2;
+            r2 = op1;
+        }
+        q = r1 / r2;
+        s1 = s = t2 = 1;
+        s2 = t1 = 0;
+        t = -q;
+        r = r1 % r2;
+        // Applying an iteration
+        while (r != 1)
+        {
+            // Shifting values like in the table method
+            r1 = r2;
+            r2 = r;
+            s1 = s2;
+            s2 = s;
+            t1 = t2;
+            t2 = t;
+            // Calculating new q, r, s, t
+            q = r1 / r2;
+            r = r1 % r2;
+            s = s1 - s2 * q;
+            t = t1 - t2 * q;
+        }
+        // Stop condition met, return the appropriate inverse
+        // Remember that we want the inverse of op1 mod op2
+        // We may have inverted them in the table
+        if (op1 > op2)
+            *result = s;
+        else
+            *result = t;
+
+        // Prefer a positive answer
+        if (*result < 0)
+            *result += (-*result / op2 + 1) * op2;
+
+        int64_t tmp;
+        // For negative input, the result is mod - positive multinv
+        if (op1_negative)
+        {
+            *result = op2 - *result;
+            // Restoring the value of op1 as it was made positive earlier
+            op1 = -op1;
+            tmp = *result * op1;
+        }
+        else
+            tmp = *result * op1;
+
+        // The check below is expecting the answer of the modulus to be one, so we push the tmp value to the positive side
+        if (tmp < 0)
+            tmp += (-tmp / op2 + 1) * op2;
+
+        // Making sure that the multiplicative inverse is correct
+        if (tmp % op2 != 1)
+        {
+            tms_save_error(TMS_INT_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL, -1);
+            return -1;
+        }
+
+        return 0;
+    }
 }

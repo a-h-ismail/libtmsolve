@@ -2,10 +2,19 @@
 Copyright (C) 2022-2026 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
+#include "internals.h"
+#include "bitwise.h"
+#include "error_handler.h"
+#include "function.h"
 #include "hashmap.h"
 #include "hashset.h"
-#include "libtmsolve.h"
+#include "int_parser.h"
 #include "m_errors.h"
+#include "parser.h"
+#include "scientific.h"
+#include "string_tools.h"
+#include "tms_complex.h"
+#include "tms_math_strs.h"
 #include <math.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -50,15 +59,27 @@ const tms_int_func tms_g_int_func[] = {{"not", tms_not},
                                        {"abs", tms_int_abs},
                                        {"parity", tms_parity}};
 
-const tms_int_extf tms_g_int_extf[] = {{"rand", tms_int_rand},   {"rr", tms_rr},
-                                       {"rl", tms_rl},           {"sr", tms_sr},
-                                       {"sra", tms_sra},         {"sl", tms_sl},
-                                       {"nand", tms_nand},       {"and", tms_and},
-                                       {"xor", tms_xor},         {"nor", tms_nor},
-                                       {"or", tms_or},           {"ipv4", tms_ipv4},
-                                       {"dotted", tms_dotted},   {"mask_range", tms_mask_range},
-                                       {"min", tms_int_min},     {"max", tms_int_max},
-                                       {"float", tms_from_float}};
+const tms_int_extf tms_g_int_extf[] = {{"rand", tms_int_rand},
+                                       {"rr", tms_rr},
+                                       {"rl", tms_rl},
+                                       {"sr", tms_sr},
+                                       {"sra", tms_sra},
+                                       {"sl", tms_sl},
+                                       {"nand", tms_nand},
+                                       {"and", tms_and},
+                                       {"xor", tms_xor},
+                                       {"nor", tms_nor},
+                                       {"or", tms_or},
+                                       {"ipv4", tms_ipv4},
+                                       {"dotted", tms_dotted},
+                                       {"mask_range", tms_mask_range},
+                                       {"min", tms_int_min},
+                                       {"max", tms_int_max},
+                                       {"float", tms_from_float},
+                                       {"hamming_dist", tms_hamming_distance},
+                                       {"multinv", tms_multinv},
+                                       {"gcd", _tms_gcd},
+                                       {"lcm", _tms_lcm}};
 
 bool _tms_do_init = true;
 bool _tms_debug = false;

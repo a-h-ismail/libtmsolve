@@ -1,11 +1,10 @@
 /*
-Copyright (C) 2021-2025 Ahmad Ismail
+Copyright (C) 2021-2026 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "scientific.h"
 #include "error_handler.h"
 #include "evaluator.h"
-#include "function.h"
 #include "int_parser.h"
 #include "internals.h"
 #include "parser.h"
@@ -14,6 +13,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "tms_math_strs.h"
 
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -320,6 +320,33 @@ tms_int_factor *tms_find_factors(int32_t value)
         factor_list[1].power = 1;
     }
     return factor_list;
+}
+
+int64_t tms_gcd(int64_t a, int64_t b)
+{
+    int64_t remainder;
+    if (a < 0)
+        a = -a;
+    if (b < 0)
+        b = -b;
+
+    while (1)
+    {
+        // Ensure that a is bigger than b
+        if (a < b)
+        {
+            int64_t tmp = a;
+            a = b;
+            b = tmp;
+        }
+        remainder = a % b;
+        a = b;
+        if (remainder > 0)
+            b = remainder;
+        else
+            break;
+    }
+    return b;
 }
 
 void tms_reduce_fraction(tms_fraction *fraction_str)

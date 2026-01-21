@@ -107,9 +107,15 @@ double tms_tan(double x);
 /**
  * @brief Finds the factors of a signed 32bit integer.
  * @param value The value to factorize.
- * @return An array (malloc'd) of factors and the number of occurences of each factor.
+ * @return An array (malloc'd) of factors and the number of occurences of each factor, zero terminated.
  */
 tms_int_factor *tms_find_factors(int32_t value);
+
+/**
+ * @brief Finds the GCD of "a" and "b" using optimized Euclidean algorithm.
+ * @return GCD(a, b)
+ */
+int64_t tms_gcd(int64_t a, int64_t b);
 
 /**
  * @brief Reduces a fraction to its irreductible form.

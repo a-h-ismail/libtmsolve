@@ -82,3 +82,9 @@ I:min(1,6,-4,2);-4
 I:max(16,832,17,65);832
 I:parity(0b11)+parity(0b111);1
 I:abs(-1);1
+I:multinv(167,9)+multinv(-43265463,61);37
+I:hamming_dist(7,9);3
+I:gcd(735,32);1
+I:gcd(8*3,8*15);24
+I:lcm(4,5);20
+I:lcm(128,36);1152

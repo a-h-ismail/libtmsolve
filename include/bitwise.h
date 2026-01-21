@@ -99,4 +99,14 @@ int tms_int_max(tms_arg_list *args, tms_arg_list *labels, int64_t *result);
 /// @brief Converts a floating point value/expression to its binary representation.
 /// @note Supports only 32 and 64 bit floats and chooses between them according to int mask size.
 int tms_from_float(tms_arg_list *args, tms_arg_list *labels, int64_t *result);
+
+/// @brief Calculates hamming distance between its two arguments
+int tms_hamming_distance(tms_arg_list *args, tms_arg_list *labels, int64_t *result);
+
+/// @brief Calculates the multiplicative inverse of arg1 mod arg2
+int tms_multinv(tms_arg_list *args, tms_arg_list *labels, int64_t *result);
+
+int _tms_gcd(tms_arg_list *args, tms_arg_list *labels, int64_t *result);
+
+int _tms_lcm(tms_arg_list *args, tms_arg_list *labels, int64_t *result);
 #endif
