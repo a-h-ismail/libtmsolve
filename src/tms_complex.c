@@ -1,9 +1,10 @@
 /*
-Copyright (C) 2023 Ahmad Ismail
+Copyright (C) 2023,2025-2026 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "tms_complex.h"
 #include "scientific.h"
+#include <complex.h>
 #include <math.h>
 
 double complex tms_round_to_axis(double complex z)
@@ -51,6 +52,12 @@ double complex tms_cceil(double complex z)
 double complex tms_cfloor(double complex z)
 {
     return floor(creal(z)) + I * floor(cimag(z));
+}
+
+double complex tms_round_to_zero(double complex z)
+{
+    double r = creal(z), c = cimag(z);
+    return (r > 0 ? floor(r) : ceil(r)) + I * (c > 0 ? floor(c) : ceil(c));
 }
 
 double complex tms_cround(double complex z)

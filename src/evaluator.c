@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2023-2025 Ahmad Ismail
+Copyright (C) 2023-2026 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "evaluator.h"
@@ -207,7 +207,7 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                         }
                         *(i_node->result) = i_node->left_operand / i_node->right_operand;
                         if (i_node->op == 'd')
-                            *(i_node->result) = tms_cfloor(*(i_node->result));
+                            *(i_node->result) = tms_round_to_zero(*(i_node->result));
                         break;
 
                     case '%':

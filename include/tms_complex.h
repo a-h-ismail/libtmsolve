@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2023,2025 Ahmad Ismail
+Copyright (C) 2023,2025-2026 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #ifndef _TMS_COMPLEX_H
@@ -34,6 +34,8 @@ cdouble tms_ccbrt(cdouble z);
 cdouble tms_cceil(cdouble z);
 
 cdouble tms_cfloor(cdouble z);
+
+double complex tms_round_to_zero(double complex z);
 
 cdouble tms_cround(cdouble z);
 
