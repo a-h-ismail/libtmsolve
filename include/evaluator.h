@@ -28,7 +28,7 @@ cdouble tms_evaluate(tms_math_expr *M, int options);
 /**
  * @brief Calculates the answer for an int expression.
  * @param M Expression to evaluate.
- * @param result Pointer to a variable where the result will be stored.
+ * @param result Pointer to a variable where the result will be stored (sign extended if needed).
  * @param options Supported: NO_LOCK and PRINT_ERRORS.
  * @note Thread safe, unless NO_LOCK is used.
  * @return 0 on success, -1 on failure.

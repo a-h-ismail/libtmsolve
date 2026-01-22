@@ -68,7 +68,7 @@ cdouble tms_solve(const char *expr);
 /**
  * @brief Calculates an integer expression
  * @param expr The string form of the integer expression.
- * @param result Pointer to variable where answer will be stored.
+ * @param result Pointer to variable where answer will be stored (sign extended if necessary).
  * @return 0 on success, -1 on failure.
  * @note Prints errors to stderr (if any).
  */
@@ -77,7 +77,7 @@ int tms_int_solve(char *expr, int64_t *result);
 /**
  * @brief Calculates an integer expression
  * @param expr The string form of the integer expression.
- * @param result Pointer to variable where answer will be stored.
+ * @param result Pointer to variable where answer will be stored (sign extended if necessary).
  * @param options Modifies the behavior of the solving operation using flags (NO_LOCK, PRINT_ERRORS)
  * @param labels The variable names to be passed to the parser, set to NULL if you don't need them.
  * @return 0 on success, -1 on failure.
