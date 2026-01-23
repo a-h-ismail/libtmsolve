@@ -29,7 +29,7 @@ if (NOT SKBUILD)
   # Link to math library
   target_link_libraries(${PROJECT_NAME} m)
 
-  if (WIN32)
+  if (MSYS)
   target_link_libraries(${PROJECT_NAME} winpthread)
   add_compile_options("-static")
   endif()
@@ -40,7 +40,7 @@ if (NOT SKBUILD)
   if(LINUX)
       install(TARGETS ${PROJECT_NAME} DESTINATION /usr/local/lib)
       install(CODE "execute_process(COMMAND ldconfig)")
-  elseif(WIN32)
+  elseif(MSYS)
       install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
   endif()
 
