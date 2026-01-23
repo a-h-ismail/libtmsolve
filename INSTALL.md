@@ -15,10 +15,10 @@ Install required packages:
 Clone the project repository, generate the Makefile and install using make:
 
 ```
-git clone --depth 1 https://gitlab.com/a-h-ismail/libtmsolve
+git clone --depth 1 --branch v3.1.0 https://github.com/a-h-ismail/libtmsolve.git
 cd libtmsolve
-cmake -DCMAKE_BUILD_TYPE=Release -S. -B./build -G "Unix Makefiles"
-cd build
-make
-sudo make install
+
+# Generate the makefile and use it to build the library
+cmake -S . -B build; cmake --build build
+sudo cmake --install build
 ```
