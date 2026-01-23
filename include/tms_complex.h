@@ -35,7 +35,7 @@ cdouble tms_cceil(cdouble z);
 
 cdouble tms_cfloor(cdouble z);
 
-double complex tms_round_to_zero(double complex z);
+cdouble tms_round_to_zero(cdouble z);
 
 cdouble tms_cround(cdouble z);
 
