@@ -1,8 +1,31 @@
 # Changelog
 
+## 3.1.0 - 2026-01-23
+
+### Added
+
+- Integer functions `float`, `hamming_dist`, `multinv`, `gcd`, `lcm`.
+- Long operators support: `//` and `**` in the floating point parser and `<<`, `>>`, `<<<`, `>>>`, `**` in the integer parser.
+- Experimental C++/Python binder.
+- Function `tms_get_last_error()`
+
+### Changed
+
+- Removed `=` from operators list.
+- The error prefix is now always duplicated to avoid potential memory leaks.
+- Many function prototypes now uses `const char*` instead of `char *`.
+- Int mask setter accepts only powers of 2. 
+- Always sign extend integers instead of expecting the user to do it.
+- Marked all extended functions as private.
+
+### Fixed
+
+- Floor operation with complex values.
+- Some issues caused by inconsistent masking/sign extending.
+
 ## 3.0.2 - 2025-06-15
 
-### Fixes
+### Fixed
 
 - Always sign extend integer variables before storing them
 - Do not handle = in tms_solve
