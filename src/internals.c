@@ -1390,14 +1390,14 @@ char **tms_imode_autocompletion_helper(const char *name)
 
     // User functions
     size_t count;
-    tms_ufunc *int_ufuncs = hashmap_to_array(int_ufunc_hmap, &count, true);
+    tms_int_ufunc *int_ufuncs = hashmap_to_array(int_ufunc_hmap, &count, true);
     if (int_ufuncs != NULL)
         for (i = 0; i < count; ++i)
             if (_tms_string_is_prefix(int_ufuncs[i].name, name))
                 matches[next++] = tms_strcat_dup(int_ufuncs[i].name, "(");
 
     // Variables
-    tms_var *int_vars = hashmap_to_array(int_var_hmap, &count, true);
+    tms_int_var *int_vars = hashmap_to_array(int_var_hmap, &count, true);
     if (int_vars != NULL)
         for (i = 0; i < count; ++i)
             if (_tms_string_is_prefix(int_vars[i].name, name))
