@@ -136,7 +136,7 @@ int _tms_set_int_function_ptr(const char *expr, tms_int_expr *M, int s_i)
         func = tms_get_int_func_by_name(name);
         if (func == NULL)
         {
-            tms_save_error(TMS_INT_PARSER, UNDEFINED_FUNCTION, EH_NONFATAL, expr, solve_start - 2);
+            tms_save_error(TMS_INT_PARSER, UNDEFINED_FUNCTION, EH_NONFATAL, expr, solve_start - 2 - strlen(name) + 1);
             free(name);
             return -1;
         }
@@ -236,20 +236,19 @@ tms_int_expr *_tms_parse_int_expr_unsafe(const char *expr_const, int options, tm
             continue;
         }
 
+        status = _tms_set_int_function_ptr(expr, M, s_i);
+        if (status == -1)
+        {
+            tms_delete_int_expr(M);
+            return NULL;
+        }
+
         // Get an array of the index of all operators and set their count
         int *operator_index = _tms_get_operator_indexes(expr, S, s_i);
 
         if (operator_index == NULL)
         {
             tms_delete_int_expr(M);
-            return NULL;
-        }
-
-        status = _tms_set_int_function_ptr(expr, M, s_i);
-        if (status == -1)
-        {
-            tms_delete_int_expr(M);
-            free(operator_index);
             return NULL;
         }
 

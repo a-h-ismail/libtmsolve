@@ -288,6 +288,16 @@ static int *_tms_get_operator_indexes(const char *expr, math_subexpr *S, int s_i
                 ++i;
             ++op_count;
         }
+        else if (expr[i] == ',')
+        {
+            // There is a function before the parenthesis
+            if (S->solve_start > S->subexpr_start + 1)
+                tms_save_error(PARSER, UNEXPECTED_COMMA_W_SIMPLE_FUNC, EH_FATAL, expr, i);
+            else
+                tms_save_error(PARSER, SYNTAX_ERROR, EH_FATAL, expr, i);
+            free(operator_index);
+            return NULL;
+        }
         else
         {
             // Not a subexpr, nor a number or an operand, so it is a syntax error

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2022-2025 Ahmad Ismail
+Copyright (C) 2022-2026 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 
@@ -36,7 +36,7 @@ int _tms_set_rcfunction_ptr(const char *expr, tms_math_expr *M, int s_i)
         func = tms_get_rc_func_by_name(name);
         if (func == NULL)
         {
-            tms_save_error(TMS_PARSER, UNDEFINED_FUNCTION, EH_NONFATAL, expr, solve_start - 2);
+            tms_save_error(TMS_PARSER, UNDEFINED_FUNCTION, EH_NONFATAL, expr, solve_start - 2 - strlen(name) + 1);
             free(name);
             return -1;
         }
@@ -211,19 +211,18 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *lab
         }
 
         // Get an array of the index of all operators and set their count
-        int *operator_index = _tms_get_operator_indexes(expr, S, s_i);
-
-        if (operator_index == NULL)
+        status = _tms_set_rcfunction_ptr(expr, M, s_i);
+        if (status == -1)
         {
             tms_delete_math_expr(M);
             return NULL;
         }
 
-        status = _tms_set_rcfunction_ptr(expr, M, s_i);
-        if (status == -1)
+        int *operator_index = _tms_get_operator_indexes(expr, S, s_i);
+
+        if (operator_index == NULL)
         {
             tms_delete_math_expr(M);
-            free(operator_index);
             return NULL;
         }
 
