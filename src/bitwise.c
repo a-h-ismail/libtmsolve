@@ -738,8 +738,8 @@ int _tms_multinv(tms_arg_list *args, tms_arg_list *labels, int64_t *result)
             r2 = op1;
         }
         q = r1 / r2;
-        s1 = s = t2 = 1;
-        s2 = t1 = 0;
+        s = t2 = 1;
+        s2 = 0;
         t = -q;
         r = r1 % r2;
         // Applying an iteration
