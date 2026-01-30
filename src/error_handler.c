@@ -3,8 +3,8 @@ Copyright (C) 2022-2026 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 #include "error_handler.h"
+#include <pthread.h>
 #include <stdarg.h>
-#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,17 +12,17 @@ SPDX-License-Identifier: LGPL-2.1-only
 int last_error = 0, fatal = 0, non_fatal = 0;
 tms_error_data error_table[EH_MAX_ERRORS];
 
-atomic_bool db_lock;
+// Defined in internals and initialized there
+extern pthread_mutex_t _error_db_lock;
 
 void _lock_error_database()
 {
-    while (atomic_flag_test_and_set(&db_lock))
-        ;
+    pthread_mutex_lock(&_error_db_lock);
 }
 
 void _unlock_error_database()
 {
-    atomic_flag_clear(&db_lock);
+    pthread_mutex_unlock(&_error_db_lock);
 }
 
 void tms_print_error(tms_error_data E)

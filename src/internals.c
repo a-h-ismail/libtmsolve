@@ -88,6 +88,7 @@ pthread_mutex_t _parser_lock, _int_parser_lock;
 pthread_mutex_t _ufunc_lock, _int_ufunc_lock;
 pthread_mutex_t _variables_lock, _int_variables_lock;
 pthread_mutex_t _evaluator_lock, _int_evaluator_lock;
+pthread_mutex_t _error_db_lock;
 
 char *tms_g_illegal_names[] = {"ans"};
 const int tms_g_illegal_names_count = array_length(tms_g_illegal_names);
@@ -421,6 +422,7 @@ void tmsolve_init()
         pthread_mutex_init(&_int_ufunc_lock, NULL);
         pthread_mutex_init(&_variables_lock, NULL);
         pthread_mutex_init(&_int_variables_lock, NULL);
+        pthread_mutex_init(&_error_db_lock, NULL);
 
         // Seed the random number generator
         srand(time(NULL));
