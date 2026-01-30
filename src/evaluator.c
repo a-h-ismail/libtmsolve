@@ -748,7 +748,7 @@ void tms_dump_int_expr(tms_int_expr *M, bool was_evaluated)
 
         case TMS_F_INT_USER:
             tmp = strdup(S[s_i].func.user);
-
+            break;
         default:
             tmp = NULL;
         }
