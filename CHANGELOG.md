@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.1.1 - 2026-01-31
+
+### Fixed
+
+- Type confusion in integer mode autocompletion helper.
+- Memory leak and missing name when showing debug output in integer mode.
+
+### Changed
+
+- Replace stdatomic bool used as lock in the error handler with a pthread mutex.
+- Improved error reporting for undefined functions and stray commas.
+
 ## 3.1.0 - 2026-01-23
 
 ### Added
