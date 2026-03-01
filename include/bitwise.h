@@ -19,6 +19,9 @@ int64_t tms_sign_extend(int64_t value);
 /// @brief Bitwise NOT
 int tms_not(int64_t value, int64_t *result);
 
+/// @brief Factorial
+int tms_int_fact(int64_t value, int64_t *result);
+
 /// @brief Generates a mask of size "bits"
 int tms_mask(int64_t bits, int64_t *result);
 

@@ -49,15 +49,11 @@ const tms_extf tms_g_extf[] = {{"avg", _tms_avg},
                                {"rand", _tms_rand},
                                {"int", _tms_int}};
 
-const tms_int_func tms_g_int_func[] = {{"not", tms_not},
-                                       {"mask", tms_mask},
-                                       {"mask_bit", tms_mask_bit},
-                                       {"inv_mask", tms_inv_mask},
-                                       {"ipv4_prefix", tms_ipv4_prefix},
-                                       {"zeros", tms_zeros},
-                                       {"ones", tms_ones},
-                                       {"abs", tms_int_abs},
-                                       {"parity", tms_parity}};
+const tms_int_func tms_g_int_func[] = {{"not", tms_not},           {"fact", tms_int_fact},
+                                       {"mask", tms_mask},         {"mask_bit", tms_mask_bit},
+                                       {"inv_mask", tms_inv_mask}, {"ipv4_prefix", tms_ipv4_prefix},
+                                       {"zeros", tms_zeros},       {"ones", tms_ones},
+                                       {"abs", tms_int_abs},       {"parity", tms_parity}};
 
 const tms_int_extf tms_g_int_extf[] = {{"rand", _tms_int_rand},
                                        {"rr", _tms_rr},

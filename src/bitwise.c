@@ -68,6 +68,35 @@ int tms_not(int64_t value, int64_t *result)
     return 0;
 }
 
+int tms_int_fact(int64_t value, int64_t *result)
+{
+    if (value < 0)
+    {
+        tms_save_error(TMS_INT_EVALUATOR, FACTORIAL_EXPECTS_POSITIVE_INT, EH_FATAL, NULL, 0);
+        return -1;
+    }
+
+    int64_t tmp = *result = 1;
+    int overflow;
+
+    for (int i = 2; i <= value; ++i)
+    {
+        overflow = __builtin_mul_overflow(*result, i, &tmp);
+        if (overflow)
+        {
+            tms_save_error(TMS_INT_EVALUATOR, INTEGER_OVERFLOW, EH_FATAL, NULL, 0);
+            return -1;
+        }
+        *result *= i;
+    }
+    if (*result != tms_sign_extend(*result & tms_int_mask))
+    {
+        tms_save_error(TMS_INT_EVALUATOR, INT_TOO_LARGE, EH_FATAL, NULL, 0);
+        return -1;
+    }
+    return 0;
+}
+
 int tms_mask(int64_t bits, int64_t *result)
 {
     if (bits < 0)
