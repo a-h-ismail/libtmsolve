@@ -7,6 +7,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "error_handler.h"
 #include "int_parser.h"
 #include "internals.h"
+#include "m_errors.h"
 #include "parser.h"
 #include "scientific.h"
 #include "string_tools.h"
@@ -265,7 +266,11 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
 
             if (tms_iscnan(**(S[i].result)))
             {
-                tms_save_error(TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->expr, S[i].subexpr_start);
+                // If the function didn't generate an error itself, provide a generic one
+                if (tms_get_error_count(TMS_EVALUATOR | TMS_PARSER, EH_ALL_ERRORS) == 0)
+                    tms_save_error(TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->expr, S[i].subexpr_start);
+                else
+                    tms_modify_last_error(TMS_EVALUATOR | TMS_PARSER, M->expr, S[i].subexpr_start, "In function: ");
                 return NAN;
             }
         }
