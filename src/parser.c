@@ -117,6 +117,46 @@ int _tms_get_operand_value(tms_math_expr *M, int start, double complex *out)
     return 0;
 }
 
+// Meant to make unary operators work without affecting the binary operation based parsing by expanding them into a function
+int _tms_expand_macros(char **expr)
+{
+    // Expand the "!" to "fact" function
+    int i = 0, start;
+    while ((i = tms_f_search(*expr, "!", i, false)) != -1)
+    {
+        // ! is expected after a value not before it
+        if (i == 0)
+            return -1;
+
+        // Do we have a parenthesis?
+        if ((*expr)[i - 1] == ')')
+        {
+            start = tms_find_opening_parenthesis(*expr, i - 1);
+            if (start == -1)
+                return -1;
+        }
+        else
+        {
+            // Check if we have a name
+            start = tms_name_bounds(*expr, i - 1, false);
+            // If not, check if we have a number
+            if (start == -1)
+            {
+                start = tms_find_startofnumber(*expr, i - 1);
+                // The + or - likely has a left operand, we don't want to break the expression
+                if ((*expr)[start] == '-' || (*expr)[start] == '+')
+                    ++start;
+            }
+        }
+        *expr = realloc(*expr, (strlen(*expr) + 6) * sizeof(char));
+        tms_resize_zone(*expr, i, i + 5);
+        memmove(*expr + start + 5, *expr + start, (strlen(*expr + start) + 1) * sizeof(char));
+        memcpy(*expr + start, "fact(", 5 * sizeof(char));
+        (*expr)[i + 5] = ')';
+    }
+    return 0;
+}
+
 tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *labels);
 
 tms_math_expr *tms_parse_expr(const char *expr, int options, tms_arg_list *labels)
@@ -168,6 +208,8 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *lab
     tms_remove_whitespace(expr);
     // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
     _tms_combine_add_sub(expr);
+    // Expand unary operators into functions
+    _tms_expand_macros(&expr);
 
     tms_math_expr *M = _tms_init_math_expr(expr);
     if (M == NULL)
@@ -194,7 +236,7 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *lab
     - Allocate the array of nodes
     - Use the operator index array to fill the nodes data on operators type and location
     - Fill nodes operator priority
-    - Fill nodes with values or set as label (using x)
+    - Fill nodes with values or set as label
     - Set nodes order of calculation (using *next)
     - Set the result pointer of each op_node relying on its position and neighbor priorities
     - Set the subexpr result double pointer to the result pointer of the last calculated op_node
@@ -210,7 +252,7 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *lab
             continue;
         }
 
-        // Get an array of the index of all operators and set their count
+        // Set the pointer of "simple" functions
         status = _tms_set_rcfunction_ptr(expr, M, s_i);
         if (status == -1)
         {
@@ -218,6 +260,7 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *lab
             return NULL;
         }
 
+        // Get an array of the index of all operators and set their count
         int *operator_index = _tms_get_operator_indexes(expr, S, s_i);
 
         if (operator_index == NULL)

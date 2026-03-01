@@ -149,6 +149,78 @@ int _tms_set_int_function_ptr(const char *expr, tms_int_expr *M, int s_i)
     return 0;
 }
 
+// Meant to make unary operators work without affecting the binary operation based parsing by expanding them into a function
+int _tms_expand_int_macros(char **expr)
+{
+    // Expand the "!" to "fact" function
+    int i = 0, start;
+    while ((i = tms_f_search(*expr, "!", i, false)) != -1)
+    {
+        // ! is expected after a value not before it
+        if (i == 0)
+            return -1;
+
+        // Do we have a parenthesis?
+        if ((*expr)[i - 1] == ')')
+        {
+            start = tms_find_opening_parenthesis(*expr, i - 1);
+            if (start == -1)
+                return -1;
+        }
+        else
+        {
+            // Check if we have a name
+            start = tms_name_bounds(*expr, i - 1, false);
+            // If not, check if we have a number
+            if (start == -1)
+            {
+                start = tms_find_startofnumber(*expr, i - 1);
+                // The + or - likely has a left operand, we don't want to break the expression
+                if ((*expr)[start] == '-' || (*expr)[start] == '+')
+                    ++start;
+            }
+        }
+        *expr = realloc(*expr, (strlen(*expr) + 6) * sizeof(char));
+        // Make room for the additional function call
+        tms_resize_zone(*expr, i, i + 5);
+        // Move the term to position
+        memmove(*expr + start + 5, *expr + start, (strlen(*expr + start) + 1) * sizeof(char));
+        // Surround it with fact()
+        memcpy(*expr + start, "fact(", 5 * sizeof(char));
+        (*expr)[i + 5] = ')';
+    }
+    // Expand the "~" to not()
+    i = 0;
+    int end;
+    while ((i = tms_f_search(*expr, "~", i, false)) != -1)
+    {
+        // Do we have a parenthesis?
+        if ((*expr)[i + 1] == '(')
+        {
+            end = tms_find_closing_parenthesis(*expr, i + 1);
+            if (end == -1)
+                return -1;
+        }
+        else
+        {
+            // Check if we have a name
+            end = tms_name_bounds(*expr, i + 1, true);
+            // If not, check if we have a number
+            if (end == -1)
+                end = tms_find_endofnumber(*expr, i + 1);
+        }
+        *expr = realloc(*expr, (strlen(*expr) + 5) * sizeof(char));
+        // Make room for additional text
+        tms_resize_zone(*expr, end, end + 4);
+        // Move the term to position
+        memmove(*expr + i + 4, *expr + i + 1, (end - i) * sizeof(char));
+        // add the "not()"
+        memcpy(*expr + i, "not(", 4 * sizeof(char));
+        (*expr)[end + 4] = ')';
+    }
+    return 0;
+}
+
 tms_int_expr *_tms_parse_int_expr_unsafe(const char *expr, int options, tms_arg_list *labels);
 
 tms_int_expr *tms_parse_int_expr(const char *expr, int options, tms_arg_list *labels)
@@ -199,6 +271,8 @@ tms_int_expr *_tms_parse_int_expr_unsafe(const char *expr_const, int options, tm
     tms_remove_whitespace(expr);
     // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
     _tms_combine_add_sub(expr);
+
+    _tms_expand_int_macros(&expr);
 
     tms_int_expr *M = _tms_init_int_expr(expr);
     if (M == NULL)

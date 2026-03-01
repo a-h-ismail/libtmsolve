@@ -610,7 +610,7 @@ void tms_resize_zone(char *str, int old_end, int new_end)
         return;
     // Other cases
     else
-        memmove(str + new_end + 1, str + old_end + 1, strlen(str + old_end));
+        memmove(str + new_end + 1, str + old_end + 1, strlen(str + old_end + 1) + 1);
 }
 bool tms_valid_digit_for_base(char digit, int8_t base)
 {
