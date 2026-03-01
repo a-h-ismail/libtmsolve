@@ -42,7 +42,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define NO_COMPLEX_LOG_BASE "Base-N logarithm doesn't support complex base"
 #define NO_FSELF_REFERENCE "Can't reference a user function within itself"
 #define NO_FCIRCULAR_REFERENCE "Circular function reference detected, ignoring changes"
-#define INTEGER_OVERFLOW "Warning: Integer overflow detected"
+#define INTEGER_OVERFLOW "Integer overflow detected"
 #define VAR_NAME_MATCHES_FUNCTION "Variable name can't shadow an existing function"
 #define FUNCTION_NAME_MATCHES_VAR "Function name can't shadow an existing variable"
 #define INT_TOO_LARGE "Value is too large for the current integer size"
@@ -69,4 +69,5 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define VALUE_OUT_OF_RANGE_FOR_MULINV "The multiplicative inverse algorithm needs values in range [-2147483647;2147483647]."
 #define MULINV_NEEDS_COPRIMES "The multiplicative inverse algorithm requires coprime values."
 #define MULTINV_NO_NEGATIVE_MODULUS "Multiplicative inverse requires a modulus > 0."
+#define FACTORIAL_EXPECTS_POSITIVE_INT "The factorial function expects a positive integer."
 #endif

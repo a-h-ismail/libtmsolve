@@ -53,6 +53,11 @@ double tms_tan(double __x)
 
 double tms_fact(double value)
 {
+    if (!tms_is_integer(value) || value < 0)
+    {
+        tms_save_error(TMS_EVALUATOR, FACTORIAL_EXPECTS_POSITIVE_INT, EH_FATAL, NULL, 0);
+        return NAN;
+    }
     double result = 1;
     for (int i = 2; i <= value; ++i)
         result *= i;
