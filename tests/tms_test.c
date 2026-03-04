@@ -1,9 +1,13 @@
 /*
-Copyright (C) 2023-2025 Ahmad Ismail
+Copyright (C) 2023-2026 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
 
-#include "libtmsolve.h"
+#include "error_handler.h"
+#include "internals.h"
+#include "scientific.h"
+#include "string_tools.h"
+#include "tms_math_strs.h"
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -118,7 +122,7 @@ int main(int argc, char **argv)
 {
     if (argc < 2)
     {
-        puts("Missing argument\nUsage: tms_test test_file");
+        puts("Missing argument\nUsage: tms_test a|r test_file");
         exit(1);
     }
     // Load the test file, should have the following format:
@@ -127,7 +131,8 @@ int main(int argc, char **argv)
 
     FILE *test_file;
     char mode;
-    test_file = fopen(argv[1], "r");
+
+    test_file = fopen(argv[2], "r");
     if (test_file == NULL)
     {
         fputs("Unable to open test file.\n", stderr);
@@ -141,23 +146,67 @@ int main(int argc, char **argv)
 
     // I won't make lines longer than that to test
     char buffer[1000];
-
-    while (fgets(buffer, 1000, test_file) != NULL)
+    // Accuracy test
+    if (argv[1][0] == 'a')
     {
-        tms_remove_whitespace(buffer);
-        mode = buffer[0];
-        switch (mode)
+        while (fgets(buffer, 1000, test_file) != NULL)
         {
-        case 'S':
-            test_scientific(buffer + 2);
-            break;
+            tms_remove_whitespace(buffer);
+            mode = buffer[0];
+            switch (mode)
+            {
+            case 'S':
+                test_scientific(buffer + 2);
+                break;
 
-        case 'I':
-            test_integer(buffer + 2);
-            break;
+            case 'I':
+                test_integer(buffer + 2);
+                break;
 
-        default:
-            fputs("Invalid test mode.\n", stderr);
+            default:
+                fputs("Invalid test mode.\n", stderr);
+            }
         }
     }
+    // Rules test: All
+    else if (argv[1][0] == 'r')
+    {
+        puts("Starting rules tests: All expressions should generate errors.");
+        int64_t result;
+        while (fgets(buffer, 1000, test_file) != NULL)
+        {
+            tms_remove_whitespace(buffer);
+            mode = buffer[0];
+            switch (mode)
+            {
+            case 'S':
+                printf("Testing %s:\n", buffer + 2);
+                tms_solve_e(buffer + 2, 0, NULL);
+                if (tms_get_error_count(TMS_PARSER | TMS_EVALUATOR, EH_FATAL | EH_NONFATAL) == 0)
+                {
+                    fputs("Expected an error in this expression, got none.\n", stderr);
+                    exit(1);
+                }
+                // Show the error we got
+                tms_print_errors(TMS_PARSER | TMS_EVALUATOR);
+                break;
+
+            case 'I':
+                printf("Testing %s:\n", buffer + 2);
+                tms_int_solve_e(buffer + 2, &result, 0, NULL);
+                if (tms_get_error_count(TMS_INT_PARSER | TMS_INT_EVALUATOR, EH_FATAL | EH_NONFATAL) == 0)
+                {
+                    fputs("Expected an error in this expression, got none.\n", stderr);
+                    exit(1);
+                }
+                tms_print_errors(TMS_INT_PARSER | TMS_INT_EVALUATOR);
+                break;
+
+            default:
+                fputs("Invalid test mode.\n", stderr);
+            }
+        }
+        puts("All test cases produced errors as expected.");
+    }
+    return 0;
 }
