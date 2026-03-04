@@ -13,9 +13,19 @@ Build:
 Test Accuracy:
   stage: test
   script:
-    - ./tms_test tests/accuracy_test.txt
+    - ./tms_test a tests/accuracy_test.txt
 
 Test Accuracy (with sanitizers):
   stage: test
   script:
-    - ./tms_test_sanitized tests/accuracy_test.txt
+    - ./tms_test_sanitized a tests/accuracy_test.txt
+
+Test Rules:
+  stage: test
+  script:
+    - ./tms_test r tests/rules_test.txt
+
+Test Rules (with sanitizers):
+  stage: test
+  script:
+    - ./tms_test_sanitized r tests/rules_test.txt
