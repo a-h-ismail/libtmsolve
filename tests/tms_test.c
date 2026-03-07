@@ -146,6 +146,8 @@ int main(int argc, char **argv)
 
     // I won't make lines longer than that to test
     char buffer[1000];
+    // Force line buffering of stdout to avoid stdout/stderr output order problems with CI services
+    setvbuf(stdout, NULL, _IOLBF, 4096);
     // Accuracy test
     if (argv[1][0] == 'a')
     {
@@ -168,7 +170,7 @@ int main(int argc, char **argv)
             }
         }
     }
-    // Rules test: All
+    // Rules test: All expressions should provide errors
     else if (argv[1][0] == 'r')
     {
         puts("Starting rules tests: All expressions should generate errors.");
