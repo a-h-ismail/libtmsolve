@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "tmsolve"
-version = "3.1.0"
+version = "3.2.0"
 description = "Library for parsing mathematical expressions"
 readme = "README.md"
 requires-python = ">=3.12"
