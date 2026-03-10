@@ -258,6 +258,19 @@ int tms_int_solve(char *expr, int64_t *result)
     return state;
 }
 
+int tms_int_solve_e_wmask(const char *expr, int64_t *result, int mask_size, int options, tms_arg_list *labels)
+{
+    // Lock the evaluator (implicitly locks the parser and mask changing due to common deps)
+    tms_lock_evaluator(TMS_INT_EVALUATOR);
+    int old_mask_size = tms_int_mask_size;
+    if (_tms_set_int_mask_nolock(mask_size) != 0)
+        return -1;
+    int status = tms_int_solve_e(expr, result, options | NO_LOCK, labels);
+    _tms_set_int_mask_nolock(old_mask_size);
+    tms_unlock_evaluator(TMS_INT_EVALUATOR);
+    return status;
+}
+
 int tms_int_solve_e(const char *expr, int64_t *result, int options, tms_arg_list *labels)
 {
     tms_int_expr *M;

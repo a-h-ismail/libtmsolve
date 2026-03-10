@@ -175,6 +175,8 @@ void tms_unlock_evaluator(int variant);
  */
 int tms_set_int_mask(int size_in_bits);
 
+int _tms_set_int_mask_nolock(int size_in_bits);
+
 /**
  * @brief Add/Update a user variable.
  * @param name Variable name.

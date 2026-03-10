@@ -85,6 +85,11 @@ int tms_int_solve(char *expr, int64_t *result);
 int tms_int_solve_e(const char *expr, int64_t *result, int options, tms_arg_list *labels);
 
 /**
+ * @brief Similar to tms_int_solve_e() except it accepts an integer mask to be used one time and can't be used with the NO_LOCK option (ignored).
+*/
+int tms_int_solve_e_wmask(const char *expr, int64_t *result, int mask_size, int options, tms_arg_list *labels);
+
+/**
  * @brief Calculates the factorial.
  * @return value!
  */
