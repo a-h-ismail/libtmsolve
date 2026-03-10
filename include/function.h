@@ -77,4 +77,9 @@ int _tms_derivative(tms_arg_list *L, tms_arg_list *labels, cdouble *result);
  * @return integral(lower_bound,upper_bound,expression)
  */
 int _tms_integrate(tms_arg_list *L, tms_arg_list *labels, cdouble *result);
+
+int _tms_bin_to_float32(tms_arg_list *L, tms_arg_list *labels, double complex *result);
+
+int _tms_bin_to_float64(tms_arg_list *L, tms_arg_list *labels, double complex *result);
+
 #endif

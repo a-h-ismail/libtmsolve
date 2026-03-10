@@ -47,7 +47,9 @@ const tms_extf tms_g_extf[] = {{"avg", _tms_avg},
                                {"oct", _tms_oct},
                                {"bin", _tms_bin},
                                {"rand", _tms_rand},
-                               {"int", _tms_int}};
+                               {"int", _tms_int},
+                               {"float32", _tms_bin_to_float32},
+                               {"float64", _tms_bin_to_float64}};
 
 const tms_int_func tms_g_int_func[] = {{"not", tms_not},           {"fact", tms_int_fact},
                                        {"mask", tms_mask},         {"mask_bit", tms_mask_bit},
@@ -654,7 +656,7 @@ void tmsolve_reset()
     tms_unlock_ufuncs(TMS_V_INT64);
 }
 
-int tms_set_int_mask(int size_in_bits)
+int _tms_set_int_mask_nolock(int size_in_bits)
 {
     if (size_in_bits < 0 || size_in_bits > 64)
         return 1;
@@ -664,8 +666,6 @@ int tms_set_int_mask(int size_in_bits)
     if (!((size_in_bits != 0) && ((size_in_bits & (size_in_bits - 1)) == 0)))
         return 2;
 
-    // Lock the evaluator (implicitly locks the parser due to common dependency on ufunc lock)
-    tms_lock_evaluator(TMS_INT_EVALUATOR);
     if (size_in_bits == 64)
     {
         tms_int_mask = ~(int64_t)0;
@@ -676,8 +676,16 @@ int tms_set_int_mask(int size_in_bits)
         tms_int_mask = ((int64_t)1 << size_in_bits) - 1;
         tms_int_mask_size = size_in_bits;
     }
-    tms_unlock_evaluator(TMS_INT_EVALUATOR);
     return 0;
+}
+
+int tms_set_int_mask(int size_in_bits)
+{
+    // Lock the evaluator (implicitly locks the parser due to common dependency on ufunc lock)
+    tms_lock_evaluator(TMS_INT_EVALUATOR);
+    int status = _tms_set_int_mask_nolock(size_in_bits);
+    tms_unlock_evaluator(TMS_INT_EVALUATOR);
+    return status;
 }
 
 bool _tms_validate_args_count(int expected, int actual, int facility_id)

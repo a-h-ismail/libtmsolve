@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (C) 2021-2024 Ahmad Ismail
 SPDX-License-Identifier: LGPL-2.1-only
 */
@@ -372,4 +372,56 @@ int _tms_integrate(tms_arg_list *L, tms_arg_list *labels, double complex *result
 
     *result = integration_ans;
     return 0;
+}
+
+int _tms_bin_to_float(tms_arg_list *L, tms_arg_list *labels, int size, double complex *result)
+{
+    if (_tms_validate_args_count(1, L->count, TMS_EVALUATOR) == false)
+        return -1;
+    int64_t iresult;
+    if (size != 32 && size != 64)
+    {
+        tms_save_error(TMS_EVALUATOR, INTERNAL_ERROR, EH_FATAL, NULL, -1);
+        return -1;
+    }
+    // Solve for the specific mask size and handle any error
+    if (tms_int_solve_e_wmask(L->arguments[0], &iresult, size, 0, NULL) != 0)
+    {
+        tms_error_data *last_error = tms_get_last_error(TMS_INT_PARSER | TMS_INT_EVALUATOR);
+        char *err_msg = last_error->message;
+        tms_save_error(TMS_EVALUATOR, err_msg, EH_FATAL, NULL, -1);
+        tms_clear_errors(TMS_INT_PARSER | TMS_INT_EVALUATOR);
+        return -1;
+    }
+    switch (size)
+    {
+    case 32: {
+        // Use a union to reinterpret an unsigned int32 to float
+        const union {
+            int32_t i;
+            float f;
+        } u = {iresult};
+        *result = u.f;
+    }
+    break;
+    case 64: {
+        // Use a union to reinterpret an unsigned int64 to double
+        const union {
+            int64_t i;
+            double f;
+        } u = {iresult};
+        *result = u.f;
+    }
+    }
+    return 0;
+}
+
+int _tms_bin_to_float32(tms_arg_list *L, tms_arg_list *labels, double complex *result)
+{
+    return _tms_bin_to_float(L, labels, 32, result);
+}
+
+int _tms_bin_to_float64(tms_arg_list *L, tms_arg_list *labels, double complex *result)
+{
+    return _tms_bin_to_float(L, labels, 64, result);
 }
