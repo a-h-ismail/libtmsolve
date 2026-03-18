@@ -1,5 +1,6 @@
 S:fact(-5)
 S:fact(6.01)
+S:6.01!
 S:17/0
 S:28//0
 S:3%0
@@ -19,3 +20,4 @@ I:rand(18)
 I:0xFFFFFFFFFFFFFF
 I:17/0
 I:3%0
+I:(-5)!
