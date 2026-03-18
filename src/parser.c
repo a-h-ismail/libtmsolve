@@ -148,6 +148,10 @@ int _tms_expand_macros(char **expr)
                     ++start;
             }
         }
+        // Potential syntax error
+        if (start == -1)
+            return -1;
+
         *expr = realloc(*expr, (strlen(*expr) + 6) * sizeof(char));
         tms_resize_zone(*expr, i, i + 5);
         memmove(*expr + start + 5, *expr + start, (strlen(*expr + start) + 1) * sizeof(char));

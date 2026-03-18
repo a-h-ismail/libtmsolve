@@ -174,12 +174,16 @@ int _tms_expand_int_macros(char **expr)
             // If not, check if we have a number
             if (start == -1)
             {
-                start = tms_find_startofnumber(*expr, i - 1);
+                start = tms_find_int_startofnumber(*expr, i - 1);
                 // The + or - likely has a left operand, we don't want to break the expression
                 if ((*expr)[start] == '-' || (*expr)[start] == '+')
                     ++start;
             }
         }
+        // Can't find the start, likely a syntax error
+        if (start == -1)
+            return -1;
+
         *expr = realloc(*expr, (strlen(*expr) + 6) * sizeof(char));
         // Make room for the additional function call
         tms_resize_zone(*expr, i, i + 5);
@@ -207,8 +211,20 @@ int _tms_expand_int_macros(char **expr)
             end = tms_name_bounds(*expr, i + 1, true);
             // If not, check if we have a number
             if (end == -1)
-                end = tms_find_endofnumber(*expr, i + 1);
+                end = tms_find_int_endofnumber(*expr, i + 1);
+            // We have a name, is it a function name?
+            // Then, we have a parenthesis pair to take into account
+            if ((*expr)[end + 1] == '(')
+            {
+                end = tms_find_closing_parenthesis(*expr, end + 1);
+                if (end == -1)
+                    return -1;
+            }
         }
+        // We can't determine the end, likely a syntax error
+        if (end == -1)
+            return -1;
+
         *expr = realloc(*expr, (strlen(*expr) + 5) * sizeof(char));
         // Make room for additional text
         tms_resize_zone(*expr, end, end + 4);
