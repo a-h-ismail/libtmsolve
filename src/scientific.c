@@ -165,7 +165,7 @@ double complex tms_solve(const char *expr)
         // We don't want errors to be printed automatically (to keep the error database from being cleared)
         // And we want to keep the parser locked until we get the correct answer and print errors if any
         tms_lock_parser(TMS_PARSER);
-        M = tms_parse_expr(expr, NO_LOCK, NULL);
+        M = tms_parse_expr(expr, NO_LOCK | EXPAND_UOPS, NULL);
 
         if (M == NULL)
         {
@@ -180,7 +180,7 @@ double complex tms_solve(const char *expr)
             {
                 // Clear previous errors and try again with complex enabled
                 tms_clear_errors(TMS_PARSER);
-                M = tms_parse_expr(expr, NO_LOCK | ENABLE_CMPLX, NULL);
+                M = tms_parse_expr(expr, NO_LOCK | ENABLE_CMPLX | EXPAND_UOPS, NULL);
 
                 // Failed again somehow with complex enabled, so abort
                 if (M == NULL)
@@ -236,7 +236,7 @@ double complex tms_solve(const char *expr)
         }
 
     case 2:
-        M = tms_parse_expr(expr, ENABLE_CMPLX | PRINT_ERRORS, NULL);
+        M = tms_parse_expr(expr, ENABLE_CMPLX | PRINT_ERRORS | EXPAND_UOPS, NULL);
         result = tms_evaluate(M, PRINT_ERRORS);
         tms_delete_math_expr(M);
         return result;
@@ -249,7 +249,7 @@ double complex tms_solve(const char *expr)
 int tms_int_solve(char *expr, int64_t *result)
 {
     tms_int_expr *M;
-    M = tms_parse_int_expr(expr, PRINT_ERRORS, NULL);
+    M = tms_parse_int_expr(expr, PRINT_ERRORS | EXPAND_UOPS, NULL);
     if (M == NULL)
         return -1;
 
