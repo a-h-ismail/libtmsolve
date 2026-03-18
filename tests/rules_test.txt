@@ -13,6 +13,8 @@ S:logn(73,1+i)
 S:logn(72,-2)
 S:ln(-1)
 S:avg
+S:float32(0xFFFF FFFF)
+S:float64(0xFFFF FFFF FFFF FFFF)
 I:rand(18)
 I:0xFFFFFFFFFFFFFF
 I:17/0
