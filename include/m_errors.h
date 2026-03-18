@@ -64,7 +64,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define LABELS_NOT_UNIQUE "Provided argument names must be unique"
 #define USER_FUNCTION_NOT_FOUND "This user function is no longer defined, redefine it and try again"
 #define X_NOT_ALLOWED "Using x as label name is not allowed here."
-#define STACK_DEPTH_EXCEEDED "Stack depth was exceeded, aborting..."
+#define STACK_DEPTH_EXCEEDED "Maximum stack depth was exceeded, aborting..."
 #define NOT_A_FLOAT_OR_DOUBLE "Only 32 bit and 64 bit floats supported."
 #define VALUE_OUT_OF_RANGE_FOR_MULINV "The multiplicative inverse algorithm needs values in range [-2147483647;2147483647]."
 #define MULINV_NEEDS_COPRIMES "The multiplicative inverse algorithm requires coprime values."
