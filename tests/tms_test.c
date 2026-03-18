@@ -31,13 +31,13 @@ void test_scientific(char *buffer)
     expr[field_separator] = '\0';
     puts(expr);
 
-    real_only = tms_solve_e(expr, 0, NULL);
+    real_only = tms_solve_e(expr, EXPAND_UOPS, NULL);
     if (isnan(creal(real_only)))
     {
         puts("Calculation failure in real domain.");
         tms_clear_errors(TMS_PARSER | TMS_EVALUATOR);
     }
-    with_complex = tms_solve_e(expr, ENABLE_CMPLX, NULL);
+    with_complex = tms_solve_e(expr, ENABLE_CMPLX | EXPAND_UOPS, NULL);
     if (isnan(creal(with_complex)))
     {
         puts("Fatal: Calculation failure in complex domain.");
@@ -183,7 +183,7 @@ int main(int argc, char **argv)
             {
             case 'S':
                 printf("Testing %s:\n", buffer + 2);
-                tms_solve_e(buffer + 2, 0, NULL);
+                tms_solve_e(buffer + 2, EXPAND_UOPS, NULL);
                 if (tms_get_error_count(TMS_PARSER | TMS_EVALUATOR, EH_FATAL | EH_NONFATAL) == 0)
                 {
                     fputs("Expected an error in this expression, got none.\n", stderr);
@@ -195,7 +195,7 @@ int main(int argc, char **argv)
 
             case 'I':
                 printf("Testing %s:\n", buffer + 2);
-                tms_int_solve_e(buffer + 2, &result, 0, NULL);
+                tms_int_solve_e(buffer + 2, &result, EXPAND_UOPS, NULL);
                 if (tms_get_error_count(TMS_INT_PARSER | TMS_INT_EVALUATOR, EH_FATAL | EH_NONFATAL) == 0)
                 {
                     fputs("Expected an error in this expression, got none.\n", stderr);
