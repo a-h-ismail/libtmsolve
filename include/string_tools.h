@@ -120,6 +120,8 @@ bool tms_is_valid_int_number_start(char c);
  */
 int tms_find_startofnumber(const char *expr, int end);
 
+int tms_find_int_startofnumber(const char *expr, int end);
+
 /**
  * @brief Forward search for a specified keyword.
  * @param str The string to be searched.

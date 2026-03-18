@@ -734,7 +734,7 @@ int tms_find_startofnumber(const char *expr, int end)
     Algorithm:
     * Starting from start=end:
     * If start==0, break.
-    * Check if the char at start-1 is a number, if true decrement start.
+    * Check if the char at start-1 is a digit, if true decrement start.
     * If not handle the following cases:
     * expr[start-1] is the imaginary number 'i': decrement start
     * expr[start-1] is a point, scientific notation (e,E): decrement start
@@ -752,9 +752,7 @@ int tms_find_startofnumber(const char *expr, int end)
         else
         {
             if (expr[start - 1] == 'i')
-            {
                 --start;
-            }
             if (expr[start - 1] == 'e' || expr[start - 1] == 'E' || expr[start - 1] == '.')
                 --start;
             else if (start > 1 && (expr[start - 1] == '+' || expr[start - 1] == '-') &&
@@ -768,6 +766,35 @@ int tms_find_startofnumber(const char *expr, int end)
             else
                 break;
         }
+    }
+    return start;
+}
+
+int tms_find_int_startofnumber(const char *expr, int end)
+{
+    int start = end, base = 16;
+
+    while (1)
+    {
+        if (start == 0)
+            break;
+
+        if (tms_valid_digit_for_base(expr[start - 1], base))
+            --start;
+        // Did we reach the base prefix? (0x, 0o, 0b)
+        else if (start > 1)
+        {
+            switch (expr[start - 1])
+            {
+            case 'x':
+            case 'b':
+            case 'o':
+                if (expr[start - 2] == '0')
+                    return start - 2;
+            }
+        }
+        else
+            break;
     }
     return start;
 }
