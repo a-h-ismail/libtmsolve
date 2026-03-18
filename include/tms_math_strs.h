@@ -176,6 +176,8 @@ enum tms_variable_types
 #define ENABLE_CMPLX 2
 /// Allows errors to be printed immediately
 #define PRINT_ERRORS 4
+/// Enables unary operators expansion
+#define EXPAND_UOPS 8
 
 /// @brief Holds the metadata of a subexpression.
 typedef struct tms_math_subexpr

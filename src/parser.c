@@ -15,6 +15,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "parser.h"
 #include "string_tools.h"
 #include "tms_complex.h"
+#include "tms_math_strs.h"
 
 #define dup_mexpr tms_dup_mexpr
 
@@ -213,7 +214,8 @@ tms_math_expr *_tms_parse_expr_unsafe(char *expr, int options, tms_arg_list *lab
     // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
     _tms_combine_add_sub(expr);
     // Expand unary operators into functions
-    _tms_expand_macros(&expr);
+    if ((options & EXPAND_UOPS) != 0)
+        _tms_expand_macros(&expr);
 
     tms_math_expr *M = _tms_init_math_expr(expr);
     if (M == NULL)

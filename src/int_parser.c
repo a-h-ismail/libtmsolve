@@ -288,7 +288,9 @@ tms_int_expr *_tms_parse_int_expr_unsafe(const char *expr_const, int options, tm
     // Combine multiple add/subtract symbols (ex: -- becomes + or +++++ becomes +)
     _tms_combine_add_sub(expr);
 
-    _tms_expand_int_macros(&expr);
+    // Expand unary operators into functions
+    if ((options & EXPAND_UOPS) != 0)
+        _tms_expand_int_macros(&expr);
 
     tms_int_expr *M = _tms_init_int_expr(expr);
     if (M == NULL)
