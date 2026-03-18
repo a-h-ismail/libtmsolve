@@ -39,8 +39,8 @@ void tms_convert_real_to_complex(tms_math_expr *M);
 /**
  * @brief Parses a math expression into a structure.
  * @param expr The string containing the math expression.
- * @param options Provides the parser with options (currently: ENABLE_LABELS, ENABLE_CMPLX, NO_LOCK, PRINT_ERRORS)
- * @param labels If the option to enable labels is set, provide them here.
+ * @param options Provides the parser with options (currently: ENABLE_CMPLX, NO_LOCK, PRINT_ERRORS, EXPAND_UOPS)
+ * @param labels List of named labels and optionally a values array to initialize labeled operands.
  * @return A (malloc'd) pointer to the generated math structure.
  */
 tms_math_expr *tms_parse_expr(const char *expr, int options, tms_arg_list *labels);
