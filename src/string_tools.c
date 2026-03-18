@@ -791,10 +791,10 @@ int tms_find_int_startofnumber(const char *expr, int end)
             case 'o':
                 if (expr[start - 2] == '0')
                     return start - 2;
+            default:
+                return start;
             }
         }
-        else
-            break;
     }
     return start;
 }
