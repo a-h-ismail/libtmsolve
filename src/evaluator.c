@@ -592,7 +592,10 @@ void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
     tms_math_subexpr *S = M->S;
     char *tmp = NULL;
     tms_op_node *tmp_node;
-    puts("Dumping expression data:\n");
+    puts("Dumping expression data:");
+    if (M->expr != NULL)
+        printf("Expression: %s", M->expr);
+
     while (s_i < s_count)
     {
         // Find the name of the function to execute
@@ -612,7 +615,7 @@ void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
             tmp = NULL;
         }
 
-        printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n", s_i, S[s_i].func_type, tmp, S[s_i].depth);
+        printf("\n*subexpr %d:\nftype = %u, fname = %s, depth = %d\n", s_i, S[s_i].func_type, tmp, S[s_i].depth);
         free(tmp);
 
         // Lookup result pointer location
@@ -693,8 +696,9 @@ void tms_dump_expr(tms_math_expr *M, bool was_evaluated)
             }
         }
         ++s_i;
-        puts("end\n");
+        puts("end");
     }
+    puts("----------");
 }
 
 bool _print_int_operand_source(tms_int_subexpr *S, int64_t *operand, int s_i, bool was_evaluated)
@@ -740,7 +744,10 @@ void tms_dump_int_expr(tms_int_expr *M, bool was_evaluated)
     tms_int_subexpr *S = M->S;
     char *tmp = NULL;
     tms_int_op_node *tmp_node;
-    puts("Dumping expression data:\n");
+    puts("Dumping expression data:");
+
+    if (M->expr != NULL)
+        printf("Expression: %s\n", M->expr);
     while (s_i < s_count)
     {
         // Find the name of the function to execute
@@ -758,7 +765,7 @@ void tms_dump_int_expr(tms_int_expr *M, bool was_evaluated)
             tmp = NULL;
         }
 
-        printf("subexpr %d:\nftype = %u, fname = %s, depth = %d\n", s_i, S[s_i].func_type, tmp, S[s_i].depth);
+        printf("\n*subexpr %d:\nftype = %u, fname = %s, depth = %d\n", s_i, S[s_i].func_type, tmp, S[s_i].depth);
         free(tmp);
 
         // Lookup result pointer location
@@ -838,6 +845,7 @@ void tms_dump_int_expr(tms_int_expr *M, bool was_evaluated)
             }
         }
         ++s_i;
-        puts("end\n");
+        puts("end");
     }
+    puts("----------");
 }
