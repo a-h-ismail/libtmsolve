@@ -70,4 +70,5 @@ SPDX-License-Identifier: LGPL-2.1-only
 #define MULINV_NEEDS_COPRIMES "The multiplicative inverse algorithm requires coprime values."
 #define MULTINV_NO_NEGATIVE_MODULUS "Multiplicative inverse requires a modulus > 0."
 #define FACTORIAL_EXPECTS_POSITIVE_INT "The factorial function expects a positive integer."
+#define NAN_NOT_ALLOWED "NaN is not allowed."
 #endif

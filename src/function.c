@@ -11,6 +11,7 @@ SPDX-License-Identifier: LGPL-2.1-only
 #include "scientific.h"
 #include "string_tools.h"
 #include "tms_complex.h"
+#include "tms_math_strs.h"
 #include <float.h>
 #include <math.h>
 #include <stdlib.h>
@@ -385,7 +386,7 @@ int _tms_bin_to_float(tms_arg_list *L, tms_arg_list *labels, int size, double co
         return -1;
     }
     // Solve for the specific mask size and handle any error
-    if (tms_int_solve_e_wmask(L->arguments[0], &iresult, size, 0, NULL) != 0)
+    if (tms_int_solve_e_wmask(L->arguments[0], &iresult, size, EXPAND_UOPS, NULL) != 0)
     {
         tms_error_data *last_error = tms_get_last_error(TMS_INT_PARSER | TMS_INT_EVALUATOR);
         char *err_msg = last_error->message;
@@ -413,7 +414,14 @@ int _tms_bin_to_float(tms_arg_list *L, tms_arg_list *labels, int size, double co
         *result = u.f;
     }
     }
-    return 0;
+
+    if (tms_iscnan(*result))
+    {
+        tms_save_error(TMS_EVALUATOR, NAN_NOT_ALLOWED, EH_FATAL, NULL, 0);
+        return -1;
+    }
+    else
+        return 0;
 }
 
 int _tms_bin_to_float32(tms_arg_list *L, tms_arg_list *labels, double complex *result)
