@@ -5,6 +5,7 @@ Similar to double precision scientific mode, integer mode has functions: simple 
 ## Simple Functions
 
 - `abs(value)`: Returns the absolute value.
+- `fact(value)`: Calculates the factorial.
 - `not(value)`: Flips all bits of `value`.
 - `mask(n)`: Creates an n bit wide mask.
 - `mask_bit(n)`: Creates a mask for the nth bit (LSB is considered `b0`).
