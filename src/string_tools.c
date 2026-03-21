@@ -795,6 +795,8 @@ int tms_find_int_startofnumber(const char *expr, int end)
                 return start;
             }
         }
+        else
+            break;
     }
     return start;
 }
