@@ -1,5 +1,27 @@
 # Changelog
 
+## 3.2.0 - 2026-03-21
+
+### Added
+
+- Unary postfix operator `!` (factorial) in scientific mode.
+- Unary postfix operator `!` (factorial) and prefix operator `~` (bitwise NOT) in integer mode.
+- Functions `float32()` and `float64()` in scientific mode.
+- Function `fact()` in integer mode.
+- New parser/solver option: `EXPAND_UOPS` to enable unary operator support.
+- Helper function `tms_int_solve_e_wmask()` to solve an int expression with the specified integer mask set only for the function invocation.
+- "find start of number" function variant for int expressions.
+- Technical: Add "rules" test to always ensure that common math rules are not violated.
+
+### Changed
+
+- Optimize very large factorials by immediately returning infinity when the result is too large.
+
+### Fixed
+
+- Missing check for negative and decimal input to `fact()` function.
+- Incorrect error position on some errors in scientific mode.
+
 ## 3.1.1 - 2026-01-31
 
 ### Fixed
