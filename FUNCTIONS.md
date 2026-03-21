@@ -35,7 +35,7 @@ Trigonometric functions lose precision with larger values. I recommend staying i
 ## Extended Functions
 
 - `avg(v1, v2, ...)`: Calculates the average of its arguments.
-- `min() and max()`: Calculates the minimun/maximum. Works only with real values.
+- `min()` and `max()`: Calculates the minimun/maximum. Works only with real values.
 - `integrate(start, end, function)`: Calculates integral using Simpson 3/8 rule.
 - `der(function, x)`: Calculates derivative of the function at the specified point.
 - `logn(value, n)`: Calculates the base-n logarithm for the specified value.
@@ -44,6 +44,8 @@ Trigonometric functions lose precision with larger values. I recommend staying i
 - `bin(bin_rep)`: Reads a binary representation and returns the corresponding value.
 - `rand()`: Returns a random weight [0,1].
 - `int(value)`: Returns the integer part of the value, supports complex.
+- `float32(binary_representation)`: Takes an integer expression as argument, solves it, then treats it as the binary representation of a 32 bit floating number.
+- `float64(binary_representation)`: Same as `float32()` but for double precision floats.
 
 ## Runtime Functions
 

@@ -29,7 +29,7 @@ Similar to double precision scientific mode, integer mode has functions: simple 
 - `rand(min, max)`: Returns a random value in range `[min, max]`. If arguments are omitted, default is `[0,max]`.
 - `max(...)`: Finds the maximum of its arguments.
 - `min(...)`: Finds the minimum of its arguments.
-- `float(value)`: Returns the binary representation of its argument. Automatically picks between float32 and float64 depending on the mask size.
+- `float(value)`: Returns the binary representation of its argument. Automatically picks between float32 and float64 depending on the current integer mask size.
 - `hamming_dist(v1, v2)`: Returns the hamming distance between its two arguments.
 - `multinv(value, m)`: Finds a multiplicative inverse of `value` (mod `m`).
 - `gcd(...)`: Finds the Greatest common divisor of its arguments.
