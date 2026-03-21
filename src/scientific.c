@@ -60,7 +60,12 @@ double tms_fact(double value)
     }
     double result = 1;
     for (int i = 2; i <= value; ++i)
+    {
         result *= i;
+        // No point in continuing the calculation if we reached infinity
+        if (isinf(result))
+            break;
+    }
     return result;
 }
 
