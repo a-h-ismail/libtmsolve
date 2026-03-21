@@ -224,31 +224,24 @@ double complex _tms_evaluate_unsafe(tms_math_expr *M)
                             return NAN;
                         }
                         else
-                        {
                             *(i_node->result) = fmod(i_node->left_operand, i_node->right_operand);
-                            if (tms_iscnan(*(i_node->result)))
-                            {
-                                tms_save_error(TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->expr, i_node->operator_index);
-                                return NAN;
-                            }
-                        }
                         break;
 
                     case '^':
                     case 'p':
                         // Use non complex power function if the operands are real
                         if (M->enable_complex == false)
-                        {
                             *(i_node->result) = pow(i_node->left_operand, i_node->right_operand);
-                            if (tms_iscnan(*(i_node->result)))
-                            {
-                                tms_save_error(TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->expr, i_node->operator_index);
-                                return NAN;
-                            }
-                        }
                         else
                             *(i_node->result) = tms_cpow(i_node->left_operand, i_node->right_operand);
                         break;
+                    }
+                    // Generic math error not caught earlier
+                    // Something like inf - inf
+                    if (tms_iscnan(*(i_node->result)))
+                    {
+                        tms_save_error(TMS_EVALUATOR, MATH_ERROR, EH_NONFATAL, M->expr, i_node->operator_index);
+                        return NAN;
                     }
                     i_node = i_node->next;
                 }
