@@ -133,6 +133,9 @@ int _tms_expand_macros(char **expr)
         if ((*expr)[i - 1] == ')')
         {
             start = tms_find_opening_parenthesis(*expr, i - 1);
+            // Do we have a function?
+            if (start > 0 && tms_legal_char_in_name((*expr)[start - 1]))
+                start = tms_name_bounds(*expr, start - 1, false);
             if (start == -1)
                 return -1;
         }
@@ -154,8 +157,11 @@ int _tms_expand_macros(char **expr)
             return -1;
 
         *expr = realloc(*expr, (strlen(*expr) + 6) * sizeof(char));
+        // Make room for the additional function call
         tms_resize_zone(*expr, i, i + 5);
-        memmove(*expr + start + 5, *expr + start, (strlen(*expr + start) + 1) * sizeof(char));
+        // Move the term to position
+        memmove(*expr + start + 5, *expr + start, (i - start) * sizeof(char));
+        // Surround it with fact()
         memcpy(*expr + start, "fact(", 5 * sizeof(char));
         (*expr)[i + 5] = ')';
     }
